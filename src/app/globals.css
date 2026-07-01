@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --background: #f8fafc;
+  --foreground: #111827;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
+  --surface-glass: rgba(255, 255, 255, 0.78);
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --muted: #64748b;
+  --muted-strong: #334155;
+  --primary: #2563eb;
+  --primary-strong: #1d4ed8;
+  --primary-soft: #dbeafe;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --shadow-soft: 0 16px 44px rgba(15, 23, 42, 0.08);
+  --shadow-panel: 0 18px 60px rgba(15, 23, 42, 0.14);
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --font-sans: "Pretendard", "Inter", "Apple SD Gothic Neo", "Malgun Gothic",
+    "Segoe UI", system-ui, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-glass: var(--surface-glass);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-muted: var(--muted);
+  --color-muted-strong: var(--muted-strong);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-soft: var(--primary-soft);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --shadow-soft: var(--shadow-soft);
+  --shadow-panel: var(--shadow-panel);
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --background: #060914;
+    --foreground: #f8fafc;
+    --surface: #0f172a;
+    --surface-muted: #111827;
+    --surface-glass: rgba(15, 23, 42, 0.78);
+    --border: #263244;
+    --border-strong: #475569;
+    --muted: #94a3b8;
+    --muted-strong: #cbd5e1;
+    --primary: #60a5fa;
+    --primary-strong: #3b82f6;
+    --primary-soft: rgba(37, 99, 235, 0.22);
+    --shadow-soft: 0 18px 46px rgba(0, 0, 0, 0.25);
+    --shadow-panel: 0 24px 72px rgba(0, 0, 0, 0.34);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--background);
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: var(--primary-soft);
+  color: var(--foreground);
+}
+
+.glass-panel {
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  background: var(--surface-glass);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+}
