@@ -1,0 +1,1329 @@
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+  [90m 5 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m 6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+[31m[1m>[0m [90m 7 |[0m [36mimport[0m { [33mCommunityHub[0m } [36mfrom[0m [32m"./community-hub"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m [36mimport[0m { [33mMapPlace[0m, [33mPlaceCategory[0m, [33mPlaceDetailCard[0m } [36mfrom[0m [32m"./place-detail-card"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mTripDetailPreview[0m } [36mfrom[0m [32m"./trip-detail-preview"[0m;
+  [90m10 |[0m [36mimport[0m { [33mTripDraft[0m } [36mfrom[0m [32m"./trip-draft"[0m;
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+[browser] Uncaught Error: ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+   5 | import { Button } from "@/components/ui/button";
+   6 | import { cn } from "@/lib/utils";
+>  7 | import { CommunityHub } from "./community-hub";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   8 | import { MapPlace, PlaceCategory, PlaceDetailCard } from "./place-detail-card";
+   9 | import { TripDetailPreview } from "./trip-detail-preview";
+  10 | import { TripDraft } from "./trip-draft";
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (Error: ./src/features/map/interactive-map.tsx:7:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (Error: (./src/features/map/interactive-map.tsx:7:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+[browser] Uncaught Error: ./src/features/map/interactive-map.tsx:7:1
+Module not found: Can't resolve './community-hub'
+   5 | import { Button } from "@/components/ui/button";
+   6 | import { cn } from "@/lib/utils";
+>  7 | import { CommunityHub } from "./community-hub";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   8 | import { MapPlace, PlaceCategory, PlaceDetailCard } from "./place-detail-card";
+   9 | import { TripDetailPreview } from "./trip-detail-preview";
+  10 | import { TripDraft } from "./trip-draft";
+
+
+
+Import trace:
+  Server Component:
+    ./src/features/map/interactive-map.tsx
+    ./src/components/layout/app-shell.tsx
+    ./src/app/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (Error: ./src/features/map/interactive-map.tsx:7:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (Error: (./src/features/map/interactive-map.tsx:7:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+[browser] The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: [seongsu-gallery, [object Object],[object Object],[object Object],[object Object]]
+Incoming: [seongsu-gallery, ready, [object Object],[object Object],[object Object],[object Object]] 
+    at InteractiveMap (src/features/map/interactive-map.tsx:277:12)
+    at Set.forEach (<anonymous>)
+  275 |   }, [appKey]);
+  276 |
+> 277 |   useEffect(() => {
+      |            ^
+  278 |     const map = mapRef.current;
+  279 |     const maps = mapsRef.current;
+  280 | (src/features/map/interactive-map.tsx:277:12)
+[browser] The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: [seongsu-gallery, [object Object],[object Object],[object Object],[object Object]]
+Incoming: [seongsu-gallery, ready, [object Object],[object Object],[object Object],[object Object]] 
+    at InteractiveMap (file://C:/Users/cheil/Documents/Codex/2026-06-30/new-chat/work/trip-chain/.next/dev/static/chunks/src_0j3nfsj._.js?id=%255Bproject%255D%252Fsrc%252Ffeatures%252Fmap%252Finteractive-map.tsx+%255Bapp-client%255D+%2528ecmascript%2529:254:291)
+    at Set.forEach (<anonymous>) (file://C:/Users/cheil/Documents/Codex/2026-06-30/new-chat/work/trip-chain/.next/dev/static/chunks/src_0j3nfsj._.js?id=%255Bproject%255D%252Fsrc%252Ffeatures%252Fmap%252Finteractive-map.tsx+%255Bapp-client%255D+%2528ecmascript%2529:254:291)
