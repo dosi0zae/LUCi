@@ -123,7 +123,7 @@ export function AppShell() {
 
           <nav
             aria-label="주요 메뉴"
-            className="glass-panel fixed inset-x-3 bottom-3 z-30 grid grid-cols-5 rounded-lg p-1 lg:left-1/2 lg:right-auto lg:w-[520px] lg:-translate-x-1/2"
+            className="glass-panel fixed inset-x-3 bottom-3 z-30 grid grid-cols-5 rounded-lg p-1 lg:inset-x-auto lg:right-4 lg:bottom-4 lg:flex lg:w-auto lg:flex-col lg:gap-1"
           >
             {bottomNav.map((item) => {
               const Icon = item.icon;
@@ -131,8 +131,8 @@ export function AppShell() {
               return (
                 <button
                   className={cn(
-                    "flex h-14 flex-col items-center justify-center gap-1 rounded-sm text-xs font-semibold text-muted transition hover:bg-surface-muted",
-                    item.active && "bg-primary text-white shadow-soft hover:bg-primary",
+                    "flex h-14 flex-col items-center justify-center gap-1 rounded-sm text-xs font-semibold text-muted transition hover:bg-surface-muted lg:w-16",
+                     item.active && "bg-primary text-white shadow-soft hover:bg-primary",
                   )}
                   key={item.label}
                   type="button"
