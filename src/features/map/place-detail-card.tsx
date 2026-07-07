@@ -43,7 +43,7 @@ export function PlaceDetailCard({
   place,
 }: PlaceDetailCardProps) {
   return (
-    <aside className="glass-panel absolute bottom-4 right-4 z-10 w-[min(380px,calc(100%-2rem))] rounded-lg p-4">
+    <aside className="glass-panel absolute bottom-20 right-4 z-10 w-[min(380px,calc(100%-2rem))] rounded-lg p-4 sm:bottom-4 sm:right-20 sm:w-[min(380px,calc(100%-7rem))]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <Badge tone={categoryTones[place.category]}>{place.category}</Badge>

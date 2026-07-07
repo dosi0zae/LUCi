@@ -520,7 +520,7 @@ export function InteractiveMap() {
         ))}
       </div>
 
-      <div className="glass-panel absolute right-4 top-4 z-10 grid gap-2 rounded-lg p-2">
+      <div className="glass-panel absolute bottom-4 right-4 z-20 grid gap-2 rounded-lg p-2">
         <Button
           aria-label="지도 확대"
           className="h-10 w-10 px-0 text-lg"
@@ -550,9 +550,6 @@ export function InteractiveMap() {
         >
           ↺
         </Button>
-      </div>
-
-      <div className="glass-panel absolute right-4 top-44 z-10 rounded-lg p-2">
         <Button
           aria-label="탐색 피드 열기"
           className="h-10 w-10 px-0"
@@ -575,7 +572,7 @@ export function InteractiveMap() {
         />
       ) : (
         <button
-          className="glass-panel absolute bottom-4 right-4 z-10 rounded-lg px-4 py-3 text-sm font-bold"
+          className="glass-panel absolute bottom-20 right-4 z-10 rounded-lg px-4 py-3 text-sm font-bold sm:bottom-4 sm:right-20"
           onClick={() => setIsDetailOpen(true)}
           type="button"
         >
