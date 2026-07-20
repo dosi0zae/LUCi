@@ -61,7 +61,7 @@ function getChainWarnings(chainPlaces: MapPlace[]) {
 
     if (meters > 1800) {
       warnings.push(
-        `${previousPlace.name} -> ${place.name} 구간이 약 ${(meters / 1000).toFixed(1)}km로 깁니다.`,
+        `${previousPlace.name} -> ${place.name} 구간이 ${(meters / 1000).toFixed(1)}km로 깁니다.`,
       );
     }
 
@@ -71,6 +71,27 @@ function getChainWarnings(chainPlaces: MapPlace[]) {
   });
 
   return warnings.slice(0, 3);
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-3.5 w-3.5"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 15H6L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
+  );
 }
 
 export function TripChainBuilder({
@@ -154,7 +175,7 @@ export function TripChainBuilder({
           >
             {isDragOver && (
               <p className="mb-2 rounded-sm bg-primary px-3 py-2 text-sm font-bold text-white">
-                여기에 놓으면 체인에 추가됩니다
+                여기에 놓으면 체인에 추가됩니다.
               </p>
             )}
             <p className="text-sm font-semibold">아직 추가한 장소가 없습니다.</p>
@@ -169,7 +190,7 @@ export function TripChainBuilder({
                 {chainPlaces.map((place, index) => (
                   <div
                     className={cn(
-                      "cursor-grab rounded-sm border border-border bg-surface/82 p-3 shadow-soft transition active:cursor-grabbing",
+                      "cursor-grab rounded-sm border border-border bg-surface/82 px-3 py-2 shadow-soft transition active:cursor-grabbing",
                       draggedChainPlaceId === place.id && "opacity-60 ring-2 ring-primary",
                       draggedChainPlaceId && draggedChainPlaceId !== place.id && "hover:border-primary",
                     )}
@@ -200,7 +221,7 @@ export function TripChainBuilder({
                       setDraggedChainPlaceId(null);
                     }}
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex min-h-10 items-center gap-2">
                       <span className="grid h-7 w-7 shrink-0 place-items-center rounded-xs bg-primary text-xs font-bold text-white">
                         {index + 1}
                       </span>
@@ -210,39 +231,40 @@ export function TripChainBuilder({
                           {place.category} · {place.duration} · {place.distance}
                         </p>
                       </button>
-                    </div>
-                    <div className="mt-3 grid grid-cols-4 gap-1">
-                      <button
-                        aria-label={`${place.name} 위로 이동`}
-                        className={cn(
-                          "h-8 rounded-xs bg-surface-muted text-xs font-bold text-muted-strong transition hover:bg-primary-soft",
-                          index === 0 && "cursor-not-allowed opacity-40",
-                        )}
-                        disabled={index === 0}
-                        onClick={() => onMovePlace(place.id, "up")}
-                        type="button"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        aria-label={`${place.name} 아래로 이동`}
-                        className={cn(
-                          "h-8 rounded-xs bg-surface-muted text-xs font-bold text-muted-strong transition hover:bg-primary-soft",
-                          index === chainPlaces.length - 1 && "cursor-not-allowed opacity-40",
-                        )}
-                        disabled={index === chainPlaces.length - 1}
-                        onClick={() => onMovePlace(place.id, "down")}
-                        type="button"
-                      >
-                        ↓
-                      </button>
-                      <button
-                        className="col-span-2 h-8 rounded-xs bg-surface-muted text-xs font-bold text-muted-strong transition hover:bg-surface"
-                        onClick={() => onRemovePlace(place.id)}
-                        type="button"
-                      >
-                        제거
-                      </button>
+                      <div className="ml-1 flex shrink-0 items-center gap-1">
+                        <button
+                          aria-label={`${place.name} 위로 이동`}
+                          className={cn(
+                            "grid h-7 w-7 place-items-center rounded-xs bg-surface-muted text-xs font-bold text-muted-strong transition hover:bg-primary-soft",
+                            index === 0 && "cursor-not-allowed opacity-40",
+                          )}
+                          disabled={index === 0}
+                          onClick={() => onMovePlace(place.id, "up")}
+                          type="button"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          aria-label={`${place.name} 아래로 이동`}
+                          className={cn(
+                            "grid h-7 w-7 place-items-center rounded-xs bg-surface-muted text-xs font-bold text-muted-strong transition hover:bg-primary-soft",
+                            index === chainPlaces.length - 1 && "cursor-not-allowed opacity-40",
+                          )}
+                          disabled={index === chainPlaces.length - 1}
+                          onClick={() => onMovePlace(place.id, "down")}
+                          type="button"
+                        >
+                          ↓
+                        </button>
+                        <button
+                          aria-label={`${place.name} 제거`}
+                          className="grid h-7 w-7 place-items-center rounded-xs bg-surface-muted text-muted-strong transition hover:bg-surface"
+                          onClick={() => onRemovePlace(place.id)}
+                          type="button"
+                        >
+                          <TrashIcon />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

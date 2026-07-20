@@ -49,6 +49,7 @@ type KakaoMapsApi = {
     position: KakaoLatLng;
     xAnchor?: number;
     yAnchor?: number;
+    zIndex?: number;
   }) => KakaoCustomOverlay;
   Polyline: new (options: {
     endArrow?: boolean;
@@ -67,8 +68,20 @@ export type HighlightedRoute = {
   placeIds: string[];
 };
 
+export type RouteImportRequest = {
+  requestId: number;
+  route: HighlightedRoute;
+};
+
+type ToastState = {
+  id: number;
+  kind?: "optimize";
+  message: string;
+};
+
 type InteractiveMapProps = {
   highlightedRoute?: HighlightedRoute | null;
+  routeImportRequest?: RouteImportRequest | null;
 };
 
 declare global {
@@ -1135,7 +1148,7 @@ function createMarkerElement(
   return marker;
 }
 
-export function InteractiveMap({ highlightedRoute = null }: InteractiveMapProps) {
+export function InteractiveMap({ highlightedRoute = null, routeImportRequest = null }: InteractiveMapProps) {
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KakaoMap | null>(null);
@@ -1149,6 +1162,7 @@ export function InteractiveMap({ highlightedRoute = null }: InteractiveMapProps)
   const [isPreviewActive, setIsPreviewActive] = useState(false);
   const [isPublishOpen, setIsPublishOpen] = useState(false);
   const [publishedDraft, setPublishedDraft] = useState<TripDraft | null>(null);
+  const [lastOptimizedChain, setLastOptimizedChain] = useState<MapPlace[] | null>(null);
   const [selectedPlaceId, setSelectedPlaceId] = useState(places[0].id);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [level, setLevel] = useState(DEFAULT_LEVEL);
@@ -1156,6 +1170,7 @@ export function InteractiveMap({ highlightedRoute = null }: InteractiveMapProps)
   const [sortOption, setSortOption] = useState<SortOption>("recommended");
   const [draggedPlaceId, setDraggedPlaceId] = useState<string | null>(null);
   const [isChainDropActive, setIsChainDropActive] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error" | "missing-key">(
     appKey ? "idle" : "missing-key",
   );
@@ -1231,6 +1246,10 @@ export function InteractiveMap({ highlightedRoute = null }: InteractiveMapProps)
     [highlightedRoute],
   );
 
+  function showToast(message: string, kind?: ToastState["kind"]) {
+    setToast({ id: Date.now(), kind, message });
+  }
+
   useEffect(() => {
     if (!appKey || !containerRef.current || mapRef.current) {
       return;
@@ -1294,6 +1313,41 @@ export function InteractiveMap({ highlightedRoute = null }: InteractiveMapProps)
   }, []);
 
   useEffect(() => {
+    if (!toast) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => setToast(null), toast.kind === "optimize" ? 6500 : 3400);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [toast]);
+
+  useEffect(() => {
+    if (!routeImportRequest) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const routePlaces = routeImportRequest.route.placeIds
+        .map((placeId) => places.find((place) => place.id === placeId))
+        .filter((place): place is MapPlace => Boolean(place));
+
+      if (routePlaces.length < 2) {
+        showToast("가져올 수 있는 랭킹 코스 장소가 부족해요.");
+        return;
+      }
+
+      setChainPlaces(routePlaces);
+      setLastOptimizedChain(null);
+      setIsPreviewActive(true);
+      setIsPublishOpen(false);
+      showToast(`${routeImportRequest.route.label} 코스를 나의 체인으로 가져왔어요.`);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [routeImportRequest]);
+
+  useEffect(() => {
     const map = mapRef.current;
     const maps = mapsRef.current;
 
@@ -1303,13 +1357,18 @@ export function InteractiveMap({ highlightedRoute = null }: InteractiveMapProps)
 
     overlaysRef.current.forEach((overlay) => overlay.setMap(null));
     overlaysRef.current = visiblePlaces.map((place) => {
+      const isActiveMarker = place.id === selectedPlaceId;
+      const isHighlightedRouteMarker = highlightedRoutePlaceIds.has(place.id);
+      const isPreviewMarker = activePreviewPlaceIds.has(place.id);
+      const isCompactMarker =
+        (activePreviewPlaceIds.size > 0 || highlightedRoutePlaceIds.size > 0) &&
+        !isPreviewMarker &&
+        !isHighlightedRouteMarker;
       const marker = createMarkerElement(
         place,
-        place.id === selectedPlaceId,
-        highlightedRoutePlaceIds.has(place.id),
-        (activePreviewPlaceIds.size > 0 || highlightedRoutePlaceIds.size > 0) &&
-          !activePreviewPlaceIds.has(place.id) &&
-          !highlightedRoutePlaceIds.has(place.id),
+        isActiveMarker,
+        isHighlightedRouteMarker,
+        isCompactMarker,
       );
       marker.addEventListener("click", () => {
         setSelectedPlaceId(place.id);
@@ -1322,6 +1381,7 @@ export function InteractiveMap({ highlightedRoute = null }: InteractiveMapProps)
         position: new maps.LatLng(place.lat, place.lng),
         xAnchor: 0.5,
         yAnchor: 1,
+        zIndex: isCompactMarker ? 1 : isActiveMarker || isHighlightedRouteMarker || isPreviewMarker ? 30 : 10,
       });
 
       overlay.setMap(map);
@@ -1428,13 +1488,17 @@ export function InteractiveMap({ highlightedRoute = null }: InteractiveMapProps)
   }
 
   function addPlaceToChain(place: MapPlace) {
-    setChainPlaces((currentPlaces) => {
-      if (currentPlaces.some((currentPlace) => currentPlace.id === place.id)) {
-        return currentPlaces;
-      }
+    if (chainPlaces.some((currentPlace) => currentPlace.id === place.id)) {
+      showToast(`${place.name}은 이미 나의 체인에 있어요.`);
+      return;
+    }
 
-      return [...currentPlaces, place];
-    });
+    setChainPlaces((currentPlaces) =>
+      currentPlaces.some((currentPlace) => currentPlace.id === place.id)
+        ? currentPlaces
+        : [...currentPlaces, place],
+    );
+    showToast(`${place.name}을 나의 체인에 추가했어요.`);
   }
 
   function startPlaceDrag(place: MapPlace) {
@@ -1518,31 +1582,41 @@ export function InteractiveMap({ highlightedRoute = null }: InteractiveMapProps)
   }
 
   function optimizeChainOrder() {
-    setChainPlaces((currentPlaces) => {
-      if (currentPlaces.length < 3) {
-        return currentPlaces;
-      }
+    if (chainPlaces.length < 3) {
+      showToast("추천 순서는 장소 3곳 이상에서 사용할 수 있어요.");
+      return;
+    }
 
-      const remainingPlaces = currentPlaces.slice(1);
-      const orderedPlaces = [currentPlaces[0]];
+    const remainingPlaces = chainPlaces.slice(1);
+    const orderedPlaces = [chainPlaces[0]];
 
-      while (remainingPlaces.length > 0) {
-        const currentPlace = orderedPlaces[orderedPlaces.length - 1];
-        const nextIndex = remainingPlaces.reduce((bestIndex, place, index) => {
-          const bestPlace = remainingPlaces[bestIndex];
+    while (remainingPlaces.length > 0) {
+      const currentPlace = orderedPlaces[orderedPlaces.length - 1];
+      const nextIndex = remainingPlaces.reduce((bestIndex, place, index) => {
+        const bestPlace = remainingPlaces[bestIndex];
 
-          return getPlaceDistance(currentPlace, place) < getPlaceDistance(currentPlace, bestPlace)
-            ? index
-            : bestIndex;
-        }, 0);
+        return getPlaceDistance(currentPlace, place) < getPlaceDistance(currentPlace, bestPlace)
+          ? index
+          : bestIndex;
+      }, 0);
 
-        const [nextPlace] = remainingPlaces.splice(nextIndex, 1);
-        orderedPlaces.push(nextPlace);
-      }
+      const [nextPlace] = remainingPlaces.splice(nextIndex, 1);
+      orderedPlaces.push(nextPlace);
+    }
 
-      return orderedPlaces;
-    });
-    setIsPreviewActive(false);
+    setLastOptimizedChain(chainPlaces);
+    setChainPlaces(orderedPlaces);
+    showToast("가까운 장소끼리 이어지도록 추천 순서를 적용했어요.", "optimize");
+  }
+
+  function undoOptimizedOrder() {
+    if (!lastOptimizedChain) {
+      return;
+    }
+
+    setChainPlaces(lastOptimizedChain);
+    setLastOptimizedChain(null);
+    showToast("추천 순서 적용을 되돌렸어요.");
   }
 
   function clearChain() {
@@ -1823,6 +1897,29 @@ export function InteractiveMap({ highlightedRoute = null }: InteractiveMapProps)
           </svg>
         )}
       </button>
+
+      {toast && (
+        <div className="glass-panel absolute left-1/2 top-4 z-40 flex max-w-[min(520px,calc(100%-2rem))] -translate-x-1/2 items-center gap-3 rounded-lg border border-success/20 px-4 py-3 shadow-panel">
+          <p className="min-w-0 flex-1 text-sm font-bold leading-5 text-foreground">{toast.message}</p>
+          {toast.kind === "optimize" && lastOptimizedChain && (
+            <button
+              className="shrink-0 rounded-sm border border-success/30 bg-success/12 px-3 py-1.5 text-xs font-bold text-success transition hover:bg-success/20"
+              onClick={undoOptimizedOrder}
+              type="button"
+            >
+              되돌리기
+            </button>
+          )}
+          <button
+            aria-label="안내 메시지 닫기"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-sm text-sm font-bold text-muted transition hover:bg-surface-muted hover:text-foreground"
+            onClick={() => setToast(null)}
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <TripChainBuilder
         chainPlaces={chainPlaces}

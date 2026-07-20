@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
-import { InteractiveMap, type HighlightedRoute } from "@/features/map/interactive-map";
+import { InteractiveMap, type HighlightedRoute, type RouteImportRequest } from "@/features/map/interactive-map";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -89,6 +89,7 @@ export function AppShell() {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [panelPosition, setPanelPosition] = useState({ x: 16, y: 16 });
   const [highlightedRouteId, setHighlightedRouteId] = useState<string | null>(null);
+  const [routeImportRequest, setRouteImportRequest] = useState<RouteImportRequest | null>(null);
   const dragOffsetRef = useRef<{ x: number; y: number } | null>(null);
   const contentAreaRef = useRef<HTMLElement | null>(null);
   const hasPlacedPanelRef = useRef(false);
@@ -112,6 +113,16 @@ export function AppShell() {
     };
   }, [highlightedRouteId]);
 
+  function getRankingRoute(item: (typeof rankingItems)[number]): HighlightedRoute {
+    const placeIds = rankingRoutePlaceIds[item.rank - 1] ?? [];
+
+    return {
+      id: `ranking-${item.rank}`,
+      label: item.title,
+      placeIds: [...placeIds],
+    };
+  }
+
   useEffect(() => {
     const area = contentAreaRef.current;
 
@@ -119,7 +130,7 @@ export function AppShell() {
       return;
     }
 
-    const panelWidth = 360;
+    const panelWidth = 340;
     const mapControlReserve = 128;
     const areaRect = area.getBoundingClientRect();
 
@@ -133,20 +144,20 @@ export function AppShell() {
   const panelContent = useMemo(() => {
     if (activeTab === "home") {
       return (
-        <div className="grid gap-3">
+        <div className="grid gap-2">
           <div className="grid grid-cols-3 gap-2">
             {homeHighlights.map((item) => (
-              <div className="rounded-sm border border-border bg-surface/78 p-3" key={item.label}>
+              <div className="rounded-sm border border-border bg-surface/78 p-2" key={item.label}>
                 <p className="text-xs font-semibold text-muted">{item.label}</p>
-                <p className="mt-1 text-lg font-bold">{item.value}</p>
-                <p className="mt-1 text-xs leading-5 text-muted">{item.meta}</p>
+                <p className="mt-1 text-base font-bold">{item.value}</p>
+                <p className="mt-0.5 line-clamp-1 text-xs leading-4 text-muted">{item.meta}</p>
               </div>
             ))}
           </div>
-          <div className="rounded-sm border border-border bg-surface/78 p-3">
+          <div className="rounded-sm border border-border bg-surface/78 p-2.5">
             <Badge className={limeBadgeClass}>추천 시작점</Badge>
-            <p className="mt-3 text-sm font-bold">성수역 주변에서 팝업과 카페를 먼저 훑기</p>
-            <p className="mt-1 text-xs leading-5 text-muted">
+            <p className="mt-2 text-sm font-bold">성수역 주변에서 팝업과 카페를 먼저 훑기</p>
+            <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted">
               좌측 장소 탐색에서 카테고리를 고르고, 마음에 드는 장소를 후보로 추가해보세요.
             </p>
           </div>
@@ -205,9 +216,10 @@ export function AppShell() {
         <div className="grid gap-2">
           {rankingItems.map((item) => {
             const isRouteActive = highlightedRouteId === String(item.rank);
+            const rankingRoute = getRankingRoute(item);
 
             return (
-              <button
+              <div
                 className={cn(
                   "rounded-sm border border-border bg-surface/78 p-3 text-left transition hover:border-warning hover:bg-warning/10",
                   isRouteActive && "border-success bg-success/10 ring-1 ring-success/20",
@@ -218,7 +230,18 @@ export function AppShell() {
                     currentRouteId === String(item.rank) ? null : String(item.rank),
                   )
                 }
-                type="button"
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter" && event.key !== " ") {
+                    return;
+                  }
+
+                  event.preventDefault();
+                  setHighlightedRouteId((currentRouteId) =>
+                    currentRouteId === String(item.rank) ? null : String(item.rank),
+                  );
+                }}
+                role="button"
+                tabIndex={0}
               >
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-bold">
@@ -230,7 +253,29 @@ export function AppShell() {
                   <p className="text-xs font-semibold text-muted">{item.tags}</p>
                   {isRouteActive && <span className="text-xs font-bold text-success">지도 표시 중</span>}
                 </div>
-              </button>
+                {isRouteActive && (
+                  <span
+                    className="mt-3 inline-flex h-9 w-full items-center justify-center rounded-sm border border-success/35 bg-success/12 text-xs font-bold text-success transition hover:bg-success/20"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setRouteImportRequest({ requestId: Date.now(), route: rankingRoute });
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter" && event.key !== " ") {
+                        return;
+                      }
+
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setRouteImportRequest({ requestId: Date.now(), route: rankingRoute });
+                    }}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    나의 체인으로 가져오기
+                  </span>
+                )}
+              </div>
             );
           })}
         </div>
@@ -286,8 +331,8 @@ export function AppShell() {
     const areaRect = area.getBoundingClientRect();
     const nextX = event.clientX - areaRect.left - dragOffset.x;
     const nextY = event.clientY - areaRect.top - dragOffset.y;
-    const panelWidth = 360;
-    const estimatedPanelHeight = 330;
+    const panelWidth = 340;
+    const estimatedPanelHeight = 280;
     const fixedNavReserveRight = 128;
     const fixedNavReserveBottom = 104;
     const maxX = Math.max(16, areaRect.width - panelWidth - fixedNavReserveRight);
@@ -357,11 +402,11 @@ export function AppShell() {
             className="relative z-10 grid min-h-0 grid-cols-1 gap-4 px-4 pb-24 sm:px-6 lg:pb-6"
             ref={contentAreaRef}
           >
-            <InteractiveMap highlightedRoute={highlightedRoute} />
+            <InteractiveMap highlightedRoute={highlightedRoute} routeImportRequest={routeImportRequest} />
 
             {isPanelOpen && (
               <aside
-                className="tab-floating-panel glass-panel absolute z-30 hidden w-[360px] rounded-lg p-4 xl:block"
+                className="tab-floating-panel glass-panel absolute z-30 hidden max-h-[min(34vh,300px)] w-[340px] overflow-y-auto rounded-lg p-3 xl:block"
                 style={{ left: panelPosition.x, top: panelPosition.y }}
               >
                 <div
