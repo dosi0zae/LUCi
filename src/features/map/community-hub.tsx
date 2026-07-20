@@ -72,7 +72,7 @@ export function CommunityHub({ latestDraft, onClose }: CommunityHubProps) {
             <button
               className={cn(
                 "h-10 rounded-sm text-sm font-bold text-muted transition hover:bg-surface-muted",
-                activeTab === tab.id && "bg-primary text-white shadow-soft hover:bg-primary",
+                activeTab === tab.id && "bg-primary text-white shadow-soft hover:bg-primary-strong",
               )}
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}

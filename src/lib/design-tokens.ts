@@ -1,11 +1,15 @@
 export const designTokens = {
   colors: {
-    primary: "#2563EB",
-    background: "#F8FAFC",
+    primary: "#4F8DF7",
+    primaryStrong: "#2F6FE4",
+    accent: "#B7E86B",
+    route: "#6E8FF7",
+    background: "#F7FAFC",
     foreground: "#111827",
-    surface: "#FFFFFF",
+    surface: "rgba(255,255,255,0.9)",
+    surfaceGlass: "rgba(255,255,255,0.56)",
     muted: "#64748B",
-    border: "#E2E8F0",
+    border: "rgba(17,24,39,0.13)",
   },
   radii: {
     card: "8px",
@@ -15,6 +19,6 @@ export const designTokens = {
   typography: {
     locale: "ko-KR",
     body: "Pretendard, Apple SD Gothic Neo, Malgun Gothic, Segoe UI, system-ui",
-    productVoice: "간결하고 도시적이며, 하루의 흐름을 먼저 보여준다.",
+    productVoice: "지도 위에서 안정적으로 읽히고, 라임은 작은 순간에만 반짝인다.",
   },
 } as const;

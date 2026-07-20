@@ -61,6 +61,16 @@ type KakaoMapsApi = {
   load(callback: () => void): void;
 };
 
+export type HighlightedRoute = {
+  id: string;
+  label: string;
+  placeIds: string[];
+};
+
+type InteractiveMapProps = {
+  highlightedRoute?: HighlightedRoute | null;
+};
+
 declare global {
   interface Window {
     kakao?: {
@@ -74,8 +84,83 @@ const DEFAULT_CENTER = {
   lng: 127.0557,
 };
 const DEFAULT_LEVEL = 4;
-const mapModes = ["추천", "도보", "저장"] as const;
 const categories: Array<PlaceCategory | "전체"> = ["전체", "전시", "카페", "팝업", "산책"];
+const sortOptions = [
+  { id: "recommended", label: "추천순" },
+  { id: "saved", label: "저장 많은 순" },
+  { id: "near", label: "가까운 순" },
+  { id: "price", label: "가격 낮은 순" },
+  { id: "short", label: "짧은 체류" },
+] as const;
+
+function CategoryFilterIcon({ category }: { category: PlaceCategory | "전체" }) {
+  const baseProps = {
+    "aria-hidden": true,
+    className: "h-5 w-5",
+    fill: "none",
+    stroke: "currentColor",
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    strokeWidth: 2,
+    viewBox: "0 0 24 24",
+  };
+
+  if (category === "전시") {
+    return (
+      <svg {...baseProps}>
+        <rect height="12" rx="1.5" width="14" x="5" y="5" />
+        <path d="M9 17h6" />
+        <path d="M10 9h4" />
+        <path d="M9 13h6" />
+      </svg>
+    );
+  }
+
+  if (category === "카페") {
+    return (
+      <svg {...baseProps}>
+        <path d="M6 8h10v6a4 4 0 0 1-4 4h-2a4 4 0 0 1-4-4z" />
+        <path d="M16 10h1.5a2 2 0 0 1 0 4H16" />
+        <path d="M8 5v1" />
+        <path d="M12 5v1" />
+      </svg>
+    );
+  }
+
+  if (category === "팝업") {
+    return (
+      <svg {...baseProps}>
+        <path d="m12 4 1.6 4.3L18 10l-4.4 1.7L12 16l-1.6-4.3L6 10l4.4-1.7z" />
+        <path d="M19 4v3" />
+        <path d="M20.5 5.5h-3" />
+        <path d="M5 17v3" />
+        <path d="M6.5 18.5h-3" />
+      </svg>
+    );
+  }
+
+  if (category === "산책") {
+    return (
+      <svg {...baseProps}>
+        <path d="M6 19c4-7 8-7 12-14" />
+        <path d="M7 7h.01" />
+        <path d="M11 11h.01" />
+        <path d="M15 15h.01" />
+        <path d="M5 19h14" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...baseProps}>
+      <rect height="5" rx="1" width="5" x="5" y="5" />
+      <rect height="5" rx="1" width="5" x="14" y="5" />
+      <rect height="5" rx="1" width="5" x="5" y="14" />
+      <rect height="5" rx="1" width="5" x="14" y="14" />
+    </svg>
+  );
+}
+
 const places: MapPlace[] = [
   {
     id: "seongsu-gallery",
@@ -137,18 +222,845 @@ const places: MapPlace[] = [
     hours: "상시 이용",
     savedBy: 1573,
   },
+  {
+    id: "seongsu-media-hall",
+    name: "성수 미디어홀",
+    category: "전시",
+    lat: 37.5457,
+    lng: 127.0559,
+    address: "서울 성동구 연무장길 31",
+    description: "성수동 골목 안쪽의 몰입형 미디어 전시 공간입니다. 짧은 동선에 넣기 좋은 실내 포인트입니다.",
+    distance: "410m",
+    duration: "50분",
+    price: "1만2천원",
+    tags: ["전시", "미디어", "실내"],
+    hours: "오늘 11:00 - 20:00",
+    savedBy: 1462,
+  },
+  {
+    id: "seongsu-print-room",
+    name: "성수 프린트룸",
+    category: "전시",
+    lat: 37.5441,
+    lng: 127.0571,
+    address: "서울 성동구 연무장7길 8",
+    description: "그래픽 포스터와 독립 출판물을 함께 보는 작은 전시 겸 숍입니다.",
+    distance: "520m",
+    duration: "35분",
+    price: "무료",
+    tags: ["전시", "그래픽", "굿즈"],
+    hours: "오늘 12:00 - 19:00",
+    savedBy: 812,
+  },
+  {
+    id: "seongsu-archive-lab",
+    name: "성수 아카이브랩",
+    category: "전시",
+    lat: 37.5468,
+    lng: 127.0528,
+    address: "서울 성동구 성수이로 78",
+    description: "로컬 브랜드의 기록과 제품 프로토타입을 소개하는 아카이브형 전시입니다.",
+    distance: "640m",
+    duration: "45분",
+    price: "무료",
+    tags: ["전시", "브랜드", "아카이브"],
+    hours: "오늘 10:30 - 19:30",
+    savedBy: 1034,
+  },
+  {
+    id: "ttukseom-art-window",
+    name: "뚝섬 아트윈도우",
+    category: "전시",
+    lat: 37.5474,
+    lng: 127.0473,
+    address: "서울 성동구 아차산로 6",
+    description: "퇴근 후 가볍게 들르기 좋은 쇼윈도 기반 미니 전시 공간입니다.",
+    distance: "930m",
+    duration: "25분",
+    price: "무료",
+    tags: ["전시", "짧은관람", "야간"],
+    hours: "오늘 13:00 - 21:00",
+    savedBy: 678,
+  },
+  {
+    id: "forest-design-gallery",
+    name: "서울숲 디자인 갤러리",
+    category: "전시",
+    lat: 37.5444,
+    lng: 127.0397,
+    address: "서울 성동구 서울숲4길 21",
+    description: "가구와 오브제를 중심으로 한 디자인 전시가 열리는 조용한 갤러리입니다.",
+    distance: "1.4km",
+    duration: "40분",
+    price: "무료",
+    tags: ["전시", "디자인", "오브제"],
+    hours: "오늘 11:00 - 18:30",
+    savedBy: 921,
+  },
+  {
+    id: "wangsimni-culture-room",
+    name: "왕십리 컬처룸",
+    category: "전시",
+    lat: 37.5612,
+    lng: 127.0376,
+    address: "서울 성동구 왕십리로 305",
+    description: "사진과 일러스트를 번갈아 소개하는 지역 문화 전시 공간입니다.",
+    distance: "2.7km",
+    duration: "35분",
+    price: "무료",
+    tags: ["전시", "사진", "일러스트"],
+    hours: "오늘 10:00 - 18:00",
+    savedBy: 544,
+  },
+  {
+    id: "hanyang-art-corner",
+    name: "한양대 아트코너",
+    category: "전시",
+    lat: 37.5573,
+    lng: 127.0435,
+    address: "서울 성동구 마조로 22",
+    description: "학생 작가와 신진 작가의 실험적인 작업을 볼 수 있는 소규모 전시입니다.",
+    distance: "2.1km",
+    duration: "30분",
+    price: "무료",
+    tags: ["전시", "신진작가", "실험"],
+    hours: "오늘 12:00 - 18:00",
+    savedBy: 389,
+  },
+  {
+    id: "konkuk-project-space",
+    name: "건대 프로젝트 스페이스",
+    category: "전시",
+    lat: 37.5426,
+    lng: 127.0701,
+    address: "서울 광진구 아차산로 272",
+    description: "건대입구 근처에서 짧게 보기 좋은 팝 아트 중심 프로젝트 전시입니다.",
+    distance: "1.5km",
+    duration: "35분",
+    price: "8천원",
+    tags: ["전시", "팝아트", "건대"],
+    hours: "오늘 11:30 - 20:30",
+    savedBy: 1137,
+  },
+  {
+    id: "children-park-gallery",
+    name: "어린이대공원 갤러리",
+    category: "전시",
+    lat: 37.5487,
+    lng: 127.0803,
+    address: "서울 광진구 능동로 216",
+    description: "공원 산책 전후로 들르기 좋은 밝은 분위기의 공공 전시 공간입니다.",
+    distance: "2.4km",
+    duration: "30분",
+    price: "무료",
+    tags: ["전시", "공공", "공원"],
+    hours: "오늘 10:00 - 17:30",
+    savedBy: 722,
+  },
+  {
+    id: "guui-photo-room",
+    name: "구의 포토룸",
+    category: "전시",
+    lat: 37.5387,
+    lng: 127.0859,
+    address: "서울 광진구 자양로 116",
+    description: "동네 풍경과 여행 사진을 중심으로 큐레이션하는 작은 사진 전시실입니다.",
+    distance: "3.0km",
+    duration: "25분",
+    price: "무료",
+    tags: ["전시", "사진", "동네"],
+    hours: "오늘 13:00 - 19:00",
+    savedBy: 433,
+  },
+  {
+    id: "gwangjang-object-hall",
+    name: "광장 오브제홀",
+    category: "전시",
+    lat: 37.5479,
+    lng: 127.1032,
+    address: "서울 광진구 광장로 56",
+    description: "한강 동쪽 동선에 붙이기 좋은 공예와 오브제 중심 전시입니다.",
+    distance: "4.4km",
+    duration: "40분",
+    price: "1만원",
+    tags: ["전시", "공예", "오브제"],
+    hours: "오늘 11:00 - 19:00",
+    savedBy: 602,
+  },
+  {
+    id: "seongsu-roastery",
+    name: "성수 로스터리",
+    category: "카페",
+    lat: 37.5462,
+    lng: 127.0568,
+    address: "서울 성동구 연무장5길 9",
+    description: "원두 선택지가 넓고 바 좌석이 좋아 혼자 코스 중간에 쉬기 좋습니다.",
+    distance: "470m",
+    duration: "40분",
+    price: "6천원대",
+    tags: ["카페", "로스터리", "혼자"],
+    hours: "오늘 09:00 - 21:00",
+    savedBy: 1750,
+  },
+  {
+    id: "seongsu-dessert-bar",
+    name: "성수 디저트바",
+    category: "카페",
+    lat: 37.5438,
+    lng: 127.0552,
+    address: "서울 성동구 성수이로14길 12",
+    description: "작은 케이크와 시즌 디저트가 강점인 카페입니다. 팝업 대기 전후로 넣기 좋습니다.",
+    distance: "390m",
+    duration: "45분",
+    price: "9천원대",
+    tags: ["카페", "디저트", "시즌"],
+    hours: "오늘 11:00 - 22:00",
+    savedBy: 1322,
+  },
+  {
+    id: "seongsu-yard-cafe",
+    name: "성수 야드카페",
+    category: "카페",
+    lat: 37.5429,
+    lng: 127.0601,
+    address: "서울 성동구 연무장길 62",
+    description: "마당 좌석이 있는 카페로 날씨 좋은 날 체인 중간 휴식지로 적합합니다.",
+    distance: "690m",
+    duration: "50분",
+    price: "7천원대",
+    tags: ["카페", "마당", "휴식"],
+    hours: "오늘 10:00 - 21:30",
+    savedBy: 1198,
+  },
+  {
+    id: "seoulforest-tea-house",
+    name: "서울숲 티하우스",
+    category: "카페",
+    lat: 37.5449,
+    lng: 127.0412,
+    address: "서울 성동구 서울숲2길 32",
+    description: "차와 가벼운 다과를 파는 조용한 공간입니다. 산책 코스와 잘 붙습니다.",
+    distance: "1.2km",
+    duration: "45분",
+    price: "8천원대",
+    tags: ["카페", "차", "조용"],
+    hours: "오늘 10:30 - 20:00",
+    savedBy: 1049,
+  },
+  {
+    id: "ttukseom-bakery-cafe",
+    name: "뚝섬 베이커리카페",
+    category: "카페",
+    lat: 37.5476,
+    lng: 127.0491,
+    address: "서울 성동구 왕십리로 90",
+    description: "빵 종류가 많아 오전 코스의 첫 지점으로 쓰기 좋은 베이커리 카페입니다.",
+    distance: "820m",
+    duration: "35분",
+    price: "7천원대",
+    tags: ["카페", "베이커리", "오전"],
+    hours: "오늘 08:30 - 21:00",
+    savedBy: 886,
+  },
+  {
+    id: "sageundong-coffee",
+    name: "사근동 커피",
+    category: "카페",
+    lat: 37.5588,
+    lng: 127.0452,
+    address: "서울 성동구 사근동길 18",
+    description: "한양대 인근의 조용한 작업형 카페입니다. 긴 체인 중 쉬어가기 좋습니다.",
+    distance: "2.3km",
+    duration: "55분",
+    price: "5천원대",
+    tags: ["카페", "작업", "한양대"],
+    hours: "오늘 09:30 - 22:00",
+    savedBy: 611,
+  },
+  {
+    id: "konkuk-latte-house",
+    name: "건대 라떼하우스",
+    category: "카페",
+    lat: 37.5409,
+    lng: 127.0694,
+    address: "서울 광진구 동일로22길 42",
+    description: "라떼와 쿠키가 유명한 건대 골목 카페입니다. 전시와 식사 사이에 넣기 좋습니다.",
+    distance: "1.4km",
+    duration: "40분",
+    price: "6천원대",
+    tags: ["카페", "라떼", "건대"],
+    hours: "오늘 10:00 - 23:00",
+    savedBy: 1477,
+  },
+  {
+    id: "jayang-river-cafe",
+    name: "자양 리버카페",
+    category: "카페",
+    lat: 37.5326,
+    lng: 127.0678,
+    address: "서울 광진구 능동로 10",
+    description: "강변 산책 뒤 들르기 좋은 창가 좌석 중심 카페입니다.",
+    distance: "2.1km",
+    duration: "45분",
+    price: "7천원대",
+    tags: ["카페", "강변", "창가"],
+    hours: "오늘 10:00 - 22:30",
+    savedBy: 930,
+  },
+  {
+    id: "guui-slow-cafe",
+    name: "구의 슬로우카페",
+    category: "카페",
+    lat: 37.5382,
+    lng: 127.0831,
+    address: "서울 광진구 자양로18길 17",
+    description: "좌석 간격이 넓고 분위기가 차분해 대화 중심 코스에 잘 맞습니다.",
+    distance: "2.8km",
+    duration: "50분",
+    price: "6천원대",
+    tags: ["카페", "대화", "차분"],
+    hours: "오늘 09:00 - 21:00",
+    savedBy: 742,
+  },
+  {
+    id: "gunja-cookie-room",
+    name: "군자 쿠키룸",
+    category: "카페",
+    lat: 37.5571,
+    lng: 127.0797,
+    address: "서울 광진구 능동로 289",
+    description: "쿠키와 필터커피를 함께 파는 군자역 근처 작은 카페입니다.",
+    distance: "3.2km",
+    duration: "35분",
+    price: "6천원대",
+    tags: ["카페", "쿠키", "군자"],
+    hours: "오늘 11:00 - 20:00",
+    savedBy: 518,
+  },
+  {
+    id: "seongsu-sneaker-popup",
+    name: "성수 스니커즈 팝업",
+    category: "팝업",
+    lat: 37.5452,
+    lng: 127.0581,
+    address: "서울 성동구 연무장길 45",
+    description: "한정 컬러와 커스텀 체험존이 있는 스니커즈 브랜드 팝업입니다.",
+    distance: "530m",
+    duration: "35분",
+    price: "무료",
+    tags: ["팝업", "스니커즈", "체험"],
+    hours: "오늘 12:00 - 21:00",
+    savedBy: 2521,
+  },
+  {
+    id: "seongsu-beauty-popup",
+    name: "성수 뷰티 팝업",
+    category: "팝업",
+    lat: 37.5465,
+    lng: 127.0539,
+    address: "서울 성동구 성수이로 82",
+    description: "샘플링과 퍼스널 컬러 체험이 있는 뷰티 브랜드 팝업입니다.",
+    distance: "560m",
+    duration: "40분",
+    price: "무료",
+    tags: ["팝업", "뷰티", "샘플"],
+    hours: "오늘 11:00 - 20:30",
+    savedBy: 2214,
+  },
+  {
+    id: "seongsu-dessert-popup",
+    name: "성수 디저트 팝업",
+    category: "팝업",
+    lat: 37.5434,
+    lng: 127.0566,
+    address: "서울 성동구 연무장3길 14",
+    description: "주말 한정 메뉴가 나오는 디저트 브랜드 팝업입니다. 대기열 확인용으로 좋습니다.",
+    distance: "450m",
+    duration: "30분",
+    price: "1만원대",
+    tags: ["팝업", "디저트", "한정"],
+    hours: "오늘 12:00 - 19:00",
+    savedBy: 1805,
+  },
+  {
+    id: "seongsu-fragrance-popup",
+    name: "성수 프래그런스 팝업",
+    category: "팝업",
+    lat: 37.5425,
+    lng: 127.0589,
+    address: "서울 성동구 연무장길 57",
+    description: "시향 동선과 포토 부스가 잘 구성된 향수 브랜드 팝업입니다.",
+    distance: "630m",
+    duration: "45분",
+    price: "무료",
+    tags: ["팝업", "향수", "포토"],
+    hours: "오늘 11:30 - 21:00",
+    savedBy: 1992,
+  },
+  {
+    id: "seoulforest-pet-popup",
+    name: "서울숲 펫 팝업",
+    category: "팝업",
+    lat: 37.5458,
+    lng: 127.0427,
+    address: "서울 성동구 서울숲길 48",
+    description: "반려동물 용품과 간식을 소개하는 서울숲 인근 팝업입니다.",
+    distance: "1.2km",
+    duration: "35분",
+    price: "무료",
+    tags: ["팝업", "펫", "서울숲"],
+    hours: "오늘 11:00 - 18:00",
+    savedBy: 764,
+  },
+  {
+    id: "konkuk-fashion-popup",
+    name: "건대 패션 팝업",
+    category: "팝업",
+    lat: 37.5418,
+    lng: 127.0682,
+    address: "서울 광진구 아차산로30길 8",
+    description: "스트리트 브랜드 신상품과 한정 굿즈를 볼 수 있는 패션 팝업입니다.",
+    distance: "1.3km",
+    duration: "35분",
+    price: "무료",
+    tags: ["팝업", "패션", "굿즈"],
+    hours: "오늘 12:00 - 22:00",
+    savedBy: 1698,
+  },
+  {
+    id: "konkuk-character-popup",
+    name: "건대 캐릭터 팝업",
+    category: "팝업",
+    lat: 37.5401,
+    lng: 127.0718,
+    address: "서울 광진구 동일로20길 96",
+    description: "캐릭터 포토존과 랜덤 굿즈가 있는 팝업입니다. 친구 코스에 넣기 좋습니다.",
+    distance: "1.7km",
+    duration: "45분",
+    price: "무료",
+    tags: ["팝업", "캐릭터", "포토존"],
+    hours: "오늘 11:00 - 21:30",
+    savedBy: 2342,
+  },
+  {
+    id: "children-park-market",
+    name: "능동 플리마켓",
+    category: "팝업",
+    lat: 37.5501,
+    lng: 127.0792,
+    address: "서울 광진구 능동로 238",
+    description: "주말마다 바뀌는 핸드메이드 셀러 중심의 작은 마켓입니다.",
+    distance: "2.5km",
+    duration: "50분",
+    price: "무료",
+    tags: ["팝업", "마켓", "핸드메이드"],
+    hours: "오늘 13:00 - 18:00",
+    savedBy: 888,
+  },
+  {
+    id: "guui-book-popup",
+    name: "구의 북 팝업",
+    category: "팝업",
+    lat: 37.5377,
+    lng: 127.0845,
+    address: "서울 광진구 자양로 130",
+    description: "독립출판 신간과 작가 토크가 열리는 북 팝업입니다.",
+    distance: "2.9km",
+    duration: "40분",
+    price: "무료",
+    tags: ["팝업", "책", "토크"],
+    hours: "오늘 12:00 - 20:00",
+    savedBy: 566,
+  },
+  {
+    id: "gwangjang-outdoor-popup",
+    name: "광장 리버 팝업",
+    category: "팝업",
+    lat: 37.5461,
+    lng: 127.1021,
+    address: "서울 광진구 아차산로78길 90",
+    description: "강변 산책 동선에 붙는 아웃도어 브랜드 체험 팝업입니다.",
+    distance: "4.2km",
+    duration: "45분",
+    price: "무료",
+    tags: ["팝업", "아웃도어", "강변"],
+    hours: "오늘 11:00 - 19:00",
+    savedBy: 697,
+  },
+  {
+    id: "seongsu-cafe-street-walk",
+    name: "성수 카페거리 산책",
+    category: "산책",
+    lat: 37.5447,
+    lng: 127.0563,
+    address: "서울 성동구 연무장길 일대",
+    description: "팝업과 카페를 촘촘히 연결하기 좋은 성수 핵심 골목 산책 루트입니다.",
+    distance: "0m",
+    duration: "35분",
+    price: "무료",
+    tags: ["산책", "성수", "골목"],
+    hours: "상시 이용",
+    savedBy: 2011,
+  },
+  {
+    id: "seongsu-industrial-walk",
+    name: "성수 공장골목 산책",
+    category: "산책",
+    lat: 37.5419,
+    lng: 127.0569,
+    address: "서울 성동구 성수이로 일대",
+    description: "낡은 공장과 새 브랜드 공간이 섞인 성수 특유의 분위기를 느끼는 코스입니다.",
+    distance: "620m",
+    duration: "40분",
+    price: "무료",
+    tags: ["산책", "골목", "브랜드"],
+    hours: "상시 이용",
+    savedBy: 1544,
+  },
+  {
+    id: "seoulforest-north-walk",
+    name: "서울숲 북쪽 산책",
+    category: "산책",
+    lat: 37.5456,
+    lng: 127.0387,
+    address: "서울 성동구 서울숲길 24",
+    description: "서울숲 카페권과 자연스럽게 이어지는 가벼운 녹지 산책 루트입니다.",
+    distance: "1.5km",
+    duration: "45분",
+    price: "무료",
+    tags: ["산책", "서울숲", "녹지"],
+    hours: "상시 이용",
+    savedBy: 1876,
+  },
+  {
+    id: "ttukseom-station-walk",
+    name: "뚝섬역 골목 산책",
+    category: "산책",
+    lat: 37.5472,
+    lng: 127.0479,
+    address: "서울 성동구 왕십리로 일대",
+    description: "성수와 서울숲 사이를 잇는 짧고 실용적인 도보 연결 코스입니다.",
+    distance: "910m",
+    duration: "25분",
+    price: "무료",
+    tags: ["산책", "뚝섬", "연결"],
+    hours: "상시 이용",
+    savedBy: 830,
+  },
+  {
+    id: "han-river-jayang-walk",
+    name: "자양 한강 산책",
+    category: "산책",
+    lat: 37.5299,
+    lng: 127.0697,
+    address: "서울 광진구 자양동 한강공원",
+    description: "해 질 무렵 체인의 마지막 지점으로 쓰기 좋은 한강변 산책 루트입니다.",
+    distance: "2.4km",
+    duration: "60분",
+    price: "무료",
+    tags: ["산책", "한강", "노을"],
+    hours: "상시 이용",
+    savedBy: 2140,
+  },
+  {
+    id: "konkuk-food-street-walk",
+    name: "건대 맛의거리 산책",
+    category: "산책",
+    lat: 37.5407,
+    lng: 127.0709,
+    address: "서울 광진구 동일로22길 일대",
+    description: "카페와 팝업 사이에 식사 후보를 탐색하기 좋은 번화가 산책 구간입니다.",
+    distance: "1.6km",
+    duration: "35분",
+    price: "무료",
+    tags: ["산책", "건대", "식사"],
+    hours: "상시 이용",
+    savedBy: 1655,
+  },
+  {
+    id: "children-park-loop",
+    name: "어린이대공원 루프",
+    category: "산책",
+    lat: 37.5508,
+    lng: 127.0816,
+    address: "서울 광진구 능동로 216",
+    description: "전시와 공원 휴식을 함께 묶기 좋은 넓은 산책 루프입니다.",
+    distance: "2.7km",
+    duration: "70분",
+    price: "무료",
+    tags: ["산책", "공원", "루프"],
+    hours: "오늘 05:00 - 22:00",
+    savedBy: 1240,
+  },
+  {
+    id: "achasan-base-walk",
+    name: "아차산 입구 산책",
+    category: "산책",
+    lat: 37.5523,
+    lng: 127.0898,
+    address: "서울 광진구 영화사로 135",
+    description: "긴 코스가 부담스러울 때 입구 주변만 걷는 가벼운 산책 포인트입니다.",
+    distance: "3.5km",
+    duration: "50분",
+    price: "무료",
+    tags: ["산책", "아차산", "가벼움"],
+    hours: "상시 이용",
+    savedBy: 997,
+  },
+  {
+    id: "guui-market-walk",
+    name: "구의시장 산책",
+    category: "산책",
+    lat: 37.5385,
+    lng: 127.0868,
+    address: "서울 광진구 구의동 일대",
+    description: "동네 시장 분위기와 간식을 함께 탐색하는 로컬 산책 코스입니다.",
+    distance: "3.1km",
+    duration: "40분",
+    price: "무료",
+    tags: ["산책", "시장", "로컬"],
+    hours: "상시 이용",
+    savedBy: 705,
+  },
+  {
+    id: "gwangnaru-river-walk",
+    name: "광나루 한강 산책",
+    category: "산책",
+    lat: 37.5452,
+    lng: 127.1056,
+    address: "서울 광진구 광장동 한강공원",
+    description: "성동에서 광진까지 확장하는 긴 체인의 끝점으로 쓰기 좋은 강변 루트입니다.",
+    distance: "4.6km",
+    duration: "75분",
+    price: "무료",
+    tags: ["산책", "광나루", "강변"],
+    hours: "상시 이용",
+    savedBy: 1189,
+  },
+  {
+    id: "majang-cafe-gallery",
+    name: "마장 카페갤러리",
+    category: "카페",
+    lat: 37.5661,
+    lng: 127.0424,
+    address: "서울 성동구 마장로 240",
+    description: "작은 전시 벽을 함께 운영하는 카페입니다. 왕십리 북쪽 테스트 포인트로 좋습니다.",
+    distance: "3.2km",
+    duration: "45분",
+    price: "6천원대",
+    tags: ["카페", "전시", "마장"],
+    hours: "오늘 10:00 - 20:00",
+    savedBy: 482,
+  },
+  {
+    id: "songjeong-roastery",
+    name: "송정 로스터리",
+    category: "카페",
+    lat: 37.5529,
+    lng: 127.0685,
+    address: "서울 성동구 송정길 22",
+    description: "성수와 군자 사이를 잇는 중간 휴식지 성격의 로스터리 카페입니다.",
+    distance: "1.8km",
+    duration: "45분",
+    price: "6천원대",
+    tags: ["카페", "로스터리", "연결"],
+    hours: "오늘 09:00 - 20:30",
+    savedBy: 573,
+  },
+  {
+    id: "neungdong-illustration-show",
+    name: "능동 일러스트 쇼",
+    category: "전시",
+    lat: 37.5538,
+    lng: 127.0765,
+    address: "서울 광진구 능동로32길 19",
+    description: "일러스트 굿즈와 원화를 함께 볼 수 있는 능동권 전시입니다.",
+    distance: "2.8km",
+    duration: "35분",
+    price: "5천원",
+    tags: ["전시", "일러스트", "굿즈"],
+    hours: "오늘 12:00 - 19:00",
+    savedBy: 646,
+  },
+  {
+    id: "jayang-food-popup",
+    name: "자양 푸드 팝업",
+    category: "팝업",
+    lat: 37.5344,
+    lng: 127.0732,
+    address: "서울 광진구 뚝섬로 552",
+    description: "한강 산책 전후로 들르기 좋은 간식 중심 푸드 팝업입니다.",
+    distance: "2.2km",
+    duration: "30분",
+    price: "1만원대",
+    tags: ["팝업", "푸드", "한강"],
+    hours: "오늘 13:00 - 21:00",
+    savedBy: 917,
+  },
+  {
+    id: "hwayang-vintage-popup",
+    name: "화양 빈티지 팝업",
+    category: "팝업",
+    lat: 37.5448,
+    lng: 127.0719,
+    address: "서울 광진구 동일로 178",
+    description: "빈티지 의류와 소품을 주말 단위로 큐레이션하는 화양동 팝업입니다.",
+    distance: "1.6km",
+    duration: "40분",
+    price: "무료",
+    tags: ["팝업", "빈티지", "소품"],
+    hours: "오늘 12:00 - 20:00",
+    savedBy: 774,
+  },
+  {
+    id: "majanggul-community-walk",
+    name: "마장굴다리 산책",
+    category: "산책",
+    lat: 37.5639,
+    lng: 127.0471,
+    address: "서울 성동구 마장동 일대",
+    description: "왕십리와 마장 사이의 로컬 분위기를 확인하기 좋은 짧은 연결 산책입니다.",
+    distance: "2.8km",
+    duration: "35분",
+    price: "무료",
+    tags: ["산책", "마장", "로컬"],
+    hours: "상시 이용",
+    savedBy: 421,
+  },
+  {
+    id: "seongsu-night-gallery",
+    name: "성수 나이트 갤러리",
+    category: "전시",
+    lat: 37.5417,
+    lng: 127.0608,
+    address: "서울 성동구 성수일로 89",
+    description: "저녁 시간대 조명 연출이 좋은 야간 관람형 전시 공간입니다.",
+    distance: "780m",
+    duration: "45분",
+    price: "1만5천원",
+    tags: ["전시", "야간", "조명"],
+    hours: "오늘 14:00 - 22:00",
+    savedBy: 1356,
+  },
+  {
+    id: "seongsu-object-shop",
+    name: "성수 오브젝트숍",
+    category: "팝업",
+    lat: 37.5459,
+    lng: 127.0604,
+    address: "서울 성동구 연무장13길 11",
+    description: "라이프스타일 브랜드가 시즌별로 바뀌는 오브젝트 기반 팝업 숍입니다.",
+    distance: "760m",
+    duration: "35분",
+    price: "무료",
+    tags: ["팝업", "오브젝트", "라이프스타일"],
+    hours: "오늘 11:00 - 20:00",
+    savedBy: 1588,
+  },
+  {
+    id: "tuktuk-river-terrace",
+    name: "뚝섬 리버테라스",
+    category: "카페",
+    lat: 37.5307,
+    lng: 127.0668,
+    address: "서울 광진구 강변북로 2202",
+    description: "한강을 바라보며 쉬어갈 수 있는 테라스형 카페 포인트입니다.",
+    distance: "2.3km",
+    duration: "50분",
+    price: "8천원대",
+    tags: ["카페", "테라스", "한강"],
+    hours: "오늘 10:00 - 23:00",
+    savedBy: 1216,
+  },
+  {
+    id: "wangsimni-record-cafe",
+    name: "왕십리 레코드카페",
+    category: "카페",
+    lat: 37.5605,
+    lng: 127.0352,
+    address: "서울 성동구 왕십리광장로 17",
+    description: "음악을 들으며 쉬어가기 좋은 레코드 콘셉트 카페입니다.",
+    distance: "2.9km",
+    duration: "50분",
+    price: "7천원대",
+    tags: ["카페", "음악", "왕십리"],
+    hours: "오늘 11:00 - 22:00",
+    savedBy: 639,
+  },
+  {
+    id: "achasan-view-cafe",
+    name: "아차산 뷰카페",
+    category: "카페",
+    lat: 37.5537,
+    lng: 127.0912,
+    address: "서울 광진구 영화사로 145",
+    description: "아차산 입구 산책 뒤 쉬어가기 좋은 전망형 카페입니다.",
+    distance: "3.7km",
+    duration: "55분",
+    price: "7천원대",
+    tags: ["카페", "아차산", "전망"],
+    hours: "오늘 10:00 - 21:00",
+    savedBy: 811,
+  },
 ];
 
 const categoryTone: Record<PlaceCategory, string> = {
-  전시: "#2563eb",
-  카페: "#16a34a",
-  팝업: "#d97706",
-  산책: "#0f766e",
+  전시: "#7c6cf2",
+  카페: "#a36a3d",
+  팝업: "#e87957",
+  산책: "#2f9f8f",
 };
 
-type MapMode = (typeof mapModes)[number];
+function getCategoryFilterColor(category: PlaceCategory | "전체") {
+  return category === "전체" ? "#64748b" : categoryTone[category];
+}
+
+type SortOption = (typeof sortOptions)[number]["id"];
 
 let kakaoSdkPromise: Promise<KakaoMapsApi> | null = null;
+
+function parseMeters(value: string) {
+  const numericValue = Number.parseFloat(value.replace(/[^0-9.]/g, ""));
+
+  if (Number.isNaN(numericValue)) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  return value.includes("km") ? numericValue * 1000 : numericValue;
+}
+
+function parseMinutes(value: string) {
+  const numericValue = Number.parseFloat(value.replace(/[^0-9.]/g, ""));
+
+  return Number.isNaN(numericValue) ? Number.POSITIVE_INFINITY : numericValue;
+}
+
+function parsePrice(value: string) {
+  if (value.includes("무료")) {
+    return 0;
+  }
+
+  const numericValue = Number.parseFloat(value.replace(/[^0-9.]/g, ""));
+
+  if (Number.isNaN(numericValue)) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  return value.includes("만") ? numericValue * 10000 : numericValue * 1000;
+}
+
+function getPlaceDistance(a: MapPlace, b: MapPlace) {
+  const earthRadius = 6371000;
+  const latA = (a.lat * Math.PI) / 180;
+  const latB = (b.lat * Math.PI) / 180;
+  const deltaLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const deltaLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const haversine =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(latA) * Math.cos(latB) * Math.sin(deltaLng / 2) ** 2;
+
+  return 2 * earthRadius * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+}
 
 function loadKakaoMaps(appKey: string) {
   if (window.kakao?.maps) {
@@ -186,36 +1098,51 @@ function loadKakaoMaps(appKey: string) {
   return kakaoSdkPromise;
 }
 
-function createMarkerElement(place: MapPlace, isActive: boolean) {
+function createMarkerElement(
+  place: MapPlace,
+  isActive: boolean,
+  isRouteHighlighted = false,
+  isCompact = false,
+) {
   const marker = document.createElement("button");
+  const markerBorder = isRouteHighlighted ? "#8fbf45" : categoryTone[place.category];
+
   marker.type = "button";
   marker.setAttribute("aria-label", `${place.name} 마커`);
   marker.style.alignItems = "center";
-  marker.style.background = isActive ? "#111827" : "#ffffff";
-  marker.style.border = `2px solid ${categoryTone[place.category]}`;
+  marker.style.background = isActive ? "#111827" : isRouteHighlighted ? "#f7ffe8" : "#ffffff";
+  marker.style.border = `2px solid ${markerBorder}`;
   marker.style.borderRadius = "999px";
-  marker.style.boxShadow = "0 14px 34px rgba(15, 23, 42, 0.22)";
+  marker.style.boxShadow = isRouteHighlighted
+    ? "0 16px 38px rgba(143, 191, 69, 0.36)"
+    : isCompact
+      ? "0 8px 18px rgba(15, 23, 42, 0.18)"
+      : "0 14px 34px rgba(15, 23, 42, 0.22)";
   marker.style.color = isActive ? "#ffffff" : "#111827";
   marker.style.cursor = "pointer";
   marker.style.display = "inline-flex";
   marker.style.font = "700 12px system-ui, sans-serif";
   marker.style.gap = "6px";
-  marker.style.height = "34px";
-  marker.style.padding = "0 12px 0 8px";
+  marker.style.height = isCompact ? "20px" : "34px";
+  marker.style.justifyContent = "center";
+  marker.style.padding = isCompact ? "0" : "0 12px 0 8px";
+  marker.style.width = isCompact ? "20px" : "auto";
   marker.style.whiteSpace = "nowrap";
-  marker.innerHTML = `<span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${categoryTone[place.category]}"></span>${place.name}`;
+  marker.innerHTML = isCompact
+    ? `<span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${markerBorder}"></span>`
+    : `<span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${markerBorder}"></span>${place.name}`;
 
   return marker;
 }
 
-export function InteractiveMap() {
+export function InteractiveMap({ highlightedRoute = null }: InteractiveMapProps) {
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KakaoMap | null>(null);
   const mapsRef = useRef<KakaoMapsApi | null>(null);
   const overlaysRef = useRef<KakaoCustomOverlay[]>([]);
   const chainLineRef = useRef<KakaoPolyline | null>(null);
-  const [mode, setMode] = useState<(typeof mapModes)[number]>("추천");
+  const highlightedRouteLineRef = useRef<KakaoPolyline | null>(null);
   const [category, setCategory] = useState<PlaceCategory | "전체">("전체");
   const [chainPlaces, setChainPlaces] = useState<MapPlace[]>([]);
   const [isCommunityOpen, setIsCommunityOpen] = useState(false);
@@ -225,16 +1152,84 @@ export function InteractiveMap() {
   const [selectedPlaceId, setSelectedPlaceId] = useState(places[0].id);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [level, setLevel] = useState(DEFAULT_LEVEL);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOption, setSortOption] = useState<SortOption>("recommended");
+  const [draggedPlaceId, setDraggedPlaceId] = useState<string | null>(null);
+  const [isChainDropActive, setIsChainDropActive] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error" | "missing-key">(
     appKey ? "idle" : "missing-key",
   );
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const categoryCounts = useMemo(
+    () =>
+      categories.map((item) => ({
+        count: item === "전체" ? places.length : places.filter((place) => place.category === item).length,
+        label: item,
+      })),
+    [],
+  );
   const visiblePlaces = useMemo(
-    () => places.filter((place) => category === "전체" || place.category === category),
-    [category],
+    () => {
+      const filteredPlaces = places.filter((place) => {
+        const matchesCategory = category === "전체" || place.category === category;
+        const searchableText = [
+          place.name,
+          place.category,
+          place.address,
+          place.description,
+          place.price,
+          place.hours,
+          ...place.tags,
+        ]
+          .join(" ")
+          .toLowerCase();
+
+        return (
+          matchesCategory &&
+          (!normalizedQuery || searchableText.includes(normalizedQuery))
+        );
+      });
+
+      return [...filteredPlaces].sort((a, b) => {
+        if (sortOption === "saved") {
+          return b.savedBy - a.savedBy;
+        }
+
+        if (sortOption === "near") {
+          return parseMeters(a.distance) - parseMeters(b.distance);
+        }
+
+        if (sortOption === "price") {
+          return parsePrice(a.price) - parsePrice(b.price);
+        }
+
+        if (sortOption === "short") {
+          return parseMinutes(a.duration) - parseMinutes(b.duration);
+        }
+
+        return b.savedBy - a.savedBy;
+      });
+    },
+    [category, normalizedQuery, sortOption],
   );
   const selectedPlace = places.find((place) => place.id === selectedPlaceId) ?? places[0];
   const selectedPlaceIsInChain = chainPlaces.some((place) => place.id === selectedPlace.id);
+  const activePreviewPlaceIds = useMemo(
+    () => new Set(isPreviewActive && chainPlaces.length >= 2 ? chainPlaces.map((place) => place.id) : []),
+    [chainPlaces, isPreviewActive],
+  );
+  const highlightedRoutePlaceIds = useMemo(
+    () => new Set(highlightedRoute?.placeIds ?? []),
+    [highlightedRoute],
+  );
+  const highlightedRoutePlaces = useMemo(
+    () =>
+      (highlightedRoute?.placeIds ?? [])
+        .map((placeId) => places.find((place) => place.id === placeId))
+        .filter((place): place is MapPlace => Boolean(place)),
+    [highlightedRoute],
+  );
 
   useEffect(() => {
     if (!appKey || !containerRef.current || mapRef.current) {
@@ -277,6 +1272,28 @@ export function InteractiveMap() {
   }, [appKey]);
 
   useEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      const map = mapRef.current;
+
+      if (!map) {
+        return;
+      }
+
+      window.requestAnimationFrame(() => map.relayout());
+    });
+
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     const map = mapRef.current;
     const maps = mapsRef.current;
 
@@ -286,7 +1303,14 @@ export function InteractiveMap() {
 
     overlaysRef.current.forEach((overlay) => overlay.setMap(null));
     overlaysRef.current = visiblePlaces.map((place) => {
-      const marker = createMarkerElement(place, place.id === selectedPlaceId);
+      const marker = createMarkerElement(
+        place,
+        place.id === selectedPlaceId,
+        highlightedRoutePlaceIds.has(place.id),
+        (activePreviewPlaceIds.size > 0 || highlightedRoutePlaceIds.size > 0) &&
+          !activePreviewPlaceIds.has(place.id) &&
+          !highlightedRoutePlaceIds.has(place.id),
+      );
       marker.addEventListener("click", () => {
         setSelectedPlaceId(place.id);
         setIsDetailOpen(true);
@@ -309,7 +1333,7 @@ export function InteractiveMap() {
       overlaysRef.current.forEach((overlay) => overlay.setMap(null));
       overlaysRef.current = [];
     };
-  }, [selectedPlaceId, status, visiblePlaces]);
+  }, [activePreviewPlaceIds, highlightedRoutePlaceIds, selectedPlaceId, status, visiblePlaces]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -326,8 +1350,8 @@ export function InteractiveMap() {
     const chainLine = new maps.Polyline({
       endArrow: true,
       path: linePath,
-      strokeColor: "#2563eb",
-      strokeOpacity: 0.9,
+      strokeColor: "#6e8ff7",
+      strokeOpacity: 0.86,
       strokeStyle: "solid",
       strokeWeight: 6,
     });
@@ -340,6 +1364,41 @@ export function InteractiveMap() {
       chainLineRef.current = null;
     };
   }, [chainPlaces, isPreviewActive]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const maps = mapsRef.current;
+
+    highlightedRouteLineRef.current?.setMap(null);
+    highlightedRouteLineRef.current = null;
+
+    if (!map || !maps || status !== "ready" || highlightedRoutePlaces.length < 2) {
+      return;
+    }
+
+    const linePath = highlightedRoutePlaces.map((place) => new maps.LatLng(place.lat, place.lng));
+    const centerLat =
+      highlightedRoutePlaces.reduce((total, place) => total + place.lat, 0) / highlightedRoutePlaces.length;
+    const centerLng =
+      highlightedRoutePlaces.reduce((total, place) => total + place.lng, 0) / highlightedRoutePlaces.length;
+    const highlightedLine = new maps.Polyline({
+      endArrow: true,
+      path: linePath,
+      strokeColor: "#8fbf45",
+      strokeOpacity: 0.95,
+      strokeStyle: "solid",
+      strokeWeight: 8,
+    });
+
+    highlightedLine.setMap(map);
+    highlightedRouteLineRef.current = highlightedLine;
+    map.setCenter(new maps.LatLng(centerLat, centerLng));
+
+    return () => {
+      highlightedLine.setMap(null);
+      highlightedRouteLineRef.current = null;
+    };
+  }, [highlightedRoutePlaces, status]);
 
   function changeLevel(nextLevel: number) {
     const clampedLevel = Math.min(10, Math.max(1, nextLevel));
@@ -368,26 +1427,6 @@ export function InteractiveMap() {
     mapRef.current.setCenter(new mapsRef.current.LatLng(place.lat, place.lng));
   }
 
-  function getModeTargetPlace(nextMode: MapMode) {
-    if (nextMode === "도보") {
-      return places.find((place) => place.category === "산책") ?? places[0];
-    }
-
-    if (nextMode === "저장") {
-      return chainPlaces[0] ?? [...places].sort((a, b) => b.savedBy - a.savedBy)[0];
-    }
-
-    return [...places].sort((a, b) => b.savedBy - a.savedBy)[0];
-  }
-
-  function selectMapMode(nextMode: MapMode) {
-    const targetPlace = getModeTargetPlace(nextMode);
-
-    setMode(nextMode);
-    setCategory(nextMode === "도보" ? "산책" : "전체");
-    focusPlace(targetPlace);
-  }
-
   function addPlaceToChain(place: MapPlace) {
     setChainPlaces((currentPlaces) => {
       if (currentPlaces.some((currentPlace) => currentPlace.id === place.id)) {
@@ -396,6 +1435,30 @@ export function InteractiveMap() {
 
       return [...currentPlaces, place];
     });
+  }
+
+  function startPlaceDrag(place: MapPlace) {
+    setDraggedPlaceId(place.id);
+  }
+
+  function endPlaceDrag() {
+    setDraggedPlaceId(null);
+    setIsChainDropActive(false);
+  }
+
+  function dropDraggedPlaceToChain() {
+    if (!draggedPlaceId) {
+      return;
+    }
+
+    const draggedPlace = places.find((place) => place.id === draggedPlaceId);
+
+    if (draggedPlace) {
+      addPlaceToChain(draggedPlace);
+      focusPlace(draggedPlace);
+    }
+
+    endPlaceDrag();
   }
 
   function removePlaceFromChain(placeId: string) {
@@ -431,6 +1494,55 @@ export function InteractiveMap() {
 
       return nextPlaces;
     });
+  }
+
+  function reorderChainPlaces(activePlaceId: string, targetPlaceId: string) {
+    if (activePlaceId === targetPlaceId) {
+      return;
+    }
+
+    setChainPlaces((currentPlaces) => {
+      const activeIndex = currentPlaces.findIndex((place) => place.id === activePlaceId);
+      const targetIndex = currentPlaces.findIndex((place) => place.id === targetPlaceId);
+
+      if (activeIndex < 0 || targetIndex < 0) {
+        return currentPlaces;
+      }
+
+      const nextPlaces = [...currentPlaces];
+      const [activePlace] = nextPlaces.splice(activeIndex, 1);
+      nextPlaces.splice(targetIndex, 0, activePlace);
+
+      return nextPlaces;
+    });
+  }
+
+  function optimizeChainOrder() {
+    setChainPlaces((currentPlaces) => {
+      if (currentPlaces.length < 3) {
+        return currentPlaces;
+      }
+
+      const remainingPlaces = currentPlaces.slice(1);
+      const orderedPlaces = [currentPlaces[0]];
+
+      while (remainingPlaces.length > 0) {
+        const currentPlace = orderedPlaces[orderedPlaces.length - 1];
+        const nextIndex = remainingPlaces.reduce((bestIndex, place, index) => {
+          const bestPlace = remainingPlaces[bestIndex];
+
+          return getPlaceDistance(currentPlace, place) < getPlaceDistance(currentPlace, bestPlace)
+            ? index
+            : bestIndex;
+        }, 0);
+
+        const [nextPlace] = remainingPlaces.splice(nextIndex, 1);
+        orderedPlaces.push(nextPlace);
+      }
+
+      return orderedPlaces;
+    });
+    setIsPreviewActive(false);
   }
 
   function clearChain() {
@@ -482,45 +1594,145 @@ export function InteractiveMap() {
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_0%,transparent_58%,rgba(15,23,42,0.14)_100%)]" />
 
-      <div className="absolute left-4 top-4 z-10 flex flex-wrap items-center gap-2">
-        <Badge tone="blue">카카오맵</Badge>
-        <Badge tone="green">마커 {visiblePlaces.length}개</Badge>
-        <Badge tone="neutral">레벨 {level}</Badge>
-      </div>
+      <aside className="glass-panel absolute bottom-10 left-4 top-4 z-20 hidden w-[360px] min-w-0 flex-col overflow-hidden rounded-lg p-3 xl:flex">
+        <div className="flex items-start justify-between gap-3 px-1">
+          <div>
+            <p className="text-xs font-semibold text-primary">Place Explorer</p>
+            <h2 className="mt-1 text-lg font-bold">장소 탐색</h2>
+          </div>
+          <Badge tone="blue">{visiblePlaces.length}곳</Badge>
+        </div>
 
-      <div className="glass-panel absolute left-4 top-16 z-10 hidden rounded-lg p-1 sm:flex">
-        {mapModes.map((item) => (
-          <button
-            className={cn(
-              "h-9 rounded-sm px-3 text-sm font-semibold text-muted transition hover:bg-surface-muted",
-              mode === item && "bg-primary text-white shadow-soft hover:bg-primary",
-            )}
-            key={item}
-            onClick={() => selectMapMode(item)}
-            type="button"
+        <label className="mt-3 block">
+          <span className="sr-only">장소 검색</span>
+          <input
+            className="h-11 w-full rounded-sm border border-border bg-surface px-3 text-sm font-semibold outline-none transition placeholder:text-muted focus:border-primary"
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="장소, 태그, 주소 검색"
+            type="search"
+            value={searchQuery}
+          />
+        </label>
+
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {categoryCounts.map((item) => {
+            const filterColor = getCategoryFilterColor(item.label);
+            const isSelectedCategory = category === item.label;
+
+            return (
+              <button
+                aria-label={`${item.label} ${item.count}곳`}
+                className={cn(
+                  "grid h-9 w-9 place-items-center rounded-sm border border-border bg-surface transition hover:bg-surface-muted",
+                  isSelectedCategory && "shadow-soft",
+                )}
+                key={item.label}
+                onClick={() => setCategory(item.label)}
+                style={{
+                  background: isSelectedCategory
+                    ? `color-mix(in srgb, ${filterColor} 15%, rgba(255,255,255,0.86))`
+                    : undefined,
+                  borderColor: isSelectedCategory ? filterColor : undefined,
+                  color: filterColor,
+                }}
+                title={`${item.label} ${item.count}곳`}
+                type="button"
+              >
+                <CategoryFilterIcon category={item.label} />
+                <span className="sr-only">
+                  {item.label} {item.count}곳
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <label className="mt-3 grid gap-1">
+          <span className="text-xs font-bold text-muted">정렬</span>
+          <select
+            className="h-10 w-full rounded-sm border border-border bg-surface px-3 text-sm font-bold text-muted-strong outline-none transition focus:border-primary"
+            onChange={(event) => setSortOption(event.target.value as SortOption)}
+            value={sortOption}
           >
-            {item}
-          </button>
-        ))}
-      </div>
+            {sortOptions.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </label>
 
-      <div className="glass-panel absolute left-4 top-[110px] z-10 hidden max-w-[420px] flex-wrap gap-1 rounded-lg p-1 sm:flex">
-        {categories.map((item) => (
-          <button
-            className={cn(
-              "h-8 rounded-sm px-2.5 text-xs font-semibold text-muted transition hover:bg-surface-muted",
-              category === item && "bg-foreground text-background hover:bg-foreground",
-            )}
-            key={item}
-            onClick={() => setCategory(item)}
-            type="button"
-          >
-            {item}
-          </button>
-        ))}
-      </div>
+        <div className="place-list-scroll mt-3 min-h-0 flex-1 overflow-y-auto">
+          {visiblePlaces.length > 0 ? (
+            <div className="grid gap-2">
+              {visiblePlaces.map((place) => {
+                const isSelected = place.id === selectedPlace.id;
+                const isInChain = chainPlaces.some((chainPlace) => chainPlace.id === place.id);
 
-      <div className="glass-panel absolute bottom-4 right-4 z-20 grid gap-2 rounded-lg p-2">
+                return (
+                  <article
+                    className={cn(
+                      "glass-card cursor-grab rounded-sm p-3 transition active:cursor-grabbing hover:bg-surface/88",
+                      isSelected && "border-primary ring-1 ring-primary/20",
+                    )}
+                    draggable
+                    onDragEnd={endPlaceDrag}
+                    onDragStart={(event) => {
+                      event.dataTransfer.effectAllowed = "copy";
+                      event.dataTransfer.setData("text/plain", place.id);
+                      startPlaceDrag(place);
+                    }}
+                    key={place.id}
+                  >
+                    <button className="w-full text-left" onClick={() => focusPlace(place)} type="button">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold">{place.name}</p>
+                          <p className="mt-1 truncate text-xs text-muted">{place.address}</p>
+                        </div>
+                        <span
+                          className="inline-flex h-7 items-center rounded-xs border px-2.5 text-xs font-semibold"
+                          style={{
+                            background: `color-mix(in srgb, ${categoryTone[place.category]} 13%, rgba(255,255,255,0.84))`,
+                            borderColor: `color-mix(in srgb, ${categoryTone[place.category]} 26%, transparent)`,
+                            color: categoryTone[place.category],
+                          }}
+                        >
+                          {place.category}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-xs font-semibold text-muted">
+                        <span>{place.duration}</span>
+                        <span>{place.price}</span>
+                        <span>{place.savedBy.toLocaleString()} 저장</span>
+                      </div>
+                    </button>
+                    <div className="mt-2 flex items-center gap-2">
+                      <Button className="flex-1" onClick={() => focusPlace(place)} size="sm" variant="secondary">
+                        지도 이동
+                      </Button>
+                      <Button
+                        className="flex-1"
+                        disabled={isInChain}
+                        onClick={() => addPlaceToChain(place)}
+                        size="sm"
+                      >
+                        {isInChain ? "추가됨" : "후보 추가"}
+                      </Button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-sm border border-dashed border-border-strong bg-surface/78 p-4 text-sm leading-6 text-muted">
+              조건에 맞는 장소가 없습니다. 검색어를 줄이거나 카테고리를 전체로 바꿔보세요.
+            </div>
+          )}
+        </div>
+      </aside>
+
+      <div className="glass-panel absolute right-4 top-4 z-20 grid gap-2 rounded-lg p-2">
         <Button
           aria-label="지도 확대"
           className="h-10 w-10 px-0 text-lg"
@@ -562,7 +1774,7 @@ export function InteractiveMap() {
         </Button>
       </div>
 
-      {isDetailOpen ? (
+      {isDetailOpen && (
         <PlaceDetailCard
           isInChain={selectedPlaceIsInChain}
           onAddToChain={addPlaceToChain}
@@ -570,25 +1782,63 @@ export function InteractiveMap() {
           onFocus={focusPlace}
           place={selectedPlace}
         />
-      ) : (
-        <button
-          className="glass-panel absolute bottom-20 right-4 z-10 rounded-lg px-4 py-3 text-sm font-bold sm:bottom-4 sm:right-20"
-          onClick={() => setIsDetailOpen(true)}
-          type="button"
-        >
-          {selectedPlace.name} 다시 보기
-        </button>
       )}
+
+      <button
+        aria-label={isDetailOpen ? "장소 상세 숨기기" : `${selectedPlace.name} 다시 보기`}
+        className="glass-panel absolute bottom-6 right-4 z-20 grid h-10 w-10 place-items-center rounded-lg text-muted-strong transition hover:bg-surface-muted"
+        onClick={() => setIsDetailOpen((currentValue) => !currentValue)}
+        title={isDetailOpen ? "장소 상세 숨기기" : `${selectedPlace.name} 다시 보기`}
+        type="button"
+      >
+        {isDetailOpen ? (
+          <svg
+            aria-hidden="true"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path d="M3 3l18 18" />
+            <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+            <path d="M9.9 4.2A8.8 8.8 0 0 1 12 4c5 0 8 6 8 6a13.8 13.8 0 0 1-2.2 3.1" />
+            <path d="M6.6 6.6C4.9 7.8 4 10 4 10s3 6 8 6a8.8 8.8 0 0 0 3.4-.7" />
+          </svg>
+        ) : (
+          <svg
+            aria-hidden="true"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path d="M4 12s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z" />
+            <circle cx="12" cy="12" r="2.5" />
+          </svg>
+        )}
+      </button>
 
       <TripChainBuilder
         chainPlaces={chainPlaces}
+        isDragOver={isChainDropActive}
         isPreviewActive={isPreviewActive}
         onClear={clearChain}
+        onDragLeave={() => setIsChainDropActive(false)}
+        onDragOver={() => setIsChainDropActive(Boolean(draggedPlaceId))}
+        onDropPlace={dropDraggedPlaceToChain}
         onFocusPlace={focusPlace}
         onMovePlace={movePlaceInChain}
+        onOptimizeRoute={optimizeChainOrder}
         onPreview={toggleChainPreview}
         onPublish={() => setIsPublishOpen(true)}
         onRemovePlace={removePlaceFromChain}
+        onReorderPlace={reorderChainPlaces}
       />
 
       {isPublishOpen && (

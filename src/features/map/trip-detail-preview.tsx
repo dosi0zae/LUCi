@@ -60,7 +60,7 @@ export function TripDetailPreview({ draft, onClose }: TripDetailPreviewProps) {
             {draft.places.map((place, index) => (
               <li className="rounded-lg border border-border bg-surface p-4 shadow-soft" key={place.id}>
                 <div className="flex gap-4">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-sm bg-primary text-sm font-bold text-white">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-sm bg-primary text-sm font-bold text-white">
                     {index + 1}
                   </span>
                   <div className="min-w-0 flex-1">
