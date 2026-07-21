@@ -148,6 +148,21 @@ select {
   display: none;
 }
 
+.trip-map-base img {
+  transition:
+    filter 240ms ease,
+    opacity 240ms ease;
+}
+
+.trip-map-base--focus img {
+  filter: saturate(0.42) contrast(0.74) brightness(1.12);
+  opacity: 0.5;
+}
+
+.trip-map-base--focus .trip-map-marker {
+  filter: saturate(1.12) contrast(1.06);
+}
+
 .intro-splash {
   position: fixed;
   inset: 0;

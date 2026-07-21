@@ -33,6 +33,9 @@ type KakaoPolyline = {
 };
 
 type KakaoMapsApi = {
+  event: {
+    addListener(target: KakaoMap, type: string, handler: () => void): void;
+  };
   LatLng: new (lat: number, lng: number) => KakaoLatLng;
   Map: new (
     container: HTMLElement,
@@ -103,6 +106,7 @@ const DEFAULT_CENTER = {
   lng: 127.0557,
 };
 const DEFAULT_LEVEL = 4;
+const LABEL_VISIBLE_LEVEL = DEFAULT_LEVEL - 1;
 const categories: Array<PlaceCategory | "전체"> = ["전체", "전시", "카페", "팝업", "산책"];
 const sortOptions = [
   { id: "recommended", label: "추천순" },
@@ -1093,6 +1097,7 @@ function createMarkerElement(
   const markerIconMarkup = `<span style="align-items:center;color:${markerIconColor};display:inline-flex;justify-content:center">${markerIcon}</span>`;
 
   marker.type = "button";
+  marker.className = "trip-map-marker";
   marker.setAttribute("aria-label", `${place.name} 마커`);
   marker.style.alignItems = "center";
   marker.style.background = isActive ? "#111827" : isRouteHighlighted ? "#f7ffe8" : "#ffffff";
@@ -1504,6 +1509,7 @@ export function InteractiveMap({
         .filter((place): place is MapPlace => Boolean(place)),
     [highlightedRoute],
   );
+  const isMapFocusMode = (isPreviewActive && chainPlaces.length >= 2) || highlightedRoutePlaces.length >= 2;
 
   function showToast(message: string, kind?: ToastState["kind"]) {
     setToast({ id: Date.now(), kind, message });
@@ -1535,6 +1541,12 @@ export function InteractiveMap({
         mapRef.current = map;
         setLevel(map.getLevel());
         setStatus("ready");
+        maps.event.addListener(map, "zoom_changed", () => {
+          setLevel(map.getLevel());
+        });
+        maps.event.addListener(map, "idle", () => {
+          setLevel(map.getLevel());
+        });
 
         window.requestAnimationFrame(() => map.relayout());
       })
@@ -1643,10 +1655,9 @@ export function InteractiveMap({
       const isActiveMarker = place.id === selectedPlaceId;
       const isHighlightedRouteMarker = highlightedRoutePlaceIds.has(place.id);
       const isPreviewMarker = activePreviewPlaceIds.has(place.id);
-      const isCompactMarker =
-        (activePreviewPlaceIds.size > 0 || highlightedRoutePlaceIds.size > 0) &&
-        !isPreviewMarker &&
-        !isHighlightedRouteMarker;
+      const hasRouteFocus = activePreviewPlaceIds.size > 0 || highlightedRoutePlaceIds.size > 0;
+      const isRouteMarker = isPreviewMarker || isHighlightedRouteMarker;
+      const isCompactMarker = hasRouteFocus ? !isRouteMarker : level > LABEL_VISIBLE_LEVEL;
       const marker = createMarkerElement(
         place,
         isActiveMarker,
@@ -1664,7 +1675,7 @@ export function InteractiveMap({
         position: new maps.LatLng(place.lat, place.lng),
         xAnchor: 0.5,
         yAnchor: 1,
-        zIndex: isCompactMarker ? 1 : isActiveMarker || isHighlightedRouteMarker || isPreviewMarker ? 30 : 10,
+        zIndex: isActiveMarker || isRouteMarker ? 30 : isCompactMarker ? 1 : 10,
       });
 
       overlay.setMap(map);
@@ -1676,7 +1687,7 @@ export function InteractiveMap({
       overlaysRef.current.forEach((overlay) => overlay.setMap(null));
       overlaysRef.current = [];
     };
-  }, [activePreviewPlaceIds, highlightedRoutePlaceIds, selectedPlaceId, status, visiblePlaces]);
+  }, [activePreviewPlaceIds, highlightedRoutePlaceIds, level, selectedPlaceId, status, visiblePlaces]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -1694,8 +1705,8 @@ export function InteractiveMap({
     const chainLine = new maps.Polyline({
       endArrow: true,
       path: linePath,
-      strokeColor: isWalkingRouteActive ? "#8fbf45" : "#6e8ff7",
-      strokeOpacity: isWalkingRouteActive ? 0.96 : 0.86,
+      strokeColor: isWalkingRouteActive ? "#8fbf45" : "#2f6df6",
+      strokeOpacity: 1,
       strokeStyle: "solid",
       strokeWeight: isWalkingRouteActive ? 7 : 6,
     });
@@ -1729,7 +1740,7 @@ export function InteractiveMap({
       endArrow: true,
       path: linePath,
       strokeColor: "#8fbf45",
-      strokeOpacity: 0.95,
+      strokeOpacity: 1,
       strokeStyle: "solid",
       strokeWeight: 8,
     });
@@ -1973,7 +1984,10 @@ export function InteractiveMap({
       aria-label="카카오맵 인터랙티브 지도"
       className="relative min-h-[640px] overflow-hidden rounded-lg border border-border bg-slate-200 shadow-panel dark:bg-slate-900"
     >
-      <div ref={containerRef} className="absolute inset-0" />
+      <div
+        ref={containerRef}
+        className={cn("trip-map-base absolute inset-0", isMapFocusMode && "trip-map-base--focus")}
+      />
 
       {status !== "ready" && (
         <div className="absolute inset-0 z-20 grid place-items-center bg-surface-muted/92 p-6 text-center backdrop-blur-sm">
