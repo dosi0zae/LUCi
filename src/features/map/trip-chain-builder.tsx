@@ -9,6 +9,7 @@ type TripChainBuilderProps = {
   chainPlaces: MapPlace[];
   isDragOver: boolean;
   isPreviewActive: boolean;
+  isWalkingRouteActive: boolean;
   onClear: () => void;
   onDragLeave: () => void;
   onDragOver: () => void;
@@ -20,6 +21,7 @@ type TripChainBuilderProps = {
   onPublish: () => void;
   onRemovePlace: (placeId: string) => void;
   onReorderPlace: (activePlaceId: string, targetPlaceId: string) => void;
+  onWalkingRoute: () => void;
 };
 
 function getStayMinutes(chainPlaces: MapPlace[]) {
@@ -98,6 +100,7 @@ export function TripChainBuilder({
   chainPlaces,
   isDragOver,
   isPreviewActive,
+  isWalkingRouteActive,
   onClear,
   onDragLeave,
   onDragOver,
@@ -109,6 +112,7 @@ export function TripChainBuilder({
   onPublish,
   onRemovePlace,
   onReorderPlace,
+  onWalkingRoute,
 }: TripChainBuilderProps) {
   const [dismissedWarningKey, setDismissedWarningKey] = useState("");
   const [draggedChainPlaceId, setDraggedChainPlaceId] = useState<string | null>(null);
@@ -294,6 +298,15 @@ export function TripChainBuilder({
                 추천 순서
               </Button>
             </div>
+            <Button
+              className="mt-2 shrink-0"
+              disabled={chainPlaces.length < 2}
+              onClick={onWalkingRoute}
+              size="sm"
+              variant={isWalkingRouteActive ? "primary" : "secondary"}
+            >
+              {isWalkingRouteActive ? "실제 경로 끄기" : "실제 경로 보기"}
+            </Button>
             <div className="mt-2 grid shrink-0 grid-cols-2 gap-2">
               <Button disabled={chainPlaces.length < 2} onClick={onPublish} size="sm">
                 발행 준비

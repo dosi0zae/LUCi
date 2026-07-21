@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
-import { InteractiveMap, type HighlightedRoute, type RouteImportRequest } from "@/features/map/interactive-map";
+import {
+  InteractiveMap,
+  type HighlightedRoute,
+  type RouteImportRequest,
+  type SearchRecommendationRequest,
+} from "@/features/map/interactive-map";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -90,6 +95,9 @@ export function AppShell() {
   const [panelPosition, setPanelPosition] = useState({ x: 16, y: 16 });
   const [highlightedRouteId, setHighlightedRouteId] = useState<string | null>(null);
   const [routeImportRequest, setRouteImportRequest] = useState<RouteImportRequest | null>(null);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
+  const [searchRecommendationRequest, setSearchRecommendationRequest] =
+    useState<SearchRecommendationRequest | null>(null);
   const dragOffsetRef = useRef<{ x: number; y: number } | null>(null);
   const contentAreaRef = useRef<HTMLElement | null>(null);
   const hasPlacedPanelRef = useRef(false);
@@ -352,6 +360,17 @@ export function AppShell() {
     }
   }
 
+  function submitGlobalSearch() {
+    const query = globalSearchQuery.trim();
+
+    if (!query) {
+      selectTab("explore");
+      return;
+    }
+
+    setSearchRecommendationRequest({ query, requestId: Date.now() });
+  }
+
   return (
     <main className="min-h-screen overflow-hidden bg-background text-foreground">
       <IntroSplash />
@@ -361,20 +380,33 @@ export function AppShell() {
 
         <div className="relative grid min-h-screen grid-rows-[auto_1fr_auto]">
           <header className="z-20 flex items-center gap-3 px-4 py-4 sm:px-6">
-            <button
+            <form
               className="glass-panel flex h-12 min-w-0 flex-1 items-center gap-3 rounded-lg px-4 text-left"
-              onClick={() => selectTab("explore")}
-              type="button"
+              onSubmit={(event) => {
+                event.preventDefault();
+                submitGlobalSearch();
+              }}
             >
               <SearchIcon className="h-5 w-5 shrink-0 text-muted" />
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 [&>p:not(.search-helper)]:hidden">
+                <input
+                  aria-label="전시, 장소, 루트, 크리에이터 검색"
+                  className="h-5 w-full bg-transparent text-sm font-semibold text-foreground outline-none placeholder:text-foreground"
+                  onChange={(event) => setGlobalSearchQuery(event.target.value)}
+                  placeholder="전시, 장소, 루트, 크리에이터 검색"
+                  type="search"
+                  value={globalSearchQuery}
+                />
+                <p className="search-helper hidden text-xs text-muted sm:block">
+                  예: 비 오는 날 성수 실내 코스, 전시 보고 카페
+                </p>
                 <p className="truncate text-sm font-semibold">전시, 장소, 루트, 크리에이터 검색</p>
                 <p className="hidden text-xs text-muted sm:block">예: 성수 팝업 데이트, 비 오는 날 실내 코스</p>
               </div>
               <Badge tone="blue" className="hidden sm:inline-flex">
                 서울
               </Badge>
-            </button>
+            </form>
 
             <nav className="hidden items-center gap-2 md:flex" aria-label="주요 메뉴">
               {bottomNav.map((item) => {
@@ -402,7 +434,11 @@ export function AppShell() {
             className="relative z-10 grid min-h-0 grid-cols-1 gap-4 px-4 pb-24 sm:px-6 lg:pb-6"
             ref={contentAreaRef}
           >
-            <InteractiveMap highlightedRoute={highlightedRoute} routeImportRequest={routeImportRequest} />
+            <InteractiveMap
+              highlightedRoute={highlightedRoute}
+              routeImportRequest={routeImportRequest}
+              searchRecommendationRequest={searchRecommendationRequest}
+            />
 
             {isPanelOpen && (
               <aside

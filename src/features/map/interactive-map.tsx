@@ -73,6 +73,11 @@ export type RouteImportRequest = {
   route: HighlightedRoute;
 };
 
+export type SearchRecommendationRequest = {
+  query: string;
+  requestId: number;
+};
+
 type ToastState = {
   id: number;
   kind?: "optimize";
@@ -82,6 +87,7 @@ type ToastState = {
 type InteractiveMapProps = {
   highlightedRoute?: HighlightedRoute | null;
   routeImportRequest?: RouteImportRequest | null;
+  searchRecommendationRequest?: SearchRecommendationRequest | null;
 };
 
 declare global {
@@ -106,71 +112,34 @@ const sortOptions = [
   { id: "short", label: "짧은 체류" },
 ] as const;
 
-function CategoryFilterIcon({ category }: { category: PlaceCategory | "전체" }) {
-  const baseProps = {
-    "aria-hidden": true,
-    className: "h-5 w-5",
-    fill: "none",
-    stroke: "currentColor",
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    strokeWidth: 2,
-    viewBox: "0 0 24 24",
-  };
+function getCategoryIconSvg(category: PlaceCategory | "전체", className = "h-5 w-5") {
+  const iconProps = `aria-hidden="true" class="${className}" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"`;
 
   if (category === "전시") {
-    return (
-      <svg {...baseProps}>
-        <rect height="12" rx="1.5" width="14" x="5" y="5" />
-        <path d="M9 17h6" />
-        <path d="M10 9h4" />
-        <path d="M9 13h6" />
-      </svg>
-    );
+    return `<svg ${iconProps}><rect height="13" rx="1.8" width="16" x="4" y="5"></rect><circle cx="9" cy="10" r="1.3"></circle><path d="m6.5 16 3.4-3.7 2.4 2.5 2.1-2 3.1 3.2"></path><path d="M9 21h6"></path><path d="M12 18v3"></path></svg>`;
   }
 
   if (category === "카페") {
-    return (
-      <svg {...baseProps}>
-        <path d="M6 8h10v6a4 4 0 0 1-4 4h-2a4 4 0 0 1-4-4z" />
-        <path d="M16 10h1.5a2 2 0 0 1 0 4H16" />
-        <path d="M8 5v1" />
-        <path d="M12 5v1" />
-      </svg>
-    );
+    return `<svg ${iconProps}><path d="M6 9h10v5a4 4 0 0 1-4 4h-2a4 4 0 0 1-4-4z"></path><path d="M16 10h1.4a2.1 2.1 0 0 1 0 4.2H16"></path><path d="M8 5c.8.7.8 1.3 0 2"></path><path d="M12 5c.8.7.8 1.3 0 2"></path><path d="M5 20h13"></path></svg>`;
   }
 
   if (category === "팝업") {
-    return (
-      <svg {...baseProps}>
-        <path d="m12 4 1.6 4.3L18 10l-4.4 1.7L12 16l-1.6-4.3L6 10l4.4-1.7z" />
-        <path d="M19 4v3" />
-        <path d="M20.5 5.5h-3" />
-        <path d="M5 17v3" />
-        <path d="M6.5 18.5h-3" />
-      </svg>
-    );
+    return `<svg ${iconProps}><path d="M6.5 9h11l-.8 10H7.3z"></path><path d="M9 9a3 3 0 0 1 6 0"></path><path d="m18.5 4 .5 1.6 1.5.5-1.5.5-.5 1.6-.5-1.6-1.5-.5 1.5-.5z"></path><path d="M10 14h4"></path></svg>`;
   }
 
   if (category === "산책") {
-    return (
-      <svg {...baseProps}>
-        <path d="M6 19c4-7 8-7 12-14" />
-        <path d="M7 7h.01" />
-        <path d="M11 11h.01" />
-        <path d="M15 15h.01" />
-        <path d="M5 19h14" />
-      </svg>
-    );
+    return `<svg ${iconProps}><path d="M12 20v-6"></path><path d="M8.2 14.5a4.2 4.2 0 1 1 7.6 0"></path><path d="M6.8 12a4.1 4.1 0 0 1 3.5-6.2"></path><path d="M13.7 5.8A4.1 4.1 0 0 1 17.2 12"></path><path d="M9 20h6"></path><path d="M10 16.5 12 14l2 2.5"></path></svg>`;
   }
 
+  return `<svg ${iconProps}><rect height="5" rx="1" width="5" x="5" y="5"></rect><rect height="5" rx="1" width="5" x="14" y="5"></rect><rect height="5" rx="1" width="5" x="5" y="14"></rect><rect height="5" rx="1" width="5" x="14" y="14"></rect></svg>`;
+}
+
+function CategoryFilterIcon({ category }: { category: PlaceCategory | "전체" }) {
   return (
-    <svg {...baseProps}>
-      <rect height="5" rx="1" width="5" x="5" y="5" />
-      <rect height="5" rx="1" width="5" x="14" y="5" />
-      <rect height="5" rx="1" width="5" x="5" y="14" />
-      <rect height="5" rx="1" width="5" x="14" y="14" />
-    </svg>
+    <span
+      className="grid h-5 w-5 place-items-center"
+      dangerouslySetInnerHTML={{ __html: getCategoryIconSvg(category) }}
+    />
   );
 }
 
@@ -1119,6 +1088,9 @@ function createMarkerElement(
 ) {
   const marker = document.createElement("button");
   const markerBorder = isRouteHighlighted ? "#8fbf45" : categoryTone[place.category];
+  const markerIconColor = isActive ? "#ffffff" : markerBorder;
+  const markerIcon = getCategoryIconSvg(place.category, isCompact ? "h-4 w-4" : "h-[18px] w-[18px]");
+  const markerIconMarkup = `<span style="align-items:center;color:${markerIconColor};display:inline-flex;justify-content:center">${markerIcon}</span>`;
 
   marker.type = "button";
   marker.setAttribute("aria-label", `${place.name} 마커`);
@@ -1136,19 +1108,302 @@ function createMarkerElement(
   marker.style.display = "inline-flex";
   marker.style.font = "700 12px system-ui, sans-serif";
   marker.style.gap = "6px";
-  marker.style.height = isCompact ? "20px" : "34px";
+  marker.style.height = isCompact ? "28px" : "34px";
   marker.style.justifyContent = "center";
   marker.style.padding = isCompact ? "0" : "0 12px 0 8px";
-  marker.style.width = isCompact ? "20px" : "auto";
+  marker.style.width = isCompact ? "28px" : "auto";
   marker.style.whiteSpace = "nowrap";
-  marker.innerHTML = isCompact
-    ? `<span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${markerBorder}"></span>`
-    : `<span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${markerBorder}"></span>${place.name}`;
+  marker.innerHTML = isCompact ? markerIconMarkup : `${markerIconMarkup}<span>${place.name}</span>`;
 
   return marker;
 }
 
-export function InteractiveMap({ highlightedRoute = null, routeImportRequest = null }: InteractiveMapProps) {
+function getTemporaryWalkingRoutePath(chainPlaces: MapPlace[]) {
+  return chainPlaces.slice(1).reduce<Array<{ lat: number; lng: number }>>(
+    (path, place, index) => {
+      const previousPlace = chainPlaces[index];
+      const latDelta = Math.abs(place.lat - previousPlace.lat);
+      const lngDelta = Math.abs(place.lng - previousPlace.lng);
+
+      if (path.length === 0) {
+        path.push({ lat: previousPlace.lat, lng: previousPlace.lng });
+      }
+
+      path.push(
+        latDelta > lngDelta
+          ? { lat: place.lat, lng: previousPlace.lng }
+          : { lat: previousPlace.lat, lng: place.lng },
+      );
+      path.push({ lat: place.lat, lng: place.lng });
+
+      return path;
+    },
+    [],
+  );
+}
+
+type SearchIntent = {
+  areaKeywords: string[];
+  categories: PlaceCategory[];
+  labels: string[];
+  maxMinutes?: number;
+  preferFree: boolean;
+  preferIndoor: boolean;
+  query: string;
+};
+
+type SearchChainSuggestion = {
+  id: string;
+  places: MapPlace[];
+  reason: string;
+  title: string;
+  totalMinutes: number;
+};
+
+type SearchRecommendationState = {
+  chains: SearchChainSuggestion[];
+  intentLabels: string[];
+  query: string;
+};
+
+function hasAnyKeyword(query: string, keywords: string[]) {
+  return keywords.some((keyword) => query.includes(keyword));
+}
+
+function uniqueCategories(categoriesToUnique: PlaceCategory[]) {
+  return categoriesToUnique.filter((categoryToUnique, index) => categoriesToUnique.indexOf(categoryToUnique) === index);
+}
+
+function parseSearchIntent(query: string): SearchIntent {
+  const normalizedQuery = query.trim().toLowerCase();
+  const categoriesFromQuery: PlaceCategory[] = [];
+  const labels: string[] = [];
+  const areaKeywords: string[] = [];
+
+  if (hasAnyKeyword(normalizedQuery, ["전시", "갤러리", "미디어", "아트"])) {
+    categoriesFromQuery.push("전시");
+    labels.push("전시");
+  }
+
+  if (hasAnyKeyword(normalizedQuery, ["카페", "커피", "디저트", "차"])) {
+    categoriesFromQuery.push("카페");
+    labels.push("카페");
+  }
+
+  if (hasAnyKeyword(normalizedQuery, ["팝업", "브랜드", "굿즈"])) {
+    categoriesFromQuery.push("팝업");
+    labels.push("팝업");
+  }
+
+  if (hasAnyKeyword(normalizedQuery, ["산책", "걷", "한강", "서울숲", "숲"])) {
+    categoriesFromQuery.push("산책");
+    labels.push("산책");
+  }
+
+  if (hasAnyKeyword(normalizedQuery, ["비 오는", "비오는", "비올", "우천", "실내"])) {
+    labels.push("실내 위주");
+  }
+
+  if (hasAnyKeyword(normalizedQuery, ["성수", "연무장", "서울숲", "건대", "자양", "광진", "성동"])) {
+    ["성수", "연무장", "서울숲", "건대", "자양", "광진", "성동"].forEach((areaKeyword) => {
+      if (normalizedQuery.includes(areaKeyword.toLowerCase())) {
+        areaKeywords.push(areaKeyword);
+      }
+    });
+  }
+
+  const hourMatch = normalizedQuery.match(/(\d+(?:\.\d+)?)\s*시간/);
+  const minuteMatch = normalizedQuery.match(/(\d+)\s*분/);
+  const maxMinutes = hourMatch
+    ? Math.round(Number.parseFloat(hourMatch[1]) * 60)
+    : minuteMatch
+      ? Number.parseInt(minuteMatch[1], 10)
+      : undefined;
+
+  if (maxMinutes) {
+    labels.push(`${maxMinutes}분 안팎`);
+  }
+
+  if (hasAnyKeyword(normalizedQuery, ["무료", "저렴", "가성비", "비싸지 않은"])) {
+    labels.push("예산 낮게");
+  }
+
+  return {
+    areaKeywords,
+    categories: uniqueCategories(categoriesFromQuery),
+    labels: labels.length > 0 ? labels : ["추천"],
+    maxMinutes,
+    preferFree: hasAnyKeyword(normalizedQuery, ["무료", "저렴", "가성비", "비싸지 않은"]),
+    preferIndoor: hasAnyKeyword(normalizedQuery, ["비 오는", "비오는", "비올", "우천", "실내"]),
+    query,
+  };
+}
+
+function getPlaceSearchText(place: MapPlace) {
+  return [place.name, place.category, place.address, place.description, place.price, place.hours, ...place.tags]
+    .join(" ")
+    .toLowerCase();
+}
+
+function scorePlaceForSearch(place: MapPlace, intent: SearchIntent, index: number) {
+  const text = getPlaceSearchText(place);
+  const normalizedQuery = intent.query.toLowerCase();
+  let score = Math.max(0, 80 - index);
+
+  if (intent.categories.includes(place.category)) {
+    score += 80;
+  }
+
+  intent.areaKeywords.forEach((keyword) => {
+    if (text.includes(keyword.toLowerCase())) {
+      score += 45;
+    }
+  });
+
+  normalizedQuery
+    .split(/\s+/)
+    .filter((word) => word.length >= 2)
+    .forEach((word) => {
+      if (text.includes(word)) {
+        score += 12;
+      }
+    });
+
+  if (intent.preferIndoor && place.category !== "산책") {
+    score += 24;
+  }
+
+  if (intent.preferFree && place.price.includes("무료")) {
+    score += 24;
+  }
+
+  score += Math.min(30, place.savedBy / 120);
+  score -= parseMeters(place.distance) / 250;
+
+  return score;
+}
+
+function getSearchCategorySequences(intent: SearchIntent): PlaceCategory[][] {
+  const requested = intent.categories;
+
+  if (requested.length >= 2) {
+    return [
+      requested,
+      uniqueCategories([...requested, "카페", "산책"]).slice(0, 4),
+      uniqueCategories(["팝업", ...requested, "카페"]).slice(0, 4),
+    ];
+  }
+
+  if (requested[0] === "전시") {
+    return [
+      ["전시", "카페", "팝업"],
+      ["전시", "산책", "카페"],
+      ["카페", "전시", "팝업"],
+    ];
+  }
+
+  if (requested[0] === "카페") {
+    return [
+      ["카페", "전시", "팝업"],
+      ["카페", "산책", "전시"],
+      ["팝업", "카페", "산책"],
+    ];
+  }
+
+  if (requested[0] === "팝업") {
+    return [
+      ["팝업", "카페", "전시"],
+      ["팝업", "팝업", "카페"],
+      ["카페", "팝업", "산책"],
+    ];
+  }
+
+  if (requested[0] === "산책") {
+    return [
+      ["산책", "카페", "전시"],
+      ["전시", "카페", "산책"],
+      ["카페", "산책", "팝업"],
+    ];
+  }
+
+  if (intent.preferIndoor) {
+    return [
+      ["전시", "카페", "팝업"],
+      ["팝업", "카페", "전시"],
+      ["카페", "전시", "카페"],
+    ];
+  }
+
+  return [
+    ["전시", "카페", "팝업"],
+    ["팝업", "카페", "산책"],
+    ["카페", "전시", "산책"],
+  ];
+}
+
+function buildSearchRecommendations(query: string): SearchRecommendationState {
+  const intent = parseSearchIntent(query);
+  const scoredPlaces = places
+    .map((place, index) => ({ place, score: scorePlaceForSearch(place, intent, index) }))
+    .sort((a, b) => b.score - a.score);
+  const chains = getSearchCategorySequences(intent)
+    .map((sequence, sequenceIndex) => {
+      const usedPlaceIds = new Set<string>();
+      const selectedPlaces = sequence
+        .map((category) => {
+          const matchedPlace =
+            scoredPlaces.find(({ place }) => place.category === category && !usedPlaceIds.has(place.id)) ??
+            scoredPlaces.find(({ place }) => !usedPlaceIds.has(place.id));
+
+          if (!matchedPlace) {
+            return null;
+          }
+
+          usedPlaceIds.add(matchedPlace.place.id);
+
+          return matchedPlace.place;
+        })
+        .filter((place): place is MapPlace => Boolean(place));
+      const totalMinutes = selectedPlaces.reduce((total, place) => total + parseMinutes(place.duration), 0);
+
+      return {
+        id: `search-${Date.now()}-${sequenceIndex}`,
+        places: selectedPlaces,
+        reason:
+          sequenceIndex === 0
+            ? "검색어와 가장 직접적으로 맞는 조합"
+            : sequenceIndex === 1
+              ? "동선과 체류 균형을 맞춘 조합"
+              : "조금 더 다양한 카테고리를 섞은 조합",
+        title:
+          sequenceIndex === 0
+            ? `${intent.labels[0]} 추천 체인`
+            : sequenceIndex === 1
+              ? "균형형 대안 체인"
+              : "확장형 대안 체인",
+        totalMinutes,
+      };
+    })
+    .filter((chain) => chain.places.length >= 2)
+    .filter((chain, index, allChains) => {
+      const signature = chain.places.map((place) => place.id).join("|");
+
+      return allChains.findIndex((candidate) => candidate.places.map((place) => place.id).join("|") === signature) === index;
+    })
+    .slice(0, 3);
+
+  return {
+    chains,
+    intentLabels: intent.labels,
+    query,
+  };
+}
+
+export function InteractiveMap({
+  highlightedRoute = null,
+  routeImportRequest = null,
+  searchRecommendationRequest = null,
+}: InteractiveMapProps) {
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KakaoMap | null>(null);
@@ -1160,9 +1415,13 @@ export function InteractiveMap({ highlightedRoute = null, routeImportRequest = n
   const [chainPlaces, setChainPlaces] = useState<MapPlace[]>([]);
   const [isCommunityOpen, setIsCommunityOpen] = useState(false);
   const [isPreviewActive, setIsPreviewActive] = useState(false);
+  const [isWalkingRouteActive, setIsWalkingRouteActive] = useState(false);
+  const [isExplorerCollapsed, setIsExplorerCollapsed] = useState(false);
+  const [isSearchPanelCollapsed, setIsSearchPanelCollapsed] = useState(false);
   const [isPublishOpen, setIsPublishOpen] = useState(false);
   const [publishedDraft, setPublishedDraft] = useState<TripDraft | null>(null);
   const [lastOptimizedChain, setLastOptimizedChain] = useState<MapPlace[] | null>(null);
+  const [searchRecommendations, setSearchRecommendations] = useState<SearchRecommendationState | null>(null);
   const [selectedPlaceId, setSelectedPlaceId] = useState(places[0].id);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [level, setLevel] = useState(DEFAULT_LEVEL);
@@ -1340,12 +1599,36 @@ export function InteractiveMap({ highlightedRoute = null, routeImportRequest = n
       setChainPlaces(routePlaces);
       setLastOptimizedChain(null);
       setIsPreviewActive(true);
+      setIsWalkingRouteActive(false);
       setIsPublishOpen(false);
       showToast(`${routeImportRequest.route.label} 코스를 나의 체인으로 가져왔어요.`);
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
   }, [routeImportRequest]);
+
+  useEffect(() => {
+    if (!searchRecommendationRequest) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const recommendationState = buildSearchRecommendations(searchRecommendationRequest.query);
+
+      setSearchRecommendations(recommendationState);
+      setIsExplorerCollapsed(true);
+      setIsSearchPanelCollapsed(false);
+
+      if (recommendationState.chains.length === 0) {
+        showToast("검색어에 맞는 체인 후보를 찾지 못했어요. 장소나 카테고리를 조금 더 직접적으로 입력해 주세요.");
+        return;
+      }
+
+      showToast(`'${searchRecommendationRequest.query}' 기준으로 ${recommendationState.chains.length}개 체인을 계산했어요.`);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchRecommendationRequest]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -1406,14 +1689,15 @@ export function InteractiveMap({ highlightedRoute = null, routeImportRequest = n
       return;
     }
 
-    const linePath = chainPlaces.map((place) => new maps.LatLng(place.lat, place.lng));
+    const routePath = isWalkingRouteActive ? getTemporaryWalkingRoutePath(chainPlaces) : chainPlaces;
+    const linePath = routePath.map((place) => new maps.LatLng(place.lat, place.lng));
     const chainLine = new maps.Polyline({
       endArrow: true,
       path: linePath,
-      strokeColor: "#6e8ff7",
-      strokeOpacity: 0.86,
+      strokeColor: isWalkingRouteActive ? "#8fbf45" : "#6e8ff7",
+      strokeOpacity: isWalkingRouteActive ? 0.96 : 0.86,
       strokeStyle: "solid",
-      strokeWeight: 6,
+      strokeWeight: isWalkingRouteActive ? 7 : 6,
     });
 
     chainLine.setMap(map);
@@ -1423,7 +1707,7 @@ export function InteractiveMap({ highlightedRoute = null, routeImportRequest = n
       chainLine.setMap(null);
       chainLineRef.current = null;
     };
-  }, [chainPlaces, isPreviewActive]);
+  }, [chainPlaces, isPreviewActive, isWalkingRouteActive]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -1531,6 +1815,7 @@ export function InteractiveMap({ highlightedRoute = null, routeImportRequest = n
 
       if (nextPlaces.length < 2) {
         setIsPreviewActive(false);
+        setIsWalkingRouteActive(false);
       }
 
       return nextPlaces;
@@ -1622,15 +1907,60 @@ export function InteractiveMap({ highlightedRoute = null, routeImportRequest = n
   function clearChain() {
     setChainPlaces([]);
     setIsPreviewActive(false);
+    setIsWalkingRouteActive(false);
   }
 
   function toggleChainPreview() {
     if (chainPlaces.length < 2) {
       setIsPreviewActive(false);
+      setIsWalkingRouteActive(false);
       return;
     }
 
-    setIsPreviewActive((isActive) => !isActive);
+    setIsPreviewActive((isActive) => {
+      const nextIsActive = !isActive;
+
+      if (!nextIsActive) {
+        setIsWalkingRouteActive(false);
+      }
+
+      return nextIsActive;
+    });
+  }
+
+  function toggleWalkingRoutePreview() {
+    if (chainPlaces.length < 2) {
+      setIsPreviewActive(false);
+      setIsWalkingRouteActive(false);
+      return;
+    }
+
+    const nextIsActive = !isWalkingRouteActive;
+
+    setIsPreviewActive(true);
+    setIsWalkingRouteActive(nextIsActive);
+    showToast(
+      nextIsActive
+        ? "임시 보행 경로를 표시했어요. 실제 보행망 데이터가 들어오면 이 라인을 교체하면 됩니다."
+        : "일반 체인 미리보기로 돌아왔어요.",
+    );
+  }
+
+  function previewSearchChain(chain: SearchChainSuggestion) {
+    setChainPlaces(chain.places);
+    setLastOptimizedChain(null);
+    setIsPreviewActive(true);
+    setIsWalkingRouteActive(false);
+    showToast(`${chain.title}을 지도에 미리 표시했어요.`);
+  }
+
+  function applySearchChain(chain: SearchChainSuggestion) {
+    setChainPlaces(chain.places);
+    setLastOptimizedChain(null);
+    setIsPreviewActive(true);
+    setIsWalkingRouteActive(false);
+    setSearchRecommendations(null);
+    showToast(`${chain.title}을 나의 체인에 적용했어요.`);
   }
 
   function publishDraft(draft: TripDraft) {
@@ -1668,15 +1998,40 @@ export function InteractiveMap({ highlightedRoute = null, routeImportRequest = n
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_0%,transparent_58%,rgba(15,23,42,0.14)_100%)]" />
 
-      <aside className="glass-panel absolute bottom-10 left-4 top-4 z-20 hidden w-[360px] min-w-0 flex-col overflow-hidden rounded-lg p-3 xl:flex">
+      <aside
+        className={cn(
+          "glass-panel absolute left-4 z-20 hidden w-[360px] min-w-0 flex-col overflow-hidden rounded-lg p-3 xl:flex",
+          isExplorerCollapsed ? "bottom-10 h-auto" : searchRecommendations ? "bottom-10 top-[136px]" : "bottom-10 top-4",
+        )}
+      >
         <div className="flex items-start justify-between gap-3 px-1">
           <div>
             <p className="text-xs font-semibold text-primary">Place Explorer</p>
             <h2 className="mt-1 text-lg font-bold">장소 탐색</h2>
           </div>
-          <Badge tone="blue">{visiblePlaces.length}곳</Badge>
+          <div className="flex items-center gap-2">
+            <Badge tone="blue">{visiblePlaces.length}곳</Badge>
+            <button
+              aria-label={isExplorerCollapsed ? "장소 탐색 펼치기" : "장소 탐색 접기"}
+              className="grid h-8 w-8 place-items-center rounded-sm text-sm font-bold text-muted transition hover:bg-surface-muted hover:text-foreground"
+              onClick={() => {
+                const nextIsCollapsed = !isExplorerCollapsed;
+
+                setIsExplorerCollapsed(nextIsCollapsed);
+
+                if (!nextIsCollapsed) {
+                  setIsSearchPanelCollapsed(true);
+                }
+              }}
+              type="button"
+            >
+              {isExplorerCollapsed ? "▴" : "▾"}
+            </button>
+          </div>
         </div>
 
+        {!isExplorerCollapsed && (
+          <>
         <label className="mt-3 block">
           <span className="sr-only">장소 검색</span>
           <input
@@ -1804,7 +2159,94 @@ export function InteractiveMap({ highlightedRoute = null, routeImportRequest = n
             </div>
           )}
         </div>
+          </>
+        )}
       </aside>
+
+      {searchRecommendations && (
+        <aside className="glass-panel absolute left-4 top-4 z-30 hidden w-[360px] rounded-lg p-4 shadow-panel xl:block">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-success">Smart Search</p>
+              <h2 className="mt-1 truncate text-lg font-bold">검색 기반 체인 후보</h2>
+              <p className="mt-1 truncate text-xs font-semibold text-muted">
+                &quot;{searchRecommendations.query}&quot;
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                aria-label={isSearchPanelCollapsed ? "검색 후보 펼치기" : "검색 후보 접기"}
+                className="grid h-8 w-8 place-items-center rounded-sm text-sm font-bold text-muted transition hover:bg-surface-muted hover:text-foreground"
+                onClick={() => {
+                  const nextIsCollapsed = !isSearchPanelCollapsed;
+
+                  setIsSearchPanelCollapsed(nextIsCollapsed);
+
+                  if (!nextIsCollapsed) {
+                    setIsExplorerCollapsed(true);
+                  }
+                }}
+                type="button"
+              >
+                {isSearchPanelCollapsed ? "▾" : "▴"}
+              </button>
+              <button
+                aria-label="검색 추천 닫기"
+                className="grid h-8 w-8 place-items-center rounded-sm text-sm font-bold text-muted transition hover:bg-surface-muted hover:text-foreground"
+                onClick={() => setSearchRecommendations(null)}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+
+          {!isSearchPanelCollapsed && (
+            <>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {searchRecommendations.intentLabels.map((label) => (
+              <span
+                className="rounded-xs border border-success/20 bg-success/10 px-2 py-1 text-xs font-bold text-success"
+                key={label}
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+
+          <div className="mt-3 grid gap-2">
+            {searchRecommendations.chains.map((chain) => (
+              <article className="rounded-sm border border-border bg-surface/78 p-3" key={chain.id}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold">{chain.title}</p>
+                    <p className="mt-1 text-xs leading-5 text-muted">{chain.reason}</p>
+                  </div>
+                  <span className="shrink-0 rounded-xs bg-surface-muted px-2 py-1 text-xs font-bold text-muted-strong">
+                    {chain.places.length}곳
+                  </span>
+                </div>
+                <p className="mt-2 truncate text-xs font-semibold text-muted">
+                  {chain.places.map((place) => place.name).join(" → ")}
+                </p>
+                <div className="mt-3 grid grid-cols-[1fr_1fr_auto] gap-2">
+                  <Button onClick={() => previewSearchChain(chain)} size="sm" variant="secondary">
+                    미리보기
+                  </Button>
+                  <Button onClick={() => applySearchChain(chain)} size="sm">
+                    체인 적용
+                  </Button>
+                  <span className="grid h-9 place-items-center rounded-sm border border-border bg-surface px-3 text-xs font-bold text-muted-strong">
+                    {chain.totalMinutes}분
+                  </span>
+                </div>
+              </article>
+            ))}
+          </div>
+            </>
+          )}
+        </aside>
+      )}
 
       <div className="glass-panel absolute right-4 top-4 z-20 grid gap-2 rounded-lg p-2">
         <Button
@@ -1925,6 +2367,7 @@ export function InteractiveMap({ highlightedRoute = null, routeImportRequest = n
         chainPlaces={chainPlaces}
         isDragOver={isChainDropActive}
         isPreviewActive={isPreviewActive}
+        isWalkingRouteActive={isWalkingRouteActive}
         onClear={clearChain}
         onDragLeave={() => setIsChainDropActive(false)}
         onDragOver={() => setIsChainDropActive(Boolean(draggedPlaceId))}
@@ -1936,6 +2379,7 @@ export function InteractiveMap({ highlightedRoute = null, routeImportRequest = n
         onPublish={() => setIsPublishOpen(true)}
         onRemovePlace={removePlaceFromChain}
         onReorderPlace={reorderChainPlaces}
+        onWalkingRoute={toggleWalkingRoutePreview}
       />
 
       {isPublishOpen && (
