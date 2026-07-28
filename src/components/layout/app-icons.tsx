@@ -98,3 +98,38 @@ export function BookmarkIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function SparklesIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M12 3v4" />
+      <path d="M12 17v4" />
+      <path d="M3 12h4" />
+      <path d="M17 12h4" />
+      <path d="m6 6 2.5 2.5" />
+      <path d="m15.5 15.5 2.5 2.5" />
+      <path d="m18 6-2.5 2.5" />
+      <path d="m8.5 15.5-2.5 2.5" />
+      <circle cx="12" cy="12" r="2.2" />
+    </svg>
+  );
+}
+
+export function ArrowRightIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps} strokeWidth={2.4}>
+      <path d="M5 12h14" />
+      <path d="m13 6 6 6-6 6" />
+    </svg>
+  );
+}
+
+export function LightbulbIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M9 18h6" />
+      <path d="M10 22h4" />
+      <path d="M12 2a6 6 0 0 0-4 10.47c.53.51.9 1.16 1.06 1.87L9.3 16h5.4l.24-1.66c.16-.71.53-1.36 1.06-1.87A6 6 0 0 0 12 2z" />
+    </svg>
+  );
+}
