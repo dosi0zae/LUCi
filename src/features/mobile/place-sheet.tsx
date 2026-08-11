@@ -1,21 +1,59 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
-import type { MobilePlace } from "@/features/mobile/mobile-data";
+import { getCafeMenu, type MobilePlace } from "@/features/mobile/mobile-data";
+import { cn } from "@/lib/utils";
+
+const CLOSE_ANIMATION_MS = 200;
 
 type PlaceSheetProps = {
   place: MobilePlace;
   isInChain: boolean;
+  likedMenuIds: Set<string>;
   onAddToChain: (place: MobilePlace) => void;
   onClose: () => void;
+  onToggleMenuLike: (key: string) => void;
 };
 
-export function PlaceSheet({ isInChain, onAddToChain, onClose, place }: PlaceSheetProps) {
+export function PlaceSheet({
+  isInChain,
+  likedMenuIds,
+  onAddToChain,
+  onClose,
+  onToggleMenuLike,
+  place,
+}: PlaceSheetProps) {
+  const [isClosing, setIsClosing] = useState(false);
+  const menuItems =
+    place.category === "카페"
+      ? [...getCafeMenu(place)].sort((a, b) => {
+          const likesA = a.baseLikes + (likedMenuIds.has(`${place.id}:${a.name}`) ? 1 : 0);
+          const likesB = b.baseLikes + (likedMenuIds.has(`${place.id}:${b.name}`) ? 1 : 0);
+          return likesB - likesA;
+        })
+      : [];
+
+  function handleClose() {
+    setIsClosing(true);
+    window.setTimeout(onClose, CLOSE_ANIMATION_MS);
+  }
+
   return (
-    <div className="sheet-backdrop absolute inset-0 z-30 flex items-end justify-center bg-black/35">
+    <div
+      className={cn(
+        "absolute inset-0 z-30 flex items-end justify-center bg-black/35",
+        isClosing ? "sheet-backdrop-out" : "sheet-backdrop",
+      )}
+      onClick={handleClose}
+    >
       <div
-        className="glass-panel sheet-panel w-full rounded-t-xl p-5 pb-6"
+        className={cn(
+          "glass-panel max-h-[85vh] w-full overflow-y-auto rounded-t-xl p-5 pb-6",
+          isClosing ? "sheet-panel-out" : "sheet-panel",
+        )}
+        onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-label={`${place.name} 상세 정보`}
       >
@@ -35,7 +73,7 @@ export function PlaceSheet({ isInChain, onAddToChain, onClose, place }: PlaceShe
           <button
             aria-label="장소 상세 닫기"
             className="grid h-8 w-8 shrink-0 place-items-center rounded-sm text-muted hover:bg-surface-muted hover:text-foreground"
-            onClick={onClose}
+            onClick={handleClose}
             type="button"
           >
             ×
@@ -72,6 +110,49 @@ export function PlaceSheet({ isInChain, onAddToChain, onClose, place }: PlaceShe
           <p className="text-sm font-semibold">{place.hours}</p>
           <p className="text-xs font-semibold text-muted">{place.savedBy.toLocaleString()}명이 저장</p>
         </div>
+
+        {menuItems.length > 0 && (
+          <div className="mt-3">
+            <h3 className="text-sm font-extrabold">메뉴</h3>
+            <div className="mt-2 grid gap-1.5">
+              {menuItems.map((item, index) => {
+                const key = `${place.id}:${item.name}`;
+                const isLiked = likedMenuIds.has(key);
+                const likeCount = item.baseLikes + (isLiked ? 1 : 0);
+
+                return (
+                  <div
+                    className="flex items-center gap-2 rounded-sm border border-border bg-surface/78 px-3 py-2"
+                    key={item.name}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center gap-1.5 truncate text-sm font-bold">
+                        {item.name}
+                        {index === 0 && (
+                          <span className="shrink-0 rounded-xs bg-primary-soft px-1.5 py-0.5 text-[10px] font-extrabold text-primary-strong">
+                            인기
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-muted">{item.price}</p>
+                    </div>
+                    <button
+                      aria-label={isLiked ? `${item.name} 좋아요 취소` : `${item.name} 좋아요`}
+                      className={cn(
+                        "flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold transition",
+                        isLiked ? "bg-primary-soft text-primary-strong" : "bg-surface-muted text-muted-strong",
+                      )}
+                      onClick={() => onToggleMenuLike(key)}
+                      type="button"
+                    >
+                      {isLiked ? "♥" : "♡"} {likeCount}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <Button
           className="mt-4 w-full"

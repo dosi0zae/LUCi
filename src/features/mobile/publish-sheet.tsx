@@ -77,8 +77,10 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
           {visibilityOptions.map((option) => (
             <button
               className={cn(
-                "flex items-center justify-between rounded-sm border border-border bg-surface px-3 py-2.5 text-left",
-                visibility === option.id && "border-primary bg-primary-soft",
+                "flex items-center justify-between rounded-sm border px-3 py-2.5 text-left",
+                visibility === option.id
+                  ? "border-primary bg-primary-soft"
+                  : "border-border bg-surface",
               )}
               key={option.id}
               onClick={() => setVisibility(option.id)}
@@ -90,8 +92,8 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
               </span>
               <span
                 className={cn(
-                  "h-4 w-4 shrink-0 rounded-full border border-border-strong",
-                  visibility === option.id && "border-primary bg-primary",
+                  "h-4 w-4 shrink-0 rounded-full border",
+                  visibility === option.id ? "border-primary bg-primary" : "border-border-strong",
                 )}
               />
             </button>

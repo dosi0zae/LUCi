@@ -33,6 +33,177 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase S: Feature Backlog Items 1-4
+
+Status: Complete
+
+Scope — implemented the top 4 items from the Phase R backlog:
+
+- 저장한 코스 목록: `ProfileTab`에 "만든 코스 / 저장한 코스" 서브탭 추가, `savedTrips` derived list를 `mobile-app-shell.tsx`에서 넘김
+- 코스 공유: `TripDetailSheet`에 공유하기(`navigator.share` → 클립보드 폴백) + 이미지로 저장(SVG→canvas→PNG 다운로드) 버튼 추가
+- 수동 코스 빌더 진입점: 이미 존재하던 `addToChain(!hasResult)` 경로 자체는 그대로 두고, 첫 화면 링크는 다시 "바로 살펴보기" 하나로 정리 (진입은 결과 화면 노출 후 탐색 탭을 통해)
+- 지도 리셋 버튼: `ConstellationCard` 줌 컨트롤에 "전체 동선 보기" 버튼 추가, `setBounds` 재호출로 원래 뷰 복귀
+
+Verification: `pnpm lint` / `tsc --noEmit` passed; each item click-tested live in the browser.
+
+### Mobile Phase T: Backlog Items 5/6/8/9 + Per-Place Menu Likes
+
+Status: Complete
+
+Scope — implemented backlog items 5, 6, 8, 9, plus a new feature requested alongside them (menu-level likes per place):
+
+- **로그인/내 데이터 영속화 (5)**: 실제 백엔드/OAuth는 아직 없음(범위 밖) — 대신 `isSignedIn`, `publishedTrips`, `likedIds`, `savedIds`, `likedMenuIds`, `recentSearches`를 `localStorage`(`tripchain:profile`)에 저장하고 마운트 시 복원. SSR과의 hydration mismatch를 피하려고 초기 렌더는 항상 빈 상태로 시작하고, 마운트 후 effect에서 복원 (`react-hooks/set-state-in-effect` 규칙은 이 1회성 hydration에 한해 명시적으로 disable).
+- **크리에이터 프로필 (6)**: 새 `creator-profile-sheet.tsx` 추가. `TripDetailSheet`에서 작성자 이름을 누르면 그 사람이 만든 코스 전체 + 합산 좋아요 수를 보여주는 전체화면 시트가 뜸.
+- **최근 검색어 (8)**: 검색 성공 시 `recentSearches`에 push(중복 제거, 최대 5개, localStorage 저장). 첫 화면에서 기록이 있으면 로테이팅 예시 문구 대신 "최근 검색" 칩으로 바뀌어 보여줌 — 기록이 없으면 기존 로테이팅 문구 그대로.
+- **GPS 기반 내 주변 (9)**: 검색창 안에 위치 아이콘 버튼 추가. `navigator.geolocation`으로 좌표를 받아 `nearestAreaId()`(하버사인 거리 계산, `mobile-data.ts`)로 성수/홍대/강남 중 가장 가까운 지역을 골라 바로 코스를 생성. 권한 거부/미지원 시 조용히 실패(스피너 해제)하도록 처리.
+- **장소별 메뉴 + 좋아요** (신규 요청): 카페 카테고리 장소에 한해 메뉴 4~6개를 결정론적으로 생성(`getCafeMenu()`, place id 해시 기반 — Math.random 없음, hydration-safe)하고, 장소 상세 시트에 메뉴 목록 + 하트 좋아요 버튼을 추가. 좋아요 수 기준 정렬, 1위 메뉴에 "인기" 배지. `likedMenuIds`는 `{placeId}:{menuName}` 키로 저장/영속화.
+
+Verification: `pnpm lint` / `tsc --noEmit` passed. Browser-tested: recent-search chip persists across reload; sign-in state persists across reload; geolocation denial resets the spinner without hanging; creator profile shows correct aggregated trips/likes; menu heart toggle updates count and re-sorts, and the liked key round-trips through localStorage.
+
+Known gaps not covered here: item 7 (코스가 지역 하나에 갇힘) and items 10-13 below remain open.
+
+### Mobile Phase R: Feature Backlog (compared against the web app at `/`)
+
+Status: Notes only — items 1-4 done in Phase S, 5/6/8/9 done in Phase T, 7 and 10-13 still open
+
+Scope: reviewed the frozen web app (`/`, `interactive-map.tsx` and friends) against the current mobile app (`/mobile`) to find functional gaps worth developing next.
+
+7. **코스가 지역 하나에만 갇혀 있음** — 성수/홍대/강남 중 한 곳으로만 코스가 만들어진다. 인접 지역을 넘나드는 하루 코스는 현재 구조상(카테고리 안에서만 장소 pool을 뽑음) 불가능.
+10. **좋아요한 코스 목록도 없음** — Phase S에서 "저장한 코스"는 만들었지만, `likedIds`(하트)는 여전히 카운트로만 쓰이고 별도로 다시 볼 목록이 없다. 저장 탭과 같은 패턴으로 바로 추가 가능.
+11. **장소 자체를 북마크하는 기능이 없음** — 장소 카드의 "담기" 라벨은 사실 클릭해도 상세 시트를 열 뿐, 코스에 넣기 전 장소만 따로 찜해두는 기능은 없다. "코스는 아직 안 정했지만 이 장소는 나중에 가보고 싶다" 케이스를 못 다룸.
+12. **카카오톡 공유가 없음** — Phase S에서 넣은 공유는 Web Share API/클립보드 기반인데, 한국 사용자 앱이라 카카오톡 공유하기가 훨씬 자연스럽다. 이미 카카오 지도 SDK 키를 쓰고 있어서, 카카오 디벨로퍼스 콘솔에서 카카오톡 공유 API를 같은 앱에 활성화하면 붙일 수 있음.
+13. **AI 추천 실패 시 폴백 여부가 사용자에게 안 보임** — `/api/recommend`가 이미 `usedAI` 플래그를 응답에 담아 보내는데, 프론트엔드에서 그 값을 아예 안 쓰고 버린다. AI가 실패해서 기본 추천으로 대체된 경우에도 사용자는 평소와 똑같이 보여서, 왜 이유(reason)가 안 보이는지 알 길이 없음 — 작은 신뢰성 개선 포인트.
+
+### Mobile Phase Q: Home/Explore/Ranking Polish Batch
+
+Status: Complete
+
+Scope — a large batch of small UI fixes/additions requested together:
+
+- **Real bug found and fixed**: the 성수/홍대/강남 selector chips (and the same pattern on the explore area chips, list/map toggle, and publish-sheet visibility options) went invisible when active — white text landed on a white background. Root cause: `cn()` was layering an "active" class (`bg-primary text-white`) on top of a "base" class (`bg-surface text-muted-strong`) that sets the *same* CSS properties; Tailwind's generated stylesheet order (not JSX class order) decided which one won, and `bg-surface` was winning. Fixed by making every such pair mutually exclusive via a ternary instead of `base + conditional-override`, everywhere this pattern appeared.
+- **Home results header**: the "OO 중심 코스" heading now shows the user's actual submitted prompt in bold instead; the AI's `reason` text below it had its own box/padding removed so it lines up flush-left with everything else in the card (this was never a `text-align` bug — both were already `text-align: start`, the reason box's own `p-3` padding was just indenting it further than its neighbors).
+- **Chain cards redesigned**: 위로/아래로/삭제 replaced with compact icon buttons (`ChevronUpIcon`/`ChevronDownIcon`/`TrashIcon`) sitting beside the place name instead of a full-width button row below — cuts each card from two rows to one. Added real drag-to-reorder via a grip handle (`GripIcon`) using Pointer Events + `setPointerCapture` (not native HTML5 `draggable`, which doesn't work reliably on touch) — works for both mouse and touch.
+- **"OO의 다른 장소" capped**: was showing every remaining place in the area (up to 46); now shows the top 3 per category (by save count) instead, so at most ~12 instead of dozens.
+- **Constellation card added to Home results** (`src/features/mobile/constellation-card.tsx`): a scaled-down inline version of the web app's SNS-share "별자리 카드" — same dark/glow aesthetic, place coordinates normalized into an SVG viewBox and connected with a glowing lime polyline, numbered stops as glowing dots. Inserted directly under the "OO 일대" coverage line, not a downloadable image like the web version — just a live visual.
+- **Place detail sheet**: tapping the dark backdrop now closes it the same as the × button, with a slide-down + fade exit animation (new `sheet-panel-out`/`sheet-backdrop-out` keyframes) instead of an instant unmount.
+- **"바로 살펴보기 >" link** added at the bottom of the pre-search hero, in `--success` green at low opacity — routes straight to the 탐색 (Explore) tab for people who'd rather browse existing courses than type a prompt. (Interpreted this as the intent behind "굳이 검색 안 하고 싶은 사람들" — flagging in case a literal "찾아보기 without typing" flow inside Home itself was actually meant instead.)
+- **Ranking tab rebuilt**: added a 주간 랭� / 실시간 랭킹 toggle (weekly = existing `rankScore`; real-time = a mock "activity" sort by likes+saves+comments, since there's no real time-series data yet) and an area filter chip row (전체/성수/홍대/강남), matching the explore tab's pattern.
+- **Ranking card width bug fixed**: cards were rendering 423px wide inside a 390px track (33px horizontal overflow, visible as cards bleeding off the right edge). Root cause: a classic CSS Grid gotcha — the `<article>` grid item had no `min-width: 0`, so unwrapped `truncate` title text forced the item's min-content size past its track width. Fixed by adding `min-w-0` to the grid item itself (not just descendants) — also applied proactively to the home chain cards and "다른 장소" list items, which had the same latent (if not yet visibly triggered) issue.
+- **Card alignment fixed between Explore and Ranking**: ranking cards had an inline rank-number badge before the thumbnail that explore cards didn't, pushing all ranking-card content 40px further right than explore-card content even though each card was internally consistent. Moved the rank number onto the thumbnail as a small overlay badge (same pattern already used on the home chain cards) so both tabs' cards now start content at the identical x-position (verified: both at 91px from card edge).
+
+Verification:
+
+- Passed: `pnpm lint`
+- Passed: `pnpm build`
+- Passed: browser checks for every item above — chip contrast (`background: rgb(79,141,247)`, `color: rgb(255,255,255)` when active), bold prompt heading, capped "다른 장소" count (12), constellation SVG rendering, backdrop-click-close (dialog fully removed after ~200ms), "바로 살펴보기" routing to Explore, ranking toggle + area filter text updating live, ranking card width (390px, matches its track) and title left-offset (91px, matches explore)
+
+### Mobile Phase P: Real AI Recommendations (Gemini)
+
+Status: Complete
+
+Scope:
+
+- Added `POST /api/recommend` (`src/app/api/recommend/route.ts`), a Next.js API route that calls Gemini server-side (key never exposed to the client) to turn the user's free-text sentence into structured intent, then hands that intent to a new local scoring engine to actually pick and order the chain — replacing the old `inferArea()`-only + fixed-first-4 logic for real submissions.
+- New pure module `src/features/mobile/recommend-engine.ts`: defines the shared attribute taxonomy (mirrors Phase M's place tags), scores every place in the target area (category match +50, each attribute-tag overlap +20, popularity as a small tiebreaker), then greedily builds the chain by rotating through the requested categories so it doesn't return 4 cafes in a row.
+- Model chosen: `gemini-flash-lite-latest`, not `gemini-flash-latest` — benchmarked both directly against the API first. The lite model responded in ~1.4s using ~270 tokens with equally good structured output, versus ~4.7s and ~1270 tokens (mostly an internal "thinking" pass) for the non-lite alias. `thinkingConfig.thinkingBudget: 0` was tried to speed up the non-lite model but returned `400 INVALID_ARGUMENT`, so lite was the right call rather than fighting that.
+- Client (`mobile-app-shell.tsx`): `recommend()` and the rotating-example tap now both call the API via a new async `startCourseFromPrompt()`, with a spinner in place of the arrow/lightbulb icon while in flight. `chooseArea()` (the area chip on the results screen) intentionally still uses the old synchronous `startCourse()` — switching area tabs should feel instant, not wait on a network round trip.
+- Robustness: if the Gemini call fails, times out (8s `AbortSignal.timeout`), returns malformed JSON, or `GEMINI_API_KEY` is unset, the API route itself falls back to the old `inferArea()` + local scoring (still runs through the same scoring engine, just with an empty intent) and always returns a valid 200 response — the client never has to distinguish AI vs fallback beyond an informational `usedAI` flag. The client also wraps the fetch in try/catch as a second safety net.
+- Surfaced the AI's one-line `reason` text under the quoted prompt on the results screen, so the recommendation doesn't feel like a black box.
+
+Verification:
+
+- Passed: `pnpm lint`
+- Passed: `pnpm build` (confirms `/api/recommend` registers as a dynamic server route)
+- Passed: direct `curl` test against `/api/recommend` — correct area + 4 relevant, non-duplicate place ids + reason text, `usedAI: true`
+- Passed: browser test — submitting "강남에서 쇼핑하고 분위기 좋은 저녁" correctly routed to Gangnam, picked a category-varied 4-place chain, and displayed the AI's reason line; no flash of an empty/incomplete results screen while the request was in flight (this was a real bug caught and fixed during this pass — `submittedPrompt` was originally set before the fetch resolved, flipping the layout to "results" before there were any results to show)
+
+Known limitation (not fixed this pass): the scoring engine doesn't account for geographic proximity between picks within an area — a recommended chain can span sub-areas that aren't realistically walkable together in one outing (e.g., 건대 + 자양 + 서울숲 in one Seongsu chain). The original static "first 4 places" design had the same issue; worth revisiting once there's a reason to prioritize it.
+
+### Mobile Phase O: 신사 → 신논현
+
+Status: Complete
+
+Scope:
+
+- Follow-up to Phase N: moved all 15 places still labeled 신사 over to 신논현 (Sinnonhyeon), per explicit instruction to fully commit to the 강남역/신논현 side rather than keep a 신사 remnant.
+- Relocated coordinates to real 신논현역/봉은사로 streets, renamed anything 신사/도산-specific (e.g. "프릳츠커피 도산" → "프릳츠커피 신논현", "세로수길 뒷골목" → "신논현 뒷골목길"), and updated descriptions that named 신사/도산 explicitly.
+- Updated `areaMeta.gangnam.coverage` ("강남역 · 신사 · 역삼 · 논현" → "강남역 · 신논현 · 역삼 · 논현 일대") and recomputed `center`.
+- Updated `inferArea()`'s Gangnam keyword regex: dropped the stale 압구정/청담 keywords (no place data has backed them since Phase N) and added 신논현/역삼/논현.
+- Fixed the seed trip title/description again (now "강남역에서 신논현까지 잇는 프리미엄 데이트") since two more of its referenced places moved.
+
+Verification:
+
+- Passed: `pnpm lint`
+- Passed: `pnpm build`
+- Passed: no duplicate ids, 150 places total
+- Passed: browser check — sub-area distribution now 신논현 15 / 강남역 9 / 논현 8 / 가로수길 11 / 역삼 7 = 50; coverage text and default recommended course both reflect 신논현
+
+### Mobile Phase N: Gangnam Re-centered on the 강남역~신사 Line
+
+Status: Complete
+
+Scope:
+
+- Gangnam beta area was skewed toward 신사~압구정 (Sinsa-Apgujeong); re-centered it on the 강남역~신사 corridor per explicit product direction.
+- Kept 신사 (15 places) and 가로수길 (11 places) as the northern anchor, unchanged.
+- Replaced the 압구정 (12 places) and 청담 (12 places) clusters — the previous southern/eastern anchor — with three new sub-areas along real Gangnam-daero/Teheran-ro geography: 강남역 (9), 역삼 (7), 논현 (8), for the same 50-place total.
+- Relocated coordinates to real Gangnam-station-district streets, renamed places where the old name was neighborhood-specific (e.g. "카페 온리 로데오" → "카페 온리 강남대로"), and rewrote descriptions that referenced 압구정/청담 by name.
+- Updated `areaMeta.gangnam.coverage` ("신사 · 압구정 · 가로수길" → "강남역 · 신사 · 역삼 · 논현 일대") and `center` (shifted south toward the new midpoint).
+- Fixed a consistency gap this surfaced: the `seed-gangnam-shopping` feed trip's title/description still said "신사 압구정" even though 2 of its 4 referenced places had moved — updated to match.
+
+Verification:
+
+- Passed: `pnpm lint`
+- Passed: `pnpm build`
+- Passed: no duplicate ids, 150 places total, confirmed via grep count
+- Passed: browser check — sub-area distribution confirmed (신사 15 / 강남역 9 / 논현 8 / 가로수길 11 / 역삼 7 = 50), coverage text and default recommended course both reflect the new corridor
+
+### Mobile Phase M: Place Naming + Attribute Tags (prep for AI matching)
+
+Status: Complete
+
+Scope:
+
+- Renamed all 150 places from generic "지역+장르" labels (e.g. "서울숲 브런치") to realistic-sounding business names, mixing invented independents with recognizable franchises for flavor (e.g. "프릳츠커피 뚝섬점", "나이키 라이즈 성수", "국제갤러리 신사") — explicitly mock/placeholder content per product direction, not factual claims about real locations.
+- Added a structured attribute-tag layer on top of the existing 2 flavor tags per place (now 4 tags each), drawn from a fixed taxonomy so natural-language intent can actually match against them later:
+  - 실내/외: 실내 · 실외 · 테라스
+  - 상황: 데이트 · 혼자 · 친구모임 · 가족동반 · 반려동반
+  - 분위기: 조용함 · 활기참 · 감성적 · 고급스러운 · 캐주얼 · 한적함
+  - 목적: 포토존 · 휴식 · 체험형 · 쇼핑
+- Tags assigned per-place based on each entry's actual description/category (e.g. outdoor-seating cafes got 실외, quiet work cafes got 혼자+조용함, pet popups got 반려동반), not applied uniformly.
+
+Verification:
+
+- Passed: `pnpm lint`
+- Passed: `pnpm build`
+- Passed: no duplicate place ids; exactly 150 place entries confirmed via grep count
+- Passed: browser check — new names render throughout (chain builder, "다른 장소" list, place detail sheet), and the detail sheet correctly shows all 4 tags per place
+
+Architecture Notes:
+
+- This directly unblocks the next phase (real AI recommendations): the plan is for the recommendation API to have Gemini extract structured intent from the user's sentence, then score/filter locally against these tags — mirroring `parseSearchIntent`/`scorePlaceForSearch` already proven out in the web app's `src/features/map/interactive-map.tsx`.
+- `.env.local` now also holds `GEMINI_API_KEY` (validated working against the `gemini-flash-latest` model — `gemini-2.0-flash` returned a quota error on this key's project, so `gemini-flash-latest` is the one to use in the API route).
+
+### Mobile Phase L: Place Catalog Expansion (5 → 50 per area)
+
+Status: Complete
+
+Scope:
+
+- Expanded `placesByArea` from 5 to 50 places per area (성수/홍대/강남), 150 total, ahead of wiring up a real AI recommendation step.
+- Seongsu: kept the original 5 curated places first (so the default auto-picked course and `seedFeedTrips` references stay stable), then added 45 more adapted from the web app's existing rich Seongsu dataset (`src/features/map/interactive-map.tsx`) — reused real content/coordinates rather than authoring from scratch, since that catalog already covers the same "건대·서울숲·뚝섬" footprint.
+- Hongdae and Gangnam: 45 new places each, hand-authored across their sub-areas (합정/망원/연남/연희/상수 · 신사/가로수길/압구정/청담) with plausible real-world coordinates.
+- Bumped the explore map's single-area zoom level (6 → 7) after noticing the map only shows pins inside its current viewport — Seongsu's real footprint now spans ~5km (Seoul Forest to Guui/Jayang), so a chunk of the far pins were being panned out of view at the old zoom.
+
+Verification:
+
+- Passed: `pnpm lint`
+- Passed: `pnpm build`
+- Passed: no duplicate place ids (checked via grep across the whole file)
+- Passed: browser check — home screen's "다른 장소" list shows all 46 non-default Seongsu places (46 + 4 in the default chain = 50); explore list/map correctly reflect the larger catalog
+
+Note (not a bug, just an observation for later): the explore map only renders pins inside the current Kakao Maps viewport/zoom, so at the default zoom for a single area you won't see literally all 50 pins at once — same as any map app. Zoom bump above helps but doesn't fully solve it; worth revisiting once real AI recommendations reduce how much a user needs to browse the raw map.
+
 ### Mobile Phase K: Search Input Polish + Icon Revert
 
 Status: Complete

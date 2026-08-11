@@ -27,8 +27,7 @@ export function TripFeedList({
   savedIds,
   trips,
 }: TripFeedListProps) {
-  const orderedTrips =
-    mode === "ranking" ? [...trips].sort((a, b) => b.rankScore - a.rankScore) : trips;
+  const orderedTrips = trips;
 
   if (orderedTrips.length === 0) {
     return (
@@ -47,7 +46,7 @@ export function TripFeedList({
 
         return (
           <article
-            className="rounded-lg border border-border bg-surface p-3.5 shadow-soft"
+            className="min-w-0 rounded-lg border border-border bg-surface p-3.5 shadow-soft"
             key={trip.id}
           >
             <button
@@ -56,17 +55,21 @@ export function TripFeedList({
               type="button"
             >
               <div className="flex items-start gap-3">
-                {mode === "ranking" && (
-                  <span
-                    className={cn(
-                      "grid h-7 w-7 shrink-0 place-items-center rounded-sm text-xs font-extrabold text-white",
-                      index === 0 ? "bg-primary" : "bg-muted",
+                {coverPlace && (
+                  <span className="relative shrink-0">
+                    <PlaceThumb category={coverPlace.category} size="lg" />
+                    {mode === "ranking" && (
+                      <span
+                        className={cn(
+                          "absolute -bottom-1 -left-1 grid h-5 w-5 place-items-center rounded-full text-[10px] font-extrabold text-white ring-2 ring-background",
+                          index === 0 ? "bg-primary" : "bg-muted",
+                        )}
+                      >
+                        {index + 1}
+                      </span>
                     )}
-                  >
-                    {index + 1}
                   </span>
                 )}
-                {coverPlace && <PlaceThumb category={coverPlace.category} size="lg" />}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <Badge tone="neutral">{areaMeta[trip.areaId].name}</Badge>

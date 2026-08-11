@@ -1,14 +1,20 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRightIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   CompassIcon,
+  GripIcon,
   HomeIcon,
   LightbulbIcon,
+  LocateIcon,
+  RefreshIcon,
   SearchIcon,
+  TrashIcon,
   TrophyIcon,
   UserIcon,
 } from "@/components/layout/app-icons";
@@ -16,25 +22,40 @@ import { cn } from "@/lib/utils";
 import {
   areaMeta,
   getPlaceById,
+  getPlaceImageUrl,
   getPlacesByIds,
   inferArea,
+  nearestAreaId,
   placesByArea,
   promptExamples,
   seedFeedTrips,
   type AreaId,
   type FeedTrip,
   type MobilePlace,
+  type PlaceCategory,
   type TripVisibility,
 } from "@/features/mobile/mobile-data";
+import { CategorySheet } from "@/features/mobile/category-sheet";
+import { ConstellationCard } from "@/features/mobile/constellation-card";
+import { CreatorProfileSheet } from "@/features/mobile/creator-profile-sheet";
 import { ExploreMap } from "@/features/mobile/explore-map";
+import { loadKakaoMaps } from "@/features/mobile/kakao-loader";
+import { OnboardingTour } from "@/features/mobile/onboarding-tour";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
 import { PublishSheet } from "@/features/mobile/publish-sheet";
+import { buildChain } from "@/features/mobile/recommend-engine";
 import { TripDetailSheet } from "@/features/mobile/trip-detail-sheet";
 import { TripFeedList } from "@/features/mobile/trip-feed-list";
 import { ProfileTab } from "@/features/mobile/profile-tab";
 
 type TabId = "home" | "explore" | "ranking" | "profile";
+
+const OTHER_PLACES_PER_CATEGORY = 3;
+const CATEGORY_ORDER: PlaceCategory[] = ["카페", "팝업", "전시", "산책"];
+const PROFILE_STORAGE_KEY = "tripchain:profile";
+const RECENTLY_VIEWED_LIMIT = 10;
+const TUTORIAL_STORAGE_KEY = "tripchain:tutorialSeen";
 
 const tabs: { id: TabId; label: string; icon: typeof HomeIcon }[] = [
   { id: "home", label: "홈", icon: HomeIcon },
@@ -45,24 +66,36 @@ const tabs: { id: TabId; label: string; icon: typeof HomeIcon }[] = [
 
 export function MobileAppShell() {
   const [activeTab, setActiveTab] = useState<TabId>("home");
+  const [tourPhase, setTourPhase] = useState<"hidden" | "intro" | "steps">("hidden");
 
   const [prompt, setPrompt] = useState("");
   const [submittedPrompt, setSubmittedPrompt] = useState("");
   const [areaId, setAreaId] = useState<AreaId>("seongsu");
   const [chainIds, setChainIds] = useState<string[]>([]);
+  const [draggingChainId, setDraggingChainId] = useState<string | null>(null);
+  const dragStateRef = useRef<{ id: string } | null>(null);
+  const chainListRef = useRef<HTMLDivElement | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+  const [viewingCategory, setViewingCategory] = useState<PlaceCategory | null>(null);
+  const [viewingAuthorHandle, setViewingAuthorHandle] = useState<string | null>(null);
   const [showPublish, setShowPublish] = useState(false);
   const [openTripId, setOpenTripId] = useState<string | null>(null);
 
   const [publishedTrips, setPublishedTrips] = useState<FeedTrip[]>([]);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [likedMenuIds, setLikedMenuIds] = useState<Set<string>>(new Set());
+  const [recentlyViewedTripIds, setRecentlyViewedTripIds] = useState<string[]>([]);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
   const [exploreView, setExploreView] = useState<"list" | "map">("list");
   const [exploreQuery, setExploreQuery] = useState("");
   const [exploreArea, setExploreArea] = useState<"all" | AreaId>("all");
+
+  const [rankingPeriod, setRankingPeriod] = useState<"weekly" | "live">("weekly");
+  const [rankingArea, setRankingArea] = useState<"all" | AreaId>("all");
 
   const hasResult = submittedPrompt.length > 0;
   const [exampleIndex, setExampleIndex] = useState(0);
@@ -79,12 +112,144 @@ export function MobileAppShell() {
     return () => window.clearInterval(intervalId);
   }, [hasResult]);
 
-  const showBottomNav = activeTab !== "home" || hasResult;
+  useEffect(() => {
+    // Warm up the Kakao SDK while the user is still on the search screen, so the
+    // constellation map is ready by the time a course appears instead of flashing
+    // the abstract fallback while the script loads.
+    const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
+    if (appKey) {
+      loadKakaoMaps(appKey).catch(() => undefined);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (!window.localStorage.getItem(TUTORIAL_STORAGE_KEY)) {
+        // One-time check on mount, not a reactive sync loop.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setTourPhase("intro");
+      }
+    } catch {
+      // Storage unavailable — just skip the tutorial rather than block the app.
+    }
+  }, []);
+
+  function startTour() {
+    setActiveTab("home");
+    setTourPhase("steps");
+  }
+
+  function endTour() {
+    setTourPhase("hidden");
+    setActiveTab("home");
+    try {
+      window.localStorage.setItem(TUTORIAL_STORAGE_KEY, "1");
+    } catch {
+      // Storage unavailable — the tutorial will just show again next visit.
+    }
+  }
+
+  const hasLoadedProfileRef = useRef(false);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(PROFILE_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as {
+          isSignedIn?: boolean;
+          publishedTrips?: FeedTrip[];
+          likedIds?: string[];
+          savedIds?: string[];
+          likedMenuIds?: string[];
+          recentlyViewedTripIds?: string[];
+        };
+
+        // One-time hydration from localStorage on mount, not a reactive sync loop.
+        /* eslint-disable react-hooks/set-state-in-effect */
+        if (parsed.isSignedIn) setIsSignedIn(true);
+        if (Array.isArray(parsed.publishedTrips)) setPublishedTrips(parsed.publishedTrips);
+        if (Array.isArray(parsed.likedIds)) setLikedIds(new Set(parsed.likedIds));
+        if (Array.isArray(parsed.savedIds)) setSavedIds(new Set(parsed.savedIds));
+        if (Array.isArray(parsed.likedMenuIds)) setLikedMenuIds(new Set(parsed.likedMenuIds));
+        if (Array.isArray(parsed.recentlyViewedTripIds)) {
+          setRecentlyViewedTripIds(parsed.recentlyViewedTripIds);
+        }
+        /* eslint-enable react-hooks/set-state-in-effect */
+      }
+    } catch {
+      // Malformed or unavailable storage — just start fresh.
+    } finally {
+      hasLoadedProfileRef.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedProfileRef.current) {
+      return;
+    }
+    try {
+      window.localStorage.setItem(
+        PROFILE_STORAGE_KEY,
+        JSON.stringify({
+          isSignedIn,
+          publishedTrips,
+          likedIds: [...likedIds],
+          savedIds: [...savedIds],
+          likedMenuIds: [...likedMenuIds],
+          recentlyViewedTripIds,
+        }),
+      );
+    } catch {
+      // Storage may be unavailable (private mode, quota) — persistence is best-effort.
+    }
+  }, [isSignedIn, publishedTrips, likedIds, savedIds, likedMenuIds, recentlyViewedTripIds]);
+
+  const [isRecommending, setIsRecommending] = useState(false);
+  const [recommendReason, setRecommendReason] = useState<string | null>(null);
+  const [isAiCourse, setIsAiCourse] = useState(false);
+
+  const showBottomNav = activeTab !== "home" || hasResult || tourPhase === "steps";
   const area = areaMeta[areaId];
   const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds]);
-  const otherPlaces = placesByArea[areaId].filter((place) => !chainIds.includes(place.id));
+  const otherPlacesByCategory = useMemo(() => {
+    const remaining = placesByArea[areaId].filter((place) => !chainIds.includes(place.id));
+    const byCategory = new Map<PlaceCategory, MobilePlace[]>();
+
+    for (const place of remaining) {
+      const bucket = byCategory.get(place.category) ?? [];
+      bucket.push(place);
+      byCategory.set(place.category, bucket);
+    }
+
+    return CATEGORY_ORDER.map((category) => ({
+      category,
+      places: (byCategory.get(category) ?? [])
+        .sort((a, b) => b.savedBy - a.savedBy)
+        .slice(0, OTHER_PLACES_PER_CATEGORY),
+    })).filter((group) => group.places.length > 0);
+  }, [areaId, chainIds]);
+
+  const viewingCategoryPlaces = useMemo(() => {
+    if (!viewingCategory) {
+      return [];
+    }
+    return placesByArea[areaId]
+      .filter((place) => place.category === viewingCategory && !chainIds.includes(place.id))
+      .sort((a, b) => b.savedBy - a.savedBy);
+  }, [areaId, chainIds, viewingCategory]);
 
   const allTrips = useMemo(() => [...publishedTrips, ...seedFeedTrips], [publishedTrips]);
+  const savedTrips = useMemo(
+    () => allTrips.filter((trip) => savedIds.has(trip.id)),
+    [allTrips, savedIds],
+  );
+  const recentlyViewedTrips = useMemo(
+    () =>
+      recentlyViewedTripIds
+        .map((id) => allTrips.find((trip) => trip.id === id))
+        .filter((trip): trip is FeedTrip => Boolean(trip)),
+    [allTrips, recentlyViewedTripIds],
+  );
   const selectedPlace = selectedPlaceId ? getPlaceById(selectedPlaceId) : null;
   const openTrip = allTrips.find((trip) => trip.id === openTripId) ?? null;
 
@@ -106,18 +271,84 @@ export function MobileAppShell() {
   );
   const exploreMapPlaces = exploreArea === "all" ? Object.values(placesByArea).flat() : placesByArea[exploreArea];
   const exploreMapCenter = exploreArea === "all" ? { lat: 37.5445, lng: 127.0 } : areaMeta[exploreArea].center;
-  const exploreMapLevel = exploreArea === "all" ? 9 : 6;
+  const exploreMapLevel = exploreArea === "all" ? 9 : 7;
+
+  const rankingTrips = useMemo(() => {
+    const filtered = allTrips.filter(
+      (trip) => rankingArea === "all" || trip.areaId === rankingArea,
+    );
+
+    if (rankingPeriod === "live") {
+      return [...filtered].sort(
+        (a, b) => b.likes + b.saved + b.comments - (a.likes + a.saved + a.comments),
+      );
+    }
+
+    return [...filtered].sort((a, b) => b.rankScore - a.rankScore);
+  }, [allTrips, rankingArea, rankingPeriod]);
 
   function startCourse(nextAreaId: AreaId, nextPrompt: string) {
+    const { placeIds } = buildChain({
+      areaId: nextAreaId,
+      categories: [],
+      attributes: [],
+      placeCount: 4,
+    });
+
     setSubmittedPrompt(nextPrompt);
     setAreaId(nextAreaId);
-    setChainIds(placesByArea[nextAreaId].slice(0, 4).map((place) => place.id));
+    setChainIds(placeIds);
+    setRecommendReason(null);
+    setIsAiCourse(false);
+  }
+
+  async function startCourseFromPrompt(nextPrompt: string) {
+    setIsRecommending(true);
+    setRecommendReason(null);
+    setIsAiCourse(true);
+
+    try {
+      const response = await fetch("/api/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: nextPrompt }),
+      });
+
+      if (!response.ok) {
+        throw new Error("recommend request failed");
+      }
+
+      const data = await response.json();
+      const isValidArea = (Object.keys(areaMeta) as AreaId[]).includes(data.areaId);
+
+      if (!isValidArea || !Array.isArray(data.placeIds) || data.placeIds.length === 0) {
+        throw new Error("recommend response malformed");
+      }
+
+      setAreaId(data.areaId);
+      setChainIds(data.placeIds);
+      setRecommendReason(typeof data.reason === "string" ? data.reason : null);
+      setSubmittedPrompt(nextPrompt);
+    } catch {
+      const fallbackAreaId = inferArea(nextPrompt);
+      const { placeIds } = buildChain({
+        areaId: fallbackAreaId,
+        categories: [],
+        attributes: [],
+        placeCount: 4,
+      });
+      setAreaId(fallbackAreaId);
+      setChainIds(placeIds);
+      setSubmittedPrompt(nextPrompt);
+    } finally {
+      setIsRecommending(false);
+    }
   }
 
   function recommend(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
     const nextPrompt = prompt.trim() || "오늘 분위기에 맞는 코스를 추천해줘";
-    startCourse(inferArea(nextPrompt), nextPrompt);
+    void startCourseFromPrompt(nextPrompt);
   }
 
   function chooseArea(nextAreaId: AreaId) {
@@ -125,6 +356,36 @@ export function MobileAppShell() {
       return;
     }
     startCourse(nextAreaId, submittedPrompt);
+  }
+
+  function refreshCourse() {
+    if (isAiCourse) {
+      void startCourseFromPrompt(submittedPrompt);
+      return;
+    }
+    startCourse(areaId, submittedPrompt);
+  }
+
+  function locateNearestArea() {
+    if (!navigator.geolocation) {
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nearest = nearestAreaId({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        startCourse(nearest, "내 주변 코스");
+        setIsLocating(false);
+      },
+      () => {
+        setIsLocating(false);
+      },
+      { timeout: 8000 },
+    );
   }
 
   function moveStop(index: number, direction: -1 | 1) {
@@ -141,6 +402,52 @@ export function MobileAppShell() {
 
   function removeStop(id: string) {
     setChainIds((current) => current.filter((placeId) => placeId !== id));
+  }
+
+  function reorderChainTo(id: string, toIndex: number) {
+    setChainIds((current) => {
+      const fromIndex = current.indexOf(id);
+      if (fromIndex === -1 || fromIndex === toIndex) {
+        return current;
+      }
+      const next = [...current];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+  }
+
+  function handleChainDragStart(event: ReactPointerEvent<HTMLButtonElement>, id: string) {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragStateRef.current = { id };
+    setDraggingChainId(id);
+  }
+
+  function handleChainDragMove(event: ReactPointerEvent<HTMLButtonElement>) {
+    const dragState = dragStateRef.current;
+    const container = chainListRef.current;
+    if (!dragState || !container) {
+      return;
+    }
+
+    const cards = [...container.querySelectorAll<HTMLElement>("[data-chain-id]")];
+    let targetIndex = cards.length - 1;
+
+    for (let i = 0; i < cards.length; i++) {
+      const rect = cards[i].getBoundingClientRect();
+      if (event.clientY < rect.top + rect.height / 2) {
+        targetIndex = i;
+        break;
+      }
+    }
+
+    reorderChainTo(dragState.id, targetIndex);
+  }
+
+  function handleChainDragEnd() {
+    dragStateRef.current = null;
+    setDraggingChainId(null);
   }
 
   function addToChain(place: MobilePlace) {
@@ -180,6 +487,7 @@ export function MobileAppShell() {
     setPrompt("");
     setSubmittedPrompt("");
     setChainIds([]);
+    setRecommendReason(null);
   }
 
   function toggleLike(id: string) {
@@ -206,9 +514,29 @@ export function MobileAppShell() {
     });
   }
 
+  function toggleMenuLike(key: string) {
+    setLikedMenuIds((current) => {
+      const next = new Set(current);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }
+
+  function viewTrip(trip: FeedTrip) {
+    setRecentlyViewedTripIds((current) =>
+      [trip.id, ...current.filter((id) => id !== trip.id)].slice(0, RECENTLY_VIEWED_LIMIT),
+    );
+    setOpenTripId(trip.id);
+  }
+
   const searchForm = (
     <form
       className="glass-panel flex min-h-14 items-center gap-2 rounded-xl p-2.5"
+      data-tour="search-form"
       onSubmit={recommend}
     >
       <SearchIcon className="h-5 w-5 shrink-0 text-muted" />
@@ -221,12 +549,33 @@ export function MobileAppShell() {
         value={prompt}
       />
       <button
+        aria-label="내 주변 지역으로 찾기"
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted transition hover:bg-surface-muted hover:text-foreground disabled:opacity-60"
+        disabled={isLocating}
+        onClick={locateNearestArea}
+        title="내 주변으로 찾기"
+        type="button"
+      >
+        {isLocating ? (
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-border-strong border-t-primary" />
+        ) : (
+          <LocateIcon className="h-4 w-4" />
+        )}
+      </button>
+      <button
         aria-label={prompt.trim() ? "이 문장으로 코스 검색" : "코스 자동 추천 받기"}
-        className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:bg-primary-strong"
+        className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:bg-primary-strong disabled:opacity-60"
+        disabled={isRecommending}
         title={prompt.trim() ? "검색" : "자동생성"}
         type="submit"
       >
-        {prompt.trim() ? <ArrowRightIcon className="h-4 w-4" /> : <LightbulbIcon className="h-4 w-4" />}
+        {isRecommending ? (
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+        ) : prompt.trim() ? (
+          <ArrowRightIcon className="h-4 w-4" />
+        ) : (
+          <LightbulbIcon className="h-4 w-4" />
+        )}
       </button>
     </form>
   );
@@ -301,11 +650,12 @@ export function MobileAppShell() {
                   {searchForm}
 
                   <button
-                    className="relative mt-7 block w-full text-center text-sm font-medium text-muted"
+                    className="relative mt-7 block w-full text-center text-sm font-medium text-muted disabled:opacity-60"
+                    disabled={isRecommending}
                     onClick={() => {
                       const example = promptExamples[exampleIndex];
                       setPrompt(example);
-                      startCourse(inferArea(example), example);
+                      void startCourseFromPrompt(example);
                     }}
                     type="button"
                   >
@@ -314,6 +664,16 @@ export function MobileAppShell() {
                     </span>
                   </button>
                 </div>
+
+                <button
+                  className="absolute inset-x-0 bottom-6 z-10 text-center text-xs font-semibold opacity-60 transition hover:opacity-100"
+                  data-tour="quick-browse"
+                  onClick={() => startCourse(areaId, "요즘 인기 있는 코스")}
+                  style={{ color: "var(--success)" }}
+                  type="button"
+                >
+                  바로 살펴보기 &gt;
+                </button>
               </div>
             ) : (
               <div className="relative flex min-h-full flex-col px-5 pb-24 pt-5">
@@ -332,8 +692,10 @@ export function MobileAppShell() {
                     {(Object.keys(areaMeta) as AreaId[]).map((id) => (
                       <button
                         className={cn(
-                          "shrink-0 rounded-sm border border-border bg-surface px-3 py-2 text-sm font-extrabold text-muted-strong",
-                          areaId === id && "border-primary bg-primary text-white",
+                          "shrink-0 rounded-sm border px-3 py-2 text-sm font-extrabold",
+                          areaId === id
+                            ? "border-primary bg-primary text-white"
+                            : "border-border bg-surface text-muted-strong",
                         )}
                         key={id}
                         onClick={() => chooseArea(id)}
@@ -345,94 +707,103 @@ export function MobileAppShell() {
                   </div>
 
                   <article className="rounded-lg border border-border bg-surface p-4 shadow-soft">
-                    <Badge tone="blue">AI 추천 코스</Badge>
-                    <h2 className="mt-3 text-xl font-extrabold">{area.name} 중심 코스</h2>
-                    <p className="mt-1 text-xs leading-5 text-muted">{area.coverage}</p>
-                    <p className="mt-3 rounded-sm bg-surface-muted p-3 text-xs font-semibold leading-5 text-muted-strong">
-                      “{submittedPrompt}”
+                    <div className="flex items-center justify-between gap-3">
+                      <Badge tone="blue">AI 추천 코스</Badge>
+                      <button
+                        aria-label="다른 코스 추천받기"
+                        className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary disabled:opacity-60"
+                        disabled={isRecommending}
+                        onClick={refreshCourse}
+                        title="다른 코스 추천받기"
+                        type="button"
+                      >
+                        <RefreshIcon className={cn("h-4 w-4", isRecommending && "animate-spin")} />
+                      </button>
+                    </div>
+                    <h2 className="mt-3 text-xl font-extrabold">{submittedPrompt}</h2>
+                    <p className="mt-1 text-xs leading-5 text-muted">
+                      {area.name} · {area.coverage}
                     </p>
+                    <div className="mt-3">
+                      <ConstellationCard places={chainPlaces} />
+                    </div>
+                    {recommendReason && (
+                      <p className="mt-2 text-xs leading-5 text-muted-strong">{recommendReason}</p>
+                    )}
                   </article>
 
-                  <div className="grid gap-2">
+                  <div className="grid gap-2" ref={chainListRef}>
                     {chainPlaces.map((place, index) => (
                       <article
-                        className="rounded-lg border border-border bg-surface p-3 shadow-soft"
+                        className={cn(
+                          "flex min-w-0 items-center gap-2 rounded-lg border border-border bg-surface p-2.5 shadow-soft transition",
+                          draggingChainId === place.id && "opacity-60",
+                        )}
+                        data-chain-id={place.id}
                         key={place.id}
                       >
                         <button
-                          className="flex w-full items-center gap-3 text-left"
+                          aria-label="순서 변경 (끌어서 이동)"
+                          className="grid h-8 w-6 shrink-0 touch-none place-items-center text-muted"
+                          onPointerCancel={handleChainDragEnd}
+                          onPointerDown={(event) => handleChainDragStart(event, place.id)}
+                          onPointerMove={handleChainDragMove}
+                          onPointerUp={handleChainDragEnd}
+                          type="button"
+                        >
+                          <GripIcon className="h-4 w-4" />
+                        </button>
+
+                        <button
+                          className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
                           onClick={() => setSelectedPlaceId(place.id)}
                           type="button"
                         >
                           <span className="relative shrink-0">
-                            <PlaceThumb category={place.category} size="lg" />
-                            <span className="absolute -bottom-1 -left-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-extrabold text-white ring-2 ring-background">
+                            <PlaceThumb category={place.category} size="sm" />
+                            <span className="absolute -bottom-1 -left-1 grid h-4 w-4 place-items-center rounded-full bg-primary text-[9px] font-extrabold text-white ring-2 ring-background">
                               {index + 1}
                             </span>
                           </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-primary">{place.category}</p>
-                            <h3 className="truncate text-base font-extrabold">{place.name}</h3>
-                            <p className="mt-1 text-xs text-muted">
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-extrabold">{place.name}</span>
+                            <span className="block truncate text-xs text-muted">
                               {place.area} · {place.duration}
-                            </p>
-                          </div>
+                            </span>
+                          </span>
                         </button>
-                        <div className="mt-3 grid grid-cols-3 gap-2">
+
+                        <div className="flex shrink-0 items-center gap-1">
                           <button
-                            className="h-9 rounded-sm border border-border text-xs font-extrabold disabled:opacity-35"
+                            aria-label="위로 이동"
+                            className="grid h-7 w-7 place-items-center rounded-sm border border-border text-muted-strong disabled:opacity-30"
                             disabled={index === 0}
                             onClick={() => moveStop(index, -1)}
                             type="button"
                           >
-                            위로
+                            <ChevronUpIcon className="h-4 w-4" />
                           </button>
                           <button
-                            className="h-9 rounded-sm border border-border text-xs font-extrabold disabled:opacity-35"
+                            aria-label="아래로 이동"
+                            className="grid h-7 w-7 place-items-center rounded-sm border border-border text-muted-strong disabled:opacity-30"
                             disabled={index === chainPlaces.length - 1}
                             onClick={() => moveStop(index, 1)}
                             type="button"
                           >
-                            아래로
+                            <ChevronDownIcon className="h-4 w-4" />
                           </button>
                           <button
-                            className="h-9 rounded-sm border border-border text-xs font-extrabold text-danger"
+                            aria-label="삭제"
+                            className="grid h-7 w-7 place-items-center rounded-sm border border-border text-danger"
                             onClick={() => removeStop(place.id)}
                             type="button"
                           >
-                            삭제
+                            <TrashIcon className="h-4 w-4" />
                           </button>
                         </div>
                       </article>
                     ))}
                   </div>
-
-                  {otherPlaces.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-extrabold text-muted-strong">
-                        {area.name}의 다른 장소
-                      </h3>
-                      <div className="mt-2 grid gap-2">
-                        {otherPlaces.map((place) => (
-                          <button
-                            className="flex items-center gap-3 rounded-sm border border-border bg-surface px-3 py-2.5 text-left"
-                            key={place.id}
-                            onClick={() => setSelectedPlaceId(place.id)}
-                            type="button"
-                          >
-                            <PlaceThumb category={place.category} size="sm" />
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm font-bold">{place.name}</span>
-                              <span className="block text-xs text-muted">
-                                {place.category} · {place.area}
-                              </span>
-                            </span>
-                            <span className="shrink-0 text-xs font-extrabold text-primary">담기</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   <Button
                     disabled={chainPlaces.length < 2}
@@ -440,6 +811,54 @@ export function MobileAppShell() {
                   >
                     코스 확정하기 ({chainPlaces.length}곳)
                   </Button>
+
+                  {otherPlacesByCategory.length > 0 && (
+                    <div className="grid gap-3.5">
+                      <h3 className="text-sm font-extrabold text-muted-strong">
+                        {area.name}의 다른 장소
+                      </h3>
+                      {otherPlacesByCategory.map((group) => (
+                        <div className="min-w-0" key={group.category}>
+                          <p className="mb-1.5 text-xs font-bold text-muted">{group.category}</p>
+                          <div className="flex items-center gap-2">
+                            <div className="place-list-scroll flex min-w-0 flex-1 gap-2.5 overflow-x-auto">
+                              {group.places.map((place) => (
+                                <button
+                                  className="flex w-28 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-surface text-left"
+                                  key={place.id}
+                                  onClick={() => setSelectedPlaceId(place.id)}
+                                  type="button"
+                                >
+                                  <span className="block h-28 w-full shrink-0 overflow-hidden bg-surface-muted">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      alt=""
+                                      className="h-full w-full object-cover"
+                                      loading="lazy"
+                                      src={getPlaceImageUrl(place.id)}
+                                    />
+                                  </span>
+                                  <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2">
+                                    <span className="truncate text-xs font-bold">{place.name}</span>
+                                    <span className="truncate text-[11px] text-muted">{place.area}</span>
+                                    <span className="mt-1 text-[11px] font-extrabold text-primary">담기</span>
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                            <button
+                              aria-label={`${group.category} 더보기`}
+                              className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary"
+                              onClick={() => setViewingCategory(group.category)}
+                              type="button"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </section>
               )}
               </div>
@@ -468,8 +887,10 @@ export function MobileAppShell() {
                   {(["all", "seongsu", "hongdae", "gangnam"] as const).map((id) => (
                     <button
                       className={cn(
-                        "shrink-0 rounded-sm border border-border bg-surface px-3 py-1.5 text-xs font-extrabold text-muted-strong",
-                        exploreArea === id && "border-primary bg-primary text-white",
+                        "shrink-0 rounded-sm border px-3 py-1.5 text-xs font-extrabold",
+                        exploreArea === id
+                          ? "border-primary bg-primary text-white"
+                          : "border-border bg-surface text-muted-strong",
                       )}
                       key={id}
                       onClick={() => setExploreArea(id)}
@@ -483,8 +904,8 @@ export function MobileAppShell() {
                   {(["list", "map"] as const).map((mode) => (
                     <button
                       className={cn(
-                        "rounded-xs px-2.5 py-1.5 text-muted-strong",
-                        exploreView === mode && "bg-primary text-white",
+                        "rounded-xs px-2.5 py-1.5",
+                        exploreView === mode ? "bg-primary text-white" : "text-muted-strong",
                       )}
                       key={mode}
                       onClick={() => setExploreView(mode)}
@@ -502,7 +923,7 @@ export function MobileAppShell() {
                     emptyLabel="검색 조건에 맞는 코스가 없어요."
                     likedIds={likedIds}
                     mode="explore"
-                    onOpenTrip={(trip) => setOpenTripId(trip.id)}
+                    onOpenTrip={viewTrip}
                     onToggleLike={toggleLike}
                     onToggleSave={toggleSave}
                     savedIds={savedIds}
@@ -525,18 +946,55 @@ export function MobileAppShell() {
 
           {activeTab === "ranking" && (
             <div className="px-5 py-4">
-              <h1 className="text-xl font-extrabold">주간 랭킹</h1>
-              <p className="mt-1 text-xs text-muted">가장 많이 저장된 코스 순서예요.</p>
+              <h1 className="text-xl font-extrabold">랭킹</h1>
+              <p className="mt-1 text-xs text-muted">
+                {rankingPeriod === "weekly" ? "가장 많이 저장된 주간 코스 순서예요." : "지금 가장 활발한 코스 순서예요."}
+              </p>
+
+              <div className="mt-3 flex rounded-sm border border-border bg-surface p-0.5 text-xs font-extrabold">
+                {(["weekly", "live"] as const).map((period) => (
+                  <button
+                    className={cn(
+                      "flex-1 rounded-xs py-1.5",
+                      rankingPeriod === period ? "bg-primary text-white" : "text-muted-strong",
+                    )}
+                    key={period}
+                    onClick={() => setRankingPeriod(period)}
+                    type="button"
+                  >
+                    {period === "weekly" ? "주간 랭킹" : "실시간 랭킹"}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-2.5 flex gap-1.5 overflow-x-auto">
+                {(["all", "seongsu", "hongdae", "gangnam"] as const).map((id) => (
+                  <button
+                    className={cn(
+                      "shrink-0 rounded-sm border px-3 py-1.5 text-xs font-extrabold",
+                      rankingArea === id
+                        ? "border-primary bg-primary text-white"
+                        : "border-border bg-surface text-muted-strong",
+                    )}
+                    key={id}
+                    onClick={() => setRankingArea(id)}
+                    type="button"
+                  >
+                    {id === "all" ? "전체" : areaMeta[id].name}
+                  </button>
+                ))}
+              </div>
+
               <div className="mt-4">
                 <TripFeedList
                   emptyLabel="아직 랭킹 데이터가 없어요."
                   likedIds={likedIds}
                   mode="ranking"
-                  onOpenTrip={(trip) => setOpenTripId(trip.id)}
+                  onOpenTrip={viewTrip}
                   onToggleLike={toggleLike}
                   onToggleSave={toggleSave}
                   savedIds={savedIds}
-                  trips={allTrips}
+                  trips={rankingTrips}
                 />
               </div>
             </div>
@@ -547,12 +1005,13 @@ export function MobileAppShell() {
               isSignedIn={isSignedIn}
               likedIds={likedIds}
               myTrips={publishedTrips}
-              onOpenTrip={(trip) => setOpenTripId(trip.id)}
+              onOpenTrip={viewTrip}
               onToggleLike={toggleLike}
               onToggleSave={toggleSave}
               onToggleSignIn={() => setIsSignedIn((current) => !current)}
-              savedCount={savedIds.size}
+              recentlyViewedTrips={recentlyViewedTrips}
               savedIds={savedIds}
+              savedTrips={savedTrips}
             />
           )}
         </div>
@@ -565,6 +1024,7 @@ export function MobileAppShell() {
                   "flex flex-col items-center gap-1 py-2.5 text-xs font-bold text-muted",
                   activeTab === id && "text-primary",
                 )}
+                data-tour={`nav-${id}`}
                 key={id}
                 onClick={() => setActiveTab(id)}
                 type="button"
@@ -576,11 +1036,26 @@ export function MobileAppShell() {
           </nav>
         )}
 
+        {viewingCategory && (
+          <CategorySheet
+            areaName={area.name}
+            category={viewingCategory}
+            onClose={() => setViewingCategory(null)}
+            onSelectPlace={(id) => {
+              setViewingCategory(null);
+              setSelectedPlaceId(id);
+            }}
+            places={viewingCategoryPlaces}
+          />
+        )}
+
         {selectedPlace && (
           <PlaceSheet
             isInChain={chainIds.includes(selectedPlace.id)}
+            likedMenuIds={likedMenuIds}
             onAddToChain={addToChain}
             onClose={() => setSelectedPlaceId(null)}
+            onToggleMenuLike={toggleMenuLike}
             place={selectedPlace}
           />
         )}
@@ -598,12 +1073,43 @@ export function MobileAppShell() {
             isLiked={likedIds.has(openTrip.id)}
             isSaved={savedIds.has(openTrip.id)}
             onClose={() => setOpenTripId(null)}
+            onOpenAuthor={(handle) => setViewingAuthorHandle(handle)}
             onToggleLike={toggleLike}
             onToggleSave={toggleSave}
             trip={openTrip}
           />
         )}
+
+        {viewingAuthorHandle && (
+          <CreatorProfileSheet
+            authorHandle={viewingAuthorHandle}
+            authorName={
+              allTrips.find((trip) => trip.authorHandle === viewingAuthorHandle)?.authorName ??
+              viewingAuthorHandle
+            }
+            likedIds={likedIds}
+            onClose={() => setViewingAuthorHandle(null)}
+            onOpenTrip={(trip) => {
+              setViewingAuthorHandle(null);
+              viewTrip(trip);
+            }}
+            onToggleLike={toggleLike}
+            onToggleSave={toggleSave}
+            savedIds={savedIds}
+            trips={allTrips.filter((trip) => trip.authorHandle === viewingAuthorHandle)}
+          />
+        )}
       </section>
+
+      {tourPhase !== "hidden" && (
+        <OnboardingTour
+          onActivateTab={(tab) => setActiveTab(tab)}
+          onFinish={endTour}
+          onSkip={endTour}
+          onStart={startTour}
+          phase={tourPhase}
+        />
+      )}
     </main>
   );
 }

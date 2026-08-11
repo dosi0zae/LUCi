@@ -4,16 +4,32 @@ export type KakaoLatLng = {
 };
 
 export type KakaoMap = {
+  addControl(control: KakaoControl, position: number): void;
+  getLevel(): number;
+  setBounds(bounds: KakaoLatLngBounds, padding?: number): void;
   setCenter(latlng: KakaoLatLng): void;
   setLevel(level: number): void;
+  setZoomable(zoomable: boolean): void;
+};
+
+export type KakaoLatLngBounds = {
+  extend(latlng: KakaoLatLng): void;
 };
 
 export type KakaoCustomOverlay = {
   setMap(map: KakaoMap | null): void;
 };
 
+export type KakaoPolyline = {
+  setMap(map: KakaoMap | null): void;
+};
+
+export type KakaoControl = object;
+
 export type KakaoMapsApi = {
+  ControlPosition: Record<"BOTTOM" | "LEFT" | "RIGHT" | "TOP" | "TOPLEFT" | "TOPRIGHT", number>;
   LatLng: new (lat: number, lng: number) => KakaoLatLng;
+  LatLngBounds: new () => KakaoLatLngBounds;
   Map: new (
     container: HTMLElement,
     options: { center: KakaoLatLng; draggable?: boolean; level: number; scrollwheel?: boolean },
@@ -26,6 +42,15 @@ export type KakaoMapsApi = {
     yAnchor?: number;
     zIndex?: number;
   }) => KakaoCustomOverlay;
+  Polyline: new (options: {
+    endArrow?: boolean;
+    path: KakaoLatLng[];
+    strokeColor?: string;
+    strokeOpacity?: number;
+    strokeStyle?: string;
+    strokeWeight?: number;
+  }) => KakaoPolyline;
+  ZoomControl: new () => KakaoControl;
   load(callback: () => void): void;
 };
 
