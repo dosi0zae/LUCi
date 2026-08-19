@@ -10,6 +10,7 @@ import {
   type KakaoPolyline,
 } from "@/features/mobile/kakao-loader";
 import type { MobilePlace } from "@/features/mobile/mobile-data";
+import { useT } from "@/features/mobile/i18n/i18n-context";
 
 type ConstellationCardProps = {
   places: MobilePlace[];
@@ -19,6 +20,10 @@ const WIDTH = 400;
 const HEIGHT = 240;
 const PADDING = 30;
 
+// Projects lat/lng onto the card with a single uniform scale (not one scale per axis),
+// so the path's shape and angles match the real map instead of being stretched to fill
+// the box. Longitude degrees are corrected by cos(latitude) since they cover less
+// ground distance than latitude degrees away from the equator.
 function getPoints(places: MobilePlace[]) {
   const lats = places.map((place) => place.lat);
   const lngs = places.map((place) => place.lng);
@@ -26,14 +31,24 @@ function getPoints(places: MobilePlace[]) {
   const maxLat = Math.max(...lats);
   const minLng = Math.min(...lngs);
   const maxLng = Math.max(...lngs);
-  const latRange = maxLat - minLat || 1;
-  const lngRange = maxLng - minLng || 1;
+  const lngCorrection = Math.cos(((minLat + maxLat) / 2) * (Math.PI / 180));
 
-  return places.map((place, index) => ({
+  const latRange = maxLat - minLat || 0.0005;
+  const lngRange = (maxLng - minLng) * lngCorrection || 0.0005;
+
+  const availableWidth = WIDTH - PADDING * 2;
+  const availableHeight = HEIGHT - PADDING * 2;
+  const scale = Math.min(availableWidth / lngRange, availableHeight / latRange);
+
+  const contentWidth = lngRange * scale;
+  const contentHeight = latRange * scale;
+  const offsetX = PADDING + (availableWidth - contentWidth) / 2;
+  const offsetY = PADDING + (availableHeight - contentHeight) / 2;
+
+  return places.map((place) => ({
     id: place.id,
-    label: String(index + 1),
-    x: PADDING + ((place.lng - minLng) / lngRange) * (WIDTH - PADDING * 2),
-    y: HEIGHT - PADDING - ((place.lat - minLat) / latRange) * (HEIGHT - PADDING * 2),
+    x: offsetX + (place.lng - minLng) * lngCorrection * scale,
+    y: offsetY + contentHeight - (place.lat - minLat) * scale,
   }));
 }
 
@@ -69,6 +84,7 @@ function createStopMarker(label: string) {
 }
 
 function AbstractConstellation({ places }: { places: MobilePlace[] }) {
+  const t = useT();
   const points = getPoints(places);
   const pathPoints = points.map((point) => `${point.x},${point.y}`).join(" ");
 
@@ -100,7 +116,7 @@ function AbstractConstellation({ places }: { places: MobilePlace[] }) {
         />
       </div>
       <svg
-        aria-label="코스 별자리 미리보기"
+        aria-label={t("constellationPreviewAria")}
         className="absolute inset-0 block h-full w-full"
         role="img"
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -132,17 +148,6 @@ function AbstractConstellation({ places }: { places: MobilePlace[] }) {
           <g key={point.id}>
             <circle cx={point.x} cy={point.y} fill="#b7e86b" opacity={0.2} r={13} />
             <circle cx={point.x} cy={point.y} fill="#b7e86b" r={7.5} />
-            <text
-              fill="#0b1220"
-              fontFamily="inherit"
-              fontSize={8.5}
-              fontWeight={900}
-              textAnchor="middle"
-              x={point.x}
-              y={point.y + 2.8}
-            >
-              {point.label}
-            </text>
           </g>
         ))}
       </svg>
@@ -151,6 +156,7 @@ function AbstractConstellation({ places }: { places: MobilePlace[] }) {
 }
 
 export function ConstellationCard({ places }: ConstellationCardProps) {
+  const t = useT();
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KakaoMap | null>(null);
@@ -272,17 +278,22 @@ export function ConstellationCard({ places }: ConstellationCardProps) {
     );
   }
 
+  const showAbstract = status !== "ready" || viewMode === "abstract";
+
   return (
     <div
-      className="relative overflow-hidden rounded-lg"
+      className="relative overflow-hidden rounded-lg [perspective:1200px]"
       style={{ aspectRatio: `${WIDTH} / ${HEIGHT}`, background: "#0b1220" }}
     >
-      <div className="absolute inset-0 z-0" ref={containerRef} />
-      {(status !== "ready" || viewMode === "abstract") && (
-        <div className="absolute inset-0 z-10">
+      <div
+        className="absolute inset-0 transition-transform duration-500 ease-in-out [transform-style:preserve-3d]"
+        style={{ transform: showAbstract ? "rotateY(180deg)" : "rotateY(0deg)" }}
+      >
+        <div className="absolute inset-0 z-0 [backface-visibility:hidden]" ref={containerRef} />
+        <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
           <AbstractConstellation places={places} />
         </div>
-      )}
+      </div>
       {status === "ready" && viewMode === "map" && (
         <>
           <div
@@ -295,7 +306,7 @@ export function ConstellationCard({ places }: ConstellationCardProps) {
           />
           <div className="absolute right-2 top-2 z-10 flex flex-col overflow-hidden rounded-lg border border-white/30 bg-white/90 opacity-50 shadow-soft backdrop-blur-sm transition hover:opacity-100">
             <button
-              aria-label="지도 확대"
+              aria-label={t("zoomInAria")}
               className="grid h-8 w-8 place-items-center text-sm font-extrabold text-foreground transition hover:bg-surface-muted"
               onClick={() => zoomBy(-1)}
               type="button"
@@ -304,7 +315,7 @@ export function ConstellationCard({ places }: ConstellationCardProps) {
             </button>
             <div className="h-px bg-border" />
             <button
-              aria-label="지도 축소"
+              aria-label={t("zoomOutAria")}
               className="grid h-8 w-8 place-items-center text-sm font-extrabold text-foreground transition hover:bg-surface-muted"
               onClick={() => zoomBy(1)}
               type="button"
@@ -313,7 +324,7 @@ export function ConstellationCard({ places }: ConstellationCardProps) {
             </button>
             <div className="h-px bg-border" />
             <button
-              aria-label="전체 동선 보기"
+              aria-label={t("resetViewAria")}
               className="grid h-8 w-8 place-items-center text-foreground transition hover:bg-surface-muted"
               onClick={resetView}
               type="button"
@@ -325,7 +336,7 @@ export function ConstellationCard({ places }: ConstellationCardProps) {
       )}
       {status === "ready" && (
         <button
-          aria-label={viewMode === "map" ? "별자리 카드로 보기" : "지도로 보기"}
+          aria-label={viewMode === "map" ? t("viewAsConstellationAria") : t("viewAsMapAria")}
           className="absolute bottom-2 right-2 z-10 grid h-8 w-8 place-items-center rounded-full border border-white/30 bg-white/90 text-foreground shadow-soft backdrop-blur-sm transition hover:bg-surface-muted"
           onClick={() => setViewMode((mode) => (mode === "map" ? "abstract" : "map"))}
           type="button"

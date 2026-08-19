@@ -1,45 +1,47 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/features/mobile/i18n/i18n-context";
+import type { TranslationKey } from "@/features/mobile/i18n/translations";
 
 export type TourTabId = "home" | "explore" | "ranking" | "profile";
 
 type TourStep = {
   target: string;
-  title: string;
-  description: string;
+  titleKey: TranslationKey;
+  descriptionKey: TranslationKey;
   tab: TourTabId;
 };
 
 const TOUR_STEPS: TourStep[] = [
   {
     target: "search-form",
-    title: "AI에게 코스 물어보기",
-    description: "원하는 분위기나 스타일을 문장으로 말하면 AI가 알아서 코스를 짜드려요.",
+    titleKey: "tourStep1Title",
+    descriptionKey: "tourStep1Desc",
     tab: "home",
   },
   {
     target: "quick-browse",
-    title: "바로 둘러보기",
-    description: "검색이 귀찮다면 여기를 눌러서 인기 코스부터 바로 살펴볼 수 있어요.",
+    titleKey: "tourStep2Title",
+    descriptionKey: "tourStep2Desc",
     tab: "home",
   },
   {
     target: "nav-explore",
-    title: "탐색",
-    description: "다른 사람들이 만든 코스와 장소를 리스트나 지도로 둘러볼 수 있어요.",
+    titleKey: "tourStep3Title",
+    descriptionKey: "tourStep3Desc",
     tab: "explore",
   },
   {
     target: "nav-ranking",
-    title: "랭킹",
-    description: "요즘 가장 인기 있는 코스를 랭킹으로 확인해보세요.",
+    titleKey: "tourStep4Title",
+    descriptionKey: "tourStep4Desc",
     tab: "ranking",
   },
   {
     target: "nav-profile",
-    title: "프로필",
-    description: "내가 만든 코스, 저장한 코스, 최근 본 코스를 여기서 관리할 수 있어요.",
+    titleKey: "tourStep5Title",
+    descriptionKey: "tourStep5Desc",
     tab: "profile",
   },
 ];
@@ -53,6 +55,7 @@ type OnboardingTourProps = {
 };
 
 export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase }: OnboardingTourProps) {
+  const t = useT();
   const [stepIndex, setStepIndex] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const step = TOUR_STEPS[stepIndex];
@@ -124,23 +127,21 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
       <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-4 bg-black/80 px-8 text-center backdrop-blur-sm">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img alt="Trip Chain" className="h-14 w-auto drop-shadow-[0_0_18px_rgba(79,141,247,0.55)]" src="/tripchain-logo.svg" />
-        <h2 className="text-2xl font-extrabold text-white">처음이신가요?</h2>
-        <p className="max-w-[260px] text-sm leading-6 text-white/70">
-          핵심 기능을 30초 안에 소개해드릴게요.
-        </p>
+        <h2 className="text-2xl font-extrabold text-white text-balance">{t("tourIntroTitle")}</h2>
+        <p className="max-w-[260px] text-sm leading-6 text-white/70 text-pretty">{t("tourIntroSubtitle")}</p>
         <button
           className="mt-2 rounded-full bg-primary px-6 py-3 text-sm font-extrabold text-white transition hover:bg-primary-strong"
           onClick={onStart}
           type="button"
         >
-          튜토리얼 시작하기
+          {t("tourStart")}
         </button>
         <button
           className="text-xs font-semibold text-white/50 transition hover:text-white hover:underline"
           onClick={onSkip}
           type="button"
         >
-          건너뛰기
+          {t("tourSkip")}
         </button>
       </div>
     );
@@ -182,15 +183,15 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
           <p className="text-xs font-bold text-primary">
             {stepIndex + 1} / {TOUR_STEPS.length}
           </p>
-          <h3 className="mt-1 text-base font-extrabold text-foreground">{step.title}</h3>
-          <p className="mt-1.5 text-sm leading-5 text-muted-strong">{step.description}</p>
+          <h3 className="mt-1 text-base font-extrabold text-foreground text-balance">{t(step.titleKey)}</h3>
+          <p className="mt-1.5 text-sm leading-5 text-muted-strong text-pretty">{t(step.descriptionKey)}</p>
           <div className="mt-3 flex items-center justify-between">
             <button
               className="text-xs font-semibold text-muted transition hover:text-foreground"
               onClick={onSkip}
               type="button"
             >
-              건너뛰기
+              {t("tourSkip")}
             </button>
             <div className="flex gap-2">
               {stepIndex > 0 && (
@@ -199,7 +200,7 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
                   onClick={goPrev}
                   type="button"
                 >
-                  이전
+                  {t("tourPrev")}
                 </button>
               )}
               <button
@@ -207,7 +208,7 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
                 onClick={goNext}
                 type="button"
               >
-                {isLastStep ? "시작하기" : "다음"}
+                {isLastStep ? t("tourFinish") : t("tourNext")}
               </button>
             </div>
           </div>

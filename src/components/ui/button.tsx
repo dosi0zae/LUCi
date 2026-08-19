@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-type ButtonVariant = "primary" | "secondary" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "gradient";
 type ButtonSize = "sm" | "md";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -16,6 +16,8 @@ const variants: Record<ButtonVariant, string> = {
     "border border-border bg-surface text-foreground hover:border-border-strong hover:bg-surface-muted focus-visible:outline-primary",
   ghost:
     "text-muted-strong hover:bg-surface-muted focus-visible:outline-primary",
+  gradient:
+    "border border-border text-foreground shadow-soft hover:border-border-strong bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_34%,var(--surface))_0%,color-mix(in_srgb,var(--success)_34%,var(--surface))_100%)] focus-visible:outline-primary",
 };
 
 const sizes: Record<ButtonSize, string> = {

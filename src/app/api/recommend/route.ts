@@ -5,35 +5,37 @@ import {
   fallbackIntent,
   type RecommendIntent,
 } from "@/features/mobile/recommend-engine";
-import {
-  detectAreaFromText,
-  inferArea,
-  type AreaId,
-  type PlaceCategory,
-} from "@/features/mobile/mobile-data";
+import type { PlaceCategory } from "@/features/mobile/mobile-data";
 
 export const runtime = "nodejs";
 
 const GEMINI_MODEL = "gemini-flash-lite-latest";
-const AREA_IDS: AreaId[] = ["seongsu", "hongdae", "gangnam"];
-const CATEGORIES: PlaceCategory[] = ["전시", "카페", "팝업", "산책"];
+const CATEGORIES: PlaceCategory[] = ["문화재", "관광지", "문화시설", "축제행사"];
 
-const SYSTEM_PROMPT = `너는 서울 데이트/나들이 코스 추천 서비스의 의도 분석기야. 사용자의 자연어 문장 하나를 분석해서 아래 JSON 스키마로만 답해.
-- areaId: 성수(seongsu), 홍대(hongdae), 강남(gangnam) 중 문장에서 추론되는 지역 하나. 명시되지 않았거나 애매하면 null.
-- categories: 전시, 카페, 팝업, 산책 중 문장과 관련 있는 것만 (없으면 빈 배열).
+const REASON_LANGUAGE_NAME: Record<string, string> = {
+  ko: "한국어",
+  en: "English",
+  ja: "日本語",
+  zh: "简体中文",
+};
+
+function buildSystemPrompt(locale: string): string {
+  const languageName = REASON_LANGUAGE_NAME[locale] ?? REASON_LANGUAGE_NAME.en;
+  return `너는 서울 전역의 문화재·관광지·문화시설·축제를 엮어주는 여행 코스 추천 서비스의 의도 분석기야. 사용자의 문장 하나를 분석해서 아래 JSON 스키마로만 답해.
+- categories: 문화재, 관광지, 문화시설, 축제행사 중 문장과 관련 있는 것만 (없으면 빈 배열).
 - attributes: 다음 목록에서만 골라 문장의 분위기/상황을 표현: ${ATTRIBUTE_TAXONOMY.join(", ")}.
 - placeCount: 추천할 장소 개수, 보통 3~5 사이 정수. 특별한 언급 없으면 4.
-- reason: 왜 이렇게 추천하는지 한국어 한 문장.`;
+- reason: 왜 이렇게 추천하는지 ${languageName}로 쓴 한 문장.`;
+}
 
 type GeminiAiIntent = {
-  areaId?: string | null;
   categories?: string[];
   attributes?: string[];
   placeCount?: number;
   reason?: string;
 };
 
-async function getAiIntent(prompt: string): Promise<GeminiAiIntent | null> {
+async function getAiIntent(prompt: string, locale: string): Promise<GeminiAiIntent | null> {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
@@ -42,13 +44,12 @@ async function getAiIntent(prompt: string): Promise<GeminiAiIntent | null> {
 
   const body = {
     contents: [{ parts: [{ text: prompt }] }],
-    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    systemInstruction: { parts: [{ text: buildSystemPrompt(locale) }] },
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: {
         type: "OBJECT",
         properties: {
-          areaId: { type: "STRING", enum: [...AREA_IDS], nullable: true },
           categories: { type: "ARRAY", items: { type: "STRING", enum: [...CATEGORIES] } },
           attributes: { type: "ARRAY", items: { type: "STRING", enum: [...ATTRIBUTE_TAXONOMY] } },
           placeCount: { type: "INTEGER" },
@@ -87,17 +88,10 @@ async function getAiIntent(prompt: string): Promise<GeminiAiIntent | null> {
   }
 }
 
-function normalizeIntent(prompt: string, aiIntent: GeminiAiIntent | null): RecommendIntent {
+function normalizeIntent(aiIntent: GeminiAiIntent | null): RecommendIntent {
   if (!aiIntent) {
-    return fallbackIntent(prompt);
+    return fallbackIntent();
   }
-
-  // An area name written in the prompt is a stronger signal than the AI's guess,
-  // which sometimes mis-infers the area for lightweight/free-tier models.
-  const explicitArea = detectAreaFromText(prompt);
-  const areaId =
-    explicitArea ??
-    (AREA_IDS.includes(aiIntent.areaId as AreaId) ? (aiIntent.areaId as AreaId) : inferArea(prompt));
 
   const categories = Array.isArray(aiIntent.categories)
     ? aiIntent.categories.filter((category): category is PlaceCategory =>
@@ -113,15 +107,17 @@ function normalizeIntent(prompt: string, aiIntent: GeminiAiIntent | null): Recom
 
   const placeCount = typeof aiIntent.placeCount === "number" ? aiIntent.placeCount : 4;
 
-  return { areaId, categories, attributes, placeCount };
+  return { categories, attributes, placeCount };
 }
 
 export async function POST(request: NextRequest) {
   let prompt = "";
+  let locale = "en";
 
   try {
     const body = await request.json();
     prompt = typeof body?.prompt === "string" ? body.prompt.trim() : "";
+    locale = typeof body?.locale === "string" ? body.locale : "en";
   } catch {
     return NextResponse.json({ error: "invalid request body" }, { status: 400 });
   }
@@ -130,12 +126,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "prompt is required" }, { status: 400 });
   }
 
-  const aiIntent = await getAiIntent(prompt);
-  const intent = normalizeIntent(prompt, aiIntent);
-  const { areaId, placeIds } = buildChain(intent);
+  const aiIntent = await getAiIntent(prompt, locale);
+  const intent = normalizeIntent(aiIntent);
+  const { placeIds } = buildChain(intent);
 
   return NextResponse.json({
-    areaId,
     placeIds,
     reason: aiIntent?.reason ?? null,
     usedAI: Boolean(aiIntent),

@@ -1,45 +1,44 @@
-import {
-  inferArea,
-  placesByArea,
-  type AreaId,
-  type MobilePlace,
-  type PlaceCategory,
-} from "@/features/mobile/mobile-data";
+import { places, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
 
 export const ATTRIBUTE_TAXONOMY = [
   "실내",
   "실외",
-  "테라스",
-  "데이트",
+  "무료",
+  "도보코스",
   "혼자",
   "친구모임",
   "가족동반",
-  "반려동반",
+  "역사탐방",
+  "전통문화",
+  "체험형",
+  "포토존",
+  "야경",
   "조용함",
   "활기참",
-  "감성적",
-  "고급스러운",
-  "캐주얼",
-  "한적함",
-  "포토존",
   "휴식",
-  "체험형",
-  "쇼핑",
 ] as const;
 
-export const CATEGORY_TAXONOMY: PlaceCategory[] = ["전시", "카페", "팝업", "산책"];
+export const CATEGORY_TAXONOMY: PlaceCategory[] = ["문화재", "관광지", "문화시설", "축제행사"];
 
-const DEFAULT_CATEGORY_ORDER: PlaceCategory[] = ["카페", "팝업", "전시", "산책"];
+const DEFAULT_CATEGORY_ORDER: PlaceCategory[] = ["관광지", "문화재", "문화시설", "축제행사"];
+
+// Places beyond this radius of the chain's anchor point are excluded first; only if that
+// leaves too few candidates do we widen the search, so a generated course stays walkable
+// across the flat, city-wide place pool instead of jumping between distant districts.
+const NEARBY_RADIUS_KM = 6;
+const WIDE_RADIUS_KM = 14;
+const MIN_POOL_SIZE = 6;
 
 export type RecommendIntent = {
-  areaId: AreaId | null;
   categories: PlaceCategory[];
   attributes: string[];
   placeCount: number;
+  // Real device location (from the "내 주변" button) or a caller-supplied anchor. When
+  // absent, buildChain anchors on its own top-scored place instead.
+  anchor?: { lat: number; lng: number } | null;
 };
 
 export type RecommendResult = {
-  areaId: AreaId;
   placeIds: string[];
 };
 
@@ -64,7 +63,7 @@ function scorePlace(place: MobilePlace, intent: RecommendIntent): number {
   return score;
 }
 
-function haversineKm(a: MobilePlace, b: MobilePlace): number {
+function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
   const R = 6371;
   const dLat = ((b.lat - a.lat) * Math.PI) / 180;
   const dLng = ((b.lng - a.lng) * Math.PI) / 180;
@@ -117,7 +116,7 @@ function orderByRoute(places: MobilePlace[]): MobilePlace[] {
 }
 
 // Sampling from the top few candidates (instead of always the single best) spreads
-// picks across more of the area's place pool over repeated generations.
+// picks across more of the pool over repeated generations.
 const CANDIDATE_POOL_SIZE = 6;
 
 function pickCandidate(
@@ -136,12 +135,25 @@ function pickCandidate(
   return candidates[Math.floor(Math.random() * candidates.length)].place;
 }
 
+function poolNear(anchor: { lat: number; lng: number }): MobilePlace[] {
+  const nearby = places.filter((place) => haversineKm(anchor, place) <= NEARBY_RADIUS_KM);
+  if (nearby.length >= MIN_POOL_SIZE) {
+    return nearby;
+  }
+
+  const wide = places.filter((place) => haversineKm(anchor, place) <= WIDE_RADIUS_KM);
+  return wide.length >= MIN_POOL_SIZE ? wide : places;
+}
+
 export function buildChain(intent: RecommendIntent): RecommendResult {
-  const areaId = intent.areaId ?? "seongsu";
-  const places = placesByArea[areaId];
-  const scored = places
+  const scoredAll = places
     .map((place) => ({ place, score: scorePlace(place, intent) }))
     .sort((a, b) => b.score - a.score);
+
+  const anchor = intent.anchor ?? scoredAll[0]?.place ?? null;
+  const pool = anchor ? poolNear(anchor) : places;
+  const poolIds = new Set(pool.map((place) => place.id));
+  const scored = scoredAll.filter((entry) => poolIds.has(entry.place.id));
 
   const categoryOrder = intent.categories.length > 0 ? intent.categories : DEFAULT_CATEGORY_ORDER;
   const count = Math.min(Math.max(Math.round(intent.placeCount) || 4, 2), 6);
@@ -151,7 +163,7 @@ export function buildChain(intent: RecommendIntent): RecommendResult {
   let round = 0;
   let safety = 0;
 
-  while (picked.length < count && used.size < places.length && safety < count * 6) {
+  while (picked.length < count && used.size < scored.length && safety < count * 6) {
     const category = categoryOrder[round % categoryOrder.length];
     const next =
       pickCandidate(scored, used, (place) => place.category === category) ??
@@ -167,14 +179,46 @@ export function buildChain(intent: RecommendIntent): RecommendResult {
   }
 
   return {
-    areaId,
     placeIds: orderByRoute(picked).map((place) => place.id),
   };
 }
 
-export function fallbackIntent(prompt: string): RecommendIntent {
+// Cheapest-insertion heuristic: finds the position in an existing (already-ordered)
+// route that adds the least total distance when a new stop is dropped in — rather than
+// always appending at the end. Only decides where the NEW stop goes; every other stop's
+// relative order is left untouched, so a later manual drag-reorder is never re-optimized
+// away by this or by a future call to it.
+export function findBestInsertionIndex(existingPlaces: MobilePlace[], newPlace: MobilePlace): number {
+  if (existingPlaces.length === 0) {
+    return 0;
+  }
+
+  let bestIndex = existingPlaces.length;
+  let bestCost = haversineKm(existingPlaces[existingPlaces.length - 1], newPlace);
+
+  const startCost = haversineKm(newPlace, existingPlaces[0]);
+  if (startCost < bestCost) {
+    bestCost = startCost;
+    bestIndex = 0;
+  }
+
+  for (let i = 0; i < existingPlaces.length - 1; i++) {
+    const added =
+      haversineKm(existingPlaces[i], newPlace) +
+      haversineKm(newPlace, existingPlaces[i + 1]) -
+      haversineKm(existingPlaces[i], existingPlaces[i + 1]);
+
+    if (added < bestCost) {
+      bestCost = added;
+      bestIndex = i + 1;
+    }
+  }
+
+  return bestIndex;
+}
+
+export function fallbackIntent(): RecommendIntent {
   return {
-    areaId: inferArea(prompt),
     categories: [],
     attributes: [],
     placeCount: 4,

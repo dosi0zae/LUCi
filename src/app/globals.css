@@ -125,8 +125,20 @@ input[type="search"]::-webkit-search-cancel-button {
     var(--shadow-soft),
     inset 0 1px 0 rgba(255, 255, 255, 0.72),
     inset 0 -1px 0 rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(64px) saturate(1.65) brightness(1.08);
   -webkit-backdrop-filter: blur(64px) saturate(1.65) brightness(1.08);
+  backdrop-filter: blur(64px) saturate(1.65) brightness(1.08);
+}
+
+/* Heavier than .glass-panel: meant to fully dissolve whatever's behind it (a full
+   screen of text/UI) into soft color, iOS Control-Center style, rather than just
+   softening the edges of a small card over simple content. */
+.frosted-overlay {
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.58) 50%, rgba(255, 255, 255, 0.7)),
+    rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  -webkit-backdrop-filter: blur(40px) saturate(1.8) brightness(1.05);
+  backdrop-filter: blur(40px) saturate(1.8) brightness(1.05);
 }
 
 .tab-floating-panel {
@@ -150,6 +162,17 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 .place-list-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Native apps don't show a scrollbar track; scrolling still works via touch/wheel,
+   it's just never drawn, so there's no reserved-width toggle between a tall
+   (scrollable) view and a short (non-scrollable) one to shift content. */
+.app-scroll-area {
+  scrollbar-width: none;
+}
+
+.app-scroll-area::-webkit-scrollbar {
   display: none;
 }
 
@@ -178,8 +201,8 @@ input[type="search"]::-webkit-search-cancel-button {
   background:
     radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.12), transparent 38%),
     rgba(79, 141, 247, 0.86);
-  backdrop-filter: blur(34px) saturate(1.2);
   -webkit-backdrop-filter: blur(34px) saturate(1.2);
+  backdrop-filter: blur(34px) saturate(1.2);
   pointer-events: none;
   will-change: opacity, backdrop-filter;
   animation: intro-splash-exit 2.25s cubic-bezier(0.33, 1, 0.68, 1) forwards;
@@ -258,15 +281,15 @@ input[type="search"]::-webkit-search-cancel-button {
   0%,
   70% {
     opacity: 1;
-    backdrop-filter: blur(34px) saturate(1.2);
     -webkit-backdrop-filter: blur(34px) saturate(1.2);
+    backdrop-filter: blur(34px) saturate(1.2);
   }
 
   100% {
     opacity: 0;
     visibility: hidden;
-    backdrop-filter: blur(2px) saturate(1);
     -webkit-backdrop-filter: blur(2px) saturate(1);
+    backdrop-filter: blur(2px) saturate(1);
   }
 }
 
@@ -547,13 +570,91 @@ input[type="search"]::-webkit-search-cancel-button {
   animation: nav-pop-in 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+@keyframes tab-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes tab-slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.tab-slide-in-right {
+  animation: tab-slide-in-right 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tab-slide-in-left {
+  animation: tab-slide-in-left 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes nav-icon-glow {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  45% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+.nav-icon-glow {
+  position: absolute;
+  inset: -8px;
+  border-radius: 999px;
+  background: radial-gradient(circle, var(--primary-soft) 0%, transparent 72%);
+  animation: nav-icon-glow 520ms ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes chain-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.chain-card-in {
+  animation: chain-card-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-blob--a,
   .hero-blob--b,
   .hero-blob--c,
   .hero-blob--d,
   .example-rotator,
-  .nav-pop-in {
+  .nav-pop-in,
+  .tab-slide-in-right,
+  .tab-slide-in-left,
+  .nav-icon-glow,
+  .chain-card-in {
     animation-duration: 0.01ms;
   }
 }

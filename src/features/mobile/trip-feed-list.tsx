@@ -3,7 +3,8 @@
 import { Badge } from "@/components/ui/badge";
 import { BookmarkIcon } from "@/components/layout/app-icons";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
-import { areaMeta, getPlaceById, type FeedTrip } from "@/features/mobile/mobile-data";
+import { getPlaceById, localizePlace, localizeTrip, type FeedTrip } from "@/features/mobile/mobile-data";
+import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import { cn } from "@/lib/utils";
 
 type TripFeedListProps = {
@@ -27,6 +28,8 @@ export function TripFeedList({
   savedIds,
   trips,
 }: TripFeedListProps) {
+  const t = useT();
+  const { locale } = useLocale();
   const orderedTrips = trips;
 
   if (orderedTrips.length === 0) {
@@ -42,7 +45,9 @@ export function TripFeedList({
       {orderedTrips.map((trip, index) => {
         const isLiked = likedIds.has(trip.id);
         const isSaved = savedIds.has(trip.id);
-        const coverPlace = getPlaceById(trip.placeIds[0]);
+        const rawCoverPlace = getPlaceById(trip.placeIds[0]);
+        const coverPlace = rawCoverPlace ? localizePlace(rawCoverPlace, locale) : undefined;
+        const localizedTrip = localizeTrip(trip, locale);
 
         return (
           <article
@@ -72,12 +77,12 @@ export function TripFeedList({
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <Badge tone="neutral">{areaMeta[trip.areaId].name}</Badge>
-                    {trip.isMine && <Badge tone="blue">내 코스</Badge>}
+                    {coverPlace && <Badge tone="neutral">{coverPlace.area}</Badge>}
+                    {trip.isMine && <Badge tone="blue">{t("myCourseBadge")}</Badge>}
                   </div>
-                  <h3 className="mt-1.5 truncate text-base font-extrabold">{trip.title}</h3>
+                  <h3 className="mt-1.5 truncate text-base font-extrabold">{localizedTrip.title}</h3>
                   <p className="mt-1 truncate text-xs text-muted">
-                    {trip.authorName} · {trip.placeIds.length}곳
+                    {trip.authorName} · {t("placesCount", { count: trip.placeIds.length })}
                   </p>
                 </div>
               </div>

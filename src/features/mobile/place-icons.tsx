@@ -15,7 +15,27 @@ const iconProps = {
   viewBox: "0 0 24 24",
 } as const;
 
-function ExhibitIcon({ className }: IconProps) {
+function HeritageIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M4 10 12 4l8 6" />
+      <path d="M6 10v9" />
+      <path d="M18 10v9" />
+      <path d="M4 19h16" />
+    </svg>
+  );
+}
+
+function AttractionIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="m3 18 5-8 4 5 3-4 6 7" />
+      <circle cx="7" cy="6" r="2" />
+    </svg>
+  );
+}
+
+function CultureFacilityIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>
       <rect height="13" rx="1.8" width="16" x="4" y="5" />
@@ -25,42 +45,20 @@ function ExhibitIcon({ className }: IconProps) {
   );
 }
 
-function CafeIcon({ className }: IconProps) {
+function FestivalIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>
-      <path d="M6 9h10v5a4 4 0 0 1-4 4h-2a4 4 0 0 1-4-4z" />
-      <path d="M16 10h1.4a2.1 2.1 0 0 1 0 4.2H16" />
-      <path d="M5 20h13" />
-    </svg>
-  );
-}
-
-function PopupIcon({ className }: IconProps) {
-  return (
-    <svg className={className} {...iconProps}>
-      <path d="M6.5 9h11l-.8 10H7.3z" />
-      <path d="M9 9a3 3 0 0 1 6 0" />
-      <path d="m18.5 4 .5 1.6 1.5.5-1.5.5-.5 1.6-.5-1.6-1.5-.5 1.5-.5z" />
-    </svg>
-  );
-}
-
-function WalkIcon({ className }: IconProps) {
-  return (
-    <svg className={className} {...iconProps}>
-      <path d="M12 20v-6" />
-      <path d="M8.2 14.5a4.2 4.2 0 1 1 7.6 0" />
-      <path d="M9 20h6" />
-      <path d="M10 16.5 12 14l2 2.5" />
+      <path d="M6 4v16" />
+      <path d="M6 5h11l-2.5 3L17 11H6" />
     </svg>
   );
 }
 
 const categoryIcons: Record<PlaceCategory, (props: IconProps) => ReactElement> = {
-  전시: ExhibitIcon,
-  카페: CafeIcon,
-  팝업: PopupIcon,
-  산책: WalkIcon,
+  문화재: HeritageIcon,
+  관광지: AttractionIcon,
+  문화시설: CultureFacilityIcon,
+  축제행사: FestivalIcon,
 };
 
 export function CategoryIcon({ category, className }: { category: PlaceCategory } & IconProps) {

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { getPlaceImageUrl, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
+import { getPlaceImageUrl, localizePlace, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
+import { useCategoryLabel, useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import { cn } from "@/lib/utils";
 
 const CLOSE_ANIMATION_MS = 200;
@@ -15,6 +16,9 @@ type CategorySheetProps = {
 };
 
 export function CategorySheet({ areaName, category, onClose, onSelectPlace, places }: CategorySheetProps) {
+  const t = useT();
+  const categoryLabel = useCategoryLabel();
+  const { locale } = useLocale();
   const [isClosing, setIsClosing] = useState(false);
 
   function handleClose() {
@@ -35,7 +39,7 @@ export function CategorySheet({ areaName, category, onClose, onSelectPlace, plac
           "glass-panel flex max-h-[82%] w-full flex-col rounded-t-xl p-5 pb-6",
           isClosing ? "sheet-panel-out" : "sheet-panel",
         )}
-        aria-label={`${areaName} ${category} 목록`}
+        aria-label={t("categoryListAria", { area: areaName, category: categoryLabel(category) })}
         onClick={(event) => event.stopPropagation()}
         role="dialog"
       >
@@ -46,10 +50,10 @@ export function CategorySheet({ areaName, category, onClose, onSelectPlace, plac
             <p className="text-xs font-bold" style={{ color: "var(--primary)" }}>
               {areaName}
             </p>
-            <h2 className="mt-1 text-xl font-extrabold">{category}</h2>
+            <h2 className="mt-1 text-xl font-extrabold">{categoryLabel(category)}</h2>
           </div>
           <button
-            aria-label="목록 닫기"
+            aria-label={t("categoryListCloseAria")}
             className="grid h-8 w-8 shrink-0 place-items-center rounded-sm text-muted hover:bg-surface-muted hover:text-foreground"
             onClick={handleClose}
             type="button"
@@ -58,9 +62,11 @@ export function CategorySheet({ areaName, category, onClose, onSelectPlace, plac
           </button>
         </div>
 
-        <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
+        <div className="app-scroll-area mt-4 min-h-0 flex-1 overflow-y-auto">
           <div className="grid grid-cols-2 gap-2.5">
-            {places.map((place) => (
+            {places.map((place) => {
+              const localizedPlace = localizePlace(place, locale);
+              return (
               <button
                 className="flex flex-col overflow-hidden rounded-lg border border-border bg-surface text-left"
                 key={place.id}
@@ -77,11 +83,12 @@ export function CategorySheet({ areaName, category, onClose, onSelectPlace, plac
                   />
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2">
-                  <span className="truncate text-xs font-bold">{place.name}</span>
-                  <span className="truncate text-[11px] text-muted">{place.area}</span>
+                  <span className="truncate text-xs font-bold">{localizedPlace.name}</span>
+                  <span className="truncate text-[11px] text-muted">{localizedPlace.area}</span>
                 </span>
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

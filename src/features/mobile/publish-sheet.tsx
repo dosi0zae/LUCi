@@ -4,6 +4,8 @@ import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { MobilePlace, TripVisibility } from "@/features/mobile/mobile-data";
+import { useT } from "@/features/mobile/i18n/i18n-context";
+import type { TranslationKey } from "@/features/mobile/i18n/translations";
 
 type PublishSheetProps = {
   places: MobilePlace[];
@@ -11,13 +13,14 @@ type PublishSheetProps = {
   onPublish: (input: { title: string; description: string; visibility: TripVisibility }) => void;
 };
 
-const visibilityOptions: { id: TripVisibility; label: string; hint: string }[] = [
-  { id: "public", label: "전체 공개", hint: "탐색 피드에 노출돼요" },
-  { id: "link", label: "링크 공유", hint: "링크가 있는 사람만 볼 수 있어요" },
-  { id: "private", label: "비공개", hint: "나만 볼 수 있어요" },
+const visibilityOptionKeys: { id: TripVisibility; labelKey: TranslationKey; hintKey: TranslationKey }[] = [
+  { id: "public", labelKey: "visibilityPublic", hintKey: "visibilityPublicHint" },
+  { id: "link", labelKey: "visibilityLink", hintKey: "visibilityLinkHint" },
+  { id: "private", labelKey: "visibilityPrivate", hintKey: "visibilityPrivateHint" },
 ];
 
 export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps) {
+  const t = useT();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<TripVisibility>("public");
@@ -27,12 +30,12 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
     event.preventDefault();
 
     if (places.length < 2) {
-      setError("코스를 확정하려면 장소가 2곳 이상 필요해요.");
+      setError(t("publishNeedsTwoPlaces"));
       return;
     }
 
     if (title.trim().length < 2) {
-      setError("제목을 2자 이상 입력해주세요.");
+      setError(t("publishNeedsTitle"));
       return;
     }
 
@@ -43,38 +46,36 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
   return (
     <div className="sheet-backdrop absolute inset-0 z-30 flex items-end justify-center bg-black/35">
       <form
-        className="glass-panel sheet-panel flex max-h-[86%] w-full flex-col overflow-y-auto rounded-t-xl p-5 pb-6"
+        className="app-scroll-area glass-panel sheet-panel flex max-h-[86%] w-full flex-col overflow-y-auto rounded-t-xl p-5 pb-6"
         onSubmit={handleSubmit}
       >
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border-strong" />
 
-        <h2 className="text-lg font-extrabold">코스 확정하기</h2>
-        <p className="mt-1 text-xs text-muted">
-          {places.length}개 장소 · 이 코스에 제목과 설명을 붙여 저장해보세요.
-        </p>
+        <h2 className="text-lg font-extrabold">{t("publishHeading")}</h2>
+        <p className="mt-1 text-xs text-muted text-balance">{t("publishSubtitle", { count: places.length })}</p>
 
         <label className="mt-4 block text-xs font-bold text-muted-strong">
-          제목
+          {t("publishTitleLabel")}
           <input
             className="mt-1.5 h-11 w-full rounded-sm border border-border bg-surface px-3 text-sm font-semibold outline-none focus:border-primary"
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="예: 성수 팝업과 카페를 잇는 오후"
+            placeholder={t("publishTitlePlaceholder")}
             value={title}
           />
         </label>
 
         <label className="mt-3 block text-xs font-bold text-muted-strong">
-          설명
+          {t("publishDescriptionLabel")}
           <textarea
             className="mt-1.5 min-h-20 w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
             onChange={(event) => setDescription(event.target.value)}
-            placeholder="이 코스를 어떤 사람에게 추천하고 싶나요?"
+            placeholder={t("publishDescriptionPlaceholder")}
             value={description}
           />
         </label>
 
         <div className="mt-3 grid gap-2">
-          {visibilityOptions.map((option) => (
+          {visibilityOptionKeys.map((option) => (
             <button
               className={cn(
                 "flex items-center justify-between rounded-sm border px-3 py-2.5 text-left",
@@ -87,8 +88,8 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
               type="button"
             >
               <span>
-                <span className="block text-sm font-bold">{option.label}</span>
-                <span className="block text-xs text-muted">{option.hint}</span>
+                <span className="block text-sm font-bold">{t(option.labelKey)}</span>
+                <span className="block text-xs text-muted">{t(option.hintKey)}</span>
               </span>
               <span
                 className={cn(
@@ -104,9 +105,9 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Button onClick={onCancel} type="button" variant="secondary">
-            취소
+            {t("cancel")}
           </Button>
-          <Button type="submit">코스 저장</Button>
+          <Button type="submit">{t("saveCourse")}</Button>
         </div>
       </form>
     </div>

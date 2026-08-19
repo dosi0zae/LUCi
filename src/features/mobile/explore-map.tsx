@@ -7,7 +7,8 @@ import {
   type KakaoMap,
   type KakaoMapsApi,
 } from "@/features/mobile/kakao-loader";
-import { categoryTone, type MobilePlace } from "@/features/mobile/mobile-data";
+import { categoryTone, localizePlace, type MobilePlace } from "@/features/mobile/mobile-data";
+import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 
 type ExploreMapProps = {
   places: MobilePlace[];
@@ -17,12 +18,12 @@ type ExploreMapProps = {
   onSelectPlace: (place: MobilePlace) => void;
 };
 
-function createMarkerElement(place: MobilePlace, isSelected: boolean) {
+function createMarkerElement(place: MobilePlace, isSelected: boolean, markerAria: string) {
   const marker = document.createElement("button");
   const tone = categoryTone[place.category];
 
   marker.type = "button";
-  marker.setAttribute("aria-label", `${place.name} 마커`);
+  marker.setAttribute("aria-label", markerAria);
   marker.style.width = isSelected ? "18px" : "14px";
   marker.style.height = isSelected ? "18px" : "14px";
   marker.style.borderRadius = "999px";
@@ -36,6 +37,8 @@ function createMarkerElement(place: MobilePlace, isSelected: boolean) {
 }
 
 export function ExploreMap({ center, level = 5, onSelectPlace, places, selectedPlaceId }: ExploreMapProps) {
+  const t = useT();
+  const { locale } = useLocale();
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KakaoMap | null>(null);
@@ -97,7 +100,11 @@ export function ExploreMap({ center, level = 5, onSelectPlace, places, selectedP
 
     overlaysRef.current.forEach((overlay) => overlay.setMap(null));
     overlaysRef.current = places.map((place) => {
-      const element = createMarkerElement(place, place.id === selectedPlaceId);
+      const element = createMarkerElement(
+        place,
+        place.id === selectedPlaceId,
+        t("markerAria", { name: localizePlace(place, locale).name }),
+      );
       element.addEventListener("click", () => onSelectPlace(place));
 
       const overlay = new maps.CustomOverlay({
@@ -116,14 +123,12 @@ export function ExploreMap({ center, level = 5, onSelectPlace, places, selectedP
       overlaysRef.current.forEach((overlay) => overlay.setMap(null));
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [places, selectedPlaceId, status]);
+  }, [places, selectedPlaceId, status, t, locale]);
 
   if (status === "missing-key") {
     return (
       <div className="grid h-full place-items-center rounded-lg border border-dashed border-border bg-surface-muted p-6 text-center">
-        <p className="text-xs text-muted">
-          지도를 사용하려면 카카오 지도 API 키(NEXT_PUBLIC_KAKAO_MAP_APP_KEY)가 필요해요.
-        </p>
+        <p className="text-xs text-muted">{t("mapMissingKey")}</p>
       </div>
     );
   }
@@ -131,7 +136,7 @@ export function ExploreMap({ center, level = 5, onSelectPlace, places, selectedP
   if (status === "error") {
     return (
       <div className="grid h-full place-items-center rounded-lg border border-dashed border-border bg-surface-muted p-6 text-center">
-        <p className="text-xs text-muted">지도를 불러오지 못했어요. 잠시 후 다시 시도해주세요.</p>
+        <p className="text-xs text-muted">{t("mapLoadFailed")}</p>
       </div>
     );
   }

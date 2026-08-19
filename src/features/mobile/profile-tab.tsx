@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { UserIcon } from "@/components/layout/app-icons";
 import { TripFeedList } from "@/features/mobile/trip-feed-list";
 import type { FeedTrip } from "@/features/mobile/mobile-data";
+import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
+import { SUPPORTED_LOCALES, localeLabel } from "@/features/mobile/i18n/translations";
 import { cn } from "@/lib/utils";
 
 type ProfileTabProps = {
@@ -22,6 +24,34 @@ type ProfileTabProps = {
 
 type ProfileSubTab = "mine" | "saved" | "recent";
 
+function LanguageSwitcher() {
+  const t = useT();
+  const { locale, setLocale } = useLocale();
+
+  return (
+    <div className="mt-6">
+      <p className="text-xs font-bold text-muted-strong">{t("languageSetting")}</p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {SUPPORTED_LOCALES.map((option) => (
+          <button
+            className={cn(
+              "rounded-full px-3.5 py-1.5 text-xs font-extrabold transition",
+              locale === option
+                ? "bg-primary text-white"
+                : "border border-border bg-surface text-muted-strong",
+            )}
+            key={option}
+            onClick={() => setLocale(option)}
+            type="button"
+          >
+            {localeLabel[option]}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ProfileTab({
   isSignedIn,
   likedIds,
@@ -34,6 +64,7 @@ export function ProfileTab({
   savedIds,
   savedTrips,
 }: ProfileTabProps) {
+  const t = useT();
   const [subTab, setSubTab] = useState<ProfileSubTab>("mine");
 
   if (!isSignedIn) {
@@ -42,11 +73,9 @@ export function ProfileTab({
         <span className="grid h-14 w-14 place-items-center rounded-full bg-surface-muted text-muted">
           <UserIcon className="h-7 w-7" />
         </span>
-        <h2 className="text-lg font-extrabold">로그인하고 내 코스를 관리해보세요</h2>
-        <p className="max-w-[260px] text-sm text-muted">
-          지금은 목업 로그인이라 실제 계정 없이 체험할 수 있어요.
-        </p>
-        <Button onClick={onToggleSignIn}>카카오로 시작하기 (목업)</Button>
+        <h2 className="text-lg font-extrabold text-balance">{t("signInHeading")}</h2>
+        <p className="max-w-[260px] break-keep text-sm text-muted text-balance">{t("signInSubtitle")}</p>
+        <Button onClick={onToggleSignIn}>{t("signInButton")}</Button>
       </div>
     );
   }
@@ -54,21 +83,21 @@ export function ProfileTab({
   const subTabs: { id: ProfileSubTab; label: string; trips: FeedTrip[]; emptyLabel: string }[] = [
     {
       id: "mine",
-      label: "만든 코스",
+      label: t("tabMine"),
       trips: myTrips,
-      emptyLabel: "아직 만든 코스가 없어요. 홈에서 코스를 확정해보세요.",
+      emptyLabel: t("emptyMine"),
     },
     {
       id: "saved",
-      label: "저장한 코스",
+      label: t("tabSaved"),
       trips: savedTrips,
-      emptyLabel: "아직 저장한 코스가 없어요. 탐색이나 랭킹에서 마음에 드는 코스를 저장해보세요.",
+      emptyLabel: t("emptySaved"),
     },
     {
       id: "recent",
-      label: "최근 본 코스",
+      label: t("tabRecent"),
       trips: recentlyViewedTrips,
-      emptyLabel: "아직 살펴본 코스가 없어요.",
+      emptyLabel: t("emptyRecent"),
     },
   ];
   const activeSubTab = subTabs.find((tab) => tab.id === subTab) ?? subTabs[0];
@@ -80,19 +109,19 @@ export function ProfileTab({
           <UserIcon className="h-7 w-7" />
         </span>
         <div className="min-w-0">
-          <h2 className="truncate text-lg font-extrabold">여행자님</h2>
+          <h2 className="truncate text-lg font-extrabold">{t("travelerName")}</h2>
           <p className="text-xs text-muted">@trip.chain.user</p>
         </div>
         <Button className="ml-auto" onClick={onToggleSignIn} size="sm" variant="secondary">
-          로그아웃
+          {t("signOut")}
         </Button>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
         {[
-          { label: "만든 코스", value: myTrips.length, onClick: () => setSubTab("mine") },
-          { label: "저장", value: savedTrips.length, onClick: () => setSubTab("saved") },
-          { label: "팔로워", value: 12, onClick: undefined },
+          { label: t("tabMine"), value: myTrips.length, onClick: () => setSubTab("mine") },
+          { label: t("statSaved"), value: savedTrips.length, onClick: () => setSubTab("saved") },
+          { label: t("statFollowers"), value: 12, onClick: undefined },
         ].map(({ label, onClick, value }) => (
           <button
             className="rounded-sm border border-border bg-surface p-3 text-center transition hover:border-primary"
@@ -137,6 +166,8 @@ export function ProfileTab({
           trips={activeSubTab.trips}
         />
       </div>
+
+      <LanguageSwitcher />
     </div>
   );
 }

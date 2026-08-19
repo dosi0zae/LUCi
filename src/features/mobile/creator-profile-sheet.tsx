@@ -2,6 +2,7 @@
 
 import { TripFeedList } from "@/features/mobile/trip-feed-list";
 import type { FeedTrip } from "@/features/mobile/mobile-data";
+import { useT } from "@/features/mobile/i18n/i18n-context";
 
 type CreatorProfileSheetProps = {
   authorHandle: string;
@@ -26,17 +27,18 @@ export function CreatorProfileSheet({
   savedIds,
   trips,
 }: CreatorProfileSheetProps) {
+  const t = useT();
   const totalLikes = trips.reduce((sum, trip) => sum + trip.likes, 0);
 
   return (
     <div className="detail-page absolute inset-0 z-40 flex flex-col bg-background">
       <header className="flex items-center border-b border-border px-5 py-4">
         <button className="text-sm font-bold text-muted-strong" onClick={onClose} type="button">
-          ← 뒤로
+          {t("back")}
         </button>
       </header>
 
-      <div className="min-w-0 flex-1 overflow-y-auto px-5 py-4">
+      <div className="app-scroll-area min-w-0 flex-1 overflow-y-auto px-5 py-4">
         <div className="flex items-center gap-3">
           <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-primary-soft text-lg font-extrabold text-primary-strong">
             {authorName.slice(0, 1)}
@@ -50,18 +52,20 @@ export function CreatorProfileSheet({
         <div className="mt-4 grid grid-cols-2 gap-2">
           <div className="rounded-sm border border-border bg-surface p-3 text-center">
             <p className="text-lg font-extrabold">{trips.length}</p>
-            <p className="mt-0.5 text-xs text-muted">만든 코스</p>
+            <p className="mt-0.5 text-xs text-muted">{t("creatorMadeCourses")}</p>
           </div>
           <div className="rounded-sm border border-border bg-surface p-3 text-center">
             <p className="text-lg font-extrabold">{totalLikes.toLocaleString()}</p>
-            <p className="mt-0.5 text-xs text-muted">받은 좋아요</p>
+            <p className="mt-0.5 text-xs text-muted">{t("creatorReceivedLikes")}</p>
           </div>
         </div>
 
-        <h2 className="mt-6 text-sm font-extrabold text-muted-strong">{authorName}님의 코스</h2>
+        <h2 className="mt-6 text-sm font-extrabold text-muted-strong">
+          {t("creatorCoursesHeading", { name: authorName })}
+        </h2>
         <div className="mt-2.5">
           <TripFeedList
-            emptyLabel="아직 공개된 코스가 없어요."
+            emptyLabel={t("creatorEmpty")}
             likedIds={likedIds}
             mode="explore"
             onOpenTrip={onOpenTrip}

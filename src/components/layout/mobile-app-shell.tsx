@@ -20,22 +20,22 @@ import {
 } from "@/components/layout/app-icons";
 import { cn } from "@/lib/utils";
 import {
-  areaMeta,
   getPlaceById,
   getPlaceImageUrl,
   getPlacesByIds,
-  inferArea,
-  nearestAreaId,
-  placesByArea,
-  promptExamples,
+  getTotalMinutes,
+  localizePlace,
+  localizeTrip,
+  places,
   seedFeedTrips,
-  type AreaId,
   type FeedTrip,
   type MobilePlace,
   type PlaceCategory,
   type TripVisibility,
 } from "@/features/mobile/mobile-data";
+import { useCategoryLabel, useLocale, usePromptExamples, useT } from "@/features/mobile/i18n/i18n-context";
 import { CategorySheet } from "@/features/mobile/category-sheet";
+import { LanguageMenuButton } from "@/features/mobile/language-menu-button";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
 import { CreatorProfileSheet } from "@/features/mobile/creator-profile-sheet";
 import { ExploreMap } from "@/features/mobile/explore-map";
@@ -44,33 +44,52 @@ import { OnboardingTour } from "@/features/mobile/onboarding-tour";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
 import { PublishSheet } from "@/features/mobile/publish-sheet";
-import { buildChain } from "@/features/mobile/recommend-engine";
+import { buildChain, findBestInsertionIndex } from "@/features/mobile/recommend-engine";
 import { TripDetailSheet } from "@/features/mobile/trip-detail-sheet";
 import { TripFeedList } from "@/features/mobile/trip-feed-list";
 import { ProfileTab } from "@/features/mobile/profile-tab";
 
 type TabId = "home" | "explore" | "ranking" | "profile";
 
+const TAB_ORDER: TabId[] = ["home", "explore", "ranking", "profile"];
+
 const OTHER_PLACES_PER_CATEGORY = 3;
-const CATEGORY_ORDER: PlaceCategory[] = ["카페", "팝업", "전시", "산책"];
+const CATEGORY_ORDER: PlaceCategory[] = ["관광지", "문화재", "문화시설", "축제행사"];
+const SEOUL_CENTER = { lat: 37.5665, lng: 126.978 };
 const PROFILE_STORAGE_KEY = "tripchain:profile";
 const RECENTLY_VIEWED_LIMIT = 10;
 const TUTORIAL_STORAGE_KEY = "tripchain:tutorialSeen";
 
-const tabs: { id: TabId; label: string; icon: typeof HomeIcon }[] = [
-  { id: "home", label: "홈", icon: HomeIcon },
-  { id: "explore", label: "탐색", icon: CompassIcon },
-  { id: "ranking", label: "랭킹", icon: TrophyIcon },
-  { id: "profile", label: "프로필", icon: UserIcon },
-];
-
 export function MobileAppShell() {
+  const t = useT();
+  const categoryLabel = useCategoryLabel();
+  const { locale } = useLocale();
+  const promptExamples = usePromptExamples();
+
+  const tabs: { id: TabId; label: string; icon: typeof HomeIcon }[] = [
+    { id: "home", label: t("navHome"), icon: HomeIcon },
+    { id: "explore", label: t("navExplore"), icon: CompassIcon },
+    { id: "ranking", label: t("navRanking"), icon: TrophyIcon },
+    { id: "profile", label: t("navProfile"), icon: UserIcon },
+  ];
+
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const [tourPhase, setTourPhase] = useState<"hidden" | "intro" | "steps">("hidden");
 
+  // Tracks the previous tab so the newly-shown tab can slide in from the side it
+  // logically came from, rather than a fixed direction. Adjusting state during render
+  // (React's documented pattern for "remembering info from previous renders") is what
+  // keeps this in sync with the same render that introduces the new tab's DOM node —
+  // an effect would only update it one render too late for that node's entrance class.
+  const [prevActiveTab, setPrevActiveTab] = useState<TabId>(activeTab);
+  const [tabSlideClass, setTabSlideClass] = useState("tab-slide-in-right");
+  if (activeTab !== prevActiveTab) {
+    setTabSlideClass(TAB_ORDER.indexOf(activeTab) >= TAB_ORDER.indexOf(prevActiveTab) ? "tab-slide-in-right" : "tab-slide-in-left");
+    setPrevActiveTab(activeTab);
+  }
+
   const [prompt, setPrompt] = useState("");
   const [submittedPrompt, setSubmittedPrompt] = useState("");
-  const [areaId, setAreaId] = useState<AreaId>("seongsu");
   const [chainIds, setChainIds] = useState<string[]>([]);
   const [draggingChainId, setDraggingChainId] = useState<string | null>(null);
   const dragStateRef = useRef<{ id: string } | null>(null);
@@ -86,16 +105,14 @@ export function MobileAppShell() {
   const [publishedTrips, setPublishedTrips] = useState<FeedTrip[]>([]);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
-  const [likedMenuIds, setLikedMenuIds] = useState<Set<string>>(new Set());
   const [recentlyViewedTripIds, setRecentlyViewedTripIds] = useState<string[]>([]);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
   const [exploreView, setExploreView] = useState<"list" | "map">("list");
   const [exploreQuery, setExploreQuery] = useState("");
-  const [exploreArea, setExploreArea] = useState<"all" | AreaId>("all");
+  const [exploreUserLocation, setExploreUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const [rankingPeriod, setRankingPeriod] = useState<"weekly" | "live">("weekly");
-  const [rankingArea, setRankingArea] = useState<"all" | AreaId>("all");
 
   const hasResult = submittedPrompt.length > 0;
   const [exampleIndex, setExampleIndex] = useState(0);
@@ -110,7 +127,7 @@ export function MobileAppShell() {
     }, 5000);
 
     return () => window.clearInterval(intervalId);
-  }, [hasResult]);
+  }, [hasResult, promptExamples.length]);
 
   useEffect(() => {
     // Warm up the Kakao SDK while the user is still on the search screen, so the
@@ -160,7 +177,6 @@ export function MobileAppShell() {
           publishedTrips?: FeedTrip[];
           likedIds?: string[];
           savedIds?: string[];
-          likedMenuIds?: string[];
           recentlyViewedTripIds?: string[];
         };
 
@@ -170,7 +186,6 @@ export function MobileAppShell() {
         if (Array.isArray(parsed.publishedTrips)) setPublishedTrips(parsed.publishedTrips);
         if (Array.isArray(parsed.likedIds)) setLikedIds(new Set(parsed.likedIds));
         if (Array.isArray(parsed.savedIds)) setSavedIds(new Set(parsed.savedIds));
-        if (Array.isArray(parsed.likedMenuIds)) setLikedMenuIds(new Set(parsed.likedMenuIds));
         if (Array.isArray(parsed.recentlyViewedTripIds)) {
           setRecentlyViewedTripIds(parsed.recentlyViewedTripIds);
         }
@@ -195,24 +210,37 @@ export function MobileAppShell() {
           publishedTrips,
           likedIds: [...likedIds],
           savedIds: [...savedIds],
-          likedMenuIds: [...likedMenuIds],
           recentlyViewedTripIds,
         }),
       );
     } catch {
       // Storage may be unavailable (private mode, quota) — persistence is best-effort.
     }
-  }, [isSignedIn, publishedTrips, likedIds, savedIds, likedMenuIds, recentlyViewedTripIds]);
+  }, [isSignedIn, publishedTrips, likedIds, savedIds, recentlyViewedTripIds]);
+
+  useEffect(() => {
+    if (exploreView !== "map" || exploreUserLocation || !navigator.geolocation) {
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setExploreUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+      },
+      () => {
+        // Permission denied or unavailable — the map falls back to the Seoul-wide view.
+      },
+      { maximumAge: 5 * 60 * 1000, timeout: 8000 },
+    );
+  }, [exploreView, exploreUserLocation]);
 
   const [isRecommending, setIsRecommending] = useState(false);
   const [recommendReason, setRecommendReason] = useState<string | null>(null);
   const [isAiCourse, setIsAiCourse] = useState(false);
 
   const showBottomNav = activeTab !== "home" || hasResult || tourPhase === "steps";
-  const area = areaMeta[areaId];
   const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds]);
   const otherPlacesByCategory = useMemo(() => {
-    const remaining = placesByArea[areaId].filter((place) => !chainIds.includes(place.id));
+    const remaining = places.filter((place) => !chainIds.includes(place.id));
     const byCategory = new Map<PlaceCategory, MobilePlace[]>();
 
     for (const place of remaining) {
@@ -227,16 +255,16 @@ export function MobileAppShell() {
         .sort((a, b) => b.savedBy - a.savedBy)
         .slice(0, OTHER_PLACES_PER_CATEGORY),
     })).filter((group) => group.places.length > 0);
-  }, [areaId, chainIds]);
+  }, [chainIds]);
 
   const viewingCategoryPlaces = useMemo(() => {
     if (!viewingCategory) {
       return [];
     }
-    return placesByArea[areaId]
+    return places
       .filter((place) => place.category === viewingCategory && !chainIds.includes(place.id))
       .sort((a, b) => b.savedBy - a.savedBy);
-  }, [areaId, chainIds, viewingCategory]);
+  }, [chainIds, viewingCategory]);
 
   const allTrips = useMemo(() => [...publishedTrips, ...seedFeedTrips], [publishedTrips]);
   const savedTrips = useMemo(
@@ -256,47 +284,38 @@ export function MobileAppShell() {
   const normalizedExploreQuery = exploreQuery.trim().toLowerCase();
   const exploreTrips = useMemo(
     () =>
-      allTrips
-        .filter((trip) => exploreArea === "all" || trip.areaId === exploreArea)
-        .filter((trip) => {
-          if (!normalizedExploreQuery) {
-            return true;
-          }
-          const text = [trip.title, trip.description, trip.authorName, areaMeta[trip.areaId].name]
-            .join(" ")
-            .toLowerCase();
-          return text.includes(normalizedExploreQuery);
-        }),
-    [allTrips, exploreArea, normalizedExploreQuery],
+      allTrips.filter((trip) => {
+        if (!normalizedExploreQuery) {
+          return true;
+        }
+        const text = [trip.title, trip.description, trip.authorName].join(" ").toLowerCase();
+        return text.includes(normalizedExploreQuery);
+      }),
+    [allTrips, normalizedExploreQuery],
   );
-  const exploreMapPlaces = exploreArea === "all" ? Object.values(placesByArea).flat() : placesByArea[exploreArea];
-  const exploreMapCenter = exploreArea === "all" ? { lat: 37.5445, lng: 127.0 } : areaMeta[exploreArea].center;
-  const exploreMapLevel = exploreArea === "all" ? 9 : 7;
+  const exploreMapPlaces = places;
+  const exploreMapCenter = exploreUserLocation ?? SEOUL_CENTER;
+  const exploreMapLevel = exploreUserLocation ? 4 : 9;
 
   const rankingTrips = useMemo(() => {
-    const filtered = allTrips.filter(
-      (trip) => rankingArea === "all" || trip.areaId === rankingArea,
-    );
-
     if (rankingPeriod === "live") {
-      return [...filtered].sort(
+      return [...allTrips].sort(
         (a, b) => b.likes + b.saved + b.comments - (a.likes + a.saved + a.comments),
       );
     }
 
-    return [...filtered].sort((a, b) => b.rankScore - a.rankScore);
-  }, [allTrips, rankingArea, rankingPeriod]);
+    return [...allTrips].sort((a, b) => b.rankScore - a.rankScore);
+  }, [allTrips, rankingPeriod]);
 
-  function startCourse(nextAreaId: AreaId, nextPrompt: string) {
+  function startCourse(nextPrompt: string, anchor?: { lat: number; lng: number } | null) {
     const { placeIds } = buildChain({
-      areaId: nextAreaId,
       categories: [],
       attributes: [],
       placeCount: 4,
+      anchor: anchor ?? null,
     });
 
     setSubmittedPrompt(nextPrompt);
-    setAreaId(nextAreaId);
     setChainIds(placeIds);
     setRecommendReason(null);
     setIsAiCourse(false);
@@ -311,7 +330,7 @@ export function MobileAppShell() {
       const response = await fetch("/api/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: nextPrompt }),
+        body: JSON.stringify({ prompt: nextPrompt, locale }),
       });
 
       if (!response.ok) {
@@ -319,25 +338,16 @@ export function MobileAppShell() {
       }
 
       const data = await response.json();
-      const isValidArea = (Object.keys(areaMeta) as AreaId[]).includes(data.areaId);
 
-      if (!isValidArea || !Array.isArray(data.placeIds) || data.placeIds.length === 0) {
+      if (!Array.isArray(data.placeIds) || data.placeIds.length === 0) {
         throw new Error("recommend response malformed");
       }
 
-      setAreaId(data.areaId);
       setChainIds(data.placeIds);
       setRecommendReason(typeof data.reason === "string" ? data.reason : null);
       setSubmittedPrompt(nextPrompt);
     } catch {
-      const fallbackAreaId = inferArea(nextPrompt);
-      const { placeIds } = buildChain({
-        areaId: fallbackAreaId,
-        categories: [],
-        attributes: [],
-        placeCount: 4,
-      });
-      setAreaId(fallbackAreaId);
+      const { placeIds } = buildChain({ categories: [], attributes: [], placeCount: 4 });
       setChainIds(placeIds);
       setSubmittedPrompt(nextPrompt);
     } finally {
@@ -347,15 +357,8 @@ export function MobileAppShell() {
 
   function recommend(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
-    const nextPrompt = prompt.trim() || "오늘 분위기에 맞는 코스를 추천해줘";
+    const nextPrompt = prompt.trim() || t("defaultMoodPrompt");
     void startCourseFromPrompt(nextPrompt);
-  }
-
-  function chooseArea(nextAreaId: AreaId) {
-    if (nextAreaId === areaId) {
-      return;
-    }
-    startCourse(nextAreaId, submittedPrompt);
   }
 
   function refreshCourse() {
@@ -363,10 +366,16 @@ export function MobileAppShell() {
       void startCourseFromPrompt(submittedPrompt);
       return;
     }
-    startCourse(areaId, submittedPrompt);
+    // buildChain() is synchronous, so without an artificial minimum duration the
+    // refresh icon's spin would never get a chance to paint before it's done.
+    setIsRecommending(true);
+    window.setTimeout(() => {
+      startCourse(submittedPrompt);
+      setIsRecommending(false);
+    }, 450);
   }
 
-  function locateNearestArea() {
+  function locateNearby() {
     if (!navigator.geolocation) {
       return;
     }
@@ -374,11 +383,10 @@ export function MobileAppShell() {
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const nearest = nearestAreaId({
+        startCourse(t("nearbyCoursePrompt"), {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
-        startCourse(nearest, "내 주변 코스");
         setIsLocating(false);
       },
       () => {
@@ -452,25 +460,32 @@ export function MobileAppShell() {
 
   function addToChain(place: MobilePlace) {
     if (!hasResult) {
-      setSubmittedPrompt(`${areaMeta[place.areaId].name}에서 발견한 장소로 시작한 코스`);
-      setAreaId(place.areaId);
+      setSubmittedPrompt(t("startedFromPlacePrompt", { name: place.name }));
       setChainIds([place.id]);
       setSelectedPlaceId(null);
       return;
     }
 
-    setChainIds((current) => (current.includes(place.id) ? current : [...current, place.id]));
+    setChainIds((current) => {
+      if (current.includes(place.id)) {
+        return current;
+      }
+      const insertAt = findBestInsertionIndex(getPlacesByIds(current), place);
+      return [...current.slice(0, insertAt), place.id, ...current.slice(insertAt)];
+    });
     setSelectedPlaceId(null);
   }
 
   function handlePublish(input: { title: string; description: string; visibility: TripVisibility }) {
     const trip: FeedTrip = {
+      // handlePublish only ever runs from PublishSheet's submit click, never during
+      // render, so a timestamp-based id here is a safe, one-shot side effect.
+      // eslint-disable-next-line react-hooks/purity
       id: `mine-${Date.now()}`,
       title: input.title,
       description: input.description,
       authorHandle: "you",
-      authorName: "여행자님",
-      areaId,
+      authorName: t("travelerName"),
       visibility: input.visibility,
       placeIds: chainIds,
       likes: 0,
@@ -488,6 +503,38 @@ export function MobileAppShell() {
     setSubmittedPrompt("");
     setChainIds([]);
     setRecommendReason(null);
+
+    // Published in whatever language the user typed — translate in the background
+    // (not blocking publish) so it reads correctly for viewers in every locale,
+    // regardless of which language it was written in.
+    void translateTrip(trip.id, trip.title, trip.description);
+  }
+
+  async function translateTrip(tripId: string, title: string, description: string) {
+    try {
+      const response = await fetch("/api/translate-trip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description }),
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+      if (!data.translations) {
+        return;
+      }
+
+      setPublishedTrips((current) =>
+        current.map((existing) =>
+          existing.id === tripId ? { ...existing, translations: data.translations } : existing,
+        ),
+      );
+    } catch {
+      // Best-effort — the trip still displays fine in its original language.
+    }
   }
 
   function toggleLike(id: string) {
@@ -514,23 +561,22 @@ export function MobileAppShell() {
     });
   }
 
-  function toggleMenuLike(key: string) {
-    setLikedMenuIds((current) => {
-      const next = new Set(current);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
-  }
-
   function viewTrip(trip: FeedTrip) {
     setRecentlyViewedTripIds((current) =>
       [trip.id, ...current.filter((id) => id !== trip.id)].slice(0, RECENTLY_VIEWED_LIMIT),
     );
     setOpenTripId(trip.id);
+  }
+
+  // Brings a published trip's stops into the user's own working chain — reordering,
+  // adding, or removing stops from here doesn't touch the original published trip.
+  function loadTripToChain(trip: FeedTrip) {
+    setChainIds(trip.placeIds);
+    setSubmittedPrompt(localizeTrip(trip, locale).title);
+    setRecommendReason(null);
+    setIsAiCourse(false);
+    setOpenTripId(null);
+    setActiveTab("home");
   }
 
   const searchForm = (
@@ -541,19 +587,19 @@ export function MobileAppShell() {
     >
       <SearchIcon className="h-5 w-5 shrink-0 text-muted" />
       <input
-        aria-label="원하는 코스 입력"
+        aria-label={t("searchInputAria")}
         className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-muted"
         onChange={(event) => setPrompt(event.target.value)}
-        placeholder="원하는 체인을 말해보세요."
+        placeholder={t("searchPlaceholder")}
         type="search"
         value={prompt}
       />
       <button
-        aria-label="내 주변 지역으로 찾기"
+        aria-label={t("locateNearbyAria")}
         className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted transition hover:bg-surface-muted hover:text-foreground disabled:opacity-60"
         disabled={isLocating}
-        onClick={locateNearestArea}
-        title="내 주변으로 찾기"
+        onClick={locateNearby}
+        title={t("locateNearbyTitle")}
         type="button"
       >
         {isLocating ? (
@@ -563,10 +609,10 @@ export function MobileAppShell() {
         )}
       </button>
       <button
-        aria-label={prompt.trim() ? "이 문장으로 코스 검색" : "코스 자동 추천 받기"}
+        aria-label={prompt.trim() ? t("searchSubmitPromptAria") : t("searchSubmitAutoAria")}
         className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:bg-primary-strong disabled:opacity-60"
         disabled={isRecommending}
-        title={prompt.trim() ? "검색" : "자동생성"}
+        title={prompt.trim() ? t("searchSubmitPromptTitle") : t("searchSubmitAutoTitle")}
         type="submit"
       >
         {isRecommending ? (
@@ -583,10 +629,10 @@ export function MobileAppShell() {
   return (
     <main className="min-h-screen bg-[#edf2f7] text-foreground">
       <section className="relative mx-auto flex h-[100svh] max-h-[900px] w-full max-w-[430px] flex-col overflow-hidden bg-background shadow-panel">
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="app-scroll-area min-h-0 flex-1 overflow-y-auto">
           {activeTab === "home" && (
             !hasResult ? (
-              <div className="relative min-h-full">
+              <div className={cn(tabSlideClass, "relative min-h-full")}>
                 <div className="hero-blobs" aria-hidden="true">
                   <span
                     className="hero-blob hero-blob--a"
@@ -636,13 +682,13 @@ export function MobileAppShell() {
 
                 <header className="absolute inset-x-0 top-0 z-10 px-5 pt-10 text-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img alt="Trip Chain" className="mx-auto block h-32 w-auto" src="/tripchain-logo.svg" />
-                  <p className="-mt-3 text-xs font-extrabold tracking-wide text-primary">Beta</p>
-                  <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-normal">
-                    오늘은 어디로 갈까요?
+                  <img alt="Trip Chain" className="mx-auto block h-[85px] w-auto" src="/tripchain-logo.svg" />
+                  <p className="mt-1 text-xs font-extrabold tracking-wide text-primary">Beta</p>
+                  <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-normal text-balance">
+                    {t("heroTitle")}
                   </h1>
-                  <p className="mx-auto mt-4 max-w-[310px] text-sm leading-6 text-muted">
-                    성수, 홍대, 강남 중심으로 체인을 추천합니다.
+                  <p className="mx-auto mt-4 max-w-[310px] whitespace-pre-line text-sm leading-6 text-muted">
+                    {t("heroSubtitle")}
                   </p>
                 </header>
 
@@ -668,19 +714,21 @@ export function MobileAppShell() {
                 <button
                   className="absolute inset-x-0 bottom-6 z-10 text-center text-xs font-semibold opacity-60 transition hover:opacity-100"
                   data-tour="quick-browse"
-                  onClick={() => startCourse(areaId, "요즘 인기 있는 코스")}
+                  onClick={() => startCourse(t("popularCoursePrompt"))}
                   style={{ color: "var(--success)" }}
                   type="button"
                 >
-                  바로 살펴보기 &gt;
+                  {t("quickBrowse")}
                 </button>
+
+                <LanguageMenuButton className="absolute bottom-3 right-5 z-20" />
               </div>
             ) : (
-              <div className="relative flex min-h-full flex-col px-5 pb-24 pt-5">
+              <div className={cn(tabSlideClass, "relative flex min-h-full flex-col px-5 pb-24 pt-5")}>
                 <header className="relative z-10 text-left">
                   <p className="text-xs font-extrabold text-primary">Trip Chain Beta</p>
-                  <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-normal">
-                    오늘은 어디로 갈까요?
+                  <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-normal text-balance">
+                    {t("heroTitle")}
                   </h1>
                 </header>
 
@@ -688,41 +736,23 @@ export function MobileAppShell() {
 
               {hasResult && (
                 <section className="mt-5 grid gap-4">
-                  <div className="flex gap-2 overflow-x-auto pb-1">
-                    {(Object.keys(areaMeta) as AreaId[]).map((id) => (
-                      <button
-                        className={cn(
-                          "shrink-0 rounded-sm border px-3 py-2 text-sm font-extrabold",
-                          areaId === id
-                            ? "border-primary bg-primary text-white"
-                            : "border-border bg-surface text-muted-strong",
-                        )}
-                        key={id}
-                        onClick={() => chooseArea(id)}
-                        type="button"
-                      >
-                        {areaMeta[id].name}
-                      </button>
-                    ))}
-                  </div>
-
                   <article className="rounded-lg border border-border bg-surface p-4 shadow-soft">
                     <div className="flex items-center justify-between gap-3">
-                      <Badge tone="blue">AI 추천 코스</Badge>
+                      <Badge tone="blue">{t("aiCourseBadge")}</Badge>
                       <button
-                        aria-label="다른 코스 추천받기"
+                        aria-label={t("refreshCourseAria")}
                         className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary disabled:opacity-60"
                         disabled={isRecommending}
                         onClick={refreshCourse}
-                        title="다른 코스 추천받기"
+                        title={t("refreshCourseTitle")}
                         type="button"
                       >
                         <RefreshIcon className={cn("h-4 w-4", isRecommending && "animate-spin")} />
                       </button>
                     </div>
-                    <h2 className="mt-3 text-xl font-extrabold">{submittedPrompt}</h2>
+                    <h2 className="mt-3 text-xl font-extrabold text-balance">{submittedPrompt}</h2>
                     <p className="mt-1 text-xs leading-5 text-muted">
-                      {area.name} · {area.coverage}
+                      {t("courseSummary", { minutes: getTotalMinutes(chainPlaces) })}
                     </p>
                     <div className="mt-3">
                       <ConstellationCard places={chainPlaces} />
@@ -733,17 +763,20 @@ export function MobileAppShell() {
                   </article>
 
                   <div className="grid gap-2" ref={chainListRef}>
-                    {chainPlaces.map((place, index) => (
+                    {chainPlaces.map((place, index) => {
+                      const localizedPlace = localizePlace(place, locale);
+                      return (
                       <article
                         className={cn(
-                          "flex min-w-0 items-center gap-2 rounded-lg border border-border bg-surface p-2.5 shadow-soft transition",
+                          "chain-card-in flex min-w-0 items-center gap-2 rounded-lg border border-border bg-surface p-2.5 shadow-soft transition",
                           draggingChainId === place.id && "opacity-60",
                         )}
                         data-chain-id={place.id}
                         key={place.id}
+                        style={{ animationDelay: `${index * 60}ms` }}
                       >
                         <button
-                          aria-label="순서 변경 (끌어서 이동)"
+                          aria-label={t("reorderAria")}
                           className="grid h-8 w-6 shrink-0 touch-none place-items-center text-muted"
                           onPointerCancel={handleChainDragEnd}
                           onPointerDown={(event) => handleChainDragStart(event, place.id)}
@@ -766,16 +799,16 @@ export function MobileAppShell() {
                             </span>
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-extrabold">{place.name}</span>
+                            <span className="block truncate text-sm font-extrabold">{localizedPlace.name}</span>
                             <span className="block truncate text-xs text-muted">
-                              {place.area} · {place.duration}
+                              {localizedPlace.area} · {localizedPlace.duration}
                             </span>
                           </span>
                         </button>
 
                         <div className="flex shrink-0 items-center gap-1">
                           <button
-                            aria-label="위로 이동"
+                            aria-label={t("moveUpAria")}
                             className="grid h-7 w-7 place-items-center rounded-sm border border-border text-muted-strong disabled:opacity-30"
                             disabled={index === 0}
                             onClick={() => moveStop(index, -1)}
@@ -784,7 +817,7 @@ export function MobileAppShell() {
                             <ChevronUpIcon className="h-4 w-4" />
                           </button>
                           <button
-                            aria-label="아래로 이동"
+                            aria-label={t("moveDownAria")}
                             className="grid h-7 w-7 place-items-center rounded-sm border border-border text-muted-strong disabled:opacity-30"
                             disabled={index === chainPlaces.length - 1}
                             onClick={() => moveStop(index, 1)}
@@ -793,7 +826,7 @@ export function MobileAppShell() {
                             <ChevronDownIcon className="h-4 w-4" />
                           </button>
                           <button
-                            aria-label="삭제"
+                            aria-label={t("deleteAria")}
                             className="grid h-7 w-7 place-items-center rounded-sm border border-border text-danger"
                             onClick={() => removeStop(place.id)}
                             type="button"
@@ -802,27 +835,28 @@ export function MobileAppShell() {
                           </button>
                         </div>
                       </article>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <Button
                     disabled={chainPlaces.length < 2}
                     onClick={() => setShowPublish(true)}
                   >
-                    코스 확정하기 ({chainPlaces.length}곳)
+                    {t("confirmCourse", { count: chainPlaces.length })}
                   </Button>
 
                   {otherPlacesByCategory.length > 0 && (
                     <div className="grid gap-3.5">
-                      <h3 className="text-sm font-extrabold text-muted-strong">
-                        {area.name}의 다른 장소
-                      </h3>
+                      <h3 className="text-sm font-extrabold text-muted-strong">{t("otherPlacesHeading")}</h3>
                       {otherPlacesByCategory.map((group) => (
                         <div className="min-w-0" key={group.category}>
-                          <p className="mb-1.5 text-xs font-bold text-muted">{group.category}</p>
+                          <p className="mb-1.5 text-xs font-bold text-muted">{categoryLabel(group.category)}</p>
                           <div className="flex items-center gap-2">
                             <div className="place-list-scroll flex min-w-0 flex-1 gap-2.5 overflow-x-auto">
-                              {group.places.map((place) => (
+                              {group.places.map((place) => {
+                                const localizedPlace = localizePlace(place, locale);
+                                return (
                                 <button
                                   className="flex w-28 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-surface text-left"
                                   key={place.id}
@@ -839,15 +873,18 @@ export function MobileAppShell() {
                                     />
                                   </span>
                                   <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2">
-                                    <span className="truncate text-xs font-bold">{place.name}</span>
-                                    <span className="truncate text-[11px] text-muted">{place.area}</span>
-                                    <span className="mt-1 text-[11px] font-extrabold text-primary">담기</span>
+                                    <span className="truncate text-xs font-bold">{localizedPlace.name}</span>
+                                    <span className="truncate text-[11px] text-muted">{localizedPlace.area}</span>
+                                    <span className="mt-1 text-[11px] font-extrabold text-primary">
+                                      {t("addToChainLabel")}
+                                    </span>
                                   </span>
                                 </button>
-                              ))}
+                                );
+                              })}
                             </div>
                             <button
-                              aria-label={`${group.category} 더보기`}
+                              aria-label={t("categoryMoreAria", { category: categoryLabel(group.category) })}
                               className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary"
                               onClick={() => setViewingCategory(group.category)}
                               type="button"
@@ -866,40 +903,23 @@ export function MobileAppShell() {
           )}
 
           {activeTab === "explore" && (
-            <div className="flex h-full min-h-full flex-col px-5 py-4">
-              <h1 className="text-xl font-extrabold">탐색</h1>
-              <p className="mt-1 text-xs text-muted">성수, 홍대, 강남에서 발견한 코스와 장소들이에요.</p>
+            <div className={cn(tabSlideClass, "flex h-full min-h-full flex-col px-5 py-4")}>
+              <h1 className="text-xl font-extrabold">{t("exploreHeading")}</h1>
+              <p className="mt-1 text-xs text-muted text-balance">{t("exploreSubtitle")}</p>
 
-              <div className="glass-panel mt-4 flex h-11 items-center gap-2 rounded-lg px-3">
+              <div className="glass-panel mt-4 flex h-11 shrink-0 items-center gap-2 rounded-lg px-3">
                 <SearchIcon className="h-4 w-4 shrink-0 text-muted" />
                 <input
-                  aria-label="코스 검색"
+                  aria-label={t("exploreSearchAria")}
                   className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-muted"
                   onChange={(event) => setExploreQuery(event.target.value)}
-                  placeholder="코스, 장소, 지역으로 검색"
+                  placeholder={t("exploreSearchPlaceholder")}
                   type="search"
                   value={exploreQuery}
                 />
               </div>
 
-              <div className="mt-3 flex items-center gap-2">
-                <div className="flex flex-1 gap-1.5 overflow-x-auto">
-                  {(["all", "seongsu", "hongdae", "gangnam"] as const).map((id) => (
-                    <button
-                      className={cn(
-                        "shrink-0 rounded-sm border px-3 py-1.5 text-xs font-extrabold",
-                        exploreArea === id
-                          ? "border-primary bg-primary text-white"
-                          : "border-border bg-surface text-muted-strong",
-                      )}
-                      key={id}
-                      onClick={() => setExploreArea(id)}
-                      type="button"
-                    >
-                      {id === "all" ? "전체" : areaMeta[id].name}
-                    </button>
-                  ))}
-                </div>
+              <div className="mt-3 flex items-center justify-end gap-2">
                 <div className="flex shrink-0 rounded-sm border border-border bg-surface p-0.5 text-xs font-extrabold">
                   {(["list", "map"] as const).map((mode) => (
                     <button
@@ -911,7 +931,7 @@ export function MobileAppShell() {
                       onClick={() => setExploreView(mode)}
                       type="button"
                     >
-                      {mode === "list" ? "리스트" : "지도"}
+                      {mode === "list" ? t("viewList") : t("viewMap")}
                     </button>
                   ))}
                 </div>
@@ -920,7 +940,7 @@ export function MobileAppShell() {
               {exploreView === "list" ? (
                 <div className="mt-4 pb-4">
                   <TripFeedList
-                    emptyLabel="검색 조건에 맞는 코스가 없어요."
+                    emptyLabel={t("exploreEmpty")}
                     likedIds={likedIds}
                     mode="explore"
                     onOpenTrip={viewTrip}
@@ -945,10 +965,10 @@ export function MobileAppShell() {
           )}
 
           {activeTab === "ranking" && (
-            <div className="px-5 py-4">
-              <h1 className="text-xl font-extrabold">랭킹</h1>
-              <p className="mt-1 text-xs text-muted">
-                {rankingPeriod === "weekly" ? "가장 많이 저장된 주간 코스 순서예요." : "지금 가장 활발한 코스 순서예요."}
+            <div className={cn(tabSlideClass, "px-5 py-4")}>
+              <h1 className="text-xl font-extrabold">{t("rankingHeading")}</h1>
+              <p className="mt-1 text-xs text-muted text-balance">
+                {rankingPeriod === "weekly" ? t("rankingWeeklySubtitle") : t("rankingLiveSubtitle")}
               </p>
 
               <div className="mt-3 flex rounded-sm border border-border bg-surface p-0.5 text-xs font-extrabold">
@@ -962,32 +982,14 @@ export function MobileAppShell() {
                     onClick={() => setRankingPeriod(period)}
                     type="button"
                   >
-                    {period === "weekly" ? "주간 랭킹" : "실시간 랭킹"}
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-2.5 flex gap-1.5 overflow-x-auto">
-                {(["all", "seongsu", "hongdae", "gangnam"] as const).map((id) => (
-                  <button
-                    className={cn(
-                      "shrink-0 rounded-sm border px-3 py-1.5 text-xs font-extrabold",
-                      rankingArea === id
-                        ? "border-primary bg-primary text-white"
-                        : "border-border bg-surface text-muted-strong",
-                    )}
-                    key={id}
-                    onClick={() => setRankingArea(id)}
-                    type="button"
-                  >
-                    {id === "all" ? "전체" : areaMeta[id].name}
+                    {period === "weekly" ? t("rankingWeekly") : t("rankingLive")}
                   </button>
                 ))}
               </div>
 
               <div className="mt-4">
                 <TripFeedList
-                  emptyLabel="아직 랭킹 데이터가 없어요."
+                  emptyLabel={t("rankingEmpty")}
                   likedIds={likedIds}
                   mode="ranking"
                   onOpenTrip={viewTrip}
@@ -1001,18 +1003,20 @@ export function MobileAppShell() {
           )}
 
           {activeTab === "profile" && (
-            <ProfileTab
-              isSignedIn={isSignedIn}
-              likedIds={likedIds}
-              myTrips={publishedTrips}
-              onOpenTrip={viewTrip}
-              onToggleLike={toggleLike}
-              onToggleSave={toggleSave}
-              onToggleSignIn={() => setIsSignedIn((current) => !current)}
-              recentlyViewedTrips={recentlyViewedTrips}
-              savedIds={savedIds}
-              savedTrips={savedTrips}
-            />
+            <div className={tabSlideClass}>
+              <ProfileTab
+                isSignedIn={isSignedIn}
+                likedIds={likedIds}
+                myTrips={publishedTrips}
+                onOpenTrip={viewTrip}
+                onToggleLike={toggleLike}
+                onToggleSave={toggleSave}
+                onToggleSignIn={() => setIsSignedIn((current) => !current)}
+                recentlyViewedTrips={recentlyViewedTrips}
+                savedIds={savedIds}
+                savedTrips={savedTrips}
+              />
+            </div>
           )}
         </div>
 
@@ -1021,7 +1025,7 @@ export function MobileAppShell() {
             {tabs.map(({ icon: Icon, id, label }) => (
               <button
                 className={cn(
-                  "flex flex-col items-center gap-1 py-2.5 text-xs font-bold text-muted",
+                  "flex flex-col items-center gap-1 py-2.5 text-xs font-bold text-muted transition-colors duration-300",
                   activeTab === id && "text-primary",
                 )}
                 data-tour={`nav-${id}`}
@@ -1029,7 +1033,10 @@ export function MobileAppShell() {
                 onClick={() => setActiveTab(id)}
                 type="button"
               >
-                <Icon className="h-5 w-5" />
+                <span className="relative grid place-items-center">
+                  {activeTab === id && <span aria-hidden="true" className="nav-icon-glow" />}
+                  <Icon className="relative z-10 h-5 w-5" />
+                </span>
                 {label}
               </button>
             ))}
@@ -1038,7 +1045,7 @@ export function MobileAppShell() {
 
         {viewingCategory && (
           <CategorySheet
-            areaName={area.name}
+            areaName={t("seoulWide")}
             category={viewingCategory}
             onClose={() => setViewingCategory(null)}
             onSelectPlace={(id) => {
@@ -1052,10 +1059,8 @@ export function MobileAppShell() {
         {selectedPlace && (
           <PlaceSheet
             isInChain={chainIds.includes(selectedPlace.id)}
-            likedMenuIds={likedMenuIds}
             onAddToChain={addToChain}
             onClose={() => setSelectedPlaceId(null)}
-            onToggleMenuLike={toggleMenuLike}
             place={selectedPlace}
           />
         )}
@@ -1073,6 +1078,7 @@ export function MobileAppShell() {
             isLiked={likedIds.has(openTrip.id)}
             isSaved={savedIds.has(openTrip.id)}
             onClose={() => setOpenTripId(null)}
+            onLoadToChain={loadTripToChain}
             onOpenAuthor={(handle) => setViewingAuthorHandle(handle)}
             onToggleLike={toggleLike}
             onToggleSave={toggleSave}

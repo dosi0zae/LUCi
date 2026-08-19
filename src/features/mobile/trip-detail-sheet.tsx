@@ -3,30 +3,35 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookmarkIcon } from "@/components/layout/app-icons";
+import { BookmarkIcon, DownloadIcon, HeartIcon, MapPinIcon, ShareIcon } from "@/components/layout/app-icons";
+import { ConstellationCard } from "@/features/mobile/constellation-card";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
 import {
-  areaMeta,
   getPlacesByIds,
   getTotalMinutes,
+  localizePlace,
+  localizeTrip,
   type FeedTrip,
   type MobilePlace,
 } from "@/features/mobile/mobile-data";
+import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
+import type { TranslationKey } from "@/features/mobile/i18n/translations";
 
 type TripDetailSheetProps = {
   trip: FeedTrip;
   isLiked: boolean;
   isSaved: boolean;
   onClose: () => void;
+  onLoadToChain: (trip: FeedTrip) => void;
   onOpenAuthor: (handle: string) => void;
   onToggleLike: (id: string) => void;
   onToggleSave: (id: string) => void;
 };
 
-const visibilityLabel: Record<FeedTrip["visibility"], string> = {
-  public: "전체 공개",
-  link: "링크 공유",
-  private: "비공개",
+const visibilityLabelKey: Record<FeedTrip["visibility"], TranslationKey> = {
+  public: "visibilityPublic",
+  link: "visibilityLink",
+  private: "visibilityPrivate",
 };
 
 const CARD_SIZE = 1080;
@@ -43,6 +48,9 @@ function escapeXml(value: string) {
     .replaceAll("'", "&apos;");
 }
 
+// Single uniform scale (not one scale per axis) plus a cos(latitude) correction on
+// longitude, so the route's shape matches the real map instead of being stretched to
+// fill the card. Mirrors the projection in constellation-card.tsx.
 function getCardPoints(places: MobilePlace[]) {
   const lats = places.map((place) => place.lat);
   const lngs = places.map((place) => place.lng);
@@ -50,13 +58,23 @@ function getCardPoints(places: MobilePlace[]) {
   const maxLat = Math.max(...lats);
   const minLng = Math.min(...lngs);
   const maxLng = Math.max(...lngs);
-  const latRange = maxLat - minLat || 1;
-  const lngRange = maxLng - minLng || 1;
+  const lngCorrection = Math.cos(((minLat + maxLat) / 2) * (Math.PI / 180));
+
+  const latRange = maxLat - minLat || 0.0005;
+  const lngRange = (maxLng - minLng) * lngCorrection || 0.0005;
+
+  const availableWidth = CARD_SIZE - CARD_PADDING * 2;
+  const scale = Math.min(availableWidth / lngRange, CARD_ROUTE_HEIGHT / latRange);
+
+  const contentWidth = lngRange * scale;
+  const contentHeight = latRange * scale;
+  const offsetX = CARD_PADDING + (availableWidth - contentWidth) / 2;
+  const offsetY = CARD_ROUTE_TOP + (CARD_ROUTE_HEIGHT - contentHeight) / 2;
 
   return places.map((place, index) => ({
     label: String(index + 1),
-    x: CARD_PADDING + ((place.lng - minLng) / lngRange) * (CARD_SIZE - CARD_PADDING * 2),
-    y: CARD_ROUTE_TOP + CARD_ROUTE_HEIGHT - ((place.lat - minLat) / latRange) * CARD_ROUTE_HEIGHT,
+    x: offsetX + (place.lng - minLng) * lngCorrection * scale,
+    y: offsetY + contentHeight - (place.lat - minLat) * scale,
   }));
 }
 
@@ -64,23 +82,28 @@ export function TripDetailSheet({
   isLiked,
   isSaved,
   onClose,
+  onLoadToChain,
   onOpenAuthor,
   onToggleLike,
   onToggleSave,
   trip,
 }: TripDetailSheetProps) {
+  const t = useT();
+  const { locale } = useLocale();
   const [shareMessage, setShareMessage] = useState("");
   const places = getPlacesByIds(trip.placeIds);
+  const localizedPlaces = places.map((place) => localizePlace(place, locale));
+  const localizedTrip = localizeTrip(trip, locale);
   const totalMinutes = getTotalMinutes(places);
 
   async function shareTrip() {
-    const shareText = `${trip.title} · ${places.length}개 장소 · ${totalMinutes}분 코스`;
+    const shareText = `${localizedTrip.title} · ${t("placesCount", { count: places.length })} · ${t("minutesCount", { count: totalMinutes })}`;
     const shareUrl = `https://tripchain.app/trip/${trip.id}`;
 
     if (navigator.share) {
       try {
-        await navigator.share({ title: trip.title, text: shareText, url: shareUrl });
-        setShareMessage("공유했어요.");
+        await navigator.share({ title: localizedTrip.title, text: shareText, url: shareUrl });
+        setShareMessage(t("shareDone"));
       } catch {
         // Share sheet was dismissed by the user — nothing to report.
       }
@@ -89,23 +112,23 @@ export function TripDetailSheet({
 
     try {
       await navigator.clipboard.writeText(shareUrl);
-      setShareMessage("공유 링크를 복사했어요.");
+      setShareMessage(t("shareLinkCopied"));
     } catch {
-      setShareMessage("공유 링크 복사에 실패했어요.");
+      setShareMessage(t("shareLinkFailed"));
     }
   }
 
   function downloadShareCard() {
     if (places.length < 2) {
-      setShareMessage("이미지를 만들려면 장소가 2곳 이상 필요해요.");
+      setShareMessage(t("shareImageNeedsTwo"));
       return;
     }
 
     const points = getCardPoints(places);
     const pathPoints = points.map((point) => `${point.x},${point.y}`).join(" ");
-    const title = escapeXml(trip.title);
-    const meta = escapeXml(`${areaMeta[trip.areaId].name} · ${trip.authorName}`);
-    const summary = escapeXml(`${places.length}개 장소 · ${totalMinutes}분`);
+    const title = escapeXml(localizedTrip.title);
+    const meta = escapeXml(`${localizedPlaces[0]?.area ?? t("seoulWide")} · ${trip.authorName}`);
+    const summary = escapeXml(`${t("placesCount", { count: places.length })} · ${t("minutesCount", { count: totalMinutes })}`);
     const svg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="${CARD_SIZE}" height="${CARD_SIZE}" viewBox="0 0 ${CARD_SIZE} ${CARD_SIZE}">
         <defs>
@@ -153,7 +176,7 @@ export function TripDetailSheet({
     const logoImage = new Image();
 
     function fail() {
-      setShareMessage("이미지 저장을 준비하지 못했어요. 다시 시도해 주세요.");
+      setShareMessage(t("shareImageFailed"));
     }
 
     Promise.all([
@@ -186,10 +209,10 @@ export function TripDetailSheet({
         context.globalAlpha = 1;
 
         const link = document.createElement("a");
-        link.download = `${trip.title.replace(/[\\/:*?"<>|]/g, "-")}-tripchain.png`;
+        link.download = `${localizedTrip.title.replace(/[\\/:*?"<>|]/g, "-")}-tripchain.png`;
         link.href = canvas.toDataURL("image/png");
         link.click();
-        setShareMessage("코스 카드 이미지를 저장했어요.");
+        setShareMessage(t("shareImageSaved"));
       })
       .catch(fail);
   }
@@ -202,14 +225,14 @@ export function TripDetailSheet({
           onClick={onClose}
           type="button"
         >
-          ← 뒤로
+          {t("back")}
         </button>
-        {trip.isMine && <Badge tone="blue">내 코스</Badge>}
+        {trip.isMine && <Badge tone="blue">{t("myCourseBadge")}</Badge>}
       </header>
 
-      <div className="min-w-0 flex-1 overflow-y-auto px-5 py-4">
-        <Badge tone="neutral">{areaMeta[trip.areaId].name}</Badge>
-        <h1 className="mt-3 text-2xl font-extrabold leading-tight">{trip.title}</h1>
+      <div className="app-scroll-area min-w-0 flex-1 overflow-y-auto px-5 py-4">
+        <Badge tone="neutral">{localizedPlaces[0]?.area ?? t("seoulWide")}</Badge>
+        <h1 className="mt-3 text-2xl font-extrabold leading-tight text-balance">{localizedTrip.title}</h1>
         <p className="mt-1 text-xs font-semibold text-muted">
           <button
             className="font-bold text-foreground hover:underline"
@@ -218,29 +241,35 @@ export function TripDetailSheet({
           >
             {trip.authorName}
           </button>{" "}
-          · {visibilityLabel[trip.visibility]}
+          · {t(visibilityLabelKey[trip.visibility])}
         </p>
-        {trip.description && (
-          <p className="mt-3 text-sm leading-6 text-muted-strong">{trip.description}</p>
+        {localizedTrip.description && (
+          <p className="mt-3 text-sm leading-6 text-muted-strong text-pretty">{localizedTrip.description}</p>
         )}
 
         <div className="mt-4 grid grid-cols-3 gap-2">
           <div className="rounded-sm border border-border bg-surface p-3">
-            <p className="text-xs font-semibold text-muted">장소</p>
-            <p className="mt-1 text-sm font-extrabold">{places.length}곳</p>
+            <p className="text-xs font-semibold text-muted">{t("statPlaces")}</p>
+            <p className="mt-1 text-sm font-extrabold">{t("placesCount", { count: places.length })}</p>
           </div>
           <div className="rounded-sm border border-border bg-surface p-3">
-            <p className="text-xs font-semibold text-muted">예상 시간</p>
-            <p className="mt-1 text-sm font-extrabold">{totalMinutes}분</p>
+            <p className="text-xs font-semibold text-muted">{t("statDurationTotal")}</p>
+            <p className="mt-1 text-sm font-extrabold">{t("minutesCount", { count: totalMinutes })}</p>
           </div>
           <div className="rounded-sm border border-border bg-surface p-3">
-            <p className="text-xs font-semibold text-muted">저장</p>
+            <p className="text-xs font-semibold text-muted">{t("statSaved")}</p>
             <p className="mt-1 text-sm font-extrabold">{trip.saved.toLocaleString()}</p>
           </div>
         </div>
 
+        {places.length >= 2 && (
+          <div className="mt-4">
+            <ConstellationCard places={places} />
+          </div>
+        )}
+
         <div className="mt-5 grid gap-2">
-          {places.map((place, index) => (
+          {localizedPlaces.map((place, index) => (
             <article className="rounded-lg border border-border bg-surface p-3 shadow-soft" key={place.id}>
               <div className="flex items-center gap-3">
                 <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-[11px] font-extrabold text-white">
@@ -250,7 +279,7 @@ export function TripDetailSheet({
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate text-sm font-extrabold">{place.name}</h3>
                   <p className="mt-1 text-xs text-muted">
-                    {place.area} · {place.duration} · {place.price}
+                    {place.area} · {place.duration} · {place.fee}
                   </p>
                 </div>
               </div>
@@ -260,27 +289,29 @@ export function TripDetailSheet({
       </div>
 
       <footer className="border-t border-border px-5 py-3">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-5 gap-2">
+          <Button aria-label={t("loadToChainButton")} onClick={() => onLoadToChain(trip)} variant="gradient">
+            <MapPinIcon className="h-4 w-4" />
+          </Button>
           <Button
+            aria-label={t("likeButton", { count: (trip.likes + (isLiked ? 1 : 0)).toLocaleString() })}
             onClick={() => onToggleLike(trip.id)}
             variant={isLiked ? "primary" : "secondary"}
           >
-            ♥ 좋아요 {(trip.likes + (isLiked ? 1 : 0)).toLocaleString()}
+            <HeartIcon className="h-4 w-4" filled={isLiked} />
           </Button>
           <Button
+            aria-label={isSaved ? t("savedButton") : t("saveButton")}
             onClick={() => onToggleSave(trip.id)}
             variant={isSaved ? "primary" : "secondary"}
           >
             <BookmarkIcon className="h-4 w-4" />
-            {isSaved ? "저장됨" : "저장하기"}
           </Button>
-        </div>
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          <Button onClick={() => void shareTrip()} size="sm" variant="secondary">
-            공유하기
+          <Button aria-label={t("shareButton")} onClick={() => void shareTrip()} variant="secondary">
+            <ShareIcon className="h-4 w-4" />
           </Button>
-          <Button onClick={downloadShareCard} size="sm" variant="secondary">
-            이미지로 저장
+          <Button aria-label={t("saveImageButton")} onClick={downloadShareCard} variant="secondary">
+            <DownloadIcon className="h-4 w-4" />
           </Button>
         </div>
         {shareMessage && (
