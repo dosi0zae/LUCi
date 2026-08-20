@@ -10,8 +10,14 @@ export const metadata: Metadata = {
 // viewportFit: "cover" is what makes env(safe-area-inset-*) resolve to real values on
 // iOS (it's 0 otherwise) — needed so bottom-anchored UI can pad itself clear of the
 // home indicator instead of sitting flush against it.
+// themeColor tints Safari's own toolbar to match the page background instead of
+// leaving it a mismatched default, so the two read as one continuous surface.
 export const viewport: Viewport = {
   viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f7fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#07111f" },
+  ],
 };
 
 export default function RootLayout({
