@@ -96,32 +96,13 @@ export function TripDetailSheet({
   const localizedTrip = localizeTrip(trip, locale);
   const totalMinutes = getTotalMinutes(places);
 
-  async function shareTrip() {
-    const shareText = `${localizedTrip.title} · ${t("placesCount", { count: places.length })} · ${t("minutesCount", { count: totalMinutes })}`;
-    const shareUrl = `https://tripchain.app/trip/${trip.id}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: localizedTrip.title, text: shareText, url: shareUrl });
-        setShareMessage(t("shareDone"));
-      } catch {
-        // Share sheet was dismissed by the user — nothing to report.
-      }
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setShareMessage(t("shareLinkCopied"));
-    } catch {
-      setShareMessage(t("shareLinkFailed"));
-    }
-  }
-
-  function downloadShareCard() {
+  // Renders the same branded "constellation" card shown in the trip detail view to an
+  // off-DOM canvas, shared by both the download button and the image-share flow below so
+  // there's only one place that defines what the exported card looks like.
+  async function renderShareCardCanvas(): Promise<HTMLCanvasElement | null> {
     if (places.length < 2) {
       setShareMessage(t("shareImageNeedsTwo"));
-      return;
+      return null;
     }
 
     const points = getCardPoints(places);
@@ -129,6 +110,9 @@ export function TripDetailSheet({
     const title = escapeXml(localizedTrip.title);
     const meta = escapeXml(`${localizedPlaces[0]?.area ?? t("seoulWide")} · ${trip.authorName}`);
     const summary = escapeXml(`${t("placesCount", { count: places.length })} · ${t("minutesCount", { count: totalMinutes })}`);
+    // Shown as a watermark so a viewer who sees the card on Instagram/X/Threads (where
+    // the image itself can't carry a real tappable link) still knows where to find it.
+    const siteHandle = escapeXml(window.location.host);
     const svg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="${CARD_SIZE}" height="${CARD_SIZE}" viewBox="0 0 ${CARD_SIZE} ${CARD_SIZE}">
         <defs>
@@ -156,6 +140,7 @@ export function TripDetailSheet({
         <rect width="${CARD_SIZE}" height="${CARD_SIZE}" fill="url(#lime)"/>
         <rect width="${CARD_SIZE}" height="${CARD_SIZE}" fill="url(#stars)" opacity="0.85"/>
         <text x="90" y="130" fill="rgba(255,255,255,0.4)" font-family="Arial, sans-serif" font-size="26" font-weight="800" letter-spacing="8">TRIP CHAIN</text>
+        <text x="990" y="130" text-anchor="end" fill="rgba(255,255,255,0.4)" font-family="Arial, sans-serif" font-size="26" font-weight="700">${siteHandle}</text>
         <text x="90" y="228" fill="#ffffff" font-family="Arial, sans-serif" font-size="54" font-weight="900">${title}</text>
         <text x="90" y="280" fill="rgba(255,255,255,0.72)" font-family="Arial, sans-serif" font-size="28" font-weight="700">${meta}</text>
         <polyline points="${pathPoints}" fill="none" stroke="#b7e86b" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" filter="url(#glow)"/>
@@ -175,46 +160,103 @@ export function TripDetailSheet({
     const cardImage = new Image();
     const logoImage = new Image();
 
-    function fail() {
+    try {
+      await Promise.all([
+        new Promise<void>((resolve, reject) => {
+          cardImage.onload = () => resolve();
+          cardImage.onerror = () => reject(new Error("card image failed"));
+          cardImage.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+        }),
+        new Promise<void>((resolve, reject) => {
+          logoImage.onload = () => resolve();
+          logoImage.onerror = () => reject(new Error("logo image failed"));
+          logoImage.src = "/tripchain-logo.svg";
+        }),
+      ]);
+    } catch {
       setShareMessage(t("shareImageFailed"));
+      return null;
     }
 
-    Promise.all([
-      new Promise<void>((resolve, reject) => {
-        cardImage.onload = () => resolve();
-        cardImage.onerror = () => reject(new Error("card image failed"));
-        cardImage.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-      }),
-      new Promise<void>((resolve, reject) => {
-        logoImage.onload = () => resolve();
-        logoImage.onerror = () => reject(new Error("logo image failed"));
-        logoImage.src = "/tripchain-logo.svg";
-      }),
-    ])
-      .then(() => {
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    canvas.width = CARD_SIZE;
+    canvas.height = CARD_SIZE;
 
-        canvas.width = CARD_SIZE;
-        canvas.height = CARD_SIZE;
+    if (!context) {
+      setShareMessage(t("shareImageFailed"));
+      return null;
+    }
 
-        if (!context) {
-          fail();
-          return;
+    context.drawImage(cardImage, 0, 0);
+    context.globalAlpha = 0.7;
+    context.drawImage(logoImage, 890, 925, 100, 70);
+    context.globalAlpha = 1;
+
+    return canvas;
+  }
+
+  function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
+    return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  }
+
+  // The card image is the primary thing being shared (like sharing a music card to
+  // Instagram Story) — text/url-only sharing is only a fallback for browsers that can't
+  // share files (e.g. desktop). There's no server-side trip storage yet (see
+  // mobile-app-shell's localStorage-only publish flow), so the link always points at the
+  // app itself rather than a per-trip page that wouldn't resolve for anyone else.
+  async function shareTrip() {
+    const shareText = `${localizedTrip.title} · ${t("placesCount", { count: places.length })} · ${t("minutesCount", { count: totalMinutes })}`;
+    const shareUrl = `${window.location.origin}/mobile`;
+
+    const canvas = await renderShareCardCanvas();
+    const blob = canvas ? await canvasToPngBlob(canvas) : null;
+
+    if (blob) {
+      const file = new File([blob], `${localizedTrip.title.replace(/[\\/:*?"<>|]/g, "-")}-tripchain.png`, {
+        type: "image/png",
+      });
+
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: localizedTrip.title, text: shareText, url: shareUrl });
+          setShareMessage(t("shareDone"));
+        } catch {
+          // Share sheet was dismissed by the user — nothing to report.
         }
+        return;
+      }
+    }
 
-        context.drawImage(cardImage, 0, 0);
-        context.globalAlpha = 0.7;
-        context.drawImage(logoImage, 890, 925, 100, 70);
-        context.globalAlpha = 1;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: localizedTrip.title, text: shareText, url: shareUrl });
+        setShareMessage(t("shareDone"));
+      } catch {
+        // Share sheet was dismissed by the user — nothing to report.
+      }
+      return;
+    }
 
-        const link = document.createElement("a");
-        link.download = `${localizedTrip.title.replace(/[\\/:*?"<>|]/g, "-")}-tripchain.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-        setShareMessage(t("shareImageSaved"));
-      })
-      .catch(fail);
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareMessage(t("shareLinkCopied"));
+    } catch {
+      setShareMessage(t("shareLinkFailed"));
+    }
+  }
+
+  async function downloadShareCard() {
+    const canvas = await renderShareCardCanvas();
+    if (!canvas) {
+      return;
+    }
+
+    const link = document.createElement("a");
+    link.download = `${localizedTrip.title.replace(/[\\/:*?"<>|]/g, "-")}-tripchain.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+    setShareMessage(t("shareImageSaved"));
   }
 
   return (
@@ -310,7 +352,7 @@ export function TripDetailSheet({
           <Button aria-label={t("shareButton")} onClick={() => void shareTrip()} variant="secondary">
             <ShareIcon className="h-4 w-4" />
           </Button>
-          <Button aria-label={t("saveImageButton")} onClick={downloadShareCard} variant="secondary">
+          <Button aria-label={t("saveImageButton")} onClick={() => void downloadShareCard()} variant="secondary">
             <DownloadIcon className="h-4 w-4" />
           </Button>
         </div>
