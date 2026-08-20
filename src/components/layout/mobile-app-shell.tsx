@@ -152,6 +152,28 @@ export function MobileAppShell() {
   }, []);
 
   useEffect(() => {
+    // iOS standalone (home-screen) PWA mode has been observed resolving 100svh/100dvh
+    // taller than the actual visible screen, pushing the bottom nav off-screen — a real
+    // pixel measurement from visualViewport (falls back to window.innerHeight) sidesteps
+    // that unit-resolution bug entirely instead of trusting any CSS viewport unit.
+    function syncAppHeight() {
+      const height = window.visualViewport?.height ?? window.innerHeight;
+      document.documentElement.style.setProperty("--app-vh", `${height}px`);
+    }
+
+    syncAppHeight();
+    window.visualViewport?.addEventListener("resize", syncAppHeight);
+    window.addEventListener("resize", syncAppHeight);
+    window.addEventListener("orientationchange", syncAppHeight);
+
+    return () => {
+      window.visualViewport?.removeEventListener("resize", syncAppHeight);
+      window.removeEventListener("resize", syncAppHeight);
+      window.removeEventListener("orientationchange", syncAppHeight);
+    };
+  }, []);
+
+  useEffect(() => {
     try {
       if (!window.localStorage.getItem(TUTORIAL_STORAGE_KEY)) {
         // One-time check on mount, not a reactive sync loop.
@@ -718,8 +740,8 @@ export function MobileAppShell() {
   );
 
   return (
-    <main className="h-[100svh] bg-[#edf2f7] text-foreground">
-      <section className="relative mx-auto flex h-[100svh] w-full max-w-[430px] flex-col overflow-hidden bg-background shadow-panel [padding-top:env(safe-area-inset-top)] sm:max-h-[900px]">
+    <main className="h-[var(--app-vh,100svh)] bg-[#edf2f7] text-foreground">
+      <section className="relative mx-auto flex h-[var(--app-vh,100svh)] w-full max-w-[430px] flex-col overflow-hidden bg-background shadow-panel [padding-top:env(safe-area-inset-top)] sm:max-h-[900px]">
         <div className="app-scroll-area min-h-0 flex-1 overflow-y-auto">
           {activeTab === "home" && (
             !hasResult ? (
