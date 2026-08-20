@@ -719,7 +719,7 @@ export function MobileAppShell() {
 
   return (
     <main className="min-h-screen bg-[#edf2f7] text-foreground">
-      <section className="relative mx-auto flex h-[100svh] max-h-[900px] w-full max-w-[430px] flex-col overflow-hidden bg-background shadow-panel">
+      <section className="relative mx-auto flex h-[100svh] max-h-[900px] w-full max-w-[430px] flex-col overflow-hidden bg-background shadow-panel [padding-top:env(safe-area-inset-top)]">
         <div className="app-scroll-area min-h-0 flex-1 overflow-y-auto">
           {activeTab === "home" && (
             !hasResult ? (
