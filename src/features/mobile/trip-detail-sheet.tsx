@@ -3,7 +3,15 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookmarkIcon, DownloadIcon, HeartIcon, MapPinIcon, ShareIcon } from "@/components/layout/app-icons";
+import {
+  BookmarkIcon,
+  DownloadIcon,
+  HeartIcon,
+  MapPinIcon,
+  MoreIcon,
+  ShareIcon,
+  TrashIcon,
+} from "@/components/layout/app-icons";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
 import {
@@ -22,6 +30,7 @@ type TripDetailSheetProps = {
   isLiked: boolean;
   isSaved: boolean;
   onClose: () => void;
+  onDelete: (id: string) => void;
   onLoadToChain: (trip: FeedTrip) => void;
   onOpenAuthor: (handle: string) => void;
   onToggleLike: (id: string) => void;
@@ -89,6 +98,7 @@ export function TripDetailSheet({
   isLiked,
   isSaved,
   onClose,
+  onDelete,
   onLoadToChain,
   onOpenAuthor,
   onToggleLike,
@@ -98,6 +108,13 @@ export function TripDetailSheet({
   const t = useT();
   const { locale } = useLocale();
   const [shareMessage, setShareMessage] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+
+  function closeMenu() {
+    setIsMenuOpen(false);
+    setIsConfirmingDelete(false);
+  }
 
   useEffect(() => {
     if (!shareMessage) {
@@ -308,7 +325,64 @@ export function TripDetailSheet({
 
       <div className="app-scroll-area min-w-0 flex-1 overflow-y-auto px-5 py-4">
         <Badge tone="neutral">{localizedPlaces[0]?.area ?? t("seoulWide")}</Badge>
-        <h1 className="mt-3 text-2xl font-extrabold leading-tight text-balance">{localizedTrip.title}</h1>
+        <div className="mt-3 flex items-start justify-between gap-2">
+          <h1 className="text-2xl font-extrabold leading-tight text-balance">{localizedTrip.title}</h1>
+          {trip.isMine && (
+            <div className="relative shrink-0">
+              <button
+                aria-label={t("moreOptionsAria")}
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-strong transition hover:bg-surface-muted"
+                onClick={() => setIsMenuOpen((open) => !open)}
+                type="button"
+              >
+                <MoreIcon className="h-5 w-5" />
+              </button>
+              {isMenuOpen && (
+                <>
+                  <button
+                    aria-hidden="true"
+                    className="fixed inset-0 z-10 cursor-default"
+                    onClick={closeMenu}
+                    tabIndex={-1}
+                  />
+                  <div className="absolute right-0 top-9 z-20 w-48 overflow-hidden rounded-lg border border-border bg-surface shadow-soft">
+                    {!isConfirmingDelete ? (
+                      <button
+                        className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-danger transition hover:bg-surface-muted"
+                        onClick={() => setIsConfirmingDelete(true)}
+                        type="button"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        {t("deleteChainButton")}
+                      </button>
+                    ) : (
+                      <div className="p-3">
+                        <p className="text-xs font-bold text-foreground">{t("deleteChainConfirmTitle")}</p>
+                        <p className="mt-1 text-xs text-muted">{t("deleteChainConfirmBody")}</p>
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          <button
+                            className="rounded-sm border border-border py-1.5 text-xs font-semibold text-muted-strong transition hover:bg-surface-muted"
+                            onClick={closeMenu}
+                            type="button"
+                          >
+                            {t("cancel")}
+                          </button>
+                          <button
+                            className="rounded-sm bg-danger py-1.5 text-xs font-bold text-white transition hover:opacity-90"
+                            onClick={() => onDelete(trip.id)}
+                            type="button"
+                          >
+                            {t("deleteButton")}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
         <p className="mt-1 text-xs font-semibold text-muted">
           <button
             className="font-bold text-foreground hover:underline"
@@ -367,7 +441,7 @@ export function TripDetailSheet({
       <footer className="relative border-t border-border px-5 pt-3 [padding-bottom:calc(0.75rem+env(safe-area-inset-bottom))]">
         {shareMessage && (
           <p
-            className="share-toast pointer-events-none absolute inset-x-5 bottom-full mb-2 rounded-full bg-foreground px-4 py-2 text-center text-xs font-semibold text-background shadow-soft"
+            className="share-toast pointer-events-none absolute inset-x-5 bottom-full mb-2 rounded-full border border-border bg-white px-4 py-2 text-center text-xs font-semibold text-primary shadow-soft"
             key={shareMessage}
           >
             {shareMessage}

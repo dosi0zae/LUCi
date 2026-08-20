@@ -233,6 +233,16 @@ export function RefreshIcon({ className }: IconProps) {
   );
 }
 
+export function MoreIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps} fill="currentColor" strokeWidth={0}>
+      <circle cx="12" cy="5" r="1.6" />
+      <circle cx="12" cy="12" r="1.6" />
+      <circle cx="12" cy="19" r="1.6" />
+    </svg>
+  );
+}
+
 export function GlobeIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps} strokeWidth={1}>

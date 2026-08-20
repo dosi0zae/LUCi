@@ -674,6 +674,28 @@ export function MobileAppShell() {
     });
   }
 
+  function deleteTrip(id: string) {
+    setPublishedTrips((current) => current.filter((trip) => trip.id !== id));
+    setLikedIds((current) => {
+      if (!current.has(id)) {
+        return current;
+      }
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
+    setSavedIds((current) => {
+      if (!current.has(id)) {
+        return current;
+      }
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
+    setRecentlyViewedTripIds((current) => current.filter((tripId) => tripId !== id));
+    setOpenTripId(null);
+  }
+
   function viewTrip(trip: FeedTrip) {
     setRecentlyViewedTripIds((current) =>
       [trip.id, ...current.filter((id) => id !== trip.id)].slice(0, RECENTLY_VIEWED_LIMIT),
@@ -1224,6 +1246,7 @@ export function MobileAppShell() {
             isLiked={likedIds.has(openTrip.id)}
             isSaved={savedIds.has(openTrip.id)}
             onClose={() => setOpenTripId(null)}
+            onDelete={deleteTrip}
             onLoadToChain={loadTripToChain}
             onOpenAuthor={(handle) => setViewingAuthorHandle(handle)}
             onToggleLike={toggleLike}
