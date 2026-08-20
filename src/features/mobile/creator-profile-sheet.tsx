@@ -32,7 +32,7 @@ export function CreatorProfileSheet({
 
   return (
     <div className="detail-page absolute inset-0 z-40 flex flex-col bg-background">
-      <header className="flex items-center border-b border-border px-5 py-4">
+      <header className="flex items-center border-b border-border px-5 pb-4 [padding-top:calc(1rem+env(safe-area-inset-top))]">
         <button className="text-sm font-bold text-muted-strong" onClick={onClose} type="button">
           {t("back")}
         </button>

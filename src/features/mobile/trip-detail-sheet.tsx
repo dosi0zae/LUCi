@@ -285,7 +285,7 @@ export function TripDetailSheet({
 
   return (
     <div className="detail-page absolute inset-0 z-40 flex flex-col bg-background">
-      <header className="flex items-center justify-between border-b border-border px-5 py-4">
+      <header className="flex items-center justify-between border-b border-border px-5 pb-4 [padding-top:calc(1rem+env(safe-area-inset-top))]">
         <button
           className="text-sm font-bold text-muted-strong"
           onClick={onClose}
@@ -354,30 +354,32 @@ export function TripDetailSheet({
         </div>
       </div>
 
-      <footer className="border-t border-border px-5 py-3">
+      <footer className="border-t border-border px-5 pt-3 [padding-bottom:calc(0.75rem+env(safe-area-inset-bottom))]">
         <div className="grid grid-cols-5 gap-2">
-          <Button aria-label={t("loadToChainButton")} onClick={() => onLoadToChain(trip)} variant="gradient">
-            <MapPinIcon className="h-4 w-4" />
+          <Button aria-label={t("loadToChainButton")} onClick={() => onLoadToChain(trip)} size="lg" variant="gradient">
+            <MapPinIcon className="h-5 w-5" />
           </Button>
           <Button
             aria-label={t("likeButton", { count: (trip.likes + (isLiked ? 1 : 0)).toLocaleString() })}
             onClick={() => onToggleLike(trip.id)}
+            size="lg"
             variant={isLiked ? "primary" : "secondary"}
           >
-            <HeartIcon className="h-4 w-4" filled={isLiked} />
+            <HeartIcon className="h-5 w-5" filled={isLiked} />
           </Button>
           <Button
             aria-label={isSaved ? t("savedButton") : t("saveButton")}
             onClick={() => onToggleSave(trip.id)}
+            size="lg"
             variant={isSaved ? "primary" : "secondary"}
           >
-            <BookmarkIcon className="h-4 w-4" />
+            <BookmarkIcon className="h-5 w-5" />
           </Button>
-          <Button aria-label={t("shareButton")} onClick={() => void shareTrip()} variant="secondary">
-            <ShareIcon className="h-4 w-4" />
+          <Button aria-label={t("shareButton")} onClick={() => void shareTrip()} size="lg" variant="secondary">
+            <ShareIcon className="h-5 w-5" />
           </Button>
-          <Button aria-label={t("saveImageButton")} onClick={() => void downloadShareCard()} variant="secondary">
-            <DownloadIcon className="h-4 w-4" />
+          <Button aria-label={t("saveImageButton")} onClick={() => void downloadShareCard()} size="lg" variant="secondary">
+            <DownloadIcon className="h-5 w-5" />
           </Button>
         </div>
         {shareMessage && (
