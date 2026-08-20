@@ -771,7 +771,7 @@ export function MobileAppShell() {
                   />
                 </div>
 
-                <header className="absolute inset-x-0 top-0 z-10 px-5 pt-10 text-center">
+                <div className="relative z-10 px-5 pt-10 text-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img alt="Trip Chain" className="mx-auto block h-[85px] w-auto" src="/tripchain-logo.svg" />
                   <p className="mt-1 text-xs font-extrabold tracking-wide text-primary">Beta</p>
@@ -781,25 +781,30 @@ export function MobileAppShell() {
                   <p className="mx-auto mt-4 max-w-[310px] whitespace-pre-line text-sm leading-6 text-muted">
                     {t("heroSubtitle")}
                   </p>
-                </header>
 
-                <div className="absolute inset-x-0 top-1/2 z-10 -translate-y-1/2 px-5">
-                  {searchForm}
+                  {/* A fixed gap below the subtitle (not vertically centered in the full
+                      viewport) so this sits at the same relative spot regardless of how
+                      tall the device's visible viewport actually is — a phone with more
+                      of its screen taken up by browser chrome shouldn't stretch this gap
+                      wider than on one with less. */}
+                  <div className="mt-8 text-left">
+                    {searchForm}
 
-                  <button
-                    className="relative mt-7 block w-full text-center text-sm font-medium text-muted disabled:opacity-60"
-                    disabled={isRecommending}
-                    onClick={() => {
-                      const example = promptExamples[exampleIndex];
-                      setPrompt(example);
-                      void startCourseFromPrompt(example);
-                    }}
-                    type="button"
-                  >
-                    <span className="example-rotator block" key={exampleIndex}>
-                      “{promptExamples[exampleIndex]}”
-                    </span>
-                  </button>
+                    <button
+                      className="relative mt-7 block w-full text-center text-sm font-medium text-muted disabled:opacity-60"
+                      disabled={isRecommending}
+                      onClick={() => {
+                        const example = promptExamples[exampleIndex];
+                        setPrompt(example);
+                        void startCourseFromPrompt(example);
+                      }}
+                      type="button"
+                    >
+                      <span className="example-rotator block" key={exampleIndex}>
+                        “{promptExamples[exampleIndex]}”
+                      </span>
+                    </button>
+                  </div>
                 </div>
 
                 <button

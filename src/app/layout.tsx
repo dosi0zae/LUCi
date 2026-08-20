@@ -5,6 +5,15 @@ export const metadata: Metadata = {
   title: "Trip Chain | 하루를 잇는 여행 경험",
   description:
     "장소 하나가 아니라, 하루의 흐름 전체를 발견하고 공유하는 소셜 여행 서비스입니다.",
+  // Only takes effect once launched from a home-screen icon (standalone display mode)
+  // — a regular Safari tab always owns the status bar area itself, no web API reaches
+  // it. "black-translucent" lets the app's own background show through there instead
+  // of a solid system-drawn bar.
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Trip Chain",
+  },
 };
 
 // viewportFit: "cover" is what makes env(safe-area-inset-*) resolve to real values on
