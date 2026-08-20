@@ -23,6 +23,9 @@ export function PlaceSheet({ isInChain, onAddToChain, onClose, place }: PlaceShe
   const { locale } = useLocale();
   const localizedPlace = localizePlace(place, locale);
   const [isClosing, setIsClosing] = useState(false);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
+  // Below this length a 3-line clamp wouldn't actually hide anything, so skip the toggle.
+  const isDescLong = localizedPlace.description.length > 90;
 
   function handleClose() {
     setIsClosing(true);
@@ -69,7 +72,23 @@ export function PlaceSheet({ isInChain, onAddToChain, onClose, place }: PlaceShe
           </button>
         </div>
 
-        <p className="mt-3 text-sm leading-6 text-muted-strong text-pretty">{localizedPlace.description}</p>
+        <p
+          className={cn(
+            "mt-3 text-sm leading-6 text-muted-strong text-pretty",
+            !isDescExpanded && isDescLong && "line-clamp-3",
+          )}
+        >
+          {localizedPlace.description}
+        </p>
+        {isDescLong && (
+          <button
+            className="mt-1 text-xs font-bold text-primary"
+            onClick={() => setIsDescExpanded((current) => !current)}
+            type="button"
+          >
+            {isDescExpanded ? t("descriptionCollapse") : t("descriptionExpand")}
+          </button>
+        )}
 
         <dl className="mt-4 grid grid-cols-2 gap-2">
           {[

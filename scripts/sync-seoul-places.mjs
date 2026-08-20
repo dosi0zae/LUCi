@@ -228,10 +228,23 @@ function hoursFromIntro(introItem, contentTypeId, item) {
   return text || "정보 없음";
 }
 
+// TourAPI's eventStartDate param only bounds the start of the search window, not
+// whether a festival's own run has already ended — without this, syncing on any day
+// after a festival's last day keeps re-pulling an event nobody can still attend.
+function isPastEventEndDate(value) {
+  if (!value || value.length < 8) return false;
+  const end = new Date(Number(value.slice(0, 4)), Number(value.slice(4, 6)) - 1, Number(value.slice(6, 8)));
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
+  return end < todayMidnight;
+}
+
 async function buildTourPlaces(kind, { contentTypeId, take, category }) {
   const extraParams = kind === "festival" ? { eventStartDate: "20250101" } : {};
   const list = await fetchTourList(contentTypeId, take, extraParams);
-  const withCoords = list.filter((item) => item.mapx && item.mapy && item.title);
+  const withCoords = list
+    .filter((item) => item.mapx && item.mapy && item.title)
+    .filter((item) => kind !== "festival" || !isPastEventEndDate(item.eventenddate));
 
   const detailed = await pool(withCoords, 3, async (item) => {
     const { commonItem, introItem } = await fetchTourDetail(item.contentid, contentTypeId);

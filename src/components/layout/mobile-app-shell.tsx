@@ -12,6 +12,8 @@ import {
   HomeIcon,
   LightbulbIcon,
   LocateIcon,
+  MinusIcon,
+  PlusIcon,
   RefreshIcon,
   SearchIcon,
   TrashIcon,
@@ -44,7 +46,12 @@ import { OnboardingTour } from "@/features/mobile/onboarding-tour";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
 import { PublishSheet } from "@/features/mobile/publish-sheet";
-import { buildChain, findBestInsertionIndex } from "@/features/mobile/recommend-engine";
+import {
+  buildChain,
+  DEFAULT_RADIUS_KM,
+  findBestInsertionIndex,
+  RADIUS_STEPS_KM,
+} from "@/features/mobile/recommend-engine";
 import { TripDetailSheet } from "@/features/mobile/trip-detail-sheet";
 import { TripFeedList } from "@/features/mobile/trip-feed-list";
 import { ProfileTab } from "@/features/mobile/profile-tab";
@@ -95,6 +102,11 @@ export function MobileAppShell() {
   const dragStateRef = useRef<{ id: string } | null>(null);
   const chainListRef = useRef<HTMLDivElement | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+  const [radiusKm, setRadiusKm] = useState<(typeof RADIUS_STEPS_KM)[number]>(DEFAULT_RADIUS_KM);
+  // The anchor the CURRENT course was actually built around, so wider/narrower can
+  // reuse it directly instead of re-rolling location/AI intent from scratch.
+  const [courseAnchor, setCourseAnchor] = useState<{ lat: number; lng: number } | null>(null);
+  const [radiusMessage, setRadiusMessage] = useState<string | null>(null);
 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [viewingCategory, setViewingCategory] = useState<PlaceCategory | null>(null);
@@ -307,30 +319,58 @@ export function MobileAppShell() {
     return [...allTrips].sort((a, b) => b.rankScore - a.rankScore);
   }, [allTrips, rankingPeriod]);
 
-  function startCourse(nextPrompt: string, anchor?: { lat: number; lng: number } | null) {
+  // Best-effort current position, used as the default anchor whenever a search doesn't
+  // name its own area — never blocks the search on a slow/denied permission prompt.
+  function getCurrentLocation(): Promise<{ lat: number; lng: number } | null> {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve(null);
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => resolve({ lat: position.coords.latitude, lng: position.coords.longitude }),
+        () => resolve(null),
+        { maximumAge: 5 * 60 * 1000, timeout: 4000 },
+      );
+    });
+  }
+
+  async function startCourse(
+    nextPrompt: string,
+    explicitAnchor?: { lat: number; lng: number } | null,
+    radiusOverride?: number,
+  ) {
+    const anchor = explicitAnchor !== undefined ? explicitAnchor : await getCurrentLocation();
     const { placeIds } = buildChain({
       categories: [],
       attributes: [],
       placeCount: 4,
-      anchor: anchor ?? null,
+      anchor,
+      radiusKm: radiusOverride ?? radiusKm,
     });
 
     setSubmittedPrompt(nextPrompt);
     setChainIds(placeIds);
     setRecommendReason(null);
     setIsAiCourse(false);
+    setCourseAnchor(anchor);
+    setRadiusMessage(null);
   }
 
-  async function startCourseFromPrompt(nextPrompt: string) {
+  async function startCourseFromPrompt(nextPrompt: string, radiusOverride?: number) {
     setIsRecommending(true);
     setRecommendReason(null);
     setIsAiCourse(true);
+    const effectiveRadius = radiusOverride ?? radiusKm;
 
     try {
+      // hasSpecificLocation (server-side, from the prompt itself) takes priority over
+      // this anchor when the prompt already names its own area.
+      const anchor = await getCurrentLocation();
       const response = await fetch("/api/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: nextPrompt, locale }),
+        body: JSON.stringify({ prompt: nextPrompt, locale, anchor, radiusKm: effectiveRadius }),
       });
 
       if (!response.ok) {
@@ -346,12 +386,24 @@ export function MobileAppShell() {
       setChainIds(data.placeIds);
       setRecommendReason(typeof data.reason === "string" ? data.reason : null);
       setSubmittedPrompt(nextPrompt);
+      setCourseAnchor(
+        data.anchor && typeof data.anchor.lat === "number" && typeof data.anchor.lng === "number"
+          ? { lat: data.anchor.lat, lng: data.anchor.lng }
+          : null,
+      );
     } catch {
-      const { placeIds } = buildChain({ categories: [], attributes: [], placeCount: 4 });
-      setChainIds(placeIds);
+      const result = buildChain({
+        categories: [],
+        attributes: [],
+        placeCount: 4,
+        radiusKm: effectiveRadius,
+      });
+      setChainIds(result.placeIds);
       setSubmittedPrompt(nextPrompt);
+      setCourseAnchor(result.anchor);
     } finally {
       setIsRecommending(false);
+      setRadiusMessage(null);
     }
   }
 
@@ -369,10 +421,49 @@ export function MobileAppShell() {
     // buildChain() is synchronous, so without an artificial minimum duration the
     // refresh icon's spin would never get a chance to paint before it's done.
     setIsRecommending(true);
-    window.setTimeout(() => {
-      startCourse(submittedPrompt);
+    window.setTimeout(async () => {
+      await startCourse(submittedPrompt);
       setIsRecommending(false);
     }, 450);
+  }
+
+  // Adjusts scope within the SAME area the current course is anchored on, rather than
+  // re-rolling location/AI intent (that's what the refresh button is for). If the area
+  // genuinely can't support the requested radius, says so instead of silently expanding
+  // past it or jumping elsewhere.
+  function changeRadius(direction: -1 | 1) {
+    if (!courseAnchor) {
+      setRadiusMessage(t("radiusUnavailable"));
+      return;
+    }
+
+    const currentIndex = RADIUS_STEPS_KM.indexOf(radiusKm);
+    const baseIndex = currentIndex === -1 ? RADIUS_STEPS_KM.indexOf(DEFAULT_RADIUS_KM) : currentIndex;
+    const nextIndex = Math.min(RADIUS_STEPS_KM.length - 1, Math.max(0, baseIndex + direction));
+    const nextRadius = RADIUS_STEPS_KM[nextIndex];
+
+    if (nextRadius === radiusKm) {
+      return;
+    }
+
+    const result = buildChain({
+      categories: [],
+      attributes: [],
+      placeCount: chainPlaces.length || 4,
+      anchor: courseAnchor,
+      radiusKm: nextRadius,
+      strictRadius: true,
+    });
+
+    if (result.placeIds.length < 2) {
+      setRadiusMessage(t("radiusNoPlaces"));
+      return;
+    }
+
+    setRadiusKm(nextRadius);
+    setChainIds(result.placeIds);
+    setRecommendReason(null);
+    setRadiusMessage(null);
   }
 
   function locateNearby() {
@@ -383,7 +474,7 @@ export function MobileAppShell() {
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        startCourse(t("nearbyCoursePrompt"), {
+        void startCourse(t("nearbyCoursePrompt"), {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
@@ -712,7 +803,7 @@ export function MobileAppShell() {
                 </div>
 
                 <button
-                  className="absolute inset-x-0 bottom-6 z-10 text-center text-xs font-semibold opacity-60 transition hover:opacity-100"
+                  className="absolute inset-x-0 z-10 text-center text-xs font-semibold opacity-60 transition hover:opacity-100 [bottom:calc(1.5rem+env(safe-area-inset-bottom))]"
                   data-tour="quick-browse"
                   onClick={() => startCourse(t("popularCoursePrompt"))}
                   style={{ color: "var(--success)" }}
@@ -721,7 +812,7 @@ export function MobileAppShell() {
                   {t("quickBrowse")}
                 </button>
 
-                <LanguageMenuButton className="absolute bottom-3 right-5 z-20" />
+                <LanguageMenuButton className="absolute right-5 z-20 [bottom:calc(0.75rem+env(safe-area-inset-bottom))]" />
               </div>
             ) : (
               <div className={cn(tabSlideClass, "relative flex min-h-full flex-col px-5 pb-24 pt-5")}>
@@ -739,21 +830,49 @@ export function MobileAppShell() {
                   <article className="rounded-lg border border-border bg-surface p-4 shadow-soft">
                     <div className="flex items-center justify-between gap-3">
                       <Badge tone="blue">{t("aiCourseBadge")}</Badge>
-                      <button
-                        aria-label={t("refreshCourseAria")}
-                        className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary disabled:opacity-60"
-                        disabled={isRecommending}
-                        onClick={refreshCourse}
-                        title={t("refreshCourseTitle")}
-                        type="button"
-                      >
-                        <RefreshIcon className={cn("h-4 w-4", isRecommending && "animate-spin")} />
-                      </button>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          aria-label={t("radiusNarrower")}
+                          className="grid h-8 w-8 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary disabled:opacity-40"
+                          disabled={isRecommending || radiusKm === RADIUS_STEPS_KM[0]}
+                          onClick={() => changeRadius(-1)}
+                          title={t("radiusNarrower")}
+                          type="button"
+                        >
+                          <MinusIcon className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="min-w-[3.25rem] text-center text-xs font-bold text-muted-strong">
+                          {t("radiusLabel", { km: radiusKm })}
+                        </span>
+                        <button
+                          aria-label={t("radiusWider")}
+                          className="grid h-8 w-8 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary disabled:opacity-40"
+                          disabled={isRecommending || radiusKm === RADIUS_STEPS_KM[RADIUS_STEPS_KM.length - 1]}
+                          onClick={() => changeRadius(1)}
+                          title={t("radiusWider")}
+                          type="button"
+                        >
+                          <PlusIcon className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          aria-label={t("refreshCourseAria")}
+                          className="grid h-8 w-8 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary disabled:opacity-60"
+                          disabled={isRecommending}
+                          onClick={() => refreshCourse()}
+                          title={t("refreshCourseTitle")}
+                          type="button"
+                        >
+                          <RefreshIcon className={cn("h-4 w-4", isRecommending && "animate-spin")} />
+                        </button>
+                      </div>
                     </div>
                     <h2 className="mt-3 text-xl font-extrabold text-balance">{submittedPrompt}</h2>
                     <p className="mt-1 text-xs leading-5 text-muted">
                       {t("courseSummary", { minutes: getTotalMinutes(chainPlaces) })}
                     </p>
+                    {radiusMessage && (
+                      <p className="mt-1 text-xs font-semibold text-danger">{radiusMessage}</p>
+                    )}
                     <div className="mt-3">
                       <ConstellationCard places={chainPlaces} />
                     </div>
@@ -1021,7 +1140,7 @@ export function MobileAppShell() {
         </div>
 
         {showBottomNav && (
-          <nav className="nav-pop-in grid shrink-0 grid-cols-4 border-t border-border bg-surface/95">
+          <nav className="nav-pop-in grid shrink-0 grid-cols-4 border-t border-border bg-surface/95 [padding-bottom:env(safe-area-inset-bottom)]">
             {tabs.map(({ icon: Icon, id, label }) => (
               <button
                 className={cn(

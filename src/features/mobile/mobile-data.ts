@@ -83,9 +83,33 @@ export function localizeTrip(trip: FeedTrip, locale: Locale): FeedTrip {
   return { ...trip, ...translated };
 }
 
+// Festival entries store their run as "YYYY.MM.DD - YYYY.MM.DD" in `hours` (see
+// hoursFromIntro in the sync script). TourAPI's own date filter only bounds the start
+// date, so a sync can still pull in festivals whose run already ended by the time the
+// app is actually used — filter those out here rather than only at sync time, since
+// this list can go stale for a while between syncs.
+const FESTIVAL_DATE_RANGE = /^(\d{4})\.(\d{2})\.(\d{2}) - (\d{4})\.(\d{2})\.(\d{2})$/;
+
+function isExpiredFestival(place: MobilePlace): boolean {
+  if (place.category !== "축제행사") {
+    return false;
+  }
+  const match = FESTIVAL_DATE_RANGE.exec(place.hours);
+  if (!match) {
+    return false;
+  }
+  const [, , , , endYear, endMonth, endDay] = match;
+  const end = new Date(Number(endYear), Number(endMonth) - 1, Number(endDay));
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
+  return end < todayMidnight;
+}
+
 // Real, Seoul-wide POI data synced from TourAPI (관광지/문화시설/축제행사) and the
 // national heritage open API (문화재) — see scripts/sync-seoul-places.mjs.
-export const places: MobilePlace[] = seoulPlacesData as MobilePlace[];
+export const places: MobilePlace[] = (seoulPlacesData as MobilePlace[]).filter(
+  (place) => !isExpiredFestival(place),
+);
 
 export const categoryTone: Record<PlaceCategory, string> = {
   문화재: "#b0742f",

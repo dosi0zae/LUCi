@@ -20,26 +20,45 @@ export const ATTRIBUTE_TAXONOMY = [
 
 export const CATEGORY_TAXONOMY: PlaceCategory[] = ["문화재", "관광지", "문화시설", "축제행사"];
 
+// Derived from the actual data rather than hardcoded, so it can't drift out of sync —
+// used to let the AI intent parser name a specific district (e.g. "용산구") and have
+// that reliably match a real value instead of a fuzzy/geocoded guess.
+export const SEOUL_DISTRICTS: string[] = [...new Set(places.map((place) => place.area))].sort();
+
 const DEFAULT_CATEGORY_ORDER: PlaceCategory[] = ["관광지", "문화재", "문화시설", "축제행사"];
 
-// Places beyond this radius of the chain's anchor point are excluded first; only if that
-// leaves too few candidates do we widen the search, so a generated course stays walkable
-// across the flat, city-wide place pool instead of jumping between distant districts.
-const NEARBY_RADIUS_KM = 6;
-const WIDE_RADIUS_KM = 14;
+// The "wider/narrower" control steps through these; a course stays walkable by default
+// (1km) instead of spanning distant districts, but the user can loosen that per search.
+export const RADIUS_STEPS_KM = [0.5, 1, 2, 4, 8, 15] as const;
+export const DEFAULT_RADIUS_KM: (typeof RADIUS_STEPS_KM)[number] = 1;
+
 const MIN_POOL_SIZE = 6;
 
 export type RecommendIntent = {
   categories: PlaceCategory[];
   attributes: string[];
   placeCount: number;
-  // Real device location (from the "내 주변" button) or a caller-supplied anchor. When
-  // absent, buildChain anchors on its own top-scored place instead.
+  // A district name the prompt explicitly named (must match SEOUL_DISTRICTS exactly).
+  // When set, this takes over anchoring entirely — the pool is places.area === this,
+  // not a radius around some other point — since it's ground truth, not a guess.
+  areaFilter?: string | null;
+  // Real device location (from the "내 주변" button, or the default current-location
+  // anchor when the prompt doesn't name a specific area) or a caller-supplied anchor.
+  // When absent, buildChain anchors on its own top-scored place instead.
   anchor?: { lat: number; lng: number } | null;
+  // How far from the anchor a course is allowed to span. Defaults to DEFAULT_RADIUS_KM.
+  radiusKm?: number;
+  // When true, never widen past radiusKm to backfill a sparse area — used by the
+  // wider/narrower control so it adjusts scope within the same area rather than
+  // silently relocating the course somewhere else entirely.
+  strictRadius?: boolean;
 };
 
 export type RecommendResult = {
   placeIds: string[];
+  // The anchor buildChain actually used (its own top-scored place when the caller
+  // didn't supply one) — callers can reuse this for a later same-area radius change.
+  anchor: { lat: number; lng: number } | null;
 };
 
 function scorePlace(place: MobilePlace, intent: RecommendIntent): number {
@@ -135,14 +154,33 @@ function pickCandidate(
   return candidates[Math.floor(Math.random() * candidates.length)].place;
 }
 
-function poolNear(anchor: { lat: number; lng: number }): MobilePlace[] {
-  const nearby = places.filter((place) => haversineKm(anchor, place) <= NEARBY_RADIUS_KM);
-  if (nearby.length >= MIN_POOL_SIZE) {
-    return nearby;
+// Respects the user's chosen radius first; only widens past it as a resilience fallback
+// when that radius genuinely doesn't have enough places to build a course from (sparse
+// area), rather than silently ignoring what they picked. `strict` skips that fallback
+// entirely — used when the caller (the wider/narrower control) needs to know whether
+// the same area can actually support the requested radius, rather than being quietly
+// relocated somewhere else.
+function poolNear(anchor: { lat: number; lng: number }, radiusKm: number, strict: boolean): MobilePlace[] {
+  const primary = places.filter((place) => haversineKm(anchor, place) <= radiusKm);
+  if (strict || primary.length >= MIN_POOL_SIZE) {
+    return primary;
   }
 
-  const wide = places.filter((place) => haversineKm(anchor, place) <= WIDE_RADIUS_KM);
-  return wide.length >= MIN_POOL_SIZE ? wide : places;
+  for (const fallbackRadius of [radiusKm * 3, radiusKm * 8, 30]) {
+    const pool = places.filter((place) => haversineKm(anchor, place) <= fallbackRadius);
+    if (pool.length >= MIN_POOL_SIZE) {
+      return pool;
+    }
+  }
+
+  return places;
+}
+
+function centroid(list: MobilePlace[]): { lat: number; lng: number } {
+  return {
+    lat: list.reduce((sum, place) => sum + place.lat, 0) / list.length,
+    lng: list.reduce((sum, place) => sum + place.lng, 0) / list.length,
+  };
 }
 
 export function buildChain(intent: RecommendIntent): RecommendResult {
@@ -150,8 +188,22 @@ export function buildChain(intent: RecommendIntent): RecommendResult {
     .map((place) => ({ place, score: scorePlace(place, intent) }))
     .sort((a, b) => b.score - a.score);
 
-  const anchor = intent.anchor ?? scoredAll[0]?.place ?? null;
-  const pool = anchor ? poolNear(anchor) : places;
+  const areaPlaces = intent.areaFilter ? places.filter((place) => place.area === intent.areaFilter) : null;
+
+  let anchor: { lat: number; lng: number } | null;
+  let pool: MobilePlace[];
+
+  if (areaPlaces && areaPlaces.length > 0) {
+    // Ground truth beats a radius guess: the whole district is the pool, no distance
+    // cutoff needed since every place in it already belongs to the named area.
+    anchor = centroid(areaPlaces);
+    pool = areaPlaces;
+  } else {
+    anchor = intent.anchor ?? scoredAll[0]?.place ?? null;
+    const radiusKm = intent.radiusKm ?? DEFAULT_RADIUS_KM;
+    pool = anchor ? poolNear(anchor, radiusKm, intent.strictRadius ?? false) : places;
+  }
+
   const poolIds = new Set(pool.map((place) => place.id));
   const scored = scoredAll.filter((entry) => poolIds.has(entry.place.id));
 
@@ -180,6 +232,7 @@ export function buildChain(intent: RecommendIntent): RecommendResult {
 
   return {
     placeIds: orderByRoute(picked).map((place) => place.id),
+    anchor,
   };
 }
 

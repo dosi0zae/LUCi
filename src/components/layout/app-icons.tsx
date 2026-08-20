@@ -52,6 +52,14 @@ export function PlusIcon({ className }: IconProps) {
   );
 }
 
+export function MinusIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M5 12h14" />
+    </svg>
+  );
+}
+
 export function HomeIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>
