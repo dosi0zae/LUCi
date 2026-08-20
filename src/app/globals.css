@@ -106,6 +106,16 @@ select {
   font: inherit;
 }
 
+/* iOS Safari auto-zooms the page on focus for any text field under 16px, and snaps back
+   out on blur — the "layout jumps while typing" effect. Floor every field at 16px
+   (overriding whatever text-size utility class it was given) so that can never trigger,
+   instead of disabling pinch-zoom globally with user-scalable=no. */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
 ::selection {
   background: var(--primary-soft);
   color: var(--foreground);
