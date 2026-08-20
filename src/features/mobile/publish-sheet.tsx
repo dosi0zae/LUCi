@@ -7,6 +7,8 @@ import type { MobilePlace, TripVisibility } from "@/features/mobile/mobile-data"
 import { useT } from "@/features/mobile/i18n/i18n-context";
 import type { TranslationKey } from "@/features/mobile/i18n/translations";
 
+const CLOSE_ANIMATION_MS = 200;
+
 type PublishSheetProps = {
   places: MobilePlace[];
   onCancel: () => void;
@@ -25,6 +27,12 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<TripVisibility>("public");
   const [error, setError] = useState("");
+  const [isClosing, setIsClosing] = useState(false);
+
+  function handleCancel() {
+    setIsClosing(true);
+    window.setTimeout(onCancel, CLOSE_ANIMATION_MS);
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,9 +52,19 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
   }
 
   return (
-    <div className="sheet-backdrop absolute inset-0 z-30 flex items-end justify-center bg-black/35">
+    <div
+      className={cn(
+        "absolute inset-0 z-30 flex items-end justify-center bg-black/35",
+        isClosing ? "sheet-backdrop-out" : "sheet-backdrop",
+      )}
+      onClick={handleCancel}
+    >
       <form
-        className="app-scroll-area glass-panel sheet-panel flex max-h-[86%] w-full flex-col overflow-y-auto rounded-t-xl p-5 pb-6"
+        className={cn(
+          "app-scroll-area glass-panel flex max-h-[86%] w-full flex-col overflow-y-auto rounded-t-xl p-5 pb-6",
+          isClosing ? "sheet-panel-out" : "sheet-panel",
+        )}
+        onClick={(event) => event.stopPropagation()}
         onSubmit={handleSubmit}
       >
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border-strong" />
@@ -104,7 +122,7 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
         {error && <p className="mt-3 text-xs font-semibold text-danger">{error}</p>}
 
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button onClick={onCancel} type="button" variant="secondary">
+          <Button onClick={handleCancel} type="button" variant="secondary">
             {t("cancel")}
           </Button>
           <Button type="submit">{t("saveCourse")}</Button>

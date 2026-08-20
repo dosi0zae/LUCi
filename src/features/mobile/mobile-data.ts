@@ -180,7 +180,7 @@ type TripTheme = {
 const TRIP_THEMES: TripTheme[] = [
   {
     title: "고궁과 박물관을 잇는 하루",
-    description: "대표 고궁과 근처 박물관을 묶어 걷는 정통 코스.",
+    description: "대표 고궁과 근처 박물관을 묶어 걷는 정통 체인.",
     categories: ["문화재", "문화시설", "문화재", "문화시설"],
     translations: {
       en: { title: "A Day Linking Palaces and Museums", description: "A classic route connecting a landmark palace with nearby museums." },
@@ -189,8 +189,8 @@ const TRIP_THEMES: TripTheme[] = [
     },
   },
   {
-    title: "역사 유적 탐방 코스",
-    description: "국보와 사적 위주로 서울의 역사를 짚어보는 코스.",
+    title: "역사 유적 탐방 체인",
+    description: "국보와 사적 위주로 서울의 역사를 짚어보는 체인.",
     categories: ["문화재", "문화재", "관광지", "문화재"],
     translations: {
       en: { title: "Historic Landmarks Tour", description: "A course tracing Seoul's history through National Treasures and historic sites." },
@@ -200,7 +200,7 @@ const TRIP_THEMES: TripTheme[] = [
   },
   {
     title: "지금 열리는 축제 나들이",
-    description: "요즘 열리는 축제와 근처 명소를 함께 즐기는 코스.",
+    description: "요즘 열리는 축제와 근처 명소를 함께 즐기는 체인.",
     categories: ["축제행사", "관광지", "축제행사", "문화시설"],
     translations: {
       en: { title: "Festivals Happening Now", description: "Enjoy a current festival alongside nearby attractions." },
@@ -209,8 +209,8 @@ const TRIP_THEMES: TripTheme[] = [
     },
   },
   {
-    title: "전통과 현대가 만나는 코스",
-    description: "옛 유산과 요즘 전시 공간을 번갈아 즐기는 코스.",
+    title: "전통과 현대가 만나는 체인",
+    description: "옛 유산과 요즘 전시 공간을 번갈아 즐기는 체인.",
     categories: ["문화재", "문화시설", "관광지", "문화시설"],
     translations: {
       en: { title: "Where Tradition Meets Today", description: "Alternate between old heritage and contemporary exhibition spaces." },
@@ -220,7 +220,7 @@ const TRIP_THEMES: TripTheme[] = [
   },
   {
     title: "서울 대표 명소 도장깨기",
-    description: "처음 서울에 왔다면 놓치기 아쉬운 핵심 코스.",
+    description: "처음 서울에 왔다면 놓치기 아쉬운 핵심 체인.",
     categories: ["관광지", "문화재", "관광지", "문화시설"],
     translations: {
       en: { title: "Seoul's Must-See Highlights", description: "The essential route for first-time visitors to Seoul." },
@@ -230,7 +230,7 @@ const TRIP_THEMES: TripTheme[] = [
   },
   {
     title: "조용한 박물관 투어",
-    description: "사람 적은 시간에 천천히 둘러보기 좋은 실내 코스.",
+    description: "사람 적은 시간에 천천히 둘러보기 좋은 실내 체인.",
     categories: ["문화시설", "문화시설", "문화재", "문화시설"],
     translations: {
       en: { title: "Quiet Museum Tour", description: "An indoor course best enjoyed slowly during off-peak hours." },
@@ -239,8 +239,8 @@ const TRIP_THEMES: TripTheme[] = [
     },
   },
   {
-    title: "주말 가족 나들이 코스",
-    description: "아이와 함께 걷고 체험하기 좋은 코스.",
+    title: "주말 가족 나들이 체인",
+    description: "아이와 함께 걷고 체험하기 좋은 체인.",
     categories: ["관광지", "축제행사", "문화시설", "관광지"],
     translations: {
       en: { title: "Weekend Family Outing", description: "A course great for walking and hands-on experiences with kids." },
@@ -249,8 +249,8 @@ const TRIP_THEMES: TripTheme[] = [
     },
   },
   {
-    title: "야경과 함께하는 저녁 코스",
-    description: "해질녘부터 야경까지 이어보는 저녁 코스.",
+    title: "야경과 함께하는 저녁 체인",
+    description: "해질녘부터 야경까지 이어보는 저녁 체인.",
     categories: ["문화재", "관광지", "문화시설", "문화재"],
     translations: {
       en: { title: "Evening Course With Night Views", description: "An evening route from sunset through the night skyline." },
