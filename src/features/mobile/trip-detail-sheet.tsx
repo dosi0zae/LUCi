@@ -39,6 +39,13 @@ const CARD_PADDING = 110;
 const CARD_ROUTE_TOP = 480;
 const CARD_ROUTE_HEIGHT = 380;
 
+// tripchain-logo.svg's own viewBox (0 0 333.18 314.77) — used to size the watermark by
+// its real aspect ratio instead of stretching it into a fixed box.
+const LOGO_ASPECT = 333.18 / 314.77;
+const LOGO_TARGET_HEIGHT = 70;
+const LOGO_TARGET_RIGHT = 990;
+const LOGO_TARGET_TOP = 925;
+
 function escapeXml(value: string) {
   return value
     .replaceAll("&", "&amp;")
@@ -189,9 +196,26 @@ export function TripDetailSheet({
     }
 
     context.drawImage(cardImage, 0, 0);
-    context.globalAlpha = 0.7;
-    context.drawImage(logoImage, 890, 925, 100, 70);
-    context.globalAlpha = 1;
+
+    // The logo's own artwork is solid blue; recolor it to white on an offscreen canvas
+    // (source-in keeps only the pixels the logo already drew, tinted white) rather than
+    // stretching it into a fixed box, which was squashing its real proportions.
+    const logoWidth = LOGO_TARGET_HEIGHT * LOGO_ASPECT;
+    const whiteLogo = document.createElement("canvas");
+    whiteLogo.width = logoWidth * 3;
+    whiteLogo.height = LOGO_TARGET_HEIGHT * 3;
+    const whiteLogoContext = whiteLogo.getContext("2d");
+
+    if (whiteLogoContext) {
+      whiteLogoContext.drawImage(logoImage, 0, 0, whiteLogo.width, whiteLogo.height);
+      whiteLogoContext.globalCompositeOperation = "source-in";
+      whiteLogoContext.fillStyle = "#ffffff";
+      whiteLogoContext.fillRect(0, 0, whiteLogo.width, whiteLogo.height);
+
+      context.globalAlpha = 0.7;
+      context.drawImage(whiteLogo, LOGO_TARGET_RIGHT - logoWidth, LOGO_TARGET_TOP, logoWidth, LOGO_TARGET_HEIGHT);
+      context.globalAlpha = 1;
+    }
 
     return canvas;
   }
