@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookmarkIcon, DownloadIcon, HeartIcon, MapPinIcon, ShareIcon } from "@/components/layout/app-icons";
@@ -98,6 +98,16 @@ export function TripDetailSheet({
   const t = useT();
   const { locale } = useLocale();
   const [shareMessage, setShareMessage] = useState("");
+
+  useEffect(() => {
+    if (!shareMessage) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => setShareMessage(""), 2400);
+    return () => window.clearTimeout(timeoutId);
+  }, [shareMessage]);
+
   const places = getPlacesByIds(trip.placeIds);
   const localizedPlaces = places.map((place) => localizePlace(place, locale));
   const localizedTrip = localizeTrip(trip, locale);
@@ -354,7 +364,15 @@ export function TripDetailSheet({
         </div>
       </div>
 
-      <footer className="border-t border-border px-5 pt-3 [padding-bottom:calc(0.75rem+env(safe-area-inset-bottom))]">
+      <footer className="relative border-t border-border px-5 pt-3 [padding-bottom:calc(0.75rem+env(safe-area-inset-bottom))]">
+        {shareMessage && (
+          <p
+            className="share-toast pointer-events-none absolute inset-x-5 bottom-full mb-2 rounded-full bg-foreground px-4 py-2 text-center text-xs font-semibold text-background shadow-soft"
+            key={shareMessage}
+          >
+            {shareMessage}
+          </p>
+        )}
         <div className="grid grid-cols-5 gap-2">
           <Button aria-label={t("loadToChainButton")} onClick={() => onLoadToChain(trip)} size="lg" variant="gradient">
             <MapPinIcon className="h-5 w-5" />
@@ -382,9 +400,6 @@ export function TripDetailSheet({
             <DownloadIcon className="h-5 w-5" />
           </Button>
         </div>
-        {shareMessage && (
-          <p className="mt-2 text-center text-xs font-semibold text-muted-strong">{shareMessage}</p>
-        )}
       </footer>
     </div>
   );
