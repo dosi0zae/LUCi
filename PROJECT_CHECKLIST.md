@@ -33,6 +33,44 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase V: Overlapping Markers, Profile Icon Tabs, Trip Comments
+
+Status: Complete
+
+Scope — three items that came up live while reviewing Phase U's work in the browser:
+
+- **Overlapping constellation-card markers**: a user screenshot showed a numbered map marker fully hidden behind another. Root cause: two seed places (경희궁공원 / 경희궁 흥화문) share byte-identical coordinates in the synced data, so their 24px `CustomOverlay` marker chips rendered exactly on top of each other regardless of the fixed `zIndex: 10` every marker used. Fixed in `constellation-card.tsx` with `spreadOverlappingMarkers()`: any stop within 20m of an earlier stop gets its *marker chip* (not the route line or map bounds, which still use real coordinates) fanned out by ~12m at a golden-angle offset, so 2+ clustered numbers stay legible. Verified by computing real haversine distances for the exact reported places (0m apart before, ~12m after).
+- **Profile sub-tab row → icon buttons**: replaced the 4 text pills ("만든 체인" / "저장한 체인" / "좋아요한 체인" / "최근 본 체인") in `profile-tab.tsx` with an icon-only segmented control (matching the existing list/map and ranking-period toggle style already used elsewhere) — a "MY" monogram, `BookmarkIcon`, `HeartIcon` (filled when active), and a new `EyeIcon` (added to `app-icons.tsx`). `aria-label`/`title` keep the full text for accessibility. Verified all 4 states toggle correctly and independently via direct DOM assertions (the browser automation's ref/coordinate clicks were flaking against this session's rapid hot-reload churn, so verification switched to scripted `element.click()` + class checks instead of trusting screenshots alone).
+- **Trip comments (new feature)**: the 💬 count on every trip card was pure decoration — no comment content, no way to read or post one. Added a real (still client-local, no backend) commenting feature: `TripComment` type and a deterministic `getSeedComments(tripId)` in `mobile-data.ts` (hash-based, no `Math.random`, only applies to generated `seed-*` trips — never to a user's own freshly published trip) drawing from a small pool of generic Korean comment templates/handles; `userComments` state in `mobile-app-shell.tsx` persisted in the existing `tripchain:profile` localStorage blob; a comment list + input form added to `TripDetailSheet`. The displayed comment count everywhere (feed cards, ranking, profile) now folds in the user's own additions via a single change to the `allTrips` memo, rather than threading a new prop through every `TripFeedList` call site.
+- **KakaoTalk share folded into the generic share button**: the standalone brand-yellow "카카오톡 공유" button looked visually out of place next to the app's otherwise neutral icon-button footer. Removed it as its own button (and the now-unused `kakao` `Button` variant) and instead made the existing "공유하기" button open a small popover menu with two options — "카카오톡 공유" (yellow only on the small icon badge) and "다른 방법으로 공유" (the original Web Share/clipboard flow) — reusing the same dropdown-menu visual pattern already used for the trip-detail header's "⋯" delete menu. Footer is back to 5 evenly balanced buttons.
+- **Comment count icon → flat 2D**: the 💬 count on feed/ranking cards used a colorful emoji glyph that clashed with the app's flat stroke-icon style (bookmark, heart, etc.). Added an outline `CommentIcon` to `app-icons.tsx` matching the existing icon convention and swapped it in.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: browser walkthrough — marker spread confirmed via exact-coordinate distance calculation, all 4 profile icon tabs toggle correctly, a posted comment appears immediately and increments the count consistently across the trip detail sheet and the explore feed card, comments persist across a reload via localStorage, share menu opens with both options and the feed comment icon renders as a flat outline glyph
+
+### Mobile Phase U: Remaining Phase R Backlog (7, 10-13)
+
+Status: Complete
+
+Scope — closed out the last open items from Phase R's gap review, re-checked against the codebase after the intervening global-culture pivot (Phase "Pivot mobile app to global cultural tourism..."):
+
+- **7 (코스가 지역 하나에 갇힘)**: already resolved by the pivot — `recommend-engine.ts`'s `buildChain` now pools candidates by a radius around an anchor (or a named district) across the full city-wide place set, with a user-facing 반경(radius) widen/narrow control, instead of being confined to one of the old fixed Seongsu/Hongdae/Gangnam areas. No code change needed, just re-verified.
+- **10 (좋아요한 코스 목록 없음)**: added a `likedTrips` derived list (`mobile-app-shell.tsx`) and a "좋아요한 체인" sub-tab in `ProfileTab`, mirroring the existing "저장한 체인" pattern exactly.
+- **11 (장소 자체 북마크 없음)**: added a separate `bookmarkedPlaceIds` set (persisted in the same `tripchain:profile` localStorage blob), a bookmark-ribbon toggle button in `PlaceSheet`'s header, and a "찜한 장소" horizontal-scroll section in `ProfileTab` for viewing/reopening them.
+- **12 (카카오톡 공유 없음)**: added `src/features/mobile/kakao-share.ts`, a loader for Kakao's official JS "카카오톡 공유하기" SDK (`Kakao.Share.sendDefault`, Feed template) — separate product from the Kakao Maps SDK already loaded elsewhere, but same app JavaScript key (`NEXT_PUBLIC_KAKAO_MAP_APP_KEY`; documented in `.env.example`). Wired into `TripDetailSheet`'s footer as a new yellow "카카오톡 공유" button (new `kakao` `Button` variant, new `TalkBubbleIcon`). Verified end-to-end in-browser: the Kakao sharer popup opened and reported "공유 성공" with the correct trip title/description.
+- **13 (AI 폴백 여부가 안 보임)**: the `/api/recommend` route already returned a `usedAI` flag, but the client silently dropped it — worse, the "AI 추천 체인" badge was hardcoded to show for every AI-path search regardless of whether the AI call actually succeeded. Added a `usedAI` state in `mobile-app-shell.tsx`; when `isAiCourse && !usedAI`, the badge now reads "기본 추천 체인" (neutral tone) instead of "AI 추천 체인" (blue), and a small notice line explains the fallback. Verified both states in-browser (real AI success, and a fetch-mocked `usedAI:false` fallback).
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: browser walkthrough of all five items on the actual project dev server (port 3002 per `.claude/launch.json`) — liked-trip round-trip through the new profile tab, place bookmark toggle + profile section, KakaoTalk share popup success, and both the AI-success and AI-fallback badge/notice states
+
+Housekeeping: also removed a stale, fully-merged leftover git worktree (`.claude/worktrees/global-culture`, branch `worktree-global-culture`) from an earlier session — it was polluting `pnpm lint`/`tsc` with thousands of errors from its own generated `.next` type output, since neither `eslint.config.mjs`'s ignores nor `tsconfig.json`'s excludes accounted for a nested worktree directory.
+
 ### Mobile Phase S: Feature Backlog Items 1-4
 
 Status: Complete
