@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { BookmarkIcon } from "@/components/layout/app-icons";
+import { BookmarkIcon, CommentIcon } from "@/components/layout/app-icons";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
 import { getPlaceById, localizePlace, localizeTrip, type FeedTrip } from "@/features/mobile/mobile-data";
 import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
@@ -30,9 +30,8 @@ export function TripFeedList({
 }: TripFeedListProps) {
   const t = useT();
   const { locale } = useLocale();
-  const orderedTrips = trips;
 
-  if (orderedTrips.length === 0) {
+  if (trips.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-border bg-surface/60 p-6 text-center text-sm text-muted">
         {emptyLabel}
@@ -42,7 +41,7 @@ export function TripFeedList({
 
   return (
     <div className="grid gap-2.5">
-      {orderedTrips.map((trip, index) => {
+      {trips.map((trip, index) => {
         const isLiked = likedIds.has(trip.id);
         const isSaved = savedIds.has(trip.id);
         const rawCoverPlace = getPlaceById(trip.placeIds[0]);
@@ -96,7 +95,10 @@ export function TripFeedList({
               >
                 ♥ {(trip.likes + (isLiked ? 1 : 0)).toLocaleString()}
               </button>
-              <span>💬 {trip.comments.toLocaleString()}</span>
+              <span className="flex items-center gap-1">
+                <CommentIcon className="h-3.5 w-3.5" />
+                {trip.comments.toLocaleString()}
+              </span>
               <button
                 className={cn("ml-auto flex items-center gap-1", isSaved && "text-primary")}
                 onClick={() => onToggleSave(trip.id)}

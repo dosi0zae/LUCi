@@ -9,8 +9,39 @@ import {
   type KakaoMapsApi,
   type KakaoPolyline,
 } from "@/features/mobile/kakao-loader";
-import type { MobilePlace } from "@/features/mobile/mobile-data";
+import { haversineKm, type MobilePlace } from "@/features/mobile/mobile-data";
 import { useT } from "@/features/mobile/i18n/i18n-context";
+
+// Stops within this real-world distance of an earlier stop visually overlap at the
+// zoom level setBounds() auto-picks for a walking-scale course (their 24px marker
+// chips are wider than the gap between them on screen).
+const MARKER_CLUSTER_RADIUS_KM = 0.02;
+// How far (in km) to fan a clustered marker's chip out from its true position so its
+// number stays legible — small enough that it still reads as "here", not elsewhere.
+const MARKER_SPREAD_KM = 0.012;
+
+// When two or more stops sit within a few meters of each other (e.g. adjacent
+// buildings around the same plaza), their numbered map markers can fully overlap and
+// hide each other's number. This nudges any marker that's this close to an earlier
+// stop outward in a small fan (golden-angle spacing so 3+ clustered markers don't
+// line up on top of each other either) — only the marker chip's position moves; the
+// route line and map bounds below still use each stop's real coordinates.
+function spreadOverlappingMarkers(places: MobilePlace[]): { lat: number; lng: number }[] {
+  return places.map((place, index) => {
+    const priorNearbyCount = places
+      .slice(0, index)
+      .filter((other) => haversineKm(other, place) < MARKER_CLUSTER_RADIUS_KM).length;
+
+    if (priorNearbyCount === 0) {
+      return { lat: place.lat, lng: place.lng };
+    }
+
+    const angle = (priorNearbyCount * 137.5 * Math.PI) / 180;
+    const latOffset = (MARKER_SPREAD_KM / 111) * Math.sin(angle);
+    const lngOffset = (MARKER_SPREAD_KM / (111 * Math.cos((place.lat * Math.PI) / 180))) * Math.cos(angle);
+    return { lat: place.lat + latOffset, lng: place.lng + lngOffset };
+  });
+}
 
 type ConstellationCardProps = {
   places: MobilePlace[];
@@ -224,11 +255,14 @@ export function ConstellationCard({ places }: ConstellationCardProps) {
     });
     polylineRef.current.setMap(map);
 
+    const markerPositions = spreadOverlappingMarkers(places);
+
     overlaysRef.current.forEach((overlay) => overlay.setMap(null));
     overlaysRef.current = places.map((place, index) => {
+      const markerPosition = markerPositions[index];
       const overlay = new maps.CustomOverlay({
         content: createStopMarker(String(index + 1)),
-        position: new maps.LatLng(place.lat, place.lng),
+        position: new maps.LatLng(markerPosition.lat, markerPosition.lng),
         xAnchor: 0.5,
         yAnchor: 0.5,
         zIndex: 10,

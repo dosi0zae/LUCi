@@ -243,6 +243,31 @@ export function MoreIcon({ className }: IconProps) {
   );
 }
 
+export function CommentIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M21 12c0 4.42-4.03 8-9 8-1.05 0-2.06-.16-3-.46L3 21l1.5-4.5C3.55 15.06 3 13.58 3 12c0-4.42 4.03-8 9-8s9 3.58 9 8Z" />
+    </svg>
+  );
+}
+
+export function TalkBubbleIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps} fill="currentColor" stroke="none">
+      <path d="M12 3.5C6.75 3.5 2.5 6.86 2.5 11c0 2.66 1.77 5 4.43 6.33-.2.72-.72 2.6-.83 3-.13.5.18.5.38.36.16-.11 2.55-1.73 3.59-2.44.62.09 1.27.14 1.93.14 5.25 0 9.5-3.36 9.5-7.5S17.25 3.5 12 3.5Z" />
+    </svg>
+  );
+}
+
+export function EyeIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
 export function GlobeIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps} strokeWidth={1}>

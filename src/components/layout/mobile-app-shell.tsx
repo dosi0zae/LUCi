@@ -25,6 +25,7 @@ import {
   getPlaceById,
   getPlaceImageUrl,
   getPlacesByIds,
+  getSeedComments,
   getTotalMinutes,
   localizePlace,
   localizeTrip,
@@ -33,6 +34,7 @@ import {
   type FeedTrip,
   type MobilePlace,
   type PlaceCategory,
+  type TripComment,
   type TripVisibility,
 } from "@/features/mobile/mobile-data";
 import { useCategoryLabel, useLocale, usePromptExamples, useT } from "@/features/mobile/i18n/i18n-context";
@@ -117,6 +119,8 @@ export function MobileAppShell() {
   const [publishedTrips, setPublishedTrips] = useState<FeedTrip[]>([]);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [bookmarkedPlaceIds, setBookmarkedPlaceIds] = useState<Set<string>>(new Set());
+  const [userComments, setUserComments] = useState<Record<string, TripComment[]>>({});
   const [recentlyViewedTripIds, setRecentlyViewedTripIds] = useState<string[]>([]);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
@@ -211,6 +215,8 @@ export function MobileAppShell() {
           publishedTrips?: FeedTrip[];
           likedIds?: string[];
           savedIds?: string[];
+          bookmarkedPlaceIds?: string[];
+          userComments?: Record<string, TripComment[]>;
           recentlyViewedTripIds?: string[];
         };
 
@@ -220,6 +226,12 @@ export function MobileAppShell() {
         if (Array.isArray(parsed.publishedTrips)) setPublishedTrips(parsed.publishedTrips);
         if (Array.isArray(parsed.likedIds)) setLikedIds(new Set(parsed.likedIds));
         if (Array.isArray(parsed.savedIds)) setSavedIds(new Set(parsed.savedIds));
+        if (Array.isArray(parsed.bookmarkedPlaceIds)) {
+          setBookmarkedPlaceIds(new Set(parsed.bookmarkedPlaceIds));
+        }
+        if (parsed.userComments && typeof parsed.userComments === "object") {
+          setUserComments(parsed.userComments);
+        }
         if (Array.isArray(parsed.recentlyViewedTripIds)) {
           setRecentlyViewedTripIds(parsed.recentlyViewedTripIds);
         }
@@ -244,13 +256,15 @@ export function MobileAppShell() {
           publishedTrips,
           likedIds: [...likedIds],
           savedIds: [...savedIds],
+          bookmarkedPlaceIds: [...bookmarkedPlaceIds],
+          userComments,
           recentlyViewedTripIds,
         }),
       );
     } catch {
       // Storage may be unavailable (private mode, quota) — persistence is best-effort.
     }
-  }, [isSignedIn, publishedTrips, likedIds, savedIds, recentlyViewedTripIds]);
+  }, [isSignedIn, publishedTrips, likedIds, savedIds, bookmarkedPlaceIds, userComments, recentlyViewedTripIds]);
 
   useEffect(() => {
     if (exploreView !== "map" || exploreUserLocation || !navigator.geolocation) {
@@ -270,6 +284,7 @@ export function MobileAppShell() {
   const [isRecommending, setIsRecommending] = useState(false);
   const [recommendReason, setRecommendReason] = useState<string | null>(null);
   const [isAiCourse, setIsAiCourse] = useState(false);
+  const [usedAI, setUsedAI] = useState(false);
 
   const showBottomNav = activeTab !== "home" || hasResult || tourPhase === "steps";
   const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds]);
@@ -300,10 +315,25 @@ export function MobileAppShell() {
       .sort((a, b) => b.savedBy - a.savedBy);
   }, [chainIds, viewingCategory]);
 
-  const allTrips = useMemo(() => [...publishedTrips, ...seedFeedTrips], [publishedTrips]);
+  const allTrips = useMemo(
+    () =>
+      [...publishedTrips, ...seedFeedTrips].map((trip) => {
+        const extraComments = userComments[trip.id]?.length ?? 0;
+        return extraComments > 0 ? { ...trip, comments: trip.comments + extraComments } : trip;
+      }),
+    [publishedTrips, userComments],
+  );
   const savedTrips = useMemo(
     () => allTrips.filter((trip) => savedIds.has(trip.id)),
     [allTrips, savedIds],
+  );
+  const likedTrips = useMemo(
+    () => allTrips.filter((trip) => likedIds.has(trip.id)),
+    [allTrips, likedIds],
+  );
+  const bookmarkedPlaces = useMemo(
+    () => places.filter((place) => bookmarkedPlaceIds.has(place.id)),
+    [bookmarkedPlaceIds],
   );
   const recentlyViewedTrips = useMemo(
     () =>
@@ -314,6 +344,14 @@ export function MobileAppShell() {
   );
   const selectedPlace = selectedPlaceId ? getPlaceById(selectedPlaceId) : null;
   const openTrip = allTrips.find((trip) => trip.id === openTripId) ?? null;
+  const openTripComments = useMemo(() => {
+    if (!openTrip) {
+      return [];
+    }
+    // The user's own comments show first (most recent contribution), then the seeded
+    // sample so a freshly-commented trip doesn't bury what was just posted.
+    return [...(userComments[openTrip.id] ?? []), ...getSeedComments(openTrip.id)];
+  }, [openTrip, userComments]);
 
   const normalizedExploreQuery = exploreQuery.trim().toLowerCase();
   const exploreTrips = useMemo(
@@ -383,6 +421,7 @@ export function MobileAppShell() {
     setIsRecommending(true);
     setRecommendReason(null);
     setIsAiCourse(true);
+    setUsedAI(false);
     const effectiveRadius = radiusOverride ?? radiusKm;
 
     try {
@@ -407,6 +446,7 @@ export function MobileAppShell() {
 
       setChainIds(data.placeIds);
       setRecommendReason(typeof data.reason === "string" ? data.reason : null);
+      setUsedAI(data.usedAI === true);
       setSubmittedPrompt(nextPrompt);
       setCourseAnchor(
         data.anchor && typeof data.anchor.lat === "number" && typeof data.anchor.lng === "number"
@@ -674,6 +714,36 @@ export function MobileAppShell() {
     });
   }
 
+  function addComment(tripId: string, text: string) {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    const comment: TripComment = {
+      id: `comment-${Date.now()}`,
+      authorName: t("travelerName"),
+      text: trimmed,
+    };
+
+    setUserComments((current) => ({
+      ...current,
+      [tripId]: [...(current[tripId] ?? []), comment],
+    }));
+  }
+
+  function toggleBookmarkPlace(id: string) {
+    setBookmarkedPlaceIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
   function deleteTrip(id: string) {
     setPublishedTrips((current) => current.filter((trip) => trip.id !== id));
     setLikedIds((current) => {
@@ -878,7 +948,9 @@ export function MobileAppShell() {
                 <section className="mt-5 grid gap-4">
                   <article className="rounded-lg border border-border bg-surface p-4 shadow-soft">
                     <div className="flex items-center justify-between gap-3">
-                      <Badge tone="blue">{t("aiCourseBadge")}</Badge>
+                      <Badge tone={isAiCourse && usedAI ? "blue" : "neutral"}>
+                        {isAiCourse && usedAI ? t("aiCourseBadge") : t("basicCourseBadge")}
+                      </Badge>
                       <div className="flex shrink-0 items-center gap-1">
                         <button
                           aria-label={t("radiusNarrower")}
@@ -927,6 +999,9 @@ export function MobileAppShell() {
                     </div>
                     {recommendReason && (
                       <p className="mt-2 text-xs leading-5 text-muted-strong">{recommendReason}</p>
+                    )}
+                    {isAiCourse && !usedAI && !isRecommending && (
+                      <p className="mt-2 text-xs leading-5 text-muted">{t("aiFallbackNotice")}</p>
                     )}
                   </article>
 
@@ -1173,10 +1248,13 @@ export function MobileAppShell() {
           {activeTab === "profile" && (
             <div className={tabSlideClass}>
               <ProfileTab
+                bookmarkedPlaces={bookmarkedPlaces}
                 isSignedIn={isSignedIn}
                 likedIds={likedIds}
+                likedTrips={likedTrips}
                 myTrips={publishedTrips}
                 onOpenTrip={viewTrip}
+                onSelectPlace={setSelectedPlaceId}
                 onToggleLike={toggleLike}
                 onToggleSave={toggleSave}
                 onToggleSignIn={() => setIsSignedIn((current) => !current)}
@@ -1226,9 +1304,11 @@ export function MobileAppShell() {
 
         {selectedPlace && (
           <PlaceSheet
+            isBookmarked={bookmarkedPlaceIds.has(selectedPlace.id)}
             isInChain={chainIds.includes(selectedPlace.id)}
             onAddToChain={addToChain}
             onClose={() => setSelectedPlaceId(null)}
+            onToggleBookmark={toggleBookmarkPlace}
             place={selectedPlace}
           />
         )}
@@ -1243,8 +1323,10 @@ export function MobileAppShell() {
 
         {openTrip && (
           <TripDetailSheet
+            comments={openTripComments}
             isLiked={likedIds.has(openTrip.id)}
             isSaved={savedIds.has(openTrip.id)}
+            onAddComment={(text) => addComment(openTrip.id, text)}
             onClose={() => setOpenTripId(null)}
             onDelete={deleteTrip}
             onLoadToChain={loadTripToChain}

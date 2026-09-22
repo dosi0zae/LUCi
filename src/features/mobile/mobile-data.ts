@@ -53,6 +53,12 @@ type LocalizedTripFields = {
   description: string;
 };
 
+export type TripComment = {
+  id: string;
+  authorName: string;
+  text: string;
+};
+
 export type FeedTrip = {
   id: string;
   title: string;
@@ -143,7 +149,7 @@ export function getTotalMinutes(places: MobilePlace[]): number {
   }, 0);
 }
 
-function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
   const R = 6371;
   const dLat = ((b.lat - a.lat) * Math.PI) / 180;
   const dLng = ((b.lng - a.lng) * Math.PI) / 180;
@@ -169,6 +175,71 @@ const TRIP_AUTHORS: { handle: string; name: string }[] = [
   { handle: "family.planner", name: "가족나들이" },
   { handle: "weekend.list", name: "주말리스트" },
 ];
+
+const COMMENT_AUTHORS = [
+  "hyun.log",
+  "seoulwalker",
+  "mina_daily",
+  "greentea.log",
+  "juju.trip",
+  "haneul92",
+  "yeon.notes",
+  "dabin.k",
+  "urban.hiker",
+  "cloudynoon",
+];
+
+const COMMENT_TEMPLATES = [
+  "동선이 편해서 하루 코스로 딱 좋았어요!",
+  "사진 찍기 좋은 곳들로 잘 짜여있네요.",
+  "저장해뒀다가 이번 주말에 가보려고요.",
+  "설명이 자세해서 계획 짜기 편했어요.",
+  "장소 하나하나가 다 알차네요, 추천!",
+  "혼자 다녀와도 좋을 것 같아요.",
+  "다음에 가족이랑 같이 가봐야겠어요.",
+  "생각보다 걷는 시간이 짧아서 여유롭게 다녀왔어요.",
+  "이 코스 그대로 따라가봤는데 만족스러웠어요.",
+  "이 근처 자주 가는데 이런 코스가 있는 줄 몰랐네요.",
+];
+
+// Small djb2-style hash — deterministic per trip id (no Math.random) so seed comments
+// stay stable across renders and hydrate identically on server and client.
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+// Only generated seed trips (id "seed-...") get sample comments — a freshly published
+// user trip shouldn't already show comments from fake accounts. Picks 2 distinct
+// templates/authors per trip by hash so the same trip always shows the same comments.
+export function getSeedComments(tripId: string): TripComment[] {
+  if (!tripId.startsWith("seed-")) {
+    return [];
+  }
+
+  const hash = hashString(tripId);
+  const firstTemplate = hash % COMMENT_TEMPLATES.length;
+  const secondTemplate = (hash + 7) % COMMENT_TEMPLATES.length;
+  const firstAuthor = hash % COMMENT_AUTHORS.length;
+  const secondAuthor = (hash + 3) % COMMENT_AUTHORS.length;
+
+  const picks =
+    firstTemplate === secondTemplate
+      ? [[firstTemplate, firstAuthor]]
+      : [
+          [firstTemplate, firstAuthor],
+          [secondTemplate, secondAuthor],
+        ];
+
+  return picks.map(([templateIndex, authorIndex], index) => ({
+    id: `${tripId}-seed-comment-${index}`,
+    authorName: COMMENT_AUTHORS[authorIndex],
+    text: COMMENT_TEMPLATES[templateIndex],
+  }));
+}
 
 type TripTheme = {
   title: string;

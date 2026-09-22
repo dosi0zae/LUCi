@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,9 +10,11 @@ import {
   MapPinIcon,
   MoreIcon,
   ShareIcon,
+  TalkBubbleIcon,
   TrashIcon,
 } from "@/components/layout/app-icons";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
+import { shareToKakaoTalk } from "@/features/mobile/kakao-share";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
 import {
   getPlacesByIds,
@@ -21,14 +23,17 @@ import {
   localizeTrip,
   type FeedTrip,
   type MobilePlace,
+  type TripComment,
 } from "@/features/mobile/mobile-data";
 import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import type { TranslationKey } from "@/features/mobile/i18n/translations";
 
 type TripDetailSheetProps = {
   trip: FeedTrip;
+  comments: TripComment[];
   isLiked: boolean;
   isSaved: boolean;
+  onAddComment: (text: string) => void;
   onClose: () => void;
   onDelete: (id: string) => void;
   onLoadToChain: (trip: FeedTrip) => void;
@@ -95,8 +100,10 @@ function getCardPoints(places: MobilePlace[]) {
 }
 
 export function TripDetailSheet({
+  comments,
   isLiked,
   isSaved,
+  onAddComment,
   onClose,
   onDelete,
   onLoadToChain,
@@ -110,6 +117,17 @@ export function TripDetailSheet({
   const [shareMessage, setShareMessage] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
+  const [commentDraft, setCommentDraft] = useState("");
+
+  function submitComment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!commentDraft.trim()) {
+      return;
+    }
+    onAddComment(commentDraft);
+    setCommentDraft("");
+  }
 
   function closeMenu() {
     setIsMenuOpen(false);
@@ -297,6 +315,27 @@ export function TripDetailSheet({
     }
   }
 
+  async function shareToKakao() {
+    const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
+    if (!appKey) {
+      setShareMessage(t("kakaoShareFailed"));
+      return;
+    }
+
+    try {
+      await shareToKakaoTalk({
+        appKey,
+        title: localizedTrip.title,
+        description: localizedTrip.description || `${t("placesCount", { count: places.length })} · ${t("minutesCount", { count: totalMinutes })}`,
+        imageUrl: `${window.location.origin}/apple-icon.png`,
+        link: `${window.location.origin}/mobile`,
+        buttonLabel: t("loadToChainButton"),
+      });
+    } catch {
+      setShareMessage(t("kakaoShareFailed"));
+    }
+  }
+
   async function downloadShareCard() {
     const canvas = await renderShareCardCanvas();
     if (!canvas) {
@@ -436,6 +475,42 @@ export function TripDetailSheet({
             </article>
           ))}
         </div>
+
+        <div className="mt-6">
+          <h3 className="text-sm font-extrabold text-muted-strong">
+            {t("commentsHeading", { count: comments.length })}
+          </h3>
+
+          <form className="mt-3 flex items-center gap-2" onSubmit={submitComment}>
+            <input
+              className="glass-panel min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2.5 text-sm outline-none placeholder:text-muted"
+              onChange={(event) => setCommentDraft(event.target.value)}
+              placeholder={t("commentPlaceholder")}
+              value={commentDraft}
+            />
+            <button
+              aria-label={t("commentSubmitAria")}
+              className="shrink-0 rounded-lg bg-primary px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-primary-strong disabled:opacity-50"
+              disabled={!commentDraft.trim()}
+              type="submit"
+            >
+              {t("commentSubmit")}
+            </button>
+          </form>
+
+          {comments.length === 0 ? (
+            <p className="mt-3 text-xs leading-5 text-muted">{t("commentEmpty")}</p>
+          ) : (
+            <div className="mt-3 grid gap-2.5">
+              {comments.map((comment) => (
+                <div className="rounded-lg border border-border bg-surface p-3" key={comment.id}>
+                  <p className="text-xs font-extrabold">{comment.authorName}</p>
+                  <p className="mt-1 text-sm leading-5 text-muted-strong text-pretty">{comment.text}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <footer className="relative border-t border-border px-5 pt-3 [padding-bottom:calc(0.75rem+env(safe-area-inset-bottom))]">
@@ -467,9 +542,55 @@ export function TripDetailSheet({
           >
             <BookmarkIcon className="h-5 w-5" />
           </Button>
-          <Button aria-label={t("shareButton")} onClick={() => void shareTrip()} size="lg" variant="secondary">
-            <ShareIcon className="h-5 w-5" />
-          </Button>
+          <div className="relative">
+            <Button
+              aria-label={t("shareButton")}
+              className="w-full"
+              onClick={() => setIsShareMenuOpen((open) => !open)}
+              size="lg"
+              variant="secondary"
+            >
+              <ShareIcon className="h-5 w-5" />
+            </Button>
+            {isShareMenuOpen && (
+              <>
+                <button
+                  aria-hidden="true"
+                  className="fixed inset-0 z-10 cursor-default"
+                  onClick={() => setIsShareMenuOpen(false)}
+                  tabIndex={-1}
+                />
+                <div className="absolute bottom-full right-0 z-20 mb-2 w-48 overflow-hidden rounded-lg border border-border bg-surface shadow-soft">
+                  <button
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-surface-muted"
+                    onClick={() => {
+                      setIsShareMenuOpen(false);
+                      void shareToKakao();
+                    }}
+                    type="button"
+                  >
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#FEE500] text-[#391B1B]">
+                      <TalkBubbleIcon className="h-3.5 w-3.5" />
+                    </span>
+                    {t("kakaoShareButton")}
+                  </button>
+                  <button
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-surface-muted"
+                    onClick={() => {
+                      setIsShareMenuOpen(false);
+                      void shareTrip();
+                    }}
+                    type="button"
+                  >
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-surface-muted text-muted-strong">
+                      <ShareIcon className="h-3.5 w-3.5" />
+                    </span>
+                    {t("shareOtherButton")}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <Button aria-label={t("saveImageButton")} onClick={() => void downloadShareCard()} size="lg" variant="secondary">
             <DownloadIcon className="h-5 w-5" />
           </Button>

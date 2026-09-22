@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { BookmarkIcon } from "@/components/layout/app-icons";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
 import { localizePlace, type MobilePlace } from "@/features/mobile/mobile-data";
 import { getGoogleMapsUrl, getKakaoMapUrl, getNaverMapUrl } from "@/features/mobile/map-links";
@@ -13,11 +14,20 @@ const CLOSE_ANIMATION_MS = 200;
 type PlaceSheetProps = {
   place: MobilePlace;
   isInChain: boolean;
+  isBookmarked: boolean;
   onAddToChain: (place: MobilePlace) => void;
+  onToggleBookmark: (id: string) => void;
   onClose: () => void;
 };
 
-export function PlaceSheet({ isInChain, onAddToChain, onClose, place }: PlaceSheetProps) {
+export function PlaceSheet({
+  isInChain,
+  isBookmarked,
+  onAddToChain,
+  onClose,
+  onToggleBookmark,
+  place,
+}: PlaceSheetProps) {
   const t = useT();
   const categoryLabel = useCategoryLabel();
   const { locale } = useLocale();
@@ -62,14 +72,27 @@ export function PlaceSheet({ isInChain, onAddToChain, onClose, place }: PlaceShe
               <p className="mt-1 text-xs text-muted">{place.address}</p>
             </div>
           </div>
-          <button
-            aria-label={t("placeDetailCloseAria")}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-sm text-muted hover:bg-surface-muted hover:text-foreground"
-            onClick={handleClose}
-            type="button"
-          >
-            ×
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              aria-label={isBookmarked ? t("bookmarkedPlaceAria") : t("bookmarkPlaceAria")}
+              className={cn(
+                "grid h-8 w-8 place-items-center rounded-sm hover:bg-surface-muted",
+                isBookmarked ? "text-primary" : "text-muted hover:text-foreground",
+              )}
+              onClick={() => onToggleBookmark(place.id)}
+              type="button"
+            >
+              <BookmarkIcon className="h-4.5 w-4.5" />
+            </button>
+            <button
+              aria-label={t("placeDetailCloseAria")}
+              className="grid h-8 w-8 place-items-center rounded-sm text-muted hover:bg-surface-muted hover:text-foreground"
+              onClick={handleClose}
+              type="button"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         <p

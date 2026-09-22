@@ -79,7 +79,7 @@ export function loadKakaoMaps(appKey: string) {
     return kakaoSdkPromise;
   }
 
-  kakaoSdkPromise = new Promise<KakaoMapsApi>((resolve, reject) => {
+  const promise = new Promise<KakaoMapsApi>((resolve, reject) => {
     const existingScript = document.getElementById("kakao-map-sdk");
 
     if (existingScript) {
@@ -101,5 +101,15 @@ export function loadKakaoMaps(appKey: string) {
     document.head.appendChild(script);
   });
 
-  return kakaoSdkPromise;
+  // A transient failure (flaky network, momentary CDN blip) shouldn't permanently wedge
+  // map loading for the rest of the session — let the next call start over instead of
+  // replaying the same cached rejection forever.
+  promise.catch(() => {
+    if (kakaoSdkPromise === promise) {
+      kakaoSdkPromise = null;
+    }
+  });
+
+  kakaoSdkPromise = promise;
+  return promise;
 }
