@@ -13,6 +13,8 @@ import {
   LightbulbIcon,
   LocateIcon,
   MinusIcon,
+  NavigationIcon,
+  OptimizeRouteIcon,
   PlusIcon,
   RefreshIcon,
   SearchIcon,
@@ -41,9 +43,11 @@ import { useCategoryLabel, useLocale, usePromptExamples, useT } from "@/features
 import { CategorySheet } from "@/features/mobile/category-sheet";
 import { LanguageMenuButton } from "@/features/mobile/language-menu-button";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
+import { decodeCourseFromLocation } from "@/features/mobile/course-share";
 import { CreatorProfileSheet } from "@/features/mobile/creator-profile-sheet";
 import { ExploreMap } from "@/features/mobile/explore-map";
 import { loadKakaoMaps } from "@/features/mobile/kakao-loader";
+import { buildGoogleMapsWalkingRouteUrl, buildKakaoWalkingRouteUrl } from "@/features/mobile/route-links";
 import { OnboardingTour } from "@/features/mobile/onboarding-tour";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
@@ -51,7 +55,9 @@ import { PublishSheet } from "@/features/mobile/publish-sheet";
 import {
   buildChain,
   DEFAULT_RADIUS_KM,
+  derivePreference,
   findBestInsertionIndex,
+  optimizeRoute,
   RADIUS_STEPS_KM,
 } from "@/features/mobile/recommend-engine";
 import { TripDetailSheet } from "@/features/mobile/trip-detail-sheet";
@@ -108,6 +114,9 @@ export function MobileAppShell() {
   // The anchor the CURRENT course was actually built around, so wider/narrower can
   // reuse it directly instead of re-rolling location/AI intent from scratch.
   const [courseAnchor, setCourseAnchor] = useState<{ lat: number; lng: number } | null>(null);
+  // A district the prompt named explicitly (e.g. "종로구"), so wider/narrower stays
+  // inside it instead of falling back to a plain radius around courseAnchor.
+  const [courseAreaFilter, setCourseAreaFilter] = useState<string | null>(null);
   const [radiusMessage, setRadiusMessage] = useState<string | null>(null);
 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
@@ -179,7 +188,9 @@ export function MobileAppShell() {
 
   useEffect(() => {
     try {
-      if (!window.localStorage.getItem(TUTORIAL_STORAGE_KEY)) {
+      // A shared-course link (see course-share.ts) should open straight into that course,
+      // not get blocked behind the first-run tutorial.
+      if (!window.localStorage.getItem(TUTORIAL_STORAGE_KEY) && !window.location.search.includes("course=")) {
         // One-time check on mount, not a reactive sync loop.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setTourPhase("intro");
@@ -285,9 +296,37 @@ export function MobileAppShell() {
   const [recommendReason, setRecommendReason] = useState<string | null>(null);
   const [isAiCourse, setIsAiCourse] = useState(false);
   const [usedAI, setUsedAI] = useState(false);
+  const [isNavigateMenuOpen, setIsNavigateMenuOpen] = useState(false);
 
   const showBottomNav = activeTab !== "home" || hasResult || tourPhase === "steps";
   const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds]);
+  // A lightweight taste profile inferred from the user's own bookmarked places (see
+  // derivePreference), fed into every course build so recommendations nudge toward what
+  // this person has already shown they like, without needing a backend to store it.
+  const preference = useMemo(
+    () => derivePreference([...bookmarkedPlaceIds]),
+    [bookmarkedPlaceIds],
+  );
+
+  useEffect(() => {
+    // A link built by buildCourseShareUrl encodes the course's place ids directly, so it
+    // resolves the same way for anyone (no server-side trip storage needed — see
+    // course-share.ts). Consumed once on mount, then stripped from the URL so a later
+    // refresh or radius/refresh action doesn't keep reloading this same shared course.
+    const decoded = decodeCourseFromLocation(window.location.search);
+    if (!decoded) {
+      return;
+    }
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setChainIds(decoded.placeIds);
+    setSubmittedPrompt(decoded.title || t("sharedCourseFallbackTitle"));
+    setRecommendReason(null);
+    setIsAiCourse(false);
+    setActiveTab("home");
+    window.history.replaceState(null, "", window.location.pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const otherPlacesByCategory = useMemo(() => {
     const remaining = places.filter((place) => !chainIds.includes(place.id));
     const byCategory = new Map<PlaceCategory, MobilePlace[]>();
@@ -407,6 +446,7 @@ export function MobileAppShell() {
       placeCount: 4,
       anchor,
       radiusKm: radiusOverride ?? radiusKm,
+      ...preference,
     });
 
     setSubmittedPrompt(nextPrompt);
@@ -414,6 +454,7 @@ export function MobileAppShell() {
     setRecommendReason(null);
     setIsAiCourse(false);
     setCourseAnchor(anchor);
+    setCourseAreaFilter(null);
     setRadiusMessage(null);
   }
 
@@ -431,7 +472,13 @@ export function MobileAppShell() {
       const response = await fetch("/api/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: nextPrompt, locale, anchor, radiusKm: effectiveRadius }),
+        body: JSON.stringify({
+          prompt: nextPrompt,
+          locale,
+          anchor,
+          radiusKm: effectiveRadius,
+          bookmarkedPlaceIds: [...bookmarkedPlaceIds],
+        }),
       });
 
       if (!response.ok) {
@@ -453,16 +500,19 @@ export function MobileAppShell() {
           ? { lat: data.anchor.lat, lng: data.anchor.lng }
           : null,
       );
+      setCourseAreaFilter(typeof data.areaFilter === "string" ? data.areaFilter : null);
     } catch {
       const result = buildChain({
         categories: [],
         attributes: [],
         placeCount: 4,
         radiusKm: effectiveRadius,
+        ...preference,
       });
       setChainIds(result.placeIds);
       setSubmittedPrompt(nextPrompt);
       setCourseAnchor(result.anchor);
+      setCourseAreaFilter(null);
     } finally {
       setIsRecommending(false);
       setRadiusMessage(null);
@@ -513,8 +563,10 @@ export function MobileAppShell() {
       attributes: [],
       placeCount: chainPlaces.length || 4,
       anchor: courseAnchor,
+      areaFilter: courseAreaFilter,
       radiusKm: nextRadius,
       strictRadius: true,
+      ...preference,
     });
 
     if (result.placeIds.length < 2) {
@@ -526,6 +578,15 @@ export function MobileAppShell() {
     setChainIds(result.placeIds);
     setRecommendReason(null);
     setRadiusMessage(null);
+  }
+
+  // A course's stop order isn't always a sensible walking route — manually adding stops
+  // one at a time only ever inserts each new one at its single best spot (never
+  // re-checks earlier stops), and a shared/loaded course carries whatever order its
+  // original author left it in. This re-sorts the CURRENT stops for the shortest walk
+  // without changing which places are in the chain.
+  function optimizeCurrentRoute() {
+    setChainIds(optimizeRoute(chainPlaces).map((place) => place.id));
   }
 
   function locateNearby() {
@@ -985,6 +1046,82 @@ export function MobileAppShell() {
                         >
                           <RefreshIcon className={cn("h-4 w-4", isRecommending && "animate-spin")} />
                         </button>
+                        {chainPlaces.length >= 2 && (
+                          <div className="relative">
+                            <button
+                              aria-label={t("navigateCourseAria")}
+                              className={cn(
+                                "grid h-8 w-8 place-items-center rounded-full border transition",
+                                isNavigateMenuOpen
+                                  ? "border-primary text-primary"
+                                  : "border-border text-muted-strong hover:border-primary hover:text-primary",
+                              )}
+                              onClick={() => setIsNavigateMenuOpen((open) => !open)}
+                              title={t("navigateCourseTitle")}
+                              type="button"
+                            >
+                              <NavigationIcon className="h-3.5 w-3.5" />
+                            </button>
+                            {isNavigateMenuOpen && (
+                              <>
+                                <button
+                                  aria-hidden="true"
+                                  className="fixed inset-0 z-10 cursor-default"
+                                  onClick={() => setIsNavigateMenuOpen(false)}
+                                  tabIndex={-1}
+                                />
+                                <div className="absolute right-0 top-full z-20 mt-2 flex items-center gap-1.5 rounded-full border border-border bg-surface p-1.5 shadow-soft">
+                                  <button
+                                    aria-label={t("mapKakao")}
+                                    className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full transition hover:opacity-80"
+                                    onClick={() => {
+                                      setIsNavigateMenuOpen(false);
+                                      window.open(buildKakaoWalkingRouteUrl(chainPlaces), "_blank", "noopener,noreferrer");
+                                    }}
+                                    title={t("mapKakao")}
+                                    type="button"
+                                  >
+                                    <img alt="" className="h-full w-full object-cover" src="/map-icons/kakao-map-pin.png" />
+                                  </button>
+                                  <button
+                                    aria-label={t("mapGoogle")}
+                                    className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full border border-border-strong bg-surface-muted transition hover:opacity-80"
+                                    onClick={() => {
+                                      setIsNavigateMenuOpen(false);
+                                      window.open(
+                                        buildGoogleMapsWalkingRouteUrl(chainPlaces),
+                                        "_blank",
+                                        "noopener,noreferrer",
+                                      );
+                                    }}
+                                    title={t("mapGoogle")}
+                                    type="button"
+                                  >
+                                    {/* Sized down so the rainbow pin itself roughly matches the size of
+                                        the blue pin inside the Kakao badge (not the badge/frame size) —
+                                        the extra room this reveals is the white background beneath it. */}
+                                    <img
+                                      alt=""
+                                      className="h-full w-full scale-75 object-cover"
+                                      src="/map-icons/google-maps-pin.jpg"
+                                    />
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+                        {chainPlaces.length >= 3 && (
+                          <button
+                            aria-label={t("optimizeRouteAria")}
+                            className="grid h-8 w-8 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary"
+                            onClick={optimizeCurrentRoute}
+                            title={t("optimizeRouteTitle")}
+                            type="button"
+                          >
+                            <OptimizeRouteIcon className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                     <h2 className="mt-3 text-xl font-extrabold text-balance">{submittedPrompt}</h2>

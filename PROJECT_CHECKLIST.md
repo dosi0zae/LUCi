@@ -33,6 +33,175 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase AF: Real Brand Icons for the Share Menu (simple-icons), Instagram Added
+
+Status: Complete (pending final visual re-check — a stray Kakao login popup from an earlier manual test blocked browser automation; verify KakaoTalk badge rendering once closed)
+
+Scope — user explicitly asked not to hand-draw share icons and to use "정식 아이콘 이미지" (official icon assets), plus add Instagram:
+
+- Installed `simple-icons` (CC0-licensed, `github.com/simple-icons/simple-icons`) as a real dependency rather than fetching arbitrary image files from the internet. Added `src/features/mobile/brand-icons.tsx` with `XIcon`/`FacebookIcon`/`InstagramIcon`/`WhatsAppIcon`/`KakaoTalkIcon` — each the exact official path data from that package, `fill="currentColor"` so badge color comes from the wrapping button like every other icon in this app.
+- Replaced the hand-coded letter glyphs ("X", "f") and repurposed generic icons (`TalkBubbleIcon` for Kakao, `CommentIcon` for WhatsApp) in `trip-detail-sheet.tsx`'s share popover with the real brand marks. Corrected Facebook's badge color to their current official blue (`#0866FF`, from simple-icons' own data — the `#1877F2` used before was their previous brand blue).
+- Added a dedicated Instagram badge (its own tooltip/aria-label take over from the old generic "share" one) using the classic recognizable orange→pink→purple gradient background with the white Instagram glyph on top — since Instagram (like TikTok) has no public share-intent URL, this button and the original generic one both trigger the same `shareTrip()` OS share sheet; there's no other way to reach either platform from a website.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint` (same 2 pre-existing `no-img-element` warnings as Phase AE, unrelated to this change)
+- Pending: full browser re-check of all 5 badges rendering correctly, especially KakaoTalk's icon (a combined app-icon-shape path relying on subpath winding to render its cutout correctly) — blocked mid-verification by a leftover Kakao login popup from earlier manual testing that the automation can't dismiss
+
+### Mobile Phase AE: Real Brand Icons for Map/Share Badges, Per-SNS Share Icons
+
+Status: Complete
+
+Scope — follow-up polish after Phase AD, driven directly by user feedback on how the new icon badges looked:
+
+- The Kakao/Google navigate-menu badges from Phase AD both used the same generic outline pin (`MapPinIcon`), differing only by badge color — genuinely hard to tell apart, per user feedback with a screenshot. First pass: hand-drawn SVG replacements (a Kakao-style blue-pin-on-yellow, a Google-style rainbow gradient pin). The Google gradient initially rendered as solid red due to an SVG bug (`gradientUnits` defaults to `objectBoundingBox`, so raw viewBox-scale coordinates like `x1="3" x2="21"` were being read as fractions far outside 0–1 — fixed by adding `gradientUnits="userSpaceOnUse"`, though the deeper issue was approximating a brand mark by hand at all.
+- User then explicitly asked to use their own reference images directly rather than an approximation. They're now saved as real assets (`public/map-icons/kakao-map-pin.png`, `public/map-icons/google-maps-pin.jpg`) and rendered via `<img>` (`object-cover`, clipped to the same circular badge every other icon button uses) instead of hand-coded SVG — both hand-drawn icon components were removed once the real assets were wired in.
+- Scope note: this pass only touched the navigate-menu's Kakao/Google badges, since those were the ones with user-supplied reference images. The share menu's X/Facebook/WhatsApp badges (added in Phase AD) stay as coded letter/icon glyphs.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint` (2 pre-existing-pattern `@next/next/no-img-element` warnings, same as the already-committed logo `<img>` elsewhere in this file — not errors, doesn't fail the lint command)
+- Passed: browser walkthrough — navigate menu shows the actual supplied Kakao and Google Maps pin images, correctly clipped into matching circular badges; no console errors
+
+Follow-up polish (same phase, immediately after): first pass scaled the Google image *up* (`scale-125`) assuming the pin should fill the badge like Kakao's does — backwards. The user meant the opposite: shrink the rainbow pin so *it* (not the badge frame) matches the size of the blue pin inside the Kakao icon. Switched to `scale-75`, which both shrinks the pin to a comparable size and naturally reveals the white background behind it (the same effect the yellow margin has in the Kakao badge).
+
+Second follow-up: with a plain white fill and a faint `border-border/60`, the Google badge's own circular boundary nearly disappeared against the white popover panel behind it, making the whole badge read as noticeably smaller than Kakao's solid yellow circle even though both are the same 36px box — a contrast problem, not an actual size difference. Switched to `bg-surface-muted` (a visibly distinct light gray, not pure white) and a full-strength `border-border-strong`, so the badge's outer circle is now clearly legible and reads as the same size as Kakao's.
+
+Re-verified in-browser after each round, no console errors.
+
+### Mobile Phase AD: Foreign-Visitor District Matching, SNS-First Sharing, Multi-App Navigate Menu
+
+Status: Complete
+
+Scope — three user-requested items in one batch:
+
+- **Romanized district matching**: `detectAreaFromPrompt` in `/api/recommend/route.ts` only ever matched literal Korean district names, so a non-Korean prompt naming its own district (e.g. "let's explore Jongno-gu") had no deterministic fallback and depended entirely on Gemini catching it — the exact failure mode the Korean check exists to avoid. Added `DISTRICT_ROMANIZATIONS`, a standard-romanization alias table for all 25 Seoul districts, checked with word-boundary regex after the Korean check. "중구" deliberately has no bare-word alias ("jung" is too generic/common to safely match). Verified with an isolated test: correctly matches "Jongno-gu"/"jongno"/"Gangnam"/"Jung-gu", correctly rejects "Jongnoville" and "jungle" (no false positives on partial words).
+- **SNS-first share menu**: reordered `trip-detail-sheet.tsx`'s share popover so "인스타그램 · 틱톡 등으로 공유" (the Web Share API path, which is what actually surfaces Instagram/TikTok/etc. as OS-level share targets, image card included) leads, with "카카오톡 공유" demoted to second — matching the product's shift toward prioritizing SNS reach over the Korea-specific KakaoTalk integration. Renamed the copy across all 4 locales to name the actual platforms instead of a generic "share another way".
+- **Multi-app navigate menu**: the 길찾기 button previously opened Kakao Map directly with no choice. It's now a toggle that reveals a small row of icon-only badges below it (yellow Kakao badge, blue Google badge) — clicking picks that app. Added `buildGoogleMapsWalkingRouteUrl()` alongside the existing Kakao builder, consolidated into a new `route-links.ts` (replacing the old Kakao-only `kakao-navigate.ts`, since it now covers both providers). Same popover/backdrop pattern already used for the share menu.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: isolated regex test for the district-romanization matcher (6/6 cases, including false-positive guards)
+- Passed: live `/api/recommend` call with an English prompt ("Let's explore Jongno-gu for a history walk") confirmed `areaFilter: "종로구"`
+- Passed: browser walkthrough — 길찾기 button reveals both map badges; captured the actual `window.open` call for the Google badge and confirmed a correct `google.com/maps/dir/?...&travelmode=walking&origin=...&destination=...` URL; share popover on a real trip shows the SNS option first, KakaoTalk second; no console errors in a fresh tab
+
+### Mobile Phase AC: Optimize-Route Button
+
+Status: Complete
+
+Scope — user-requested after noticing a recommended/loaded course's stop order can be geographically unreasonable:
+
+- A course's stop order isn't always a real shortest walk. `buildChain` already brute-forces the optimal order (`orderByRoute`) for a *freshly generated* course, but two other paths bypass that entirely: manually adding stops one at a time (`findBestInsertionIndex` only ever finds the best spot for the *new* stop, never re-checks the rest) and loading a shared/published course (whichever order its original author left it in — see Phase Z).
+- Added `optimizeRoute()` to `recommend-engine.ts`: brute-forces the exact shortest order (reusing `orderByRoute`) for chains up to 7 stops, and falls back to a greedy nearest-neighbor walk for anything longer — a manually-built chain has no upper bound the way a generated course does, and brute-forcing beyond ~7 stops (5,040+ permutations) would freeze the browser.
+- Added an "최적 경로" icon button (new `OptimizeRouteIcon` in `app-icons.tsx`, a 3-point route glyph) next to the 길찾기 button, shown whenever a course has 3+ stops (below that there's only one possible order). Reorders the *current* stops in place — doesn't change which places are in the chain, add/remove anything, or touch the anchor/radius state.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: browser walkthrough — built a deliberately zigzagging 5-stop course via a `?course=` link (stops ordered to cross the walking path back and forth on the map), confirmed the route line visibly crossed itself before, and clicking 최적 경로 reordered the stops into a clean, non-crossing west-to-east walk with no console errors
+
+### Mobile Phase AB: Honest "예매하기" Placeholder
+
+Status: Complete
+
+Scope — fifth item off the feature-development brainstorm ("예약/티켓 연동"), explicitly requested as a placeholder after confirming there's no real ticketing data source or payment integration to wire up: the dataset (`seoul-places.json`) has no reservation/booking URL field at all, and only 26/300 places even carry a real fee value, so a genuine booking flow isn't buildable right now without a real ticketing partner.
+
+- `place-sheet.tsx` now shows a "예매하기" button for the ~27/300 places that are either paid (`fee` isn't "무료"/"정보 없음") or explicitly require reservation (`hours` contains "예약") — checked against the raw Korean place fields, not the per-locale translated ones, since the substring match only works on the original text.
+- Clicking it shows an honest "예매 연동은 준비 중이에요" (booking isn't hooked up yet) toast — reusing the same `share-toast` animation class already used elsewhere — rather than faking a completed booking or navigating anywhere. No real transaction, no misleading confirmation.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: browser walkthrough on a paid place (가회민화박물관, 5,000원) — confirmed the button appears only for reservation/fee-flagged places, and that clicking it renders the placeholder toast (verified by batching the click and a DOM read together, since the toast's 2.2s auto-dismiss was shorter than the round-trip of separate tool calls)
+- Note: while testing this, the browser tab that had been open across this entire long session (many edits + HMR reloads) started throwing a stale `ReferenceError: derivePreference is not defined` from an unrelated earlier phase's compiled chunk. A brand-new tab against the same (even cache-cleared) dev server had zero errors, confirming it was leftover client-side HMR state in that one old tab, not a real code defect — worth knowing about if a future session sees a confusing error that a fresh tab makes disappear.
+
+### Mobile Phase AA: Weather-Aware Recommendations
+
+Status: Complete
+
+Scope — fourth item off the feature-development brainstorm ("날씨/시간 연동 추천 강화"):
+
+- `/api/recommend/route.ts` now checks current weather via Open-Meteo (`api.open-meteo.com`, no API key needed) at the request's anchor coordinate (or a fixed Seoul city-center fallback when the prompt named its own district, since the route sends `anchor: null` in that case and weather is roughly uniform across the city). Rain is detected either by `precipitation > 0` or a WMO `weather_code` matching drizzle/rain/showers/thunderstorm.
+- When it's raining, "실내" is folded into `intent.preferredTags` — reusing the same scoring-nudge mechanism added for personalization in Phase Y, rather than adding a new bonus path — and a short note ("비 소식이 있어 실내 위주로 담아봤어요.") is appended to the response's `reason` text so the user sees *why*.
+- Guarded so it never overrides what the user actually asked for: skipped entirely if the prompt's own parsed attributes already include "실내" or "실외". The weather lookup is best-effort (4s timeout, catches all errors) and never blocks or fails the recommendation.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: live-API walkthrough against the running dev server (today's Seoul weather is clear, so the branch couldn't be exercised locally) — confirmed the WMO rain-code classification against real current conditions in Singapore (drizzle, code 53) and Bangkok (rain showers, code 81) vs. clear conditions in Taipei/Tokyo, then called `/api/recommend` with the anchor set to Bangkok's real-time-rainy coordinates and confirmed the response's `reason` picked up the indoor note; a follow-up call with the same rainy anchor but an explicit "실외에서 야외 산책하고 싶어" prompt confirmed the note is correctly suppressed when the user asked for outdoor
+
+### Mobile Phase Z: Shared Course Links Actually Resolve
+
+Status: Complete
+
+Scope — third item off the feature-development brainstorm ("공유 링크로 초대"), scoped down from real-time collaborative editing (which needs a backend the app doesn't have) to fixing what was actually broken: **every existing share button already claimed to share a specific course, but silently didn't.**
+
+- Found while starting this item: `trip-detail-sheet.tsx`'s `shareTrip()` (Web Share/clipboard) and `shareToKakao()` both built their link as `${window.location.origin}/mobile` — the bare app URL, no reference to the trip at all. Opening a shared KakaoTalk card or copied link just landed on the empty home screen; the recipient never saw the course that was supposedly shared.
+- Added `src/features/mobile/course-share.ts`: `buildCourseShareUrl()` encodes a course as `?course=<comma-joined place ids>&title=<title>`, and `decodeCourseFromLocation()` reverses it, validating every id against the live `places` list. Since place ids are static bundled data (not server-stored), the link is fully self-contained — it resolves correctly for anyone with the app, no backend required.
+- Wired both share functions in `trip-detail-sheet.tsx` to use it. Added a mount effect in `mobile-app-shell.tsx` that decodes `?course=` on load, hydrates the course straight into the home view (skipping the first-run tutorial if one was pending), and strips the param via `history.replaceState` so a later refresh/radius change doesn't keep reloading the same shared course.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: browser walkthrough — opened a seed trip ("고궁과 박물관을 잇는 하루"), captured the actual share URL via `다른 방법으로 공유` (`?course=heritage-11-...,tour-130285,...&title=...`), then loaded that exact URL in a fresh navigation and confirmed the course view rendered immediately with the correct title and all 4 original stops, with the query param cleanly stripped afterward
+
+### Mobile Phase Y: Personalized Recommendation Scoring
+
+Status: Complete
+
+Scope — second item off the feature-development brainstorm ("개인화 추천 고도화"):
+
+- Added `derivePreference(bookmarkedPlaceIds)` to `recommend-engine.ts`: a pure function turning a user's bookmarked places into a lightweight taste profile (their most-common category and up to 5 most-common tags among those bookmarks), capped so a handful of bookmarks can't dominate every future recommendation.
+- `RecommendIntent` gained optional `preferredCategories`/`preferredTags`; `scorePlace` adds a modest bonus for a match (+12 category, +6/tag) — well below an explicit category/attribute match from the prompt itself (+50/+20), so this nudges scoring rather than overriding what the user actually typed or asked for.
+- No backend needed: the non-AI course path (`startCourse` in `mobile-app-shell.tsx`) derives preference from the existing client-local `bookmarkedPlaceIds` state and passes it straight into `buildChain`. The AI path (`startCourseFromPrompt`) can't do that server-side (the `/api/recommend` route has no access to the browser's localStorage), so it sends `bookmarkedPlaceIds` in the request body instead; the route derives the same preference and folds it into the intent in `normalizeIntent`.
+- `changeRadius` also carries the preference through, so a wider/narrower course stays personalized too.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: a scripted statistical check (temporary, not committed) confirmed `derivePreference` extracts the right category/tags from a sample bookmark set, and that a preference-aware `buildChain` call shifts its top-ranked place toward the bookmarked category in ~99% of trials (298/300) vs. a roughly even split with no preference (113/70/117) — the current live dataset's near-total lack of per-place tag variety within a category (a data-quality gap already tracked separately) meant the category-level signal, not tag-level, was the one with enough live data to demonstrate; the tag path is exercised by the same code and will show once place-level tagging improves
+- Passed: browser walkthrough — bookmarked a place, then captured the actual `fetch` call to `/api/recommend` and confirmed its body carries `"bookmarkedPlaceIds":["tour-130938"]`
+
+### Mobile Phase X: Real Kakao Map Walking Directions
+
+Status: Complete
+
+Scope — first item off the feature-development brainstorm (functional development, "실제 길찾기 연동"):
+
+- Added `buildKakaoWalkingRouteUrl()` in `src/features/mobile/kakao-navigate.ts`, building Kakao Map's public "길찾기" web link (`https://map.kakao.com/link/by/walk/{name},{lat},{lng}/...`, confirmed against `apis.map.kakao.com/web/guide/`) — one path segment per course stop. This link is Kakao-hosted: it opens the installed Kakao Map app when present or falls back to their web map otherwise, so no app-scheme/install-detection logic was needed on our side. Supports up to 5 via points (7 stops total); `buildChain` already caps a course at 6, so no truncation is ever hit in practice.
+- Added a `NavigationIcon` to `app-icons.tsx` (flat 2D stroke, matching the existing icon set) and a new circular icon button next to the radius/refresh controls in `mobile-app-shell.tsx`'s course card header, opening the route link in a new tab for the current `chainPlaces`.
+- Added `navigateCourseAria`/`navigateCourseTitle` to all four locales in `translations.ts`.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: browser walkthrough — captured the `window.open` call for a real 4-stop course and confirmed the decoded URL carries the exact stop names/coordinates in order (남산케이블카 → 환구단 → 공평도시유적전시관 → 모인화랑)
+
+### Mobile Phase W: Fix `changeRadius` Dropping the District Constraint
+
+Status: Complete
+
+Scope — the one known-open item from the Phase V code review flagged as small:
+
+- `/api/recommend`'s `POST` handler computed `intent.areaFilter` (a district the prompt named explicitly, e.g. "종로구") to build the chain but never returned it in the JSON response, so the client had no way to know a course was district-anchored. Added `areaFilter` to the response payload in `src/app/api/recommend/route.ts`.
+- `mobile-app-shell.tsx` tracked only `courseAnchor` (a lat/lng point) for the current course, not the district. `changeRadius()` (the 반경 −/+ buttons) rebuilt the chain from `courseAnchor` alone, so a district-scoped AI course silently fell back to a plain radius pool around the anchor point on the first wider/narrower tap — able to pull in places from a neighboring district. Added `courseAreaFilter` state, set from the new `areaFilter` response field in `startCourseFromPrompt` (cleared on its fallback path and in the plain, non-AI `startCourse`), and passed into `buildChain()` inside `changeRadius`. `buildChain` already treated `areaFilter` as ground truth over any radius (`recommend-engine.ts`), so no engine change was needed — just plumbing the field through.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: browser walkthrough — prompted "종로구에서 역사 탐방 코스", confirmed the `/api/recommend` response carries `"areaFilter":"종로구"` and the initial 4 stops are all in 종로구; tapped the 반경 + button (1km → 2km) and confirmed the resulting stops (경희궁 흥화문, 서울 운현궁, ...) stayed within 종로구 instead of spilling into a plain-radius pool
+
 ### Mobile Phase V: Overlapping Markers, Profile Icon Tabs, Trip Comments
 
 Status: Complete

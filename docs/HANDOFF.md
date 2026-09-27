@@ -22,7 +22,6 @@ Mobile-first app (`/mobile`) that turns a free-text prompt into a walkable cours
 
 ## Known open items (from the code review, not fixed)
 
-- `changeRadius()` in `mobile-app-shell.tsx` rebuilds from `courseAnchor` only, so a prompt-named district (e.g. "종로구") is dropped when the user taps wider/narrower. Needs the `areaFilter` returned by `/api/recommend` and kept in state.
 - No sequencing between concurrent course generations (quick-browse, locate-nearby, AI search, refresh); a slow earlier call can overwrite a newer result.
 - `constellation-card.tsx` builds the Kakao map once against `containerRef`; if the chain drops below 2 stops and returns, the map can stay bound to a detached div.
 - Refactor candidates: the sheet-close animation logic is copied across `category-sheet`, `place-sheet`, `publish-sheet`, `language-menu-button`; the place-card markup is copied in three files; the lat/lng projection is duplicated between `constellation-card.tsx` and `trip-detail-sheet.tsx`; `getCurrentLocation()` isn't reused by `locateNearby` and the explore effect.
@@ -30,6 +29,9 @@ Mobile-first app (`/mobile`) that turns a free-text prompt into a walkable cours
 
 ## Suggested next steps
 
-1. Fix `changeRadius` dropping the district constraint (small).
-2. Place-level reviews/ratings, paired with the existing place bookmarks.
-3. A real backend (auth + DB, e.g. Supabase) so likes/saves/comments/published trips survive device changes. This is the largest piece and touches most of the shell's state.
+1. Place-level reviews/ratings, paired with the existing place bookmarks.
+2. A real backend (auth + DB, e.g. Supabase) so likes/saves/comments/published trips survive device changes. This is the largest piece and touches most of the shell's state.
+
+## Done since (2026-09-22)
+
+- **Mobile Phase W**: fixed `changeRadius` dropping the district constraint — `/api/recommend` now returns `areaFilter`, kept in a new `courseAreaFilter` state and passed into `buildChain` on every 반경 wider/narrower tap. See `PROJECT_CHECKLIST.md`.

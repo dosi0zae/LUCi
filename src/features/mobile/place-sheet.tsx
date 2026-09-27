@@ -34,8 +34,20 @@ export function PlaceSheet({
   const localizedPlace = localizePlace(place, locale);
   const [isClosing, setIsClosing] = useState(false);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const [reservationMessage, setReservationMessage] = useState<string | null>(null);
   // Below this length a 3-line clamp wouldn't actually hide anything, so skip the toggle.
   const isDescLong = localizedPlace.description.length > 90;
+  // Checked against the raw (Korean) place, not localizedPlace — fee/hours text gets
+  // machine-translated per locale, and this substring match only works on the original.
+  const needsReservation = (place.fee !== "무료" && place.fee !== "정보 없음") || place.hours.includes("예약");
+
+  function handleReserve() {
+    // No real ticketing/booking data source exists yet (see PROJECT_CHECKLIST Mobile
+    // Phase AB) — this is an honest placeholder, not a stub that pretends to book
+    // anything, so it says "coming soon" rather than faking a confirmation.
+    setReservationMessage(t("reservationComingSoon"));
+    window.setTimeout(() => setReservationMessage(null), 2200);
+  }
 
   function handleClose() {
     setIsClosing(true);
@@ -162,13 +174,27 @@ export function PlaceSheet({
           ))}
         </div>
 
-        <Button
-          className="mt-4 w-full"
-          disabled={isInChain}
-          onClick={() => onAddToChain(localizedPlace)}
-        >
-          {isInChain ? t("addedToChain") : t("addToChain")}
-        </Button>
+        <div className="mt-4 grid gap-2">
+          {needsReservation && (
+            <div className="relative">
+              <Button className="w-full" onClick={handleReserve} variant="secondary">
+                {t("reserveButton")}
+              </Button>
+              {reservationMessage && (
+                <p
+                  className="share-toast pointer-events-none absolute inset-x-0 bottom-full mb-2 rounded-full border border-border bg-white px-4 py-2 text-center text-xs font-semibold text-primary shadow-soft"
+                  key={reservationMessage}
+                >
+                  {reservationMessage}
+                </p>
+              )}
+            </div>
+          )}
+
+          <Button disabled={isInChain} onClick={() => onAddToChain(localizedPlace)}>
+            {isInChain ? t("addedToChain") : t("addToChain")}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -52,6 +52,11 @@ export type RecommendIntent = {
   // wider/narrower control so it adjusts scope within the same area rather than
   // silently relocating the course somewhere else entirely.
   strictRadius?: boolean;
+  // Inferred from the user's own bookmarked places (see derivePreference), not typed by
+  // them — so these nudge scoring rather than filter the pool the way explicit
+  // categories/attributes do. Absent for a signed-out user or one with no bookmarks yet.
+  preferredCategories?: PlaceCategory[];
+  preferredTags?: string[];
 };
 
 export type RecommendResult = {
@@ -76,10 +81,60 @@ function scorePlace(place: MobilePlace, intent: RecommendIntent): number {
 
   score += Math.min(20, place.savedBy / 100);
 
+  // Weighted well below an explicit category/attribute match (50 / 20) — this is a
+  // guess inferred from past behavior, not something the user asked for right now, so
+  // it should nudge the pick, not override what they actually typed.
+  if (intent.preferredCategories?.includes(place.category)) {
+    score += 12;
+  }
+  for (const tag of intent.preferredTags ?? []) {
+    if (place.tags.includes(tag)) {
+      score += 6;
+    }
+  }
+
   // Randomized per-request so identical prompts don't always return the identical chain.
   score += Math.random() * 14;
 
   return score;
+}
+
+const MAX_PREFERRED_CATEGORIES = 2;
+const MAX_PREFERRED_TAGS = 5;
+
+// Turns a user's bookmarked places into a lightweight taste profile: their most-tagged
+// categories/attributes, capped so a handful of bookmarks can't already dominate every
+// future recommendation. Pure function of place data, so it runs the same way in the
+// browser (the plain, non-AI course path) and in the /api/recommend server route (the
+// client sends bookmarked ids in the request body, since that route has no access to
+// the browser's localStorage).
+export function derivePreference(bookmarkedPlaceIds: string[]): {
+  preferredCategories: PlaceCategory[];
+  preferredTags: string[];
+} {
+  const bookmarked = places.filter((place) => bookmarkedPlaceIds.includes(place.id));
+
+  const categoryCounts = new Map<PlaceCategory, number>();
+  const tagCounts = new Map<string, number>();
+
+  for (const place of bookmarked) {
+    categoryCounts.set(place.category, (categoryCounts.get(place.category) ?? 0) + 1);
+    for (const tag of place.tags) {
+      tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+    }
+  }
+
+  const preferredCategories = [...categoryCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, MAX_PREFERRED_CATEGORIES)
+    .map(([category]) => category);
+
+  const preferredTags = [...tagCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, MAX_PREFERRED_TAGS)
+    .map(([tag]) => tag);
+
+  return { preferredCategories, preferredTags };
 }
 
 function routeDistance(places: MobilePlace[]): number {
@@ -101,8 +156,11 @@ function permutations<T>(items: T[]): T[][] {
   });
 }
 
-// Picks are capped at 6, so brute-forcing every ordering (<=720 permutations) finds the
-// true shortest route instead of settling for a greedy nearest-neighbor approximation.
+// A freshly generated course is capped at 6 stops, so brute-forcing every ordering
+// (<=720 permutations) finds the true shortest route instead of settling for a greedy
+// nearest-neighbor approximation. Only safe up to a handful of stops — factorial growth
+// makes this unusable well before EXACT_ROUTE_MAX (see optimizeRoute, which callers with
+// a possibly-larger or user-edited chain should use instead of calling this directly).
 function orderByRoute(places: MobilePlace[]): MobilePlace[] {
   if (places.length <= 2) {
     return places;
@@ -120,6 +178,49 @@ function orderByRoute(places: MobilePlace[]): MobilePlace[] {
   }
 
   return best;
+}
+
+// Greedy nearest-neighbor fallback for chains too long to brute-force: keeps the first
+// stop fixed (it's usually where the user actually is, or intentionally chose to start),
+// then repeatedly walks to whichever remaining stop is closest. Not guaranteed optimal,
+// but a reasonable approximation and O(n^2) instead of O(n!).
+function nearestNeighborOrder(places: MobilePlace[]): MobilePlace[] {
+  if (places.length <= 2) {
+    return places;
+  }
+
+  const remaining = [...places];
+  const route = [remaining.shift() as MobilePlace];
+
+  while (remaining.length > 0) {
+    const last = route[route.length - 1];
+    let nearestIndex = 0;
+    let nearestDistance = Infinity;
+
+    remaining.forEach((place, index) => {
+      const distance = haversineKm(last, place);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+
+    route.push(remaining.splice(nearestIndex, 1)[0]);
+  }
+
+  return route;
+}
+
+// A chain a user has manually built (via repeated "add to chain") or loaded from a
+// shared link has no upper bound the way a freshly generated course does, and its order
+// reflects insertion/edit history rather than an actual shortest route — this is the
+// public entry point for "reorder my current stops for the shortest walk", used by the
+// route-optimize button. EXACT_ROUTE_MAX=7 (5,040 permutations) is comfortably instant;
+// beyond it, nearestNeighborOrder trades optimality for staying fast.
+const EXACT_ROUTE_MAX = 7;
+
+export function optimizeRoute(places: MobilePlace[]): MobilePlace[] {
+  return places.length <= EXACT_ROUTE_MAX ? orderByRoute(places) : nearestNeighborOrder(places);
 }
 
 // Sampling from the top few candidates (instead of always the single best) spreads

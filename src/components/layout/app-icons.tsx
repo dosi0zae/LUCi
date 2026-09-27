@@ -78,6 +78,26 @@ export function CompassIcon({ className }: IconProps) {
   );
 }
 
+export function NavigationIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="m3 11 18-8-8 18-2-8z" />
+    </svg>
+  );
+}
+
+export function OptimizeRouteIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <circle cx="5" cy="19" r="2" />
+      <circle cx="12" cy="5" r="2" />
+      <circle cx="19" cy="19" r="2" />
+      <path d="M6.5 17.5 10.5 6.5" />
+      <path d="M13.5 6.5 17.5 17.5" />
+    </svg>
+  );
+}
+
 export function TrophyIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>

@@ -10,11 +10,13 @@ import {
   MapPinIcon,
   MoreIcon,
   ShareIcon,
-  TalkBubbleIcon,
   TrashIcon,
 } from "@/components/layout/app-icons";
+import { FacebookIcon, InstagramIcon, KakaoTalkIcon, WhatsAppIcon, XIcon } from "@/features/mobile/brand-icons";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
+import { buildCourseShareUrl } from "@/features/mobile/course-share";
 import { shareToKakaoTalk } from "@/features/mobile/kakao-share";
+import { buildFacebookShareUrl, buildTwitterShareUrl, buildWhatsAppShareUrl } from "@/features/mobile/sns-share";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
 import {
   getPlacesByIds,
@@ -148,6 +150,16 @@ export function TripDetailSheet({
   const localizedTrip = localizeTrip(trip, locale);
   const totalMinutes = getTotalMinutes(places);
 
+  // Shared by every share handler below (Kakao, X, Facebook, WhatsApp, the OS share
+  // sheet) — plain functions, not values computed at render time, since window.location
+  // isn't available during server rendering and these must only run from a click handler.
+  function getShareUrl() {
+    return buildCourseShareUrl(window.location.origin, trip.placeIds, localizedTrip.title);
+  }
+  function getShareText() {
+    return `${localizedTrip.title} · ${t("placesCount", { count: places.length })} · ${t("minutesCount", { count: totalMinutes })}`;
+  }
+
   // Renders the same branded "constellation" card shown in the trip detail view to an
   // off-DOM canvas, shared by both the download button and the image-share flow below so
   // there's only one place that defines what the exported card looks like.
@@ -271,12 +283,13 @@ export function TripDetailSheet({
 
   // The card image is the primary thing being shared (like sharing a music card to
   // Instagram Story) — text/url-only sharing is only a fallback for browsers that can't
-  // share files (e.g. desktop). There's no server-side trip storage yet (see
-  // mobile-app-shell's localStorage-only publish flow), so the link always points at the
-  // app itself rather than a per-trip page that wouldn't resolve for anyone else.
+  // share files (e.g. desktop). The link encodes the course's place ids directly (see
+  // course-share.ts) rather than pointing at a per-trip server page — there's no
+  // server-side trip storage (mobile-app-shell's publish flow is localStorage-only), but
+  // every place id is static bundled data, so the link resolves for anyone regardless.
   async function shareTrip() {
-    const shareText = `${localizedTrip.title} · ${t("placesCount", { count: places.length })} · ${t("minutesCount", { count: totalMinutes })}`;
-    const shareUrl = `${window.location.origin}/mobile`;
+    const shareText = getShareText();
+    const shareUrl = getShareUrl();
 
     const canvas = await renderShareCardCanvas();
     const blob = canvas ? await canvasToPngBlob(canvas) : null;
@@ -328,12 +341,24 @@ export function TripDetailSheet({
         title: localizedTrip.title,
         description: localizedTrip.description || `${t("placesCount", { count: places.length })} · ${t("minutesCount", { count: totalMinutes })}`,
         imageUrl: `${window.location.origin}/apple-icon.png`,
-        link: `${window.location.origin}/mobile`,
+        link: getShareUrl(),
         buttonLabel: t("loadToChainButton"),
       });
     } catch {
       setShareMessage(t("kakaoShareFailed"));
     }
+  }
+
+  // X, Facebook and WhatsApp all publish a real share-intent URL (unlike Instagram/TikTok,
+  // which don't — see sns-share.ts), so these just open that link directly.
+  function shareToTwitter() {
+    window.open(buildTwitterShareUrl(getShareText(), getShareUrl()), "_blank", "noopener,noreferrer");
+  }
+  function shareToFacebook() {
+    window.open(buildFacebookShareUrl(getShareUrl()), "_blank", "noopener,noreferrer");
+  }
+  function shareToWhatsApp() {
+    window.open(buildWhatsAppShareUrl(getShareText(), getShareUrl()), "_blank", "noopener,noreferrer");
   }
 
   async function downloadShareCard() {
@@ -560,32 +585,71 @@ export function TripDetailSheet({
                   onClick={() => setIsShareMenuOpen(false)}
                   tabIndex={-1}
                 />
-                <div className="absolute bottom-full right-0 z-20 mb-2 w-48 overflow-hidden rounded-lg border border-border bg-surface shadow-soft">
+                <div className="absolute bottom-full right-0 z-20 mb-2 flex items-center gap-1.5 rounded-full border border-border bg-surface p-1.5 shadow-soft">
+                  {/* Instagram has no public share-intent URL (unlike X/Facebook/WhatsApp/
+                      Kakao below) — the OS share sheet, triggered by shareTrip(), is the
+                      only way this app can reach it (or TikTok), so this badge and the
+                      catch-all one at the end both open that same sheet. */}
                   <button
-                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-surface-muted"
-                    onClick={() => {
-                      setIsShareMenuOpen(false);
-                      void shareToKakao();
-                    }}
-                    type="button"
-                  >
-                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#FEE500] text-[#391B1B]">
-                      <TalkBubbleIcon className="h-3.5 w-3.5" />
-                    </span>
-                    {t("kakaoShareButton")}
-                  </button>
-                  <button
-                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-surface-muted"
+                    aria-label={t("shareOtherButton")}
+                    className="grid h-9 w-9 place-items-center rounded-full text-white transition hover:opacity-80"
                     onClick={() => {
                       setIsShareMenuOpen(false);
                       void shareTrip();
                     }}
+                    style={{ background: "linear-gradient(45deg, #f9ce34, #ee2a7b 45%, #6228d7)" }}
+                    title={t("shareOtherButton")}
                     type="button"
                   >
-                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-surface-muted text-muted-strong">
-                      <ShareIcon className="h-3.5 w-3.5" />
-                    </span>
-                    {t("shareOtherButton")}
+                    <InstagramIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    aria-label={t("kakaoShareButton")}
+                    className="grid h-9 w-9 place-items-center rounded-full bg-[#FEE500] text-[#391B1B] transition hover:opacity-80"
+                    onClick={() => {
+                      setIsShareMenuOpen(false);
+                      void shareToKakao();
+                    }}
+                    title={t("kakaoShareButton")}
+                    type="button"
+                  >
+                    <KakaoTalkIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    aria-label="X"
+                    className="grid h-9 w-9 place-items-center rounded-full bg-black text-white transition hover:opacity-80"
+                    onClick={() => {
+                      setIsShareMenuOpen(false);
+                      shareToTwitter();
+                    }}
+                    title="X"
+                    type="button"
+                  >
+                    <XIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    aria-label="Facebook"
+                    className="grid h-9 w-9 place-items-center rounded-full bg-[#0866FF] text-white transition hover:opacity-80"
+                    onClick={() => {
+                      setIsShareMenuOpen(false);
+                      shareToFacebook();
+                    }}
+                    title="Facebook"
+                    type="button"
+                  >
+                    <FacebookIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    aria-label="WhatsApp"
+                    className="grid h-9 w-9 place-items-center rounded-full bg-[#25D366] text-white transition hover:opacity-80"
+                    onClick={() => {
+                      setIsShareMenuOpen(false);
+                      shareToWhatsApp();
+                    }}
+                    title="WhatsApp"
+                    type="button"
+                  >
+                    <WhatsAppIcon className="h-4 w-4" />
                   </button>
                 </div>
               </>
