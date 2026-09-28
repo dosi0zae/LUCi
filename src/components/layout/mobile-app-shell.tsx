@@ -29,6 +29,7 @@ import {
   getPlacesByIds,
   getSeedComments,
   getTotalMinutes,
+  haversineKm,
   localizePlace,
   localizeTrip,
   places,
@@ -114,6 +115,9 @@ export function MobileAppShell() {
   // The anchor the CURRENT course was actually built around, so wider/narrower can
   // reuse it directly instead of re-rolling location/AI intent from scratch.
   const [courseAnchor, setCourseAnchor] = useState<{ lat: number; lng: number } | null>(null);
+  // A district the prompt named explicitly (e.g. "종로구") — wider/narrower stays inside
+  // it (buildChain treats it as a hard ceiling, not just a starting point).
+  const [courseAreaFilter, setCourseAreaFilter] = useState<string | null>(null);
   const [radiusMessage, setRadiusMessage] = useState<string | null>(null);
 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
@@ -297,6 +301,24 @@ export function MobileAppShell() {
 
   const showBottomNav = activeTab !== "home" || hasResult || tourPhase === "steps";
   const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds]);
+  // The full set of places "넓게" could ever draw from for the current course — the
+  // named district's places, or every place in Seoul otherwise. Comparing the current
+  // radius's coverage against this tells us whether widening further would actually add
+  // any new candidates, instead of just reshuffling the same already-complete pool into
+  // a "different"-looking course.
+  const radiusScopePlaces = useMemo(
+    () => (courseAreaFilter ? places.filter((place) => place.area === courseAreaFilter) : places),
+    [courseAreaFilter],
+  );
+  const isRadiusAtMaxCoverage = useMemo(() => {
+    if (!courseAnchor) {
+      return false;
+    }
+    const withinCurrentRadius = radiusScopePlaces.filter(
+      (place) => haversineKm(courseAnchor, place) <= radiusKm,
+    ).length;
+    return withinCurrentRadius >= radiusScopePlaces.length;
+  }, [courseAnchor, radiusKm, radiusScopePlaces]);
   // A lightweight taste profile inferred from the user's own bookmarked places (see
   // derivePreference), fed into every course build so recommendations nudge toward what
   // this person has already shown they like, without needing a backend to store it.
@@ -451,6 +473,7 @@ export function MobileAppShell() {
     setRecommendReason(null);
     setIsAiCourse(false);
     setCourseAnchor(anchor);
+    setCourseAreaFilter(null);
     setRadiusMessage(null);
   }
 
@@ -496,6 +519,7 @@ export function MobileAppShell() {
           ? { lat: data.anchor.lat, lng: data.anchor.lng }
           : null,
       );
+      setCourseAreaFilter(typeof data.areaFilter === "string" ? data.areaFilter : null);
     } catch {
       const result = buildChain({
         categories: [],
@@ -507,6 +531,7 @@ export function MobileAppShell() {
       setChainIds(result.placeIds);
       setSubmittedPrompt(nextPrompt);
       setCourseAnchor(result.anchor);
+      setCourseAreaFilter(null);
     } finally {
       setIsRecommending(false);
       setRadiusMessage(null);
@@ -533,18 +558,23 @@ export function MobileAppShell() {
     }, 450);
   }
 
-  // Adjusts scope around the SAME anchor the current course started from (the named
-  // district's centroid when one was set), rather than re-rolling location/AI intent
-  // (that's what the refresh button is for) or re-locking to the district: buildChain's
-  // areaFilter branch ignores radiusKm entirely (the whole district is the pool no
-  // matter the setting), which made every radius tap a no-op for a district-anchored
-  // course. Dropping areaFilter here makes the buttons do real distance-based
-  // narrowing/widening — which can now cross into a neighboring district at a wide
-  // enough setting, same as any other course. If the anchor genuinely can't support the
-  // requested radius, says so instead of silently expanding past it.
+  // Adjusts scope around the SAME anchor the current course started from, rather than
+  // re-rolling location/AI intent (that's what the refresh button is for). When the
+  // course is anchored to a named district (courseAreaFilter), buildChain treats that
+  // district as a hard ceiling — radius genuinely narrows/widens the pool within it, but
+  // widening can never spill into a neighboring district. If the anchor genuinely can't
+  // support the requested radius, says so instead of silently expanding past it.
   function changeRadius(direction: -1 | 1) {
     if (!courseAnchor) {
       setRadiusMessage(t("radiusUnavailable"));
+      return;
+    }
+
+    // Widening further wouldn't add any new candidates (already covers every place in
+    // scope) — say so instead of silently reshuffling the same pool into a course that
+    // only looks different.
+    if (direction === 1 && isRadiusAtMaxCoverage) {
+      setRadiusMessage(t("radiusNoWiderRoom"));
       return;
     }
 
@@ -562,6 +592,7 @@ export function MobileAppShell() {
       attributes: [],
       placeCount: chainPlaces.length || 4,
       anchor: courseAnchor,
+      areaFilter: courseAreaFilter,
       radiusKm: nextRadius,
       strictRadius: true,
       ...preference,
@@ -1027,7 +1058,11 @@ export function MobileAppShell() {
                         <button
                           aria-label={t("radiusWider")}
                           className="grid h-8 w-8 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary disabled:opacity-40"
-                          disabled={isRecommending || radiusKm === RADIUS_STEPS_KM[RADIUS_STEPS_KM.length - 1]}
+                          disabled={
+                            isRecommending ||
+                            radiusKm === RADIUS_STEPS_KM[RADIUS_STEPS_KM.length - 1] ||
+                            isRadiusAtMaxCoverage
+                          }
                           onClick={() => changeRadius(1)}
                           title={t("radiusWider")}
                           type="button"

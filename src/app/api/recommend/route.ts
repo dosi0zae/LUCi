@@ -4,6 +4,7 @@ import {
   buildChain,
   derivePreference,
   fallbackIntent,
+  localizeDistrictName,
   SEOUL_DISTRICTS,
   type RecommendIntent,
 } from "@/features/mobile/recommend-engine";
@@ -27,6 +28,18 @@ const WEATHER_INDOOR_NOTE: Record<string, string> = {
   en: "Rain's in the forecast, so this leans toward indoor spots.",
   ja: "雨の予報があるため、屋内中心にまとめました。",
   zh: "预报有雨,所以主要安排了室内地点。",
+};
+
+// Framed as "we used everything available" rather than "we came up short" — when a
+// district's real POI coverage is thin (or a tight radius just doesn't have more), the
+// picked count is already the most the data can honestly support, not a bug to apologize
+// for. See buildChain's requestedCount vs placeIds.length in the POST handler below.
+const PLACE_MAX_SHOWN_NOTE: Record<string, (area: string | null) => string> = {
+  ko: (area) => (area ? `${area}에 있는 장소를 최대로 담았어요.` : "지금 조건에 맞는 장소를 최대로 담았어요."),
+  en: (area) =>
+    area ? `Showing every place available in ${area}.` : "Showing every place available for this request.",
+  ja: (area) => (area ? `${area}にある場所を最大限含めました。` : "条件に合う場所を最大限含めました。"),
+  zh: (area) => (area ? `已收录${area}内所有可用地点。` : "已收录符合条件的所有地点。"),
 };
 
 // Best-effort only: a failed/slow weather lookup should never block a recommendation, so
@@ -274,12 +287,18 @@ export async function POST(request: NextRequest) {
   }
 
   const result = buildChain(intent);
+  const maxShownNote =
+    result.placeIds.length < result.requestedCount
+      ? (PLACE_MAX_SHOWN_NOTE[locale] ?? PLACE_MAX_SHOWN_NOTE.en)(
+          localizeDistrictName(intent.areaFilter ?? null, locale),
+        )
+      : null;
 
   return NextResponse.json({
     placeIds: result.placeIds,
     anchor: result.anchor,
     areaFilter: intent.areaFilter ?? null,
-    reason: [aiIntent?.reason, weatherNote].filter(Boolean).join(" ") || null,
+    reason: [aiIntent?.reason, weatherNote, maxShownNote].filter(Boolean).join(" ") || null,
     usedAI: Boolean(aiIntent),
   });
 }

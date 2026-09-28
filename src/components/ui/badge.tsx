@@ -18,7 +18,7 @@ export function Badge({ className, tone = "neutral", ...props }: BadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex h-7 items-center rounded-xs px-2.5 text-xs font-semibold",
+        "inline-flex h-7 shrink-0 items-center whitespace-nowrap rounded-xs px-2.5 text-xs font-semibold",
         tones[tone],
         className,
       )}

@@ -33,6 +33,40 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase AI: English Badge Wrapping + Untranslated District Name in Phase AH's Note
+
+Status: Complete
+
+Scope — two issues the user spotted immediately after Phase AH shipped, both in the English UI:
+
+- **"AI Recommended Course" wrapped onto 2 lines**, pushing the radius/refresh/navigate/optimize-route button row down awkwardly. `en`/`ja`/`zh`'s `aiCourseBadge`/`basicCourseBadge` still had the long form ("AI Recommended Course" / "AIおすすめコース" / "AI推荐路线") — only `ko` had been shortened in an earlier phase (Phase AF-adjacent commit "Shorten AI/basic course badge text"). Shortened all three to match ko's pattern of dropping the trailing "코스"/"course": `en` → "AI Recommended" / "Basic Recommended", `ja` → "AIおすすめ" / "基本おすすめ", `zh` → "AI推荐" / "基础推荐". That alone didn't fix the wrap, though — `Badge` (`components/ui/badge.tsx`) had no `whitespace-nowrap`/`shrink-0`, so as a flex child it could still shrink and wrap even short text. Added both.
+- **Phase AH's new "max shown" note left the district name in raw Korean** inside an otherwise-English sentence (e.g. "...Showing every place available in 성동구."), because `intent.areaFilter` is always the Korean district string (it's the ground-truth key used to filter `places`) and was interpolated directly with no translation step. Added `localizeDistrictName(area, locale)` to `recommend-engine.ts` — looks up any place in that district and reads its own per-place `translations[locale].area` (data that already exists for every place, e.g. "Jongno-gu"/"鍾路区"/"钟路区") instead of hand-maintaining a separate district-name table that could drift from it. Wired into `route.ts` before building the note.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: live `/api/recommend` call with `locale: "en"` for "5 spots to go near seongsu" — note now reads "Showing every place available in Seongdong-gu." instead of "...성동구."
+- Passed: browser walkthrough in English — "AI Recommended" badge renders on one line, radius/action buttons stay on the same row, no console errors on a fresh tab
+
+### Mobile Phase AH: Honest Note When a Requested Place Count Can't Be Met
+
+Status: Complete
+
+Scope — user-reported: asking for "성수 근처 다섯개 장소 코스" (5 places near Seongsu) only returned 4, with no explanation.
+
+- Traced with temporary debug logging (removed after): Gemini correctly parsed `placeCount: 5` every time (verified with a standalone script calling the Gemini API directly, bypassing the app, for 3 different phrasings) and `buildChain` correctly built a chain from it — the shortfall wasn't a logic bug. The actual cause: 성동구 (Seongdong-gu, where Seongsu-dong sits) has only **4** places in the entire synced dataset (`seoul-places.json`), so a 5-place pool literally doesn't exist there. Checking coverage across all 25 districts found a wide imbalance — 종로구/용산구/성북구 have 50+, while 성동구/도봉구/은평구/영등포구/중랑구 have 1-4 — a data-completeness gap in `scripts/sync-seoul-places.mjs`'s source APIs, not something fixable in the recommendation logic itself. Flagged as a separate, larger follow-up (re-sync or supplement the thin districts) rather than fixed here.
+- Fix scoped to what's fixable now: `buildChain` returns a new `requestedCount` (the same clamped count it already computed internally) alongside `placeIds`, so a caller can tell "got fewer than asked for" apart from every other reason a count might come up short. `/api/recommend` compares `result.placeIds.length` against `result.requestedCount` and, when short, appends a locale-aware note to `reason` — framed as "we've shown the maximum available" (user's explicit direction) rather than an apology, e.g. ko: "{구}에 있는 장소를 최대로 담았어요." / a generic form when there's no named district.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: standalone script confirmed Gemini's raw structured output for "성수 근처 다섯개 장소 코스" (and two other phrasings) always returns `placeCount: 5`
+- Passed: `grep -c '"area": "성동구"' seoul-places.json` → 4, confirming the data-scarcity root cause
+- Passed: live `/api/recommend` calls — "성수 근처 다섯개 장소 코스" now returns 4 places with the reason ending in "성동구에 있는 장소를 최대로 담았어요."; "종로구에서 5곳 코스" (a district with plenty of data) returns all 5 with no such note appended
+- Passed: browser walkthrough confirming the note renders in the course card's reason text; no console errors on a fresh tab
+
 ### Mobile Phase AG: Radius Buttons Were a No-Op on District-Anchored Courses
 
 Status: Complete
@@ -40,14 +74,15 @@ Status: Complete
 Scope — user-reported: 반경 좁게/넓게 didn't seem to actually change a district-anchored course. Reproduced by narrowing "종로구에서 역사 탐방 코스" to 0.5km and getting stops several km apart within 종로구 — the labeled radius had zero effect.
 
 - Root cause: `buildChain` (`recommend-engine.ts`) has always used the *entire* named district as the pool whenever `intent.areaFilter` is set, ignoring `radiusKm`/`strictRadius` completely (by design — Phase W added this specifically so a district-scoped course couldn't silently spill into a neighboring district on a radius tap). `changeRadius()` in `mobile-app-shell.tsx` passed the current `courseAreaFilter` into every radius-button call, so every tap just re-rolled a random 4-of-~150 sample from the same unfiltered district pool — the "km" label changed, nothing else did.
-- Asked the user whether leaving the district on a wide radius was acceptable (it was the whole point of the Phase W fix); they said yes — real, honest radius behavior matters more than a hard district lock once the course already exists.
-- Fix: `changeRadius()` no longer passes `areaFilter` to `buildChain`, only `anchor` (already the district's centroid) + `radiusKm` + `strictRadius`. This routes radius changes through the same distance-based `poolNear()` logic every non-district course already uses. The *initial* course generation (prompt → `/api/recommend` → `startCourseFromPrompt`) is untouched, so naming a district still returns only that district's places on the first render. Removed the now-fully-unused `courseAreaFilter` state (it had no other reader after this change).
+- First fix attempt dropped `areaFilter` from `changeRadius()` entirely, so radius became a plain distance filter from the district's centroid — real, but able to spill into a neighboring district at a wide setting (confirmed live: 반경 4km on "종로구에서 역사 탐방 코스" pulled in 중구's 남대문 갈치조림골목). Asked the user first, they initially said leaving the district was fine — then, seeing the actual spillover in a screenshot, reversed that: naming a district should cap how far wide can go, not just suggest it.
+- Final fix: generalized `poolNear()` (`recommend-engine.ts`) to take its candidate list as a parameter instead of always searching the global `places`. `buildChain`'s district branch now calls `poolNear(areaPlaces, anchor, radiusKm, strict)` — radius genuinely narrows/widens the pool, but every fallback step (including the final "just use everything" one) is bounded to `areaPlaces`, so it can never escape the named district no matter how wide the setting gets. The non-district branch is unaffected (still searches the full `places` list). Restored `courseAreaFilter` state and passed it back into `changeRadius()`'s `buildChain` call.
+- Follow-up (same phase, user feedback after the fix above): once the current radius already covers every place in scope (the whole district, or — for a non-district course — every place in Seoul), pressing "넓게" again used to still visibly change the course, because `buildChain` re-samples randomly from the same unchanged pool. That reshuffle looked like real widening even though nothing was actually added. Added `isRadiusAtMaxCoverage` (`mobile-app-shell.tsx`) — compares how many places in scope already fall within the current radius against the total in scope — and used it to (a) disable the 넓게 button once coverage is already complete and (b) short-circuit `changeRadius()` with a new `radiusNoWiderRoom` message ("더 넓힐 수 있는 곳이 없어요...") instead of calling `buildChain` again, so the radius label and course both stay exactly as they were rather than faking a change.
 
 Verification:
 
 - Passed: `pnpm exec tsc --noEmit`
 - Passed: `pnpm lint`
-- Passed: browser walkthrough on "종로구에서 역사 탐방 코스" — initial 1km result stayed all-종로구; narrowing to 0.5km produced a real tight cluster (한양도성·갤러리조선·갤러리도올·가회민화박물관, all Bukchon/Samcheong-dong); widening to the max 15km correctly pulled in neighboring/distant districts (강서구·마포구·서대문구·성동구); no console errors
+- Passed: browser walkthrough on "종로구에서 역사 탐방 코스" — initial 1km result stayed all-종로구; narrowing to 0.5km produced a real tight cluster (한양도성·국립현대미술관 서울·국제갤러리·갤러리도올, all Samcheong/Sogyeok-dong); widening to 8km already disabled the 넓게 button (종로구's full extent was already covered); force-invoking the handler anyway surfaced the new radiusNoWiderRoom message without changing the radius label or the course; no console errors on a fresh tab (one `candidates.filter is not a function` seen mid-edit was stale HMR history from the brief window between changing `poolNear`'s signature and updating its call sites, confirmed gone on a fresh tab)
 
 ### Mobile Phase AF: Real Brand Icons for the Share Menu (simple-icons), Instagram Added
 
