@@ -33,6 +33,22 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase AG: Radius Buttons Were a No-Op on District-Anchored Courses
+
+Status: Complete
+
+Scope — user-reported: 반경 좁게/넓게 didn't seem to actually change a district-anchored course. Reproduced by narrowing "종로구에서 역사 탐방 코스" to 0.5km and getting stops several km apart within 종로구 — the labeled radius had zero effect.
+
+- Root cause: `buildChain` (`recommend-engine.ts`) has always used the *entire* named district as the pool whenever `intent.areaFilter` is set, ignoring `radiusKm`/`strictRadius` completely (by design — Phase W added this specifically so a district-scoped course couldn't silently spill into a neighboring district on a radius tap). `changeRadius()` in `mobile-app-shell.tsx` passed the current `courseAreaFilter` into every radius-button call, so every tap just re-rolled a random 4-of-~150 sample from the same unfiltered district pool — the "km" label changed, nothing else did.
+- Asked the user whether leaving the district on a wide radius was acceptable (it was the whole point of the Phase W fix); they said yes — real, honest radius behavior matters more than a hard district lock once the course already exists.
+- Fix: `changeRadius()` no longer passes `areaFilter` to `buildChain`, only `anchor` (already the district's centroid) + `radiusKm` + `strictRadius`. This routes radius changes through the same distance-based `poolNear()` logic every non-district course already uses. The *initial* course generation (prompt → `/api/recommend` → `startCourseFromPrompt`) is untouched, so naming a district still returns only that district's places on the first render. Removed the now-fully-unused `courseAreaFilter` state (it had no other reader after this change).
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: browser walkthrough on "종로구에서 역사 탐방 코스" — initial 1km result stayed all-종로구; narrowing to 0.5km produced a real tight cluster (한양도성·갤러리조선·갤러리도올·가회민화박물관, all Bukchon/Samcheong-dong); widening to the max 15km correctly pulled in neighboring/distant districts (강서구·마포구·서대문구·성동구); no console errors
+
 ### Mobile Phase AF: Real Brand Icons for the Share Menu (simple-icons), Instagram Added
 
 Status: Complete

@@ -114,9 +114,6 @@ export function MobileAppShell() {
   // The anchor the CURRENT course was actually built around, so wider/narrower can
   // reuse it directly instead of re-rolling location/AI intent from scratch.
   const [courseAnchor, setCourseAnchor] = useState<{ lat: number; lng: number } | null>(null);
-  // A district the prompt named explicitly (e.g. "종로구"), so wider/narrower stays
-  // inside it instead of falling back to a plain radius around courseAnchor.
-  const [courseAreaFilter, setCourseAreaFilter] = useState<string | null>(null);
   const [radiusMessage, setRadiusMessage] = useState<string | null>(null);
 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
@@ -454,7 +451,6 @@ export function MobileAppShell() {
     setRecommendReason(null);
     setIsAiCourse(false);
     setCourseAnchor(anchor);
-    setCourseAreaFilter(null);
     setRadiusMessage(null);
   }
 
@@ -500,7 +496,6 @@ export function MobileAppShell() {
           ? { lat: data.anchor.lat, lng: data.anchor.lng }
           : null,
       );
-      setCourseAreaFilter(typeof data.areaFilter === "string" ? data.areaFilter : null);
     } catch {
       const result = buildChain({
         categories: [],
@@ -512,7 +507,6 @@ export function MobileAppShell() {
       setChainIds(result.placeIds);
       setSubmittedPrompt(nextPrompt);
       setCourseAnchor(result.anchor);
-      setCourseAreaFilter(null);
     } finally {
       setIsRecommending(false);
       setRadiusMessage(null);
@@ -539,10 +533,15 @@ export function MobileAppShell() {
     }, 450);
   }
 
-  // Adjusts scope within the SAME area the current course is anchored on, rather than
-  // re-rolling location/AI intent (that's what the refresh button is for). If the area
-  // genuinely can't support the requested radius, says so instead of silently expanding
-  // past it or jumping elsewhere.
+  // Adjusts scope around the SAME anchor the current course started from (the named
+  // district's centroid when one was set), rather than re-rolling location/AI intent
+  // (that's what the refresh button is for) or re-locking to the district: buildChain's
+  // areaFilter branch ignores radiusKm entirely (the whole district is the pool no
+  // matter the setting), which made every radius tap a no-op for a district-anchored
+  // course. Dropping areaFilter here makes the buttons do real distance-based
+  // narrowing/widening — which can now cross into a neighboring district at a wide
+  // enough setting, same as any other course. If the anchor genuinely can't support the
+  // requested radius, says so instead of silently expanding past it.
   function changeRadius(direction: -1 | 1) {
     if (!courseAnchor) {
       setRadiusMessage(t("radiusUnavailable"));
@@ -563,7 +562,6 @@ export function MobileAppShell() {
       attributes: [],
       placeCount: chainPlaces.length || 4,
       anchor: courseAnchor,
-      areaFilter: courseAreaFilter,
       radiusKm: nextRadius,
       strictRadius: true,
       ...preference,
