@@ -35,7 +35,7 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ### Mobile Phase AF: Real Brand Icons for the Share Menu (simple-icons), Instagram Added
 
-Status: Complete (pending final visual re-check — a stray Kakao login popup from an earlier manual test blocked browser automation; verify KakaoTalk badge rendering once closed)
+Status: Complete
 
 Scope — user explicitly asked not to hand-draw share icons and to use "정식 아이콘 이미지" (official icon assets), plus add Instagram:
 
@@ -47,7 +47,7 @@ Verification:
 
 - Passed: `pnpm exec tsc --noEmit`
 - Passed: `pnpm lint` (same 2 pre-existing `no-img-element` warnings as Phase AE, unrelated to this change)
-- Pending: full browser re-check of all 5 badges rendering correctly, especially KakaoTalk's icon (a combined app-icon-shape path relying on subpath winding to render its cutout correctly) — blocked mid-verification by a leftover Kakao login popup from earlier manual testing that the automation can't dismiss
+- Passed: browser re-check on a different machine/session (fresh `pnpm install`, no leftover popup) — all 5 badges (Instagram, KakaoTalk, X, Facebook, WhatsApp) render correctly, KakaoTalk's cutout renders cleanly, no console errors
 
 ### Mobile Phase AE: Real Brand Icons for Map/Share Badges, Per-SNS Share Icons
 
