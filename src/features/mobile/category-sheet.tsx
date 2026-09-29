@@ -7,15 +7,24 @@ import { cn } from "@/lib/utils";
 
 const CLOSE_ANIMATION_MS = 200;
 
+export type PlaceBadgeKind = "near" | "popular" | "recommended";
+
+const BADGE_LABEL_KEY: Record<PlaceBadgeKind, "placeBadgeNear" | "placeBadgePopular" | "placeBadgeRecommended"> = {
+  near: "placeBadgeNear",
+  popular: "placeBadgePopular",
+  recommended: "placeBadgeRecommended",
+};
+
 type CategorySheetProps = {
   category: PlaceCategory;
   areaName: string;
   places: MobilePlace[];
+  badges: Map<string, PlaceBadgeKind>;
   onSelectPlace: (id: string) => void;
   onClose: () => void;
 };
 
-export function CategorySheet({ areaName, category, onClose, onSelectPlace, places }: CategorySheetProps) {
+export function CategorySheet({ areaName, badges, category, onClose, onSelectPlace, places }: CategorySheetProps) {
   const t = useT();
   const categoryLabel = useCategoryLabel();
   const { locale } = useLocale();
@@ -66,6 +75,7 @@ export function CategorySheet({ areaName, category, onClose, onSelectPlace, plac
           <div className="grid grid-cols-2 gap-2.5">
             {places.map((place) => {
               const localizedPlace = localizePlace(place, locale);
+              const badge = badges.get(place.id);
               return (
               <button
                 className="flex flex-col overflow-hidden rounded-lg border border-border bg-surface text-left"
@@ -73,7 +83,7 @@ export function CategorySheet({ areaName, category, onClose, onSelectPlace, plac
                 onClick={() => onSelectPlace(place.id)}
                 type="button"
               >
-                <span className="block h-24 w-full shrink-0 overflow-hidden bg-surface-muted">
+                <span className="relative block h-24 w-full shrink-0 overflow-hidden bg-surface-muted">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     alt=""
@@ -81,6 +91,11 @@ export function CategorySheet({ areaName, category, onClose, onSelectPlace, plac
                     loading="lazy"
                     src={getPlaceImageUrl(place.id)}
                   />
+                  {badge && (
+                    <span className="absolute right-1 top-1 rounded-xs border border-primary bg-white px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                      {t(BADGE_LABEL_KEY[badge])}
+                    </span>
+                  )}
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2">
                   <span className="truncate text-xs font-bold">{localizedPlace.name}</span>

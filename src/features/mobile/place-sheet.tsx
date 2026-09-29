@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BookmarkIcon } from "@/components/layout/app-icons";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
@@ -10,6 +10,41 @@ import { useCategoryLabel, useLocale, useT } from "@/features/mobile/i18n/i18n-c
 import { cn } from "@/lib/utils";
 
 const CLOSE_ANIMATION_MS = 200;
+const SUMMARY_CACHE_KEY = "tripchain:placeSummaries";
+
+function readSummaryCache(): Record<string, string> {
+  try {
+    return JSON.parse(window.localStorage.getItem(SUMMARY_CACHE_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+
+function writeSummaryToCache(cacheKey: string, summary: string) {
+  try {
+    const current = readSummaryCache();
+    current[cacheKey] = summary;
+    window.localStorage.setItem(SUMMARY_CACHE_KEY, JSON.stringify(current));
+  } catch {
+    // Storage may be unavailable (private mode, quota) — the cache is best-effort; the
+    // summary still rendered for this view, it just won't be remembered for next time.
+  }
+}
+
+// Seasonal hours are synced as one run-on string, one "[범위] 시간 (설명)" segment per
+// season back to back with no separator (e.g. "[1월~2월] 09:00~17:00 (입장마감 16:00)
+// [3월~5월] ..."). Splitting right before each "[" turns that into one line per season
+// instead of a single paragraph long enough to squeeze its neighbor into a 1-char-wide
+// column. A plain string with no brackets at all (e.g. "상시 개방") is already one line.
+function splitHoursLines(hours: string): string[] {
+  if (!hours.includes("[")) {
+    return [hours];
+  }
+  return hours
+    .split(/(?=\[)/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
 
 type PlaceSheetProps = {
   place: MobilePlace;
@@ -34,9 +69,58 @@ export function PlaceSheet({
   const localizedPlace = localizePlace(place, locale);
   const [isClosing, setIsClosing] = useState(false);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
   const [reservationMessage, setReservationMessage] = useState<string | null>(null);
-  // Below this length a 3-line clamp wouldn't actually hide anything, so skip the toggle.
+  // Below this length a summary wouldn't actually shorten anything, so skip it entirely
+  // (no API call, no toggle) and just show the full text like always.
   const isDescLong = localizedPlace.description.length > 90;
+  const description = localizedPlace.description;
+  const hoursLines = splitHoursLines(localizedPlace.hours);
+  const isShowingSummary = !isDescExpanded && Boolean(summary);
+
+  useEffect(() => {
+    // PlaceSheet always remounts fresh for a new place (it's conditionally rendered off
+    // a single selected-place id in the parent), so `summary` already starts at null —
+    // nothing to reset here for the short-description case, just nothing to fetch.
+    if (!isDescLong) {
+      return;
+    }
+
+    const cacheKey = `${locale}:${place.id}`;
+    const cached = readSummaryCache()[cacheKey];
+    // Reading a cached summary from localStorage (or clearing a stale one from a
+    // previous place/locale before fetching a new one) is a one-time sync per place
+    // change, not a reactive loop — same exception already used for the profile
+    // localStorage hydration in mobile-app-shell.tsx.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (cached) {
+      setSummary(cached);
+      return;
+    }
+
+    setSummary(null);
+    /* eslint-enable react-hooks/set-state-in-effect */
+    let cancelled = false;
+
+    fetch("/api/summarize-place", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ description, locale }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (cancelled || typeof data.summary !== "string" || !data.summary) {
+          return;
+        }
+        setSummary(data.summary);
+        writeSummaryToCache(cacheKey, data.summary);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [place.id, locale, isDescLong, description]);
   // Checked against the raw (Korean) place, not localizedPlace — fee/hours text gets
   // machine-translated per locale, and this substring match only works on the original.
   const needsReservation = (place.fee !== "무료" && place.fee !== "정보 없음") || place.hours.includes("예약");
@@ -107,13 +191,21 @@ export function PlaceSheet({
           </div>
         </div>
 
+        {isShowingSummary && (
+          <span className="mt-3 inline-flex w-fit items-center gap-1 rounded-xs border border-primary bg-white px-1.5 py-0.5 text-[10px] font-bold text-primary">
+            {t("aiSummaryBadge")}
+          </span>
+        )}
         <p
           className={cn(
-            "mt-3 text-sm leading-6 text-muted-strong text-pretty",
-            !isDescExpanded && isDescLong && "line-clamp-3",
+            "text-sm leading-6 text-muted-strong text-pretty",
+            isShowingSummary ? "mt-1.5" : "mt-3",
+            // While the summary is still loading, the full text is shown clamped as a
+            // placeholder — once it arrives, the (already short) summary needs no clamp.
+            !isDescExpanded && isDescLong && !summary && "line-clamp-3",
           )}
         >
-          {localizedPlace.description}
+          {isDescExpanded ? description : (summary ?? description)}
         </p>
         {isDescLong && (
           <button
@@ -148,11 +240,20 @@ export function PlaceSheet({
           ))}
         </div>
 
-        <div className="mt-3 flex items-center justify-between rounded-sm border border-border bg-surface/76 p-3">
-          <p className="text-sm font-semibold">{localizedPlace.hours}</p>
-          <p className="text-xs font-semibold text-muted">
-            {t("savedByCount", { count: place.savedBy.toLocaleString() })}
-          </p>
+        <div className="mt-3 rounded-sm border border-border bg-surface/76 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-muted">{t("statHours")}</p>
+            <p className="shrink-0 text-xs font-semibold text-muted">
+              {t("savedByCount", { count: place.savedBy.toLocaleString() })}
+            </p>
+          </div>
+          <div className="mt-1 grid gap-0.5">
+            {hoursLines.map((line) => (
+              <p className="text-sm font-semibold" key={line}>
+                {line}
+              </p>
+            ))}
+          </div>
         </div>
 
         <p className="mt-3 text-xs font-bold text-muted-strong">{t("mapAppsHeading")}</p>

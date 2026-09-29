@@ -33,6 +33,67 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase AM: AI-Summary Badge + Seasonal Hours Formatting
+
+Status: Complete
+
+Scope — user feedback right after Phase AL shipped: the AI summary had no visible label (looked identical to the old raw text), and the operating-hours block was a single run-on line that squeezed "n명이 저장" into a 1-character-wide column next to it.
+
+- Added a small "AI 요약" pill (same white/blue-border style as the category-sheet place badges) shown only while the AI summary is actually what's displayed (not while loading the clamped-placeholder text, not while expanded to the full description).
+- `place-sheet.tsx`: `splitHoursLines()` splits the synced hours string (one `[계절 범위] 시간 (설명)` segment per season, back to back with no separator) into one line per segment via a lookahead split on `[`; a plain string with no brackets (e.g. "상시 개방") passes through unchanged. The hours block was restructured from a single flex row to a labeled ("운영 시간") stacked block, with the saved-count moved to its own `shrink-0` line so it can never be squeezed again regardless of how long the hours text is.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: browser walkthrough — 서울 육상궁 (simple "상시 개방" hours) renders one clean line; 건청궁 (5-season hours) renders 5 separate lines with "571명이 저장" intact on its own line instead of vertically stacked one-character-per-line; "AI 요약" badge shows above the summary and disappears when "자세히 보기" expands to the full text; no console errors on a fresh tab
+
+### Mobile Phase AL: Real AI Summary for Place Descriptions, Full Text on Demand
+
+Status: Complete
+
+Scope — user-requested: the place-detail description was just the raw synced text hard-clamped to 3 lines, so it visibly cut off mid-sentence (e.g. "...1895년(고종 32) 곤녕합 옥호루에서 명성황후"). Wanted a real AI-written summary shown by default, with "자세히 보기" revealing the full original text.
+
+- Added `POST /api/summarize-place` (`src/app/api/summarize-place/route.ts`), same Gemini setup as `/api/recommend`/`/api/translate-trip` (`gemini-flash-lite-latest`, `GEMINI_API_KEY`, 8s timeout) — asks for a fresh 2-3 sentence/~130-char summary in the requested locale, not a truncation. Falls back to `fallbackSummary()` (cuts at the last sentence-ending period within the window, or a word boundary as a last resort — never mid-word) whenever Gemini is unavailable, so the endpoint always returns something displayable.
+- `place-sheet.tsx`: only fetches a summary when the description is actually long enough to need one (reuses the existing `isDescLong` >90-char gate — short descriptions skip the API call entirely). Caches the result in `localStorage` (`tripchain:placeSummaries`, keyed `${locale}:${placeId}`) so revisiting the same place/locale is instant with no repeat call. While the summary is loading, the existing 3-line-clamped raw text is shown as a placeholder (unchanged from before) so there's no layout jump; once the summary arrives it replaces that with the short AI text, unclamped. "자세히 보기" now toggles to the full original description (also unclamped) instead of just un-clamping the same text.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint` (one real `react-hooks/set-state-in-effect` catch along the way — a synchronous `setState` reading the localStorage cache inside the effect — resolved the same way the profile-hydration effect in `mobile-app-shell.tsx` already does, with a scoped disable + comment, not by suppressing the rule blindly)
+- Passed: browser walkthrough on 건청궁 — description initially showed the old clamped raw text, then swapped within ~2s to a genuinely rewritten 2-sentence summary ("경복궁 북쪽에 위치한 건청궁은..."); "자세히 보기" revealed the complete original text and the button flipped to "접기"; confirmed `localStorage["tripchain:placeSummaries"]` holds the cached summary keyed `ko:tour-1604652`; no console errors on a fresh tab
+
+### Mobile Phase AK: "Other Places" Prioritizes Proximity, Adds Why-Shown Badges
+
+Status: Complete
+
+Scope — user-requested: "다른 장소도 볼까요?" and its "더보기" full list should favor places near the current chain first, and each card in the full list should show a small badge explaining why it's there.
+
+- `otherPlacesByCategory` (the home-screen preview row) and `viewingCategoryPlaces` (the CategorySheet "더보기" full list) both sorted by `savedBy` before; both now sort by distance to the nearest current chain stop (`distanceToChainKm`, reusing `haversineKm`) — someone already headed to the current 4 stops is far more likely to add a 5th one nearby than a merely popular spot across town.
+- Added a `viewingCategoryBadges` memo classifying every place in the open category sheet into exactly one of three `PlaceBadgeKind`s: `"near"` (within 1km of a current stop — `NEAR_CHAIN_BADGE_RADIUS_KM`), else `"popular"` (at/above that category list's own median `savedBy` — relative to the list itself, not a global cutoff, so it stays meaningful whether the category has 5 or 50 candidates), else `"recommended"` as the catch-all. Rendered as a small dark pill (`bg-black/55` + white text, not a pastel `Badge` tone) in each photo's top-right corner in `category-sheet.tsx`, since a translucent dark overlay stays legible over any photo instead of risking a light pastel blending into a bright image.
+- `PlaceBadgeKind` and its 4-locale labels (주변/인기/추천) exported from `category-sheet.tsx` / added to `translations.ts`.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: browser walkthrough on "종로구에서 역사 탐방 코스" — "다른 장소도 볼까요?" 관광지 row changed from popularity-sorted (나석주의사동상 등, across the district) to proximity-sorted (경희궁 흥화문 / 경희궁공원, both steps from the current chain's 건청궁 stop); 더보기 full sheet showed the same two places tagged "주변", then further-away 중구 spots tagged "추천"/"인기" further down the list; no console errors on a fresh tab
+
+### Mobile Phase AJ: Radius Steps Remember the Chain Last Seen at Each One
+
+Status: Complete
+
+Scope — user-reported: stepping 4km → 8km → back to 4km showed a completely different chain than the one originally seen at 4km, even without touching refresh.
+
+- Root cause: `changeRadius()` always called `buildChain()` fresh, and `scorePlace`/`pickCandidate` both have randomized elements (a random score nudge, and a random pick among the top few candidates per category) — so revisiting an already-seen radius produced a new random draw instead of the same result.
+- Fix: added `radiusChainCacheRef` (`mobile-app-shell.tsx`), a `Map<radiusKm, placeIds>` scoped to the current course. A `useEffect` keyed on `[hasResult, radiusKm, chainIds]` snapshots the current chain into the cache for the active radius on every change — covering not just radius-button transitions but also manual edits (drag-reorder, add/remove a stop), so whatever the user was actually looking at at a given radius is what comes back, not just the originally-generated pick. `changeRadius()` checks the cache before calling `buildChain` and restores a hit outright. The cache is cleared at the top of `startCourse`/`startCourseFromPrompt` — i.e. a brand-new search or explicitly hitting "다른 체인 추천받기" (refresh) is still the only way to get a genuinely new chain at a given radius, matching what the user asked for.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint`
+- Passed: browser walkthrough — searched "지금 열리는 축제 위주로 체인 짜줘", widened 1km→4km→8km (each step a different 4-place set as expected), then narrowed 8km→4km and got back the *exact* same 4 places seen at 4km the first time; refresh at the same 4km then produced a genuinely new set; no console errors on a fresh tab
+
 ### Mobile Phase AI: English Badge Wrapping + Untranslated District Name in Phase AH's Note
 
 Status: Complete

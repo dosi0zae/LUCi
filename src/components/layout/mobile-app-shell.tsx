@@ -41,7 +41,7 @@ import {
   type TripVisibility,
 } from "@/features/mobile/mobile-data";
 import { useCategoryLabel, useLocale, usePromptExamples, useT } from "@/features/mobile/i18n/i18n-context";
-import { CategorySheet } from "@/features/mobile/category-sheet";
+import { CategorySheet, type PlaceBadgeKind } from "@/features/mobile/category-sheet";
 import { LanguageMenuButton } from "@/features/mobile/language-menu-button";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
 import { decodeCourseFromLocation } from "@/features/mobile/course-share";
@@ -75,6 +75,25 @@ const SEOUL_CENTER = { lat: 37.5665, lng: 126.978 };
 const PROFILE_STORAGE_KEY = "tripchain:profile";
 const RECENTLY_VIEWED_LIMIT = 10;
 const TUTORIAL_STORAGE_KEY = "tripchain:tutorialSeen";
+// A place this close to any current stop is "실제로 걸어서 들를 수 있는" close, not just
+// closer-than-average — used to decide the "주변" badge in the category sheet.
+const NEAR_CHAIN_BADGE_RADIUS_KM = 1;
+
+function distanceToChainKm(place: MobilePlace, chain: MobilePlace[]): number {
+  if (chain.length === 0) {
+    return Infinity;
+  }
+  return Math.min(...chain.map((stop) => haversineKm(stop, place)));
+}
+
+function median(values: number[]): number {
+  if (values.length === 0) {
+    return 0;
+  }
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+}
 
 export function MobileAppShell() {
   const t = useT();
@@ -119,6 +138,12 @@ export function MobileAppShell() {
   // it (buildChain treats it as a hard ceiling, not just a starting point).
   const [courseAreaFilter, setCourseAreaFilter] = useState<string | null>(null);
   const [radiusMessage, setRadiusMessage] = useState<string | null>(null);
+  // Remembers the last chain seen at each radius step for the CURRENT course, so
+  // stepping 4km -> 8km -> back to 4km restores exactly what was there before instead of
+  // rebuilding a fresh (differently-randomized) chain. Cleared whenever a genuinely new
+  // course starts (search, quick-browse, locate-nearby, refresh); a ref because it's
+  // pure bookkeeping that should never itself trigger a render.
+  const radiusChainCacheRef = useRef<Map<number, string[]>>(new Map());
 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [viewingCategory, setViewingCategory] = useState<PlaceCategory | null>(null);
@@ -154,6 +179,13 @@ export function MobileAppShell() {
 
     return () => window.clearInterval(intervalId);
   }, [hasResult, promptExamples.length]);
+
+  useEffect(() => {
+    if (!hasResult) {
+      return;
+    }
+    radiusChainCacheRef.current.set(radiusKm, chainIds);
+  }, [hasResult, radiusKm, chainIds]);
 
   useEffect(() => {
     // Warm up the Kakao SDK while the user is still on the search screen, so the
@@ -358,11 +390,13 @@ export function MobileAppShell() {
 
     return CATEGORY_ORDER.map((category) => ({
       category,
+      // Closest to the current chain first — someone already headed to these 4 stops is
+      // far more likely to add a 5th one nearby than a merely popular spot across town.
       places: (byCategory.get(category) ?? [])
-        .sort((a, b) => b.savedBy - a.savedBy)
+        .sort((a, b) => distanceToChainKm(a, chainPlaces) - distanceToChainKm(b, chainPlaces))
         .slice(0, OTHER_PLACES_PER_CATEGORY),
     })).filter((group) => group.places.length > 0);
-  }, [chainIds]);
+  }, [chainIds, chainPlaces]);
 
   const viewingCategoryPlaces = useMemo(() => {
     if (!viewingCategory) {
@@ -370,8 +404,31 @@ export function MobileAppShell() {
     }
     return places
       .filter((place) => place.category === viewingCategory && !chainIds.includes(place.id))
-      .sort((a, b) => b.savedBy - a.savedBy);
-  }, [chainIds, viewingCategory]);
+      .sort((a, b) => distanceToChainKm(a, chainPlaces) - distanceToChainKm(b, chainPlaces));
+  }, [chainIds, chainPlaces, viewingCategory]);
+
+  // One badge per place in the open category sheet, explaining at a glance why it's
+  // listed: genuinely walkable from the current chain, objectively popular among the
+  // remaining candidates, or neither (still a reasonable pick, just not for either
+  // reason above) — "인기" is relative to THIS list's own median, not a global popularity
+  // cutoff, so it stays meaningful whether the category has 5 candidates or 50.
+  const viewingCategoryBadges = useMemo(() => {
+    const badges = new Map<string, PlaceBadgeKind>();
+    if (viewingCategoryPlaces.length === 0) {
+      return badges;
+    }
+    const medianSavedBy = median(viewingCategoryPlaces.map((place) => place.savedBy));
+    for (const place of viewingCategoryPlaces) {
+      if (distanceToChainKm(place, chainPlaces) <= NEAR_CHAIN_BADGE_RADIUS_KM) {
+        badges.set(place.id, "near");
+      } else if (place.savedBy >= medianSavedBy) {
+        badges.set(place.id, "popular");
+      } else {
+        badges.set(place.id, "recommended");
+      }
+    }
+    return badges;
+  }, [viewingCategoryPlaces, chainPlaces]);
 
   const allTrips = useMemo(
     () =>
@@ -458,6 +515,7 @@ export function MobileAppShell() {
     explicitAnchor?: { lat: number; lng: number } | null,
     radiusOverride?: number,
   ) {
+    radiusChainCacheRef.current.clear();
     const anchor = explicitAnchor !== undefined ? explicitAnchor : await getCurrentLocation();
     const { placeIds } = buildChain({
       categories: [],
@@ -478,6 +536,7 @@ export function MobileAppShell() {
   }
 
   async function startCourseFromPrompt(nextPrompt: string, radiusOverride?: number) {
+    radiusChainCacheRef.current.clear();
     setIsRecommending(true);
     setRecommendReason(null);
     setIsAiCourse(true);
@@ -584,6 +643,17 @@ export function MobileAppShell() {
     const nextRadius = RADIUS_STEPS_KM[nextIndex];
 
     if (nextRadius === radiusKm) {
+      return;
+    }
+
+    // Stepping back to a radius already seen this course restores exactly what was
+    // there instead of rebuilding a fresh (differently-randomized) chain — only the
+    // refresh button or a new search should ever produce a genuinely new pick.
+    const cachedChainIds = radiusChainCacheRef.current.get(nextRadius);
+    if (cachedChainIds) {
+      setRadiusKm(nextRadius);
+      setChainIds(cachedChainIds);
+      setRadiusMessage(null);
       return;
     }
 
@@ -1462,6 +1532,7 @@ export function MobileAppShell() {
         {viewingCategory && (
           <CategorySheet
             areaName={t("seoulWide")}
+            badges={viewingCategoryBadges}
             category={viewingCategory}
             onClose={() => setViewingCategory(null)}
             onSelectPlace={(id) => {
