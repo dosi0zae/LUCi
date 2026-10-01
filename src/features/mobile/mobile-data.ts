@@ -25,10 +25,21 @@ export type MobilePlace = {
   tags: string[];
   hours: string;
   savedBy: number;
+  // 0-100, how well-known a place is to an average Seoul visitor, rated once offline by
+  // Gemini (scripts/enrich-place-fame.mjs) — unlike savedBy (a deterministic hash of the
+  // id, not real popularity), this tracks actual fame. Optional: places added by hand or
+  // before a given enrichment run may not have it yet.
+  fameScore?: number;
   lat: number;
   lng: number;
   image?: string;
   translations?: Partial<Record<"en" | "ja" | "zh", LocalizedPlaceFields>>;
+  // Which pipeline this place came from — absent for the original TourAPI/문화재청 sync
+  // (sync-seoul-places.mjs; their id prefix, tour-/heritage-, already tells them apart).
+  // "kakao" marks places dug up from the Kakao Local API (scripts/dig-kakao-places.mjs)
+  // to fill gaps that sync left (실제 한강공원 지점들, 이태원/북촌 같은 동네 등) — Kakao
+  // gives no description/fee/hours, so those fields are Gemini-written or "정보 없음".
+  source?: "kakao";
 };
 
 // The address stays in Korean regardless of locale — it's what a taxi driver or map
@@ -361,6 +372,14 @@ function nearestUnused(
   return best;
 }
 
+// Every sample course starts at one of the most genuinely well-known places (by
+// fameScore — see enrich-place-fame.mjs) rather than an arbitrary index into the full
+// pool, so these showcase chains actually lead with a recognizable landmark (a palace, a
+// real 한강공원 branch, 이태원, ...) instead of whatever happened to land at a modulo'd
+// index. Only the anchor is fame-biased; the rest of each route is still picked by
+// nearestUnused below, which optimizes for walkability, not fame.
+const FAMOUS_ANCHOR_POOL = [...places].sort((a, b) => (b.fameScore ?? 0) - (a.fameScore ?? 0)).slice(0, 60);
+
 // Seed trips are generated (not hand-written) by anchoring each theme at a spread of
 // places across the flat Seoul pool, then greedily picking the nearest unused place per
 // category — this keeps each generated "course" geographically walkable even without
@@ -370,8 +389,8 @@ function generateSeedTrips(): FeedTrip[] {
 
   TRIP_THEMES.forEach((theme, themeIndex) => {
     for (let variant = 0; variant < VARIANTS_PER_THEME; variant++) {
-      const anchorIndex = (themeIndex * 37 + variant * 53) % places.length;
-      const anchor = places[anchorIndex];
+      const anchorIndex = (themeIndex * 37 + variant * 53) % FAMOUS_ANCHOR_POOL.length;
+      const anchor = FAMOUS_ANCHOR_POOL[anchorIndex];
       const used = new Set<string>();
       const picked: MobilePlace[] = [];
 
@@ -392,6 +411,13 @@ function generateSeedTrips(): FeedTrip[] {
       const seed = (themeIndex * 31 + variant * 17 + 11) % 97;
       const author = TRIP_AUTHORS[(themeIndex * 3 + variant) % TRIP_AUTHORS.length];
 
+      // Engagement/rank numbers are driven by the picked places' real fameScore (0-100
+      // average) rather than being pure seeded noise — a course built from well-known
+      // places now plausibly ranks higher, instead of ranking being disconnected from
+      // what's actually in the course. `seed` still contributes a smaller jitter so two
+      // similarly-famous courses don't look identical.
+      const avgFame = picked.reduce((sum, place) => sum + (place.fameScore ?? 50), 0) / picked.length;
+
       trips.push({
         id: `seed-${themeIndex}-${variant}`,
         title: theme.title,
@@ -401,10 +427,10 @@ function generateSeedTrips(): FeedTrip[] {
         authorName: author.name,
         visibility: "public",
         placeIds: picked.map((place) => place.id),
-        likes: 120 + seed * 9,
-        comments: 4 + (seed % 23),
-        saved: 40 + ((seed * 3) % 180),
-        rankScore: 55 + (seed % 40),
+        likes: Math.round(80 + avgFame * 8 + (seed % 60)),
+        comments: Math.round(3 + avgFame / 4 + (seed % 12)),
+        saved: Math.round(30 + avgFame * 1.5 + (seed % 100)),
+        rankScore: Math.round(avgFame + (seed % 15)),
         isMine: false,
         publishedAt: dateDaysBefore("2026-08-13", themeIndex * 3 + variant),
       });

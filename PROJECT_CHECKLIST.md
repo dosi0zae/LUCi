@@ -33,6 +33,185 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase AV: Seed/Explore/Ranking Sample Chains Now Fame-Aware
+
+Status: Complete
+
+Scope — user asked to update the sample "체인" chains shown in 탐색(explore)/랭킹(ranking) to reflect everything newly built this session (393 real photos, 165 Kakao-sourced places, fameScore), and to reconfigure ranking to match. Found `generateSeedTrips()` in `mobile-data.ts` — the 24 sample trips backing both the explore feed and the ranking tab are procedurally generated from the live `places` array, not hand-written, so they already picked up every place added since (confirmed: a 송파구 "서울 대표 명소 도장깨기" sample now genuinely includes 롯데월드 매직캐슬/매직아일랜드, both Kakao-sourced). Two things were still disconnected from the new data, though:
+
+- Each sample's *starting* place was `places[(themeIndex * 37 + variant * 53) % places.length]` — a raw modulo index, blind to fameScore, so a "showcase" course could just as easily anchor on an obscure place as a landmark. Added `FAMOUS_ANCHOR_POOL` (places sorted by `fameScore` descending, top 60) and anchor from that instead — every sample course now starts from a genuinely well-known place; the rest of the route is still picked by the existing `nearestUnused` (walkability, not fame).
+- `likes`/`comments`/`saved`/`rankScore` were pure seeded pseudo-random noise (`120 + seed * 9` etc.), with zero connection to what was actually in the course. Replaced with formulas driven by the course's own average `fameScore` (`avgFame`), with `seed` kept as a smaller jitter term so two similarly-famous courses don't look identical: `likes: 80 + avgFame*8 + seed%60`, `comments: 3 + avgFame/4 + seed%12`, `saved: 30 + avgFame*1.5 + seed%100`, `rankScore: avgFame + seed%15`. A course built from famous places now plausibly outranks one built from obscure ones, in both ranking modes (실시간 sorts by likes+saved+comments, 주간 sorts by rankScore).
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint` (pre-existing `no-img-element` warnings only, unrelated to this change)
+- Passed: browser walkthrough at `/mobile` — 탐색 feed spans 10 different districts (종로구/영등포구/중구/송파구/서대문구/강남구/마포구/광진구/성동구/성북구) instead of clustering on one; opened the 송파구 sample and confirmed real Kakao-sourced places (롯데월드 매직캐슬, 매직아일랜드) appear in it; 랭킹 tab's 주간/실시간 order both look sane; no console errors on a fresh tab (a 404 seen mid-session traced to the agent's own ad hoc debugging fetch, not the app)
+
+### Mobile Phase AU: Real Photos for Kakao-Sourced Places (and a Naver Hotlink Trap)
+
+Status: Complete
+
+Scope — user noticed the places dug up via Kakao (Phase AS) had "이상한 사진" (weird photos) attached. Root cause: Kakao's Local keyword-search API (used to find the places themselves) returns no image field at all, and `getPlaceImageUrl()` (`mobile-data.ts`) falls back to `https://picsum.photos/seed/{id}/...` — a random, completely unrelated stock photo — whenever `place.image` is unset. All 165 Kakao-sourced places had no `image`, so every one of them was showing an arbitrary random photo.
+
+- New `scripts/fetch-place-images.mjs`: for every place missing an `image`, queries the Kakao **Image** Search API (`dapi.kakao.com/v2/search/image`, same `KAKAO_REST_API_KEY` — no new credential) with `"{name} {area}"` and takes the best real-world result.
+- First pass surfaced a second, worse problem: Kakao's image search indexes Naver blog/cafe photos, and **Naver's CDN (`pstatic.net` and friends) 403s any hotlinked request** — confirmed directly (fetched one with a `Referer` header, got a 403/empty response back). 98 of the first 161 "found" images were actually on a blocked Naver host, meaning they'd render as a blank box in the app despite the script reporting success. A domain-blocklist pass caught most of those, but then surfaced a *third* variant: some `t1.daumcdn.net/cafeattach/...` paths (Daum Cafe attachments) 403 the same way despite being a "safe" host. Domain-based guessing couldn't fully solve this, so the script now **actually fetches each candidate image** (with a `Referer` header, 5s timeout) and only accepts one that comes back `200` with an `image/*` content-type — verified true relevance of loading, not inferred from the hostname.
+- Candidates are ranked blog > cafe > news before verification — a "news" hit can correctly text-match a place's name while showing an unrelated photo (e.g. "이랜드크루즈" pulled a news photo of two executives signing a contract); blog/cafe posts are much more likely to be an actual visit writeup with a real photo of the place. News is accepted only when nothing else validates — a known, documented remaining imperfection (visual relevance isn't guaranteed, only presence of *a* working photo).
+- Final state: 393/413 places now have a real, loading image (148 of 165 Kakao-sourced ones); 20 Kakao-sourced places have no usable web photo for their name and still fall back to the random picsum placeholder — an honest degradation, not a broken link.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint` (pre-existing `no-img-element` warnings only, unrelated to this change)
+- Passed: random 15-place sample of Kakao-sourced images, each independently re-fetched — 15/15 returned `200` with an `image/*` content-type
+- Passed: browser walkthrough at `/mobile` — "다른 장소도 볼까요?" grid for "한강변 체인" now shows a real 노들섬 잔디마당 photo instead of a random stock image; no console errors on a fresh tab
+
+### Mobile Phase AT: Gemini Picks the Final Chain, Not Just the Intent
+
+Status: Complete
+
+Scope — user asked whether Gemini could be involved in the actual place SELECTION, not just intent parsing, for "스마트하고 정합성 있는 코스" (smarter, more coherent courses). Previously: Gemini only turned the prompt into structured `categories`/`attributes`/`placeCount`/`area` + a one-sentence `reason` written *before* any place was chosen; the actual stops came from `scorePlace()` (category/attribute/fame scoring) plus `pickCandidate()` randomly sampling the top 6 per category slot — a locally-scored, partly-random pick with zero sense of whether the stops cohere as a day's course together. This is also the root cause behind this session's repeated "reason doesn't match the places" bugs: Gemini's `reason` was always written blind to the actual selection.
+
+Constraint that shaped the design: `buildChain()` is called both server-side (`/api/recommend`) and client-side in `mobile-app-shell.tsx` (GPS "내 주변" start, the radius +/- control, and the fetch-failure fallback) — it has to stay a synchronous, zero-network, pure function for those call sites' speed/resilience to hold. So Gemini selection couldn't be pushed down into `buildChain()` itself.
+
+- `recommend-engine.ts`: extracted the geographic/scoring half of `buildChain()` (area/landmark/한강/radius pool construction + per-place scoring) into a new exported `getScoredPool(intent)`, returning the same sorted `{place, score}[]` the picker consumes. `buildChain()` now calls it internally — behavior for every existing caller is unchanged.
+- `route.ts`: after `buildChain(intent)` produces its usual (fast, always-available) local result, and only when that result's length already equals what was requested (a thin pool means there's no real second opinion to offer — the existing honest-shortfall note already covers that case), a new `selectChainWithGemini()` step runs: takes the top 24 pool candidates (deduped to one per coordinate, reusing the same guard `buildChain` applies internally), sends them (id/name/category/area/tags/120-char description/fameScore) plus the user's original prompt to Gemini, and asks it to choose exactly the requested count — instructed explicitly to optimize for thematic/mood coherence as a combination ("같은 테마/동선으로 이어지는 조합", avoiding e.g. mixing a quiet traditional space with a loud hotspot) — and to write one sentence explaining *that specific combination*. The response schema constrains `placeIds` to an `enum` of the real candidate ids; the code still independently verifies the count, uniqueness, and id membership before trusting it at all. A valid selection is re-ordered for walking distance via the existing `optimizeRoute()` and used in place of the local pick, including replacing the `reason` text (now grounded in the real picks instead of written blind). Any failure, timeout, or invalid output silently keeps the original local result — zero regression risk.
+- Added `usedGeminiSelection: boolean` to the response alongside the existing `usedAI`, for visibility into which path a given recommendation took.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint` (pre-existing `no-img-element` warnings only, unrelated to this change)
+- Passed: direct `/api/recommend` calls — "종로구에서 조용한 전통 문화 코스" → 경복궁/창덕궁/운현궁/가회민화박물관 with a reason naming all four by name; "한강변 체인" → 잠원·반포·여의도한강공원 + 노들섬 with a matching reason; "서울 랜드마크 체인" → 창덕궁/경복궁/숭례문/남산공원; all three returned `usedGeminiSelection: true`
+- Passed: browser walkthrough at `/mobile` — "핫플레이스" now returns a genuinely coherent 롯데월드 어드벤처/매직캐슬/매직아일랜드 cluster (a real, thematically consistent amusement-park "hot place" group) instead of an arbitrary mix, reason text matches; no console errors on a fresh tab
+
+### Mobile Phase AS: Kakao Local API as a Second Data Source (한강공원 branches, 이태원/북촌/... neighborhoods)
+
+Status: Complete
+
+Scope — follow-on from Phase AR: with TourAPI's service key rejected (`SERVICE_KEY_IS_NOT_REGISTERED_ERROR`, confirmed on both the new and an already-working endpoint — not fixable from code), the user asked to dig up real attractions a different way: via the Kakao Local API, and to mark which places came from it. Set up `KAKAO_REST_API_KEY` in `.env.local`/`.env.example` (a different key type than the existing `NEXT_PUBLIC_KAKAO_MAP_APP_KEY`, from the same Kakao Developers app's "플랫폼 키" page) and verified it works against `dapi.kakao.com/v2/local/search/keyword.json`.
+
+- New `scripts/dig-kakao-places.mjs` (one-off/refreshable): keyword-searches 21 terms (한강공원, 노들섬, 이태원, 북촌한옥마을, 홍대, 명동, 압구정로데오, 가로수길, 성수동, 여의도, 잠실, 삼청동, 인사동, 서울숲, 청계천, 남산, 북한산, 동대문, 익선동, 경리단길, 을지로) against Kakao Local, keeps results categorized as 관광명소(AT4)/문화시설(CT1) **or** carrying an empty `category_group_code` with a `category_name` starting with "여행" (hit mid-run: every 한강공원 branch comes back with an empty group code despite genuinely being a travel/park category — the first run silently dropped all of them until this was caught and the filter widened), restricted to Seoul addresses, and skips anything whose name already exists in the dataset. Kakao gives no description/fee/hours, so those are synthesized per place via Gemini (explicitly instructed not to invent specific facts — only general, safe description text) along with en/ja/zh translations, same pattern as `sync-seoul-places.mjs`. Every place this adds carries `source: "kakao"` (new optional field on `MobilePlace`) so it stays distinguishable from TourAPI/heritage rows.
+- Ran it twice (second run after the empty-category-code fix): 300 → 320 → 413 places total, 165 of them now `source: "kakao"`. Confirmed live: 반포/여의도/뚝섬/이촌/망원/잠실/잠원/양화/강서한강공원 and 노들섬 are all now real dataset entries (none of them existed before this phase).
+- Re-ran `enrich-place-fame.mjs` on the full 413-place dataset so the new entries are fame-scored on the same basis as everything else.
+- `recommend-engine.ts`: expanded `SEOUL_HANGANG_PLACE_IDS` from the 3 placeholder entries in Phase AR to all 13 real river-adjacent places now in the dataset, spanning 10 districts (서초/영등포/광진/용산/마포/송파/강남/강서/강동/동작) end to end. This also crosses `MIN_POOL_SIZE` (13 ≥ 6), so `poolNear()`'s radius narrow/widen behavior is now meaningful for "한강변 체인" instead of always just returning everything — a natural side effect of having real data instead of a thin 3-entry placeholder.
+- Checked the merged dataset for the same class of problem Phase AQ fixed: no (0,0) coordinates, no 3+-same-coordinate same-category clusters introduced by the Kakao batch (the few 2-place coincidental overlaps found — e.g. festivals sharing a plaza's coordinates with its venue — are genuinely distinct content, consistent with Phase AQ's category-homogeneity guard).
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint` (pre-existing `no-img-element` warnings only, unrelated to this change)
+- Passed: direct `/api/recommend` call for "한강변 체인" — now returns 4 real places spanning multiple districts (e.g. 망원한강공원/양화한강공원/노들섬/잠원한강공원), no honest-shortfall note needed since enough real candidates exist
+- Passed: browser walkthrough at `/mobile` — searching "한강변 체인" renders 잠원한강공원/노들섬/노들나루공원/... as the chain with a working map, no console errors on a fresh tab
+
+### Mobile Phase AR: Han River Gets a Curated Place List, Not a Single Anchor Point
+
+Status: Complete
+
+Scope — user noticed every "한강변 체인" result clustered near 이촌 (용산구) and asked why real Han River spots like 노들섬 never showed up. Root cause: Phase AN's fix anchored "한강" to one fixed coordinate (37.5125, 126.9966, near 이촌) and ran a radius search from there — but the Han River runs ~40km across Seoul through a dozen-plus districts, so a single point + radius can only ever surface whatever happens to be near that one spot, never the river's actual length. Checked the dataset directly: none of the well-known named 한강공원 branches (반포/뚝섬/여의도/잠실/이촌/망원 etc.) are in it at all — only 광나루한강공원(강동구)/난지한강공원(마포구)/노들나루공원(동작구, 바로 옆이 노들섬) exist, because the TourAPI sync's Seoul-wide attraction pull (`take: 70`) never surfaced them. 노들섬 itself isn't a standalone entry.
+
+- Tried to pull the missing 한강공원 branches live via TourAPI's `searchKeyword2` before resorting to a code-only fix — it failed, and so did `areaBasedList2` (the same endpoint `sync-seoul-places.mjs` normally uses), both returning `SERVICE_KEY_IS_NOT_REGISTERED_ERROR`. The TourAPI service key in `.env.local` currently is not accepted at all, not just for the new endpoint — needs to be refreshed/reactivated on data.go.kr before any more TourAPI data (한강공원 or otherwise) can be pulled. Flagged to the user; not something fixable from code.
+- `recommend-engine.ts`: replaced 한강's point-anchor handling with the same curated-pool pattern as Phase AO's `landmarkOnly` — new `SEOUL_HANGANG_PLACE_IDS` (the 3 real entries above) and `intent.hangangOnly`, with its own `buildChain()` branch. With only 3 candidates (under `MIN_POOL_SIZE`), `poolNear()`'s own fallback ladder always bottoms out at "return all candidates" regardless of radius — so this reliably returns all 3, genuinely spanning 강동구/마포구/동작구, instead of a radius-bounded cluster near one point.
+- `route.ts`: removed 한강 from the point-based `LANDMARK_ANCHORS` table; added `isHangangPrompt()` (same keyword list) setting `intent.hangangOnly`, checked ahead of the generic-landmark path and overridden by an explicit district match same as before.
+- Since only 3 places exist for a 4-stop default chain, Phase AH's "couldn't fully meet requested count" honest note now correctly appears for this prompt (confirmed live).
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint` (pre-existing `no-img-element` warnings only, unrelated to this change)
+- Passed: direct `/api/recommend` call for "한강변 체인" — now returns 난지한강공원/노들나루공원/광나루한강공원 (마포구/동작구/강동구), with the "지금 조건에 맞는 장소를 최대로 담았어요" note attached
+- Passed: browser walkthrough at `/mobile` — map now shows the 3 stops spanning the width of the city along the river instead of one tight cluster; no console errors on a fresh tab
+
+### Mobile Phase AQ: Dataset Cleanup — Museum-Artifact Duplicates, Broken Coordinates, Same-Coord Chain Guard
+
+Status: Complete
+
+Scope — user flagged "핫플레이스" returning 내원사/경국사/길상사(서울)/훈민정음, none of them trendy or lively, and asked (1) how to generally improve recommendation quality and (2) to filter out "타당하지 않은" (not-legitimate) places from the data, confirming all 300 places had been shown to Gemini for fame-scoring. Root cause traced two ways:
+
+1. **Data quality**: `sync-seoul-places.mjs` pulls 국보 (KDCD 11, "National Treasure") heritage entries one row PER ARTIFACT, not per site. 국립중앙박물관 alone backed 29 separate "places" in the dataset — a bronze mirror, a celadon jar, individual Buddha statues — each with its own 40-50min "duration" as if it were a standalone walkable stop, when they're really one indoor museum visit. 간송미술관 (8) and 삼성미술관 리움 (8) had the same pattern. A course that pulled 3 of these read as nonsense: 3 "stops" that are actually the same building. Also found: 3 heritage entries with literal (0,0) coordinates (never geocoded), which would plot on "null island" on the map.
+2. **Selection logic**: when Gemini doesn't extract explicit categories (ambiguous prompts like "핫플레이스" don't map cleanly onto 문화재/관광지/문화시설/축제행사), `buildChain` round-robins through all 4 default categories regardless of fit — so even a "lively/trendy" request was guaranteed at least one 문화재 (heritage) pick, and before Phase AP's fameScore fix that pick was effectively random.
+
+Fixes:
+
+- New `scripts/dedupe-venue-clusters.mjs` (one-off, run after sync + fame-enrichment): drops (0,0)-coordinate places; collapses "venue clusters" down to their single highest-fameScore representative in two passes — (a) 3+ places sharing an exact coordinate, same category only (so a 축제행사/문화시설 cluster that coincidentally shares a district office's address, like 금천구, is correctly left alone — caught and fixed a first run that wrongly collapsed two real Geumcheon festivals into one, restored from git history and re-scored before re-running with the category guard added); (b) a second pass matching the venue name embedded in the address (국립중앙박물관/간송미술관/삼성미술관 리움/...) for 문화재-only places the exact-coordinate pass missed because the heritage API geocodes each artifact to a slightly different pin within the same museum grounds. Ran against the live dataset: 300 → 248 places (3 broken-coordinate drops, 49 venue-duplicate drops across both passes).
+- `recommend-engine.ts`'s `buildChain()`: the chain-picking loop now also tracks coordinates already used and won't pick a second place at the same coordinate into one chain — defense in depth so a future `sync-seoul-places.mjs` re-run (which would reintroduce fresh per-artifact duplicates until dedupe is re-run) can't put two stops at the same building into a single course.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint` (pre-existing `no-img-element` warnings only, unrelated to this change)
+- Passed: dataset check post-cleanup — 0 places at (0,0), the only remaining 3+-member same-coordinate cluster (금천구청종합청사) is genuinely mixed-category and correctly preserved, all heritage-11 entries are now either a real standalone site (숭례문, 원각사지 십층석탑) or a single representative per museum
+- Passed: direct `/api/recommend` calls — "핫플레이스" and "한강변 체인" no longer return multiple near-duplicate museum artifacts as separate chain stops
+- Passed: browser walkthrough at `/mobile` — "핫플레이스" now returns 노원 불빛정원/고려대학교 박물관/경국사(서울)/... (distinct real places), no console errors on a fresh tab
+
+### Mobile Phase AP: Gemini-Rated fameScore Replaces Guessing via savedBy
+
+Status: Complete
+
+Scope — user asked whether, instead of hand-curating landmark IDs/keywords per place (Phase AO), Gemini could just work out which places are well-known on its own. It can: the real problem isn't missing keywords, it's that `savedBy` — the only popularity-ish signal `scorePlace()` had — is `seededSavedBy(id)` in `sync-seoul-places.mjs`, a deterministic hash of the place id. It was never a real popularity number, so it's close to random with respect to actual fame; that's *why* Phase AO's bug happened (a minor statue outscored 경복궁) and it affects every prompt with no category/attribute/area to narrow on, not just ones that literally say "랜드마크". User chose to blend the new signal in alongside savedBy rather than replace it outright.
+
+- New `scripts/enrich-place-fame.mjs` (one-off, re-run after `sync-seoul-places.mjs` refreshes the dataset): batches all 300 places (25/batch, 12 batches) to Gemini with name/category/area/tags/description, asking for a 0-100 "how well-known is this to an average Seoul visitor" rating per a defined rubric (90-100 = nationally/world-famous landmark, 60-89 = fairly well-known, 30-59 = niche/local, 0-29 = essentially unknown to tourists). Writes the result back as a new `fameScore` field on each place in `seoul-places.json`. Ran it once this session: all 300 places scored, 0 failed batches. Result sanity-checked — top 10 is now 경복궁(100)/강남(98)/숭례문·창덕궁·덕수궁·명동성당·국회의사당·남산공원 등(95), all genuinely well-known, vs. the old savedBy top-10 which included random statues and festivals above 경복궁.
+- `mobile-data.ts`: added optional `fameScore?: number` to `MobilePlace`.
+- `recommend-engine.ts`'s `scorePlace()`: replaced the flat `Math.min(20, savedBy / 100)` term with a blend — `savedByScore * 0.3 + fameScore * 0.7` (fameScore falls back to savedByScore when a place has no score yet, e.g. one added after the last enrichment run, so the old behavior is the fallback rather than a crash or zero).
+- Phase AO's curated `SEOUL_LANDMARK_PLACE_IDS`/keyword detection stays as-is — it's still a stronger, more precise signal for a prompt that explicitly says "랜드마크". fameScore is the general-purpose fix for every other prompt with nothing else to go on.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint` (pre-existing `no-img-element` warnings only, unrelated to this change)
+- Passed: `node scripts/enrich-place-fame.mjs` — 300/300 scored, output top-10 list sanity-checked
+- Passed: direct `/api/recommend` calls with no area/category signal at all — "아무거나 추천해줘" now anchors on 국립현대미술관 서울 (National Museum of Modern and Contemporary Art), "오늘 뭐하지" anchors on 국립극장 (National Theater of Korea); both genuinely well-known venues, replacing the previous near-random picks
+
+### Mobile Phase AO: Curated Landmark List for Generic "랜드마크" Prompts
+
+Status: Complete
+
+Scope — user tested "서울 랜드마크 체인" right after Phase AN shipped and got 광나루안전체험관/고하송진우선생동상/더페이지갤러리/디뮤지엓 (a safety-experience center, a minor statue, two galleries, none of them landmarks) with `reason` still claiming "서울을 대표하는 주요 랜드마크". Unlike the Phase AN case, this isn't a geo-anchor gap — "랜드마크" is a generic word, not a place Phase AN's table could match. Root cause traced via direct API calls plus a dataset dump: with no categories/attributes/area extracted (the taxonomy has no "landmark" concept), `scorePlace()`'s only signal is `Math.min(20, place.savedBy / 100)`, and `savedBy` in this dataset doesn't track real fame — e.g. "나석주의사동상" (a minor independence-era statue) scores 1405 while 경복궁 scores only 618. So `buildChain`'s fallback anchor (`scoredAll[0]`) landed on whatever had the highest essentially-random `savedBy`, nowhere near an actual landmark.
+
+- `recommend-engine.ts`: added `SEOUL_LANDMARK_PLACE_IDS`, a curated set of 13 genuinely iconic place IDs confirmed to exist in the dataset — the five grand palaces (경복궁/창덕궁/창경궁/덕수궁/경희궁지), 종묘, 숭례문, 명동성당, 문묘와 성균관, 운현궁, 구 서울역사, 남산골한옥마을, 남산공원. Added `intent.landmarkOnly`; `buildChain()` gets a third branch (same shape as the existing areaFilter/district branch) that pools from this curated list via `poolNear()` — radius buttons still narrow/widen within it — instead of falling through to the broken savedBy-based fallback.
+- `route.ts`: added `isGenericLandmarkPrompt()`, a keyword check (랜드마크/대표 명소/유명한 곳/유명 관광지/landmark/iconic) mirroring the existing district/landmark-anchor detectors. Only sets `landmarkOnly` when no district and no specific landmark (Phase AN) already matched — a more specific signal always wins over the generic one.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint` (pre-existing `no-img-element` warnings only, unrelated to this change)
+- Passed: direct `/api/recommend` call for "서울 랜드마크 체인" — now returns 운현궁/덕수궁/남산골한옥마을/남산공원 (previously 광진구/성동구 obscure places)
+- Passed: browser walkthrough at `/mobile` — searching "서울 랜드마크 체인" renders 남산공원(서울)/남산골한옥마을/창경궁/경희궁지 as the chain, no console errors on a fresh tab
+
+### Mobile Phase AN: Landmark Anchors for Cross-District / Sub-District Prompts
+
+Status: Complete
+
+Scope — user noticed "한강변 체인" recommended Jongno-area places with no relation to the Han River. Root cause: "한강" isn't one of the 25 `SEOUL_DISTRICTS`, so both the deterministic district check and Gemini's own `area` field correctly return null for it — but with no `areaFilter` and no client GPS anchor, `buildChain()` fell back to `anchor = scoredAll[0]?.place`, the single highest-scored place in all of Seoul, unrelated to the prompt. Gemini's free-text `reason` field still said "한강변을 따라 산책하며..." — it understood the intent, it just had no schema field to express "anchor near this landmark" through. User then asked to generalize this to other landmarks, not just 한강.
+
+- `route.ts`: added `LANDMARK_ANCHORS`, a table of landmark/neighborhood name+alias → representative coordinate, checked the same way as the existing `DISTRICT_ROMANIZATIONS` table via `detectLandmarkAnchorFromPrompt()`. When a landmark matches and no district does, `normalizeIntent()` uses the landmark's coordinate as `anchor` (same override priority as a named district: wins over device GPS, since naming a landmark is a stronger signal than ambient location). Keyword groups added (Korean + common romanization aliases):
+  - 한강 (Han River; genuinely spans multiple districts) — `한강`, `한강변`, `한강공원`, `hangang`, `han river`
+  - 남산 (spans 용산구/중구) — `남산`, `남산타워`, `n서울타워`, `namsan`
+  - 청계천 (spans 종로구/중구/성동구/동대문구) — `청계천`, `cheonggyecheon`
+  - 북한산 (spans 강북구/은평구/도봉구/성북구) — `북한산`, `bukhansan`
+  - 홍대 (마포구) — `홍대`, `홍대입구`, `hongdae`
+  - 이태원 (용산구) — `이태원`, `itaewon`
+  - 명동 (중구) — `명동`, `myeongdong`
+  - 강남역 (강남구) — `강남역`, `gangnam station`
+  - 압구정 (강남구) — `압구정`, `압구정로데오`, `apgujeong`
+  - 가로수길 (강남구) — `가로수길`, `garosu-gil`, `garosugil`
+  - 성수동 (성동구) — `성수동`, `성수`, `seongsu`
+  - 여의도 (영등포구) — `여의도`, `yeouido`
+  - 잠실 (송파구) — `잠실`, `jamsil`
+  - 북촌한옥마을 (종로구) — `북촌`, `북촌한옥마을`, `bukchon`
+  - 삼청동 (종로구) — `삼청동`, `samcheong-dong`, `samcheongdong`
+  - 인사동 (종로구) — `인사동`, `insadong`
+  - 서울숲 (성동구) — `서울숲`, `seoul forest`
+  - 동대문/DDP (중구) — `동대문`, `ddp`, `동대문디자인플라자`, `dongdaemun` (checked only when no exact district matches first, so "동대문구" still resolves as the district, not this point anchor)
+  - 롯데월드 (송파구) — `롯데월드`, `lotte world`
+- Live-tested after adding the full list: for most of these (홍대, 이태원, 성수동, 남산, 청계천, 북한산, 강남구 control case), Gemini's own `area` field already resolves them to the correct containing district on its own, so `areaFilter` wins and the landmark anchor is never actually used — which is the better outcome anyway (a full district pool beats a single point+radius). The landmark table only actually fires as the anchor when Gemini can't collapse the prompt to one district and returns `area: null`, confirmed live for "한강 체인" (`areaFilter: null`, `anchor: {37.5125, 126.9966}`). For 남산/청계천/북한산, Gemini currently guesses one bordering district rather than returning null (e.g. 남산 → 중구, missing the 용산구 side) — that's existing Gemini area-inference behavior, not something this table changes; the entries still stand ready as a fallback if the AI call fails or a future model guess differs.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`
+- Passed: `pnpm lint` (pre-existing `no-img-element` warnings only, unrelated to this change)
+- Passed: direct `/api/recommend` calls — "한강 체인"/"한강변 체인" now anchor at `{37.5125, 126.9966}` (was the 강북구 cemetery), returning 국립중앙박물관, 경리단길, etc. in 용산구 near the river; spot-checked 홍대/이태원/성수동/남산/청계천/북한산/강남구 prompts all resolve to a sensible `areaFilter`
+
 ### Mobile Phase AM: AI-Summary Badge + Seasonal Hours Formatting
 
 Status: Complete
