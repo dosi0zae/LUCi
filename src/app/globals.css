@@ -253,6 +253,14 @@ input[type="search"]::-webkit-search-cancel-button {
   animation: intro-logo-bloom 2.25s cubic-bezier(0.33, 1, 0.68, 1) forwards;
 }
 
+.intro-splash--contained {
+  position: absolute;
+}
+
+.intro-splash--contained .intro-splash__logo {
+  width: min(31%, 252px);
+}
+
 @keyframes intro-logo-bloom {
   0% {
     opacity: 0;

@@ -33,6 +33,17 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase AZ: "체인" → "코스" Wording and Intro Splash
+
+Status: Complete
+
+- [x] Replaced user-facing "체인" with "코스" across ko strings (hero, placeholder, aria labels, tour, empty states, publish/delete copy), fixed Korean particles, and the seed trips in `mobile-data.ts`; en/ja leftovers ("chain"/"チェーン") now say course/コース.
+- [x] "체인" now surfaces only subtly: hero tagline ("체인처럼 이어, 코스로 추천합니다", with en/ja/zh equivalents), and the Trip Chain brand. (A chain-link icon between cards was tried and removed — it looked off.)
+- [x] Reused the desktop `IntroSplash` (blue blur + bloom logo) as the mobile app's initial transition screen.
+- [x] Intro splash is contained to the phone-sized frame (`IntroSplash contained`) with the logo at half size; hero tagline reworded to "서울의 매력적인 장소와 경험을 잇고, 하나의 여행으로 연결합니다." (4 locales).
+- [x] A chain loading overlay was prototyped and removed (user didn't like the look). Real `/api/recommend` latency measured at ~2.6–3.7s (two Gemini calls).
+- [x] `tsc --noEmit` and `lint` pass (2 pre-existing `no-img-element` warnings).
+
 ### Mobile Phase AY: "근처" Panel on Each Chain Card (meeting item 4)
 
 Status: Complete

@@ -28,6 +28,7 @@ import {
   TrashIcon,
   UserIcon,
 } from "@/components/layout/app-icons";
+import { IntroSplash } from "@/components/layout/intro-splash";
 import { cn } from "@/lib/utils";
 import {
   getPlaceById,
@@ -1207,6 +1208,7 @@ export function MobileAppShell() {
   return (
     <main className="h-[var(--app-vh,100svh)] bg-[#edf2f7] text-foreground">
       <section className="relative mx-auto flex h-[var(--app-vh,100svh)] w-full max-w-[430px] flex-col overflow-hidden bg-background shadow-panel [padding-top:env(safe-area-inset-top)] sm:max-h-[900px]">
+        <IntroSplash contained />
         <div
           className="app-scroll-area min-h-0 flex-1 overflow-y-auto"
           onScroll={(event) => {
