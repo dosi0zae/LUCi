@@ -11,6 +11,7 @@ import {
 } from "@/features/mobile/kakao-loader";
 import { haversineKm, type MobilePlace } from "@/features/mobile/mobile-data";
 import { useT } from "@/features/mobile/i18n/i18n-context";
+import { cn } from "@/lib/utils";
 
 // Stops within this real-world distance of an earlier stop visually overlap at the
 // zoom level setBounds() auto-picks for a walking-scale course (their 24px marker
@@ -52,6 +53,8 @@ type ConstellationCardProps = {
   // When given, a route-optimize button appears above the view toggle. It returns whether
   // the order actually changed, so the card can say "done" or "already the shortest".
   onOptimize?: () => boolean;
+  // Makes the optimize button softly blink in blue while the order isn't the shortest.
+  nudgeOptimize?: boolean;
 };
 
 const SUGGESTION_LABELS = ["A", "B", "C", "D", "E"];
@@ -218,7 +221,7 @@ function AbstractConstellation({ places }: { places: MobilePlace[] }) {
 // view, undoing any pan/zoom) on every parent re-render.
 const NO_SUGGESTIONS: MobilePlace[] = [];
 
-export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOptimize }: ConstellationCardProps) {
+export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOptimize, nudgeOptimize = false }: ConstellationCardProps) {
   const t = useT();
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -428,7 +431,10 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
         <>
           <button
             aria-label={t("optimizeRouteAria")}
-            className="absolute bottom-[3rem] right-2 z-10 grid h-8 w-8 place-items-center rounded-full border border-white/30 bg-white/90 text-foreground shadow-soft backdrop-blur-sm transition hover:bg-surface-muted"
+            className={cn(
+              "absolute bottom-[3rem] right-2 z-10 grid h-8 w-8 place-items-center rounded-full border border-white/30 bg-white/90 text-foreground shadow-soft backdrop-blur-sm transition hover:bg-surface-muted",
+              nudgeOptimize && "optimize-nudge",
+            )}
             onClick={handleOptimize}
             title={t("optimizeRouteAria")}
             type="button"

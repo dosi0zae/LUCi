@@ -710,6 +710,31 @@ input[type="search"]::-webkit-search-cancel-button {
   animation: swap-badge-fade 1100ms ease-out forwards;
 }
 
+@keyframes optimize-nudge {
+  0%,
+  100% {
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 0 0 rgba(79, 141, 247, 0);
+  }
+
+  50% {
+    border-color: var(--primary);
+    box-shadow: 0 0 10px 3px rgba(79, 141, 247, 0.55);
+  }
+}
+
+.optimize-nudge {
+  animation: optimize-nudge 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .optimize-nudge {
+    animation: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 8px 2px rgba(79, 141, 247, 0.45);
+  }
+}
+
 @keyframes optimize-note-in {
   from {
     opacity: 0;
@@ -735,6 +760,13 @@ input[type="search"]::-webkit-search-cancel-button {
 
 .chain-card-in {
   animation: chain-card-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* A card that was just added: its usual entrance plus the blue glow a swap gets. */
+.chain-card-added {
+  animation:
+    chain-card-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    chain-card-swapped 800ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 /* A chain card's "근처" panel unfolds to its natural height (the cards below follow it
@@ -767,6 +799,7 @@ input[type="search"]::-webkit-search-cancel-button {
   .nav-icon-glow,
   .chain-card-in,
   .chain-card-swapped,
+  .chain-card-added,
   .optimize-note,
   .swap-row-in,
   .swap-badge,

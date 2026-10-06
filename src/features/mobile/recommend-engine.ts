@@ -588,3 +588,16 @@ export function fallbackIntent(): RecommendIntent {
     placeCount: 4,
   };
 }
+
+// Within this much extra walking (km) a route counts as already optimal — it keeps
+// near-ties (e.g. the same path walked in reverse) from nagging the user.
+const ROUTE_OPTIMAL_TOLERANCE_KM = 0.01;
+
+// Whether the current order is already (effectively) the shortest walk the pins allow.
+export function isRouteOptimized(places: MobilePlace[], pinnedIds: Set<string>): boolean {
+  if (places.length < 3) {
+    return true;
+  }
+  const best = optimizeRoutePreservingPins(places, pinnedIds);
+  return routeDistance(places) <= routeDistance(best) + ROUTE_OPTIMAL_TOLERANCE_KM;
+}

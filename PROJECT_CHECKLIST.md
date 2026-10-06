@@ -45,6 +45,10 @@ Status: Complete
 - [x] Swap icon is now a vertically flipped rotate arrow (`RotateUpIcon`, head pointing up). Swapping no longer re-optimizes the order, so the card being worked on stays put.
 - [x] New route-optimize button on the map (`RouteIcon`, above the constellation/map toggle, shown for 3+ stops; `ConstellationCard` `onOptimize` prop). It reorders the unpinned stops by shortest walk (`optimizeRoutePreservingPins`, any stop count) and shows a short note: "동선을 가장 짧게 정리했어요" / "이미 가장 짧은 동선이에요" (4 locales).
 - [x] Swap feedback trimmed: the "교체됨" pill now sits left of the exchange button in the swapped row, and the card/row slide motion was removed — only the blue glow/highlight remains.
+- [x] Removed the redundant "근처" (map-pin-plus) button now that the alternatives panel has its own add icon; the nearby-places code path, `MapPinPlusIcon` and the `nearby*` i18n keys are gone. Each card is back to 3 buttons: pin, other places, delete.
+- [x] A stop added to the course (from the panel, the "other places" strip or the place sheet) gets the same blue glow as a swapped-in one (`addedId`, `.chain-card-added`).
+- [x] Delete button feedback: red border + light red fill on hover, solid red with a white icon while pressed. Pin and "other places" buttons get the blue equivalent (pinned pin darkens instead; disabled swap button on a pinned stop has no hover).
+- [x] `isRouteOptimized(places, pinnedIds)` in `recommend-engine.ts` (current walk vs. best walk the pins allow, 10 m tolerance). When the order isn't optimal: the map's route button softly blinks blue (`.optimize-nudge`, static glow under reduced motion), and "코스 확정하기" first asks "동선을 최적화할까요?" with "최적화하고 확정" / "그대로 확정" (backdrop tap cancels). Optimal orders go straight to the publish sheet. The route button also reports "already shortest" by the same check.
 - [x] `tsc --noEmit` and `lint` pass; verified open → pick → replaced (animations present) and switching between the two panels in the browser.
 
 ### Mobile Phase AZ: "체인" → "코스" Wording and Intro Splash

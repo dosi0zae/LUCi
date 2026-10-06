@@ -17,7 +17,6 @@ import {
   GripIcon,
   LightbulbIcon,
   LocateIcon,
-  MapPinPlusIcon,
   MapSearchIcon,
   MinusIcon,
   NavigationIcon,
@@ -68,6 +67,7 @@ import {
   derivePreference,
   EXACT_ROUTE_MAX,
   findBestInsertionIndex,
+  isRouteOptimized,
   optimizeRoutePreservingPins,
   RADIUS_STEPS_KM,
   rankReplacementStops,
@@ -151,10 +151,9 @@ export function MobileAppShell() {
   const chainListRef = useRef<HTMLDivElement | null>(null);
   // Stops the user pinned keep their exact position: drag/optimize/swap work around them.
   const [isTitleScrolledAway, setIsTitleScrolledAway] = useState(false);
-  // The one chain card whose panel is open (accordion — opening another closes it), and
-  // which one: "nearby" lists places to add, "swap" lists alternatives to replace it with.
+  // The one chain card whose alternatives panel is open (accordion — opening another
+  // closes it).
   const [expandedStopId, setExpandedStopId] = useState<string | null>(null);
-  const [expandedKind, setExpandedKind] = useState<"nearby" | "swap">("nearby");
   // The alternatives listed in the open swap panel. Frozen when it opens so that swapping
   // one in can hand its slot (same letter, same row) to the stop that was just replaced.
   const [swapCandidateIds, setSwapCandidateIds] = useState<string[]>([]);
@@ -163,6 +162,8 @@ export function MobileAppShell() {
   // card's panel from replaying its open animation (it's already open).
   const [swapFlash, setSwapFlash] = useState<{ cardId: string; rowId: string } | null>(null);
   const [staticPanelId, setStaticPanelId] = useState<string | null>(null);
+  // The stop that was just added to the course (glows briefly, like a swapped-in one).
+  const [addedId, setAddedId] = useState<string | null>(null);
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => new Set());
   // Cards whose entrance animation has finished. A card that's merely been moved in the DOM
   // by a reorder must not replay it (the class would restart on every move).
@@ -189,6 +190,7 @@ export function MobileAppShell() {
   const [viewingCategory, setViewingCategory] = useState<PlaceCategory | null>(null);
   const [viewingAuthorHandle, setViewingAuthorHandle] = useState<string | null>(null);
   const [showPublish, setShowPublish] = useState(false);
+  const [isOptimizePromptOpen, setIsOptimizePromptOpen] = useState(false);
   const [openTripId, setOpenTripId] = useState<string | null>(null);
 
   const [publishedTrips, setPublishedTrips] = useState<FeedTrip[]>([]);
@@ -372,35 +374,21 @@ export function MobileAppShell() {
   const [isNavigateMenuOpen, setIsNavigateMenuOpen] = useState(false);
 
   const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds]);
-  // Closest places to the expanded stop that aren't already in the chain (and don't sit
-  // on a stop's exact coordinate), staying inside a named district if the course has one.
+  const isOptimized = useMemo(() => isRouteOptimized(chainPlaces, pinnedIds), [chainPlaces, pinnedIds]);
+  // The alternatives listed under the open card: the frozen candidate list minus anything
+  // that has since joined the course, with distances from the stop they'd replace.
   const panelStops = useMemo(() => {
-    const expandedIndex = chainPlaces.findIndex((place) => place.id === expandedStopId);
-    const expanded = chainPlaces[expandedIndex];
+    const expanded = chainPlaces.find((place) => place.id === expandedStopId);
     if (!expanded) {
       return [];
     }
-    if (expandedKind === "swap") {
-      const inChain = new Set(chainPlaces.map((place) => place.id));
-      return getPlacesByIds(swapCandidateIds.filter((id) => !inChain.has(id))).map((place) => ({
-        place,
-        distanceKm: haversineKm(expanded, place),
-      }));
-    }
-    const chainIdSet = new Set(chainPlaces.map((place) => place.id));
-    const usedCoords = new Set(chainPlaces.map((place) => `${place.lat.toFixed(4)},${place.lng.toFixed(4)}`));
-    return places
-      .filter(
-        (place) =>
-          !chainIdSet.has(place.id) &&
-          !usedCoords.has(`${place.lat.toFixed(4)},${place.lng.toFixed(4)}`) &&
-          (!courseAreaFilter || place.area === courseAreaFilter),
-      )
-      .map((place) => ({ place, distanceKm: haversineKm(expanded, place) }))
-      .sort((a, b) => a.distanceKm - b.distanceKm)
-      .slice(0, NEARBY_LABELS.length);
-  }, [chainPlaces, expandedStopId, expandedKind, swapCandidateIds, courseAreaFilter]);
-  const nearbyPlaces = useMemo(() => panelStops.map((entry) => entry.place), [panelStops]);
+    const inChain = new Set(chainPlaces.map((place) => place.id));
+    return getPlacesByIds(swapCandidateIds.filter((id) => !inChain.has(id))).map((place) => ({
+      place,
+      distanceKm: haversineKm(expanded, place),
+    }));
+  }, [chainPlaces, expandedStopId, swapCandidateIds]);
+  const suggestionPlaces = useMemo(() => panelStops.map((entry) => entry.place), [panelStops]);
   // The full set of places "넓게" could ever draw from for the current course — the
   // named district's places, or every place in Seoul otherwise. Comparing the current
   // radius's coverage against this tells us whether widening further would actually add
@@ -807,17 +795,33 @@ export function MobileAppShell() {
   // The explicit "shortest walk" action (the map's route button): reorders the unpinned
   // stops, whatever the count, and reports whether anything actually moved.
   function optimizeOrder(): boolean {
-    const nextIds = optimizeRoutePreservingPins(chainPlaces, pinnedIds).map((place) => place.id);
-    const changed = nextIds.some((id, index) => id !== chainPlaces[index]?.id);
-    if (changed) {
-      setChainIds(nextIds);
+    if (isOptimized) {
+      return false;
     }
-    return changed;
+    setChainIds(optimizeRoutePreservingPins(chainPlaces, pinnedIds).map((place) => place.id));
+    return true;
+  }
+
+  // "코스 확정하기": if the walk could be shorter, ask before publishing.
+  function requestPublish() {
+    if (isOptimized) {
+      setShowPublish(true);
+    } else {
+      setIsOptimizePromptOpen(true);
+    }
+  }
+
+  function confirmOptimizeThenPublish(shouldOptimize: boolean) {
+    if (shouldOptimize) {
+      optimizeOrder();
+    }
+    setIsOptimizePromptOpen(false);
+    setShowPublish(true);
   }
 
   function togglePin(id: string) {
     // A pinned stop can't be swapped, so pinning closes its alternatives panel.
-    if (expandedStopId === id && expandedKind === "swap") {
+    if (expandedStopId === id) {
       setExpandedStopId(null);
     }
     setPinnedIds((current) => {
@@ -831,22 +835,19 @@ export function MobileAppShell() {
     });
   }
 
-  function toggleStopPanel(id: string, kind: "nearby" | "swap") {
+  function toggleSwapPanel(id: string) {
     setStaticPanelId(null);
-    if (expandedStopId === id && expandedKind === kind) {
+    if (expandedStopId === id) {
       setExpandedStopId(null);
       return;
     }
-    if (kind === "swap") {
-      const index = chainPlaces.findIndex((place) => place.id === id);
-      setSwapCandidateIds(
-        rankReplacementStops(chainPlaces, index, {
-          areaFilter: courseAreaFilter,
-          limit: NEARBY_LABELS.length,
-        }).map((entry) => entry.place.id),
-      );
-    }
-    setExpandedKind(kind);
+    const index = chainPlaces.findIndex((place) => place.id === id);
+    setSwapCandidateIds(
+      rankReplacementStops(chainPlaces, index, {
+        areaFilter: courseAreaFilter,
+        limit: NEARBY_LABELS.length,
+      }).map((entry) => entry.place.id),
+    );
     setExpandedStopId(id);
   }
 
@@ -994,7 +995,7 @@ export function MobileAppShell() {
     } else {
       cardTopsRef.current = new Map();
     }
-  }, [expandedStopId, expandedKind]);
+  }, [expandedStopId]);
 
   // FLIP: whenever the order (or membership) changes, every card that landed somewhere
   // else slides from its previous position to its new one rather than teleporting — this
@@ -1037,6 +1038,11 @@ export function MobileAppShell() {
       return;
     }
 
+    if (!chainIds.includes(place.id)) {
+      // Same blue glow as a swap, so the card that just joined is easy to spot.
+      setAddedId(place.id);
+      window.setTimeout(() => setAddedId(null), 1100);
+    }
     setChainIds((current) => {
       if (current.includes(place.id)) {
         return current;
@@ -1498,7 +1504,7 @@ export function MobileAppShell() {
                       <p className="mt-1 text-xs font-semibold text-danger">{radiusMessage}</p>
                     )}
                     <div className="mt-3">
-                      <ConstellationCard onOptimize={optimizeOrder} places={chainPlaces} suggestions={nearbyPlaces} />
+                      <ConstellationCard nudgeOptimize={!isOptimized} onOptimize={optimizeOrder} places={chainPlaces} suggestions={suggestionPlaces} />
                     </div>
                     {recommendReason && (
                       <p className="mt-2 text-xs leading-5 text-muted-strong">{recommendReason}</p>
@@ -1512,9 +1518,7 @@ export function MobileAppShell() {
                     {chainPlaces.map((place, index) => {
                       const localizedPlace = localizePlace(place, locale);
                       const isPinned = pinnedIds.has(place.id);
-                      const isNearbyOpen = expandedStopId === place.id && expandedKind === "nearby";
-                      const isSwapOpen = expandedStopId === place.id && expandedKind === "swap";
-                      const isExpanded = isNearbyOpen || isSwapOpen;
+                      const isSwapOpen = expandedStopId === place.id;
                       const isDragging = draggingChainId === place.id;
                       return (
                       <article
@@ -1522,6 +1526,7 @@ export function MobileAppShell() {
                           "relative min-w-0 rounded-lg border bg-surface p-2.5 shadow-soft",
                           !enteredIds.has(place.id) && "chain-card-in",
                           swapFlash?.cardId === place.id && "chain-card-swapped",
+                          addedId === place.id && "chain-card-added",
                           isPinned ? "border-primary" : "border-border",
                           isDragging ? "z-10 shadow-panel" : "transition-[border-color,box-shadow]",
                         )}
@@ -1577,28 +1582,13 @@ export function MobileAppShell() {
 
                         <div className="flex shrink-0 items-center gap-1">
                           <button
-                            aria-expanded={isNearbyOpen}
-                            aria-label={t("nearbyToggleAria")}
-                            className={cn(
-                              "grid h-7 w-7 place-items-center rounded-sm border transition-colors duration-200",
-                              isNearbyOpen
-                                ? "border-primary bg-surface text-primary"
-                                : "border-border text-muted-strong",
-                            )}
-                            onClick={() => toggleStopPanel(place.id, "nearby")}
-                            title={t("nearbyToggleAria")}
-                            type="button"
-                          >
-                            <MapPinPlusIcon className="h-4 w-4" />
-                          </button>
-                          <button
                             aria-label={isPinned ? t("unpinStopAria") : t("pinStopAria")}
                             aria-pressed={isPinned}
                             className={cn(
-                              "grid h-7 w-7 place-items-center rounded-sm border",
+                              "grid h-7 w-7 place-items-center rounded-sm border transition-colors duration-150",
                               isPinned
-                                ? "border-primary bg-primary text-white"
-                                : "border-border text-muted-strong",
+                                ? "border-primary bg-primary text-white hover:border-primary-strong hover:bg-primary-strong active:bg-primary-strong"
+                                : "border-border text-muted-strong hover:border-primary hover:bg-primary/10 hover:text-primary active:border-primary active:bg-primary active:text-white",
                             )}
                             onClick={() => togglePin(place.id)}
                             title={isPinned ? t("unpinStopAria") : t("pinStopAria")}
@@ -1610,13 +1600,13 @@ export function MobileAppShell() {
                             aria-expanded={isSwapOpen}
                             aria-label={t("swapToggleAria")}
                             className={cn(
-                              "grid h-7 w-7 place-items-center rounded-sm border transition-colors duration-200 disabled:opacity-30",
+                              "grid h-7 w-7 place-items-center rounded-sm border transition-colors duration-150 disabled:opacity-30",
                               isSwapOpen
-                                ? "border-primary bg-surface text-primary"
-                                : "border-border text-muted-strong",
+                                ? "border-primary bg-surface text-primary enabled:hover:bg-primary/10 enabled:active:bg-primary enabled:active:text-white"
+                                : "border-border text-muted-strong enabled:hover:border-primary enabled:hover:bg-primary/10 enabled:hover:text-primary enabled:active:border-primary enabled:active:bg-primary enabled:active:text-white",
                             )}
                             disabled={isPinned}
-                            onClick={() => toggleStopPanel(place.id, "swap")}
+                            onClick={() => toggleSwapPanel(place.id)}
                             title={t("swapToggleAria")}
                             type="button"
                           >
@@ -1624,7 +1614,7 @@ export function MobileAppShell() {
                           </button>
                           <button
                             aria-label={t("deleteAria")}
-                            className="grid h-7 w-7 place-items-center rounded-sm border border-border text-danger"
+                            className="grid h-7 w-7 place-items-center rounded-sm border border-border text-danger transition-colors duration-150 hover:border-danger hover:bg-danger/10 active:border-danger active:bg-danger active:text-white"
                             onClick={() => removeStop(place.id)}
                             type="button"
                           >
@@ -1633,21 +1623,18 @@ export function MobileAppShell() {
                         </div>
                         </div>
 
-                        {isExpanded && (
+                        {isSwapOpen && (
                           <div
                             className={cn("grid", staticPanelId !== place.id && "nearby-panel-in")}
-                            key={expandedKind}
                             onAnimationEnd={refreshCardTops}
                           >
                             <div className="min-h-0 overflow-hidden">
                               <div className="mt-2.5 border-t border-border pt-2.5">
                                 <p className="mb-1.5 text-[11px] font-bold text-muted">
-                                  {isSwapOpen
-                                    ? t("swapHeading", { name: localizedPlace.name })
-                                    : t("nearbyHeading", { name: localizedPlace.name })}
+                                  {t("swapHeading", { name: localizedPlace.name })}
                                 </p>
                                 {panelStops.length === 0 ? (
-                                  <p className="text-xs text-muted">{isSwapOpen ? t("swapEmpty") : t("nearbyEmpty")}</p>
+                                  <p className="text-xs text-muted">{t("swapEmpty")}</p>
                                 ) : (
                                   <ul className="grid gap-1.5">
                                     {panelStops.map(({ place: nearby, distanceKm }, nearbyIndex) => {
@@ -1687,17 +1674,15 @@ export function MobileAppShell() {
                                               {t("swappedBadge")}
                                             </span>
                                           )}
-                                          {isSwapOpen && (
-                                            <button
-                                              aria-label={t("swapPickLabel")}
-                                              className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-primary text-primary transition hover:bg-primary hover:text-white"
-                                              onClick={() => replaceStop(place.id, nearby)}
-                                              title={t("swapPickLabel")}
-                                              type="button"
-                                            >
-                                              <RotateUpIcon className="h-4 w-4" />
-                                            </button>
-                                          )}
+                                          <button
+                                            aria-label={t("swapPickLabel")}
+                                            className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-primary text-primary transition hover:bg-primary hover:text-white"
+                                            onClick={() => replaceStop(place.id, nearby)}
+                                            title={t("swapPickLabel")}
+                                            type="button"
+                                          >
+                                            <RotateUpIcon className="h-4 w-4" />
+                                          </button>
                                           <button
                                             aria-label={t("addToChainLabel")}
                                             className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-primary text-primary transition hover:bg-primary hover:text-white"
@@ -1723,7 +1708,7 @@ export function MobileAppShell() {
 
                   <Button
                     disabled={chainPlaces.length < 2}
-                    onClick={() => setShowPublish(true)}
+                    onClick={requestPublish}
                   >
                     {t("confirmCourse", { count: chainPlaces.length })}
                   </Button>
@@ -1976,6 +1961,33 @@ export function MobileAppShell() {
             onToggleBookmark={toggleBookmarkPlace}
             place={selectedPlace}
           />
+        )}
+
+        {isOptimizePromptOpen && (
+          <div
+            className="sheet-backdrop absolute inset-0 z-50 grid place-items-center bg-black/40 px-8"
+            onClick={() => setIsOptimizePromptOpen(false)}
+            role="presentation"
+          >
+            <div
+              aria-labelledby="optimize-prompt-title"
+              aria-modal="true"
+              className="sheet-panel w-full max-w-[320px] rounded-lg bg-surface p-4 shadow-panel"
+              onClick={(event) => event.stopPropagation()}
+              role="dialog"
+            >
+              <h3 className="text-base font-extrabold" id="optimize-prompt-title">
+                {t("optimizePromptTitle")}
+              </h3>
+              <p className="mt-1.5 text-sm leading-6 text-muted-strong">{t("optimizePromptBody")}</p>
+              <div className="mt-4 grid gap-2">
+                <Button onClick={() => confirmOptimizeThenPublish(true)}>{t("optimizePromptYes")}</Button>
+                <Button onClick={() => confirmOptimizeThenPublish(false)} variant="secondary">
+                  {t("optimizePromptNo")}
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
 
         {showPublish && (

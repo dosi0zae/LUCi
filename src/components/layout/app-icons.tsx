@@ -229,17 +229,6 @@ export function PinIcon({ className }: IconProps) {
   );
 }
 
-export function MapPinPlusIcon({ className }: IconProps) {
-  return (
-    <svg className={className} {...iconProps}>
-      <path d="M10 20c-3.2-3-6.5-6.2-6.5-10.5a6.5 6.5 0 0 1 13 0c0 1.2-.3 2.3-.8 3.3" />
-      <circle cx="10" cy="9.5" r="2.2" />
-      <path d="M18 15.5v5" />
-      <path d="M15.5 18h5" />
-    </svg>
-  );
-}
-
 export function RouteIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>
