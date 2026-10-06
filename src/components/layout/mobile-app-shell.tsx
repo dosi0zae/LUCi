@@ -1688,7 +1688,7 @@ export function MobileAppShell() {
             <div
               aria-hidden="true"
               className={cn(
-                "pointer-events-none absolute inset-x-0 top-0 z-10 h-[5.25rem] transition-opacity duration-300",
+                "pointer-events-none absolute inset-x-0 top-0 z-10 [height:calc(5.25rem+env(safe-area-inset-top))] transition-opacity duration-300",
                 isTitleScrolledAway ? "opacity-100" : "opacity-0",
               )}
               style={{
@@ -1702,7 +1702,7 @@ export function MobileAppShell() {
             />
             <div
               className={cn(
-                "pointer-events-none absolute left-5 top-3 z-20 flex h-10 items-center transition-opacity duration-300",
+                "pointer-events-none absolute left-5 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 flex h-10 items-center transition-opacity duration-300",
                 isTitleScrolledAway ? "opacity-100" : "opacity-0",
               )}
             >
@@ -1711,7 +1711,7 @@ export function MobileAppShell() {
             </div>
             <button
               aria-label={t("navProfile")}
-              className="absolute right-4 top-3 z-20 grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/90 text-muted-strong shadow-soft backdrop-blur transition hover:border-primary hover:text-primary"
+              className="absolute right-4 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/90 text-muted-strong shadow-soft backdrop-blur transition hover:border-primary hover:text-primary"
               onClick={() => setActiveTab("profile")}
               type="button"
             >
@@ -1719,7 +1719,7 @@ export function MobileAppShell() {
             </button>
             <button
               aria-label={t("navExplore")}
-              className="absolute right-16 top-3 z-20 grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/90 text-muted-strong shadow-soft backdrop-blur transition hover:border-primary hover:text-primary"
+              className="absolute right-16 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/90 text-muted-strong shadow-soft backdrop-blur transition hover:border-primary hover:text-primary"
               onClick={() => setActiveTab("explore")}
               type="button"
             >
