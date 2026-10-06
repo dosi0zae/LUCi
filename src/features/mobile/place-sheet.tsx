@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { BookmarkIcon } from "@/components/layout/app-icons";
+import { BookmarkIcon, CheckIcon, CloseIcon, PlaylistAddIcon } from "@/components/layout/app-icons";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
 import { localizePlace, type MobilePlace } from "@/features/mobile/mobile-data";
 import { getGoogleMapsUrl, getKakaoMapUrl, getNaverMapUrl } from "@/features/mobile/map-links";
@@ -138,6 +138,13 @@ export function PlaceSheet({
     window.setTimeout(onClose, CLOSE_ANIMATION_MS);
   }
 
+  // Adding hands off after the sheet has finished sliding away, so the course's new card
+  // (which glows and scrolls into view) is what the user sees next — not a sheet vanishing.
+  function handleAdd() {
+    setIsClosing(true);
+    window.setTimeout(() => onAddToChain(localizedPlace), CLOSE_ANIMATION_MS);
+  }
+
   return (
     <div
       className={cn(
@@ -172,7 +179,7 @@ export function PlaceSheet({
             <button
               aria-label={isBookmarked ? t("bookmarkedPlaceAria") : t("bookmarkPlaceAria")}
               className={cn(
-                "grid h-8 w-8 place-items-center rounded-sm hover:bg-surface-muted",
+                "grid h-8 w-8 place-items-center rounded-full transition-colors hover:bg-surface-muted",
                 isBookmarked ? "text-primary" : "text-muted hover:text-foreground",
               )}
               onClick={() => onToggleBookmark(place.id)}
@@ -182,11 +189,11 @@ export function PlaceSheet({
             </button>
             <button
               aria-label={t("placeDetailCloseAria")}
-              className="grid h-8 w-8 place-items-center rounded-sm text-muted hover:bg-surface-muted hover:text-foreground"
+              className="grid h-8 w-8 place-items-center rounded-full text-muted transition-colors hover:bg-surface-muted hover:text-foreground"
               onClick={handleClose}
               type="button"
             >
-              ×
+              <CloseIcon className="h-4.5 w-4.5" />
             </button>
           </div>
         </div>
@@ -275,10 +282,10 @@ export function PlaceSheet({
           ))}
         </div>
 
-        <div className="mt-4 grid gap-2">
+        <div className={cn("mt-4 grid gap-2", needsReservation && "grid-cols-[1fr_1.5fr]")}>
           {needsReservation && (
             <div className="relative">
-              <Button className="w-full" onClick={handleReserve} variant="secondary">
+              <Button className="h-12 w-full" onClick={handleReserve} variant="secondary">
                 {t("reserveButton")}
               </Button>
               {reservationMessage && (
@@ -292,9 +299,20 @@ export function PlaceSheet({
             </div>
           )}
 
-          <Button disabled={isInChain} onClick={() => onAddToChain(localizedPlace)}>
-            {isInChain ? t("addedToChain") : t("addToChain")}
-          </Button>
+          {isInChain ? (
+            <div
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-sm border border-primary bg-primary/10 text-sm font-semibold text-primary"
+              role="status"
+            >
+              <CheckIcon className="h-4 w-4" />
+              {t("addedToChain")}
+            </div>
+          ) : (
+            <Button className="h-12 w-full active:scale-[0.98]" onClick={handleAdd}>
+              <PlaylistAddIcon className="h-4.5 w-4.5" />
+              {t("addToChain")}
+            </Button>
+          )}
         </div>
       </div>
     </div>

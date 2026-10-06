@@ -59,6 +59,7 @@ import { loadKakaoMaps } from "@/features/mobile/kakao-loader";
 import { buildGoogleMapsWalkingRouteUrl, buildKakaoWalkingRouteUrl } from "@/features/mobile/route-links";
 import { OnboardingTour } from "@/features/mobile/onboarding-tour";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
+import { PlaceScroller } from "@/features/mobile/place-scroller";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
 import { PublishSheet } from "@/features/mobile/publish-sheet";
 import {
@@ -84,7 +85,7 @@ type ExploreSort = "all" | "weekly" | "live";
 
 const TAB_ORDER: TabId[] = ["home", "explore", "profile"];
 
-const OTHER_PLACES_PER_CATEGORY = 3;
+const OTHER_PLACES_PER_CATEGORY = 6;
 
 // How many "near this stop" suggestions a chain card shows when expanded, and the letters
 // that tie each one to its marker on the map (letters, so they can't be confused with the
@@ -1030,6 +1031,22 @@ export function MobileAppShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chainIds]);
 
+  // A card that was just added may be off-screen (e.g. added from the place sheet or the
+  // "other places" strip): bring it into view so its glow is actually seen.
+  useEffect(() => {
+    if (!addedId) {
+      return;
+    }
+    const card = chainListRef.current?.querySelector<HTMLElement>(`[data-chain-id="${addedId}"]`);
+    if (!card) {
+      return;
+    }
+    const rect = card.getBoundingClientRect();
+    if (rect.top < 72 || rect.bottom > window.innerHeight - 24) {
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [addedId]);
+
   function addToChain(place: MobilePlace) {
     if (!hasResult) {
       setSubmittedPrompt(t("startedFromPlacePrompt", { name: place.name }));
@@ -1057,6 +1074,7 @@ export function MobileAppShell() {
     const trip: FeedTrip = {
       // handlePublish only ever runs from PublishSheet's submit click, never during
       // render, so a timestamp-based id here is a safe, one-shot side effect.
+      // eslint-disable-next-line react-hooks/purity
       id: `mine-${Date.now()}`,
       title: input.title,
       description: input.description,
@@ -1718,46 +1736,55 @@ export function MobileAppShell() {
                       <h3 className="text-sm font-extrabold text-muted-strong">{t("otherPlacesHeading")}</h3>
                       {otherPlacesByCategory.map((group) => (
                         <div className="min-w-0" key={group.category}>
-                          <p className="mb-1.5 text-xs font-bold text-muted">{categoryLabel(group.category)}</p>
-                          <div className="flex items-center gap-2">
-                            <div className="place-list-scroll flex min-w-0 flex-1 gap-2.5 overflow-x-auto">
-                              {group.places.map((place) => {
-                                const localizedPlace = localizePlace(place, locale);
-                                return (
-                                <button
-                                  className="flex w-28 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-surface text-left"
-                                  key={place.id}
-                                  onClick={() => setSelectedPlaceId(place.id)}
-                                  type="button"
-                                >
-                                  <span className="block h-28 w-full shrink-0 overflow-hidden bg-surface-muted">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      alt=""
-                                      className="h-full w-full object-cover"
-                                      loading="lazy"
-                                      src={getPlaceImageUrl(place.id)}
-                                    />
-                                  </span>
-                                  <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2">
-                                    <span className="truncate text-xs font-bold">{localizedPlace.name}</span>
-                                    <span className="truncate text-[11px] text-muted">{localizedPlace.area}</span>
-                                    <span className="mt-1 text-[11px] font-extrabold text-primary">
-                                      {t("addToChainLabel")}
-                                    </span>
-                                  </span>
-                                </button>
-                                );
-                              })}
-                            </div>
+                          <div className="mb-1.5 flex items-center justify-between gap-2">
+                            <p className="text-xs font-bold text-muted">{categoryLabel(group.category)}</p>
                             <button
                               aria-label={t("categoryMoreAria", { category: categoryLabel(group.category) })}
-                              className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary"
+                              className="text-primary transition hover:opacity-70"
                               onClick={() => setViewingCategory(group.category)}
                               type="button"
                             >
-                              +
+                              <span className="text-xs font-bold">{t("categoryMore")}</span>
                             </button>
+                          </div>
+                          <div className="relative">
+                            <PlaceScroller>
+                              {group.places.map((place) => {
+                                const localizedPlace = localizePlace(place, locale);
+                                return (
+                                <div className="relative w-28 shrink-0" key={place.id}>
+                                  <button
+                                    className="flex w-full flex-col overflow-hidden rounded-lg border border-border bg-surface text-left"
+                                    onClick={() => setSelectedPlaceId(place.id)}
+                                    type="button"
+                                  >
+                                    <span className="block h-28 w-full shrink-0 overflow-hidden bg-surface-muted">
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        alt=""
+                                        className="h-full w-full object-cover"
+                                        loading="lazy"
+                                        src={getPlaceImageUrl(place.id)}
+                                      />
+                                    </span>
+                                    <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2.5">
+                                      <span className="truncate text-xs font-bold">{localizedPlace.name}</span>
+                                      <span className="truncate text-[11px] text-muted">{localizedPlace.area}</span>
+                                    </span>
+                                  </button>
+                                  <button
+                                    aria-label={t("addToChainLabel")}
+                                    className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full border border-white bg-primary text-white shadow-[0_1px_5px_rgba(0,0,0,0.38)] transition-colors duration-150 hover:bg-primary-strong active:scale-95"
+                                    onClick={() => addToChain(place)}
+                                    title={t("addToChainLabel")}
+                                    type="button"
+                                  >
+                                    <PlaylistAddIcon className="h-4 w-4" />
+                                  </button>
+                                </div>
+                                );
+                              })}
+                            </PlaceScroller>
                           </div>
                         </div>
                       ))}
