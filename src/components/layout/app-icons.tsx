@@ -86,18 +86,6 @@ export function NavigationIcon({ className }: IconProps) {
   );
 }
 
-export function OptimizeRouteIcon({ className }: IconProps) {
-  return (
-    <svg className={className} {...iconProps}>
-      <circle cx="5" cy="19" r="2" />
-      <circle cx="12" cy="5" r="2" />
-      <circle cx="19" cy="19" r="2" />
-      <path d="M6.5 17.5 10.5 6.5" />
-      <path d="M13.5 6.5 17.5 17.5" />
-    </svg>
-  );
-}
-
 export function TrophyIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>
@@ -225,6 +213,29 @@ export function TrashIcon({ className }: IconProps) {
       <path d="M6 7l1 13h10l1-13" />
       <path d="M10 11v6" />
       <path d="M14 11v6" />
+    </svg>
+  );
+}
+
+export function PinIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      {/* A thumbtack seen from the side: flat head, narrow neck flaring into a wide
+          base, and the needle underneath. */}
+      <path d="M8.5 3h7" />
+      <path d="M9.5 3v6.5L7 13.5h10L14.5 9.5V3" />
+      <path d="M12 13.5V21" />
+    </svg>
+  );
+}
+
+export function SwapIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M4 8h14" />
+      <path d="m14 4 4 4-4 4" />
+      <path d="M20 16H6" />
+      <path d="m10 12-4 4 4 4" />
     </svg>
   );
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useT } from "@/features/mobile/i18n/i18n-context";
 import type { TranslationKey } from "@/features/mobile/i18n/translations";
 
-export type TourTabId = "home" | "explore" | "ranking" | "profile";
+export type TourTabId = "home" | "explore" | "profile";
 
 type TourStep = {
   target: string;
@@ -25,24 +25,6 @@ const TOUR_STEPS: TourStep[] = [
     titleKey: "tourStep2Title",
     descriptionKey: "tourStep2Desc",
     tab: "home",
-  },
-  {
-    target: "nav-explore",
-    titleKey: "tourStep3Title",
-    descriptionKey: "tourStep3Desc",
-    tab: "explore",
-  },
-  {
-    target: "nav-ranking",
-    titleKey: "tourStep4Title",
-    descriptionKey: "tourStep4Desc",
-    tab: "ranking",
-  },
-  {
-    target: "nav-profile",
-    titleKey: "tourStep5Title",
-    descriptionKey: "tourStep5Desc",
-    tab: "profile",
   },
 ];
 

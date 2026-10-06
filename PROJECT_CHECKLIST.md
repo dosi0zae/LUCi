@@ -33,6 +33,45 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase AX: Chain Cards — Pin, Per-Stop Swap, and Real Reorder Motion
+
+Status: Complete
+
+Scope — from the 10/2 meeting (손잡이와 ↑↓ 중복, 카드 핀 고정, 카드별 새로고침) plus the user's note that drag-reordering gave no visible motion, so it was hard to tell it worked.
+
+- ↑/↓ buttons replaced by **핀** (pin) and **교체** (swap); reordering is drag-only via the grip. Pinned stop: blue border, filled pin, grip and swap disabled. `reorderChainTo` keeps pinned stops in their slots and deals the unpinned ones into the rest (dragging past a pin hops over it); the "최적 경로" button now calls new `optimizeRoutePreservingPins` (recommend-engine.ts), which brute-forces the unpinned ordering (≤7) with pinned stops as fixed waypoints, else falls back to optimize-then-fill. Pins and swap history are dropped by a single `replaceChain()` that every wholesale chain replacement (new search, refresh, radius step, loaded trip, ...) now goes through.
+- **Swap** (`pickReplacementStop`, local/instant, no Gemini): replaces just that stop in place with a nearby alternative — scored by distance to the neighbors/old stop, same category, and fameScore, respecting a named district; picks randomly among the top 4 and remembers places already swapped out so repeated presses cycle. No candidate → the existing inline message line says so.
+- **Motion**: (1) FLIP in a `useLayoutEffect` on `chainIds` — any card whose slot changed (drag, delete, swap, insert) slides 240ms from its old position instead of teleporting; (2) the dragged card now follows the pointer (translateY + slight scale/shadow) with slot geometry taken from untransformed offsets so it can't feed back into its own hover target and flicker, then settles into its slot on release; (3) fixed a latent bug — the `chain-card-in` entrance class used to be on every card permanently, so DOM moves during a reorder could replay the fade-in; it's now dropped per card once its entrance finishes (`enteredIds`). `prefers-reduced-motion` skips the slides.
+- Follow-up: the "최적 경로" button (and `OptimizeRouteIcon`, `optimizeRouteAria/Title`) is gone; shortest-walk order is now the default. `autoOrder()` runs whenever a stop is added or swapped in — insertion still goes through `findBestInsertionIndex`, then `optimizeRoutePreservingPins` re-sorts the unpinned stops (pinned ones stay put). Chains longer than `EXACT_ROUTE_MAX` (7, now exported) keep the cheapest-insertion order since the only optimizer left for them is a greedy approximation that would scramble a long hand-built chain. Not re-ordered automatically: deleting a stop, dragging, and loading a published/shared trip (the author's order is intentional) — and a hand-dragged order survives a later add only if the stops are pinned. The pin icon was redrawn as an actual thumbtack (flat head, flared base, needle).
+- Follow-up (floating buttons legibility): once the "오늘은 어디로 갈까요?" title has scrolled up under the profile/explore buttons (title bottom within 56px of the scroll area's top, ≈30px of scrolling), a frosted fade fades in behind them — 5.25rem tall, `var(--background)` gradient (88% → 62% → clear) plus `backdrop-filter: blur(10px)` masked out toward the bottom edge so there's no hard line, `pointer-events-none`, 300ms opacity transition, theme-aware via the CSS variable. Shown only on the course-result home screen (where the buttons exist); driven by the scroll area's `onScroll`, setting state only when the boolean flips.
+- Follow-up (compact logo): new `public/tripchain-logo-horizontal.svg` — the stacked logo's own glyph paths regrouped into "Trip" + "Chain" side by side (Chain shifted so its baseline sits just above Trip's), same `#4f8df7`, ≈3.5:1. It appears top-left, 22px tall, in the same fade-in as the frosted bar (so it only shows once the big title has scrolled away), vertically centered on the profile/explore buttons (measured: both centerY 32.0). The stacked `tripchain-logo.svg` is untouched and still used on the first screen and the tour intro.
+- Found while testing: React doesn't suppress pointer handlers on a disabled button, so a pinned card's greyed-out grip could still start a drag; `handleChainDragStart` now ignores pinned ids.
+- i18n: removed `moveUpAria`/`moveDownAria`; added `pinStopAria`, `unpinStopAria`, `swapStopAria`, `swapStopNone` in ko/en/ja/zh. New `PinIcon`/`SwapIcon` in app-icons.tsx.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`, `pnpm lint` (pre-existing `no-img-element` warnings only)
+- Passed: browser — pin holds a card (swap/grip disabled), swap replaces a stop in place, a real mouse drag moves the last card to the top with pointer capture intact and the inline transform cleared on release, deleting a card starts a 240ms slide on the cards below it
+- Not checked: the drag feel on a touch device, and a pinned card between two dragged-over slots on a slow phone (only the logic was exercised)
+
+### Mobile Phase AW: Bottom Tab Bar Removed (Avatar, Floating Explore, Ranking Merged Into Explore)
+
+Status: Complete
+
+Scope — from the 10/2 team meeting feedback (탐색 vs 랭킹 indistinguishable, bottom bar fights the browser chrome) and the user's follow-up: drop the bottom nav entirely.
+
+- `mobile-app-shell.tsx`: tabs reduced to `home | explore | profile`; the `<nav>`, `tabs` array, `showBottomNav`, the ranking view, `rankingTrips`/`rankingPeriod` are gone. Profile opens from a circular avatar button at the top-right of home; explore opens from a floating "탐색" pill at the bottom-right of the first (no-course) home screen. Once a course exists the pill would cover the chain cards' reorder/delete buttons, so there it becomes a compass icon button beside the avatar instead. The language globe on the first screen moved to the top-left (its overlay is full-screen, so position is free).
+- Follow-up: the floating "탐색" pill was dropped — on the first screen it was redundant with the "바로 살펴보기" link. That link is now "바로 탐색하기 >" and opens explore directly (it used to build a "popular course" chain; `popularCoursePrompt` removed from all four locales). The compass icon beside the avatar remains for the course-result screen, where that link doesn't exist. Tour trimmed to 3 steps (search, 바로 탐색하기, profile avatar); `tourStep3*` removed, `tourStep2*` and `quickBrowse` reworded in ko/en/ja/zh.
+- Second follow-up: the first screen is now bare — no avatar there; the avatar and the compass only appear once a course exists (profile is reachable after the first chain). Tour is therefore 2 steps (search, 바로 탐색하기); `tourStep5*` removed in all four locales. The language globe sits bottom-left, vertically centered on "바로 탐색하기 >" (both centers measured at the same y).
+- Explore now owns ranking: a 전체 / 주간 랭킹 / 실시간 랭킹 segmented control next to the list/map toggle (same segmented style as before) re-sorts the same trip list; 전체 keeps the original order and un-numbered cards, the other two show rank numbers. Explore and profile each get a "← 뒤로" button back to home.
+- `onboarding-tour.tsx`: tour is now 4 steps (search, quick-browse, explore button, profile avatar); the old nav-targeting and ranking steps are removed. i18n: removed `navHome`, `navRanking`, `rankingHeading`, `rankingEmpty`, `tourStep4*`; added `exploreSortAll`; updated tour step 3/5 copy in ko/en/ja/zh.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`, `pnpm lint` (pre-existing `no-img-element` warnings only)
+- Passed: browser walkthrough — home → explore (sort chips + list/map fit on one row, weekly sort shows rank numbers) → back → profile → back; course-result screen shows compass + avatar with nothing covered; first-visit tour runs all 4 steps; no console errors on a fresh tab
+- Not yet done: real-device check of the floating button against iOS/Android browser chrome
+
 ### Mobile Phase AV: Seed/Explore/Ranking Sample Chains Now Fame-Aware
 
 Status: Complete

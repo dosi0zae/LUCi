@@ -297,10 +297,101 @@ function nearestNeighborOrder(places: MobilePlace[]): MobilePlace[] {
 // public entry point for "reorder my current stops for the shortest walk", used by the
 // route-optimize button. EXACT_ROUTE_MAX=7 (5,040 permutations) is comfortably instant;
 // beyond it, nearestNeighborOrder trades optimality for staying fast.
-const EXACT_ROUTE_MAX = 7;
+export const EXACT_ROUTE_MAX = 7;
 
 export function optimizeRoute(places: MobilePlace[]): MobilePlace[] {
   return places.length <= EXACT_ROUTE_MAX ? orderByRoute(places) : nearestNeighborOrder(places);
+}
+
+// Same as optimizeRoute, but a pinned stop keeps its exact position in the list — only
+// the unpinned stops get reshuffled, and they're slotted into the remaining positions so
+// the whole walk (pinned stops included as fixed waypoints) is as short as possible.
+// Brute-forces the unpinned ordering when there are few enough of them, otherwise falls
+// back to optimizing them on their own and filling the free slots in that order.
+export function optimizeRoutePreservingPins(places: MobilePlace[], pinnedIds: Set<string>): MobilePlace[] {
+  const pinnedSlots = places.flatMap((place, index) => (pinnedIds.has(place.id) ? [index] : []));
+  if (pinnedSlots.length === 0) {
+    return optimizeRoute(places);
+  }
+
+  const free = places.filter((place) => !pinnedIds.has(place.id));
+  if (free.length < 2) {
+    return places;
+  }
+
+  function fill(order: MobilePlace[]): MobilePlace[] {
+    const next = [...places];
+    let cursor = 0;
+    for (let i = 0; i < next.length; i++) {
+      if (!pinnedIds.has(places[i].id)) {
+        next[i] = order[cursor++];
+      }
+    }
+    return next;
+  }
+
+  if (free.length > EXACT_ROUTE_MAX) {
+    return fill(optimizeRoute(free));
+  }
+
+  let best = places;
+  let bestDistance = Infinity;
+  for (const candidate of permutations(free)) {
+    const filled = fill(candidate);
+    const distance = routeDistance(filled);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = filled;
+    }
+  }
+  return best;
+}
+
+// Swap one stop for a fresh alternative without touching the rest of the chain. Favors
+// places near the one being replaced (so the walk still hangs together), of the same
+// category, and better known — then picks randomly among the top few so pressing swap
+// repeatedly cycles through different options instead of ping-ponging between two.
+// `excludeIds` is for places the user has already swapped away from in this course.
+export function pickReplacementStop(
+  chain: MobilePlace[],
+  index: number,
+  options: { areaFilter?: string | null; excludeIds?: Set<string> } = {},
+): MobilePlace | null {
+  const current = chain[index];
+  if (!current) {
+    return null;
+  }
+
+  const chainIds = new Set(chain.map((place) => place.id));
+  const usedCoords = new Set(
+    chain.filter((_, i) => i !== index).map((place) => `${place.lat.toFixed(4)},${place.lng.toFixed(4)}`),
+  );
+  const anchor = [chain[index - 1], chain[index + 1]].filter(Boolean);
+  const reference = anchor.length > 0 ? centroid(anchor as MobilePlace[]) : current;
+
+  const ranked = places
+    .filter(
+      (place) =>
+        !chainIds.has(place.id) &&
+        !usedCoords.has(`${place.lat.toFixed(4)},${place.lng.toFixed(4)}`) &&
+        (!options.areaFilter || place.area === options.areaFilter),
+    )
+    .map((place) => ({
+      place,
+      score:
+        -haversineKm(reference, place) -
+        haversineKm(current, place) * 0.5 +
+        (place.fameScore ?? 40) / 40 +
+        (place.category === current.category ? 1.5 : 0) -
+        (options.excludeIds?.has(place.id) ? 100 : 0),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4);
+
+  if (ranked.length === 0) {
+    return null;
+  }
+  return ranked[Math.floor(Math.random() * ranked.length)].place;
 }
 
 // Sampling from the top few candidates (instead of always the single best) spreads

@@ -1,25 +1,30 @@
 "use client";
 
-import { FormEvent, PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FormEvent,
+  PointerEvent as ReactPointerEvent,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRightIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
   CompassIcon,
   GripIcon,
-  HomeIcon,
   LightbulbIcon,
   LocateIcon,
   MinusIcon,
   NavigationIcon,
-  OptimizeRouteIcon,
+  PinIcon,
   PlusIcon,
   RefreshIcon,
   SearchIcon,
+  SwapIcon,
   TrashIcon,
-  TrophyIcon,
   UserIcon,
 } from "@/components/layout/app-icons";
 import { cn } from "@/lib/utils";
@@ -57,17 +62,23 @@ import {
   buildChain,
   DEFAULT_RADIUS_KM,
   derivePreference,
+  EXACT_ROUTE_MAX,
   findBestInsertionIndex,
-  optimizeRoute,
+  optimizeRoutePreservingPins,
+  pickReplacementStop,
   RADIUS_STEPS_KM,
 } from "@/features/mobile/recommend-engine";
 import { TripDetailSheet } from "@/features/mobile/trip-detail-sheet";
 import { TripFeedList } from "@/features/mobile/trip-feed-list";
 import { ProfileTab } from "@/features/mobile/profile-tab";
 
-type TabId = "home" | "explore" | "ranking" | "profile";
+// There's no bottom tab bar: home is the base screen, explore opens from a floating
+// button on it, and profile from the avatar in its top-right corner. Ranking lives inside
+// explore as a sort option rather than its own screen.
+type TabId = "home" | "explore" | "profile";
+type ExploreSort = "all" | "weekly" | "live";
 
-const TAB_ORDER: TabId[] = ["home", "explore", "ranking", "profile"];
+const TAB_ORDER: TabId[] = ["home", "explore", "profile"];
 
 const OTHER_PLACES_PER_CATEGORY = 3;
 const CATEGORY_ORDER: PlaceCategory[] = ["관광지", "문화재", "문화시설", "축제행사"];
@@ -101,13 +112,6 @@ export function MobileAppShell() {
   const { locale } = useLocale();
   const promptExamples = usePromptExamples();
 
-  const tabs: { id: TabId; label: string; icon: typeof HomeIcon }[] = [
-    { id: "home", label: t("navHome"), icon: HomeIcon },
-    { id: "explore", label: t("navExplore"), icon: CompassIcon },
-    { id: "ranking", label: t("navRanking"), icon: TrophyIcon },
-    { id: "profile", label: t("navProfile"), icon: UserIcon },
-  ];
-
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const [tourPhase, setTourPhase] = useState<"hidden" | "intro" | "steps">("hidden");
 
@@ -127,8 +131,22 @@ export function MobileAppShell() {
   const [submittedPrompt, setSubmittedPrompt] = useState("");
   const [chainIds, setChainIds] = useState<string[]>([]);
   const [draggingChainId, setDraggingChainId] = useState<string | null>(null);
-  const dragStateRef = useRef<{ id: string } | null>(null);
+  // startY/startTop are the pointer's clientY and the card's offsetTop when the drag began;
+  // lastY follows the pointer — together they keep the dragged card under the finger even
+  // as reordering moves its slot.
+  const dragStateRef = useRef<{ id: string; startY: number; startTop: number; lastY: number } | null>(null);
   const chainListRef = useRef<HTMLDivElement | null>(null);
+  // Stops the user pinned keep their exact position: drag/optimize/swap work around them.
+  const [isTitleScrolledAway, setIsTitleScrolledAway] = useState(false);
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => new Set());
+  // Places already swapped out of the current course, so repeated swaps don't just
+  // ping-pong between the same two options.
+  const swappedOutRef = useRef<Set<string>>(new Set());
+  // Cards whose entrance animation has finished. A card that's merely been moved in the DOM
+  // by a reorder must not replay it (the class would restart on every move).
+  const [enteredIds, setEnteredIds] = useState<Set<string>>(() => new Set());
+  // Last-known offsetTop per card, for the FLIP slide when the order changes.
+  const cardTopsRef = useRef<Map<string, number>>(new Map());
   const [isLocating, setIsLocating] = useState(false);
   const [radiusKm, setRadiusKm] = useState<(typeof RADIUS_STEPS_KM)[number]>(DEFAULT_RADIUS_KM);
   // The anchor the CURRENT course was actually built around, so wider/narrower can
@@ -163,7 +181,7 @@ export function MobileAppShell() {
   const [exploreQuery, setExploreQuery] = useState("");
   const [exploreUserLocation, setExploreUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-  const [rankingPeriod, setRankingPeriod] = useState<"weekly" | "live">("weekly");
+  const [exploreSort, setExploreSort] = useState<ExploreSort>("all");
 
   const hasResult = submittedPrompt.length > 0;
   const [exampleIndex, setExampleIndex] = useState(0);
@@ -331,7 +349,6 @@ export function MobileAppShell() {
   const [usedAI, setUsedAI] = useState(false);
   const [isNavigateMenuOpen, setIsNavigateMenuOpen] = useState(false);
 
-  const showBottomNav = activeTab !== "home" || hasResult || tourPhase === "steps";
   const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds]);
   // The full set of places "넓게" could ever draw from for the current course — the
   // named district's places, or every place in Seoul otherwise. Comparing the current
@@ -469,30 +486,28 @@ export function MobileAppShell() {
   }, [openTrip, userComments]);
 
   const normalizedExploreQuery = exploreQuery.trim().toLowerCase();
-  const exploreTrips = useMemo(
-    () =>
-      allTrips.filter((trip) => {
-        if (!normalizedExploreQuery) {
-          return true;
-        }
-        const text = [trip.title, trip.description, trip.authorName].join(" ").toLowerCase();
-        return text.includes(normalizedExploreQuery);
-      }),
-    [allTrips, normalizedExploreQuery],
-  );
-  const exploreMapPlaces = places;
-  const exploreMapCenter = exploreUserLocation ?? SEOUL_CENTER;
-  const exploreMapLevel = exploreUserLocation ? 4 : 9;
+  const exploreTrips = useMemo(() => {
+    const matching = allTrips.filter((trip) => {
+      if (!normalizedExploreQuery) {
+        return true;
+      }
+      const text = [trip.title, trip.description, trip.authorName].join(" ").toLowerCase();
+      return text.includes(normalizedExploreQuery);
+    });
 
-  const rankingTrips = useMemo(() => {
-    if (rankingPeriod === "live") {
-      return [...allTrips].sort(
+    if (exploreSort === "live") {
+      return [...matching].sort(
         (a, b) => b.likes + b.saved + b.comments - (a.likes + a.saved + a.comments),
       );
     }
-
-    return [...allTrips].sort((a, b) => b.rankScore - a.rankScore);
-  }, [allTrips, rankingPeriod]);
+    if (exploreSort === "weekly") {
+      return [...matching].sort((a, b) => b.rankScore - a.rankScore);
+    }
+    return matching;
+  }, [allTrips, normalizedExploreQuery, exploreSort]);
+  const exploreMapPlaces = places;
+  const exploreMapCenter = exploreUserLocation ?? SEOUL_CENTER;
+  const exploreMapLevel = exploreUserLocation ? 4 : 9;
 
   // Best-effort current position, used as the default anchor whenever a search doesn't
   // name its own area — never blocks the search on a slow/denied permission prompt.
@@ -527,7 +542,7 @@ export function MobileAppShell() {
     });
 
     setSubmittedPrompt(nextPrompt);
-    setChainIds(placeIds);
+    replaceChain(placeIds);
     setRecommendReason(null);
     setIsAiCourse(false);
     setCourseAnchor(anchor);
@@ -569,7 +584,7 @@ export function MobileAppShell() {
         throw new Error("recommend response malformed");
       }
 
-      setChainIds(data.placeIds);
+      replaceChain(data.placeIds);
       setRecommendReason(typeof data.reason === "string" ? data.reason : null);
       setUsedAI(data.usedAI === true);
       setSubmittedPrompt(nextPrompt);
@@ -587,7 +602,7 @@ export function MobileAppShell() {
         radiusKm: effectiveRadius,
         ...preference,
       });
-      setChainIds(result.placeIds);
+      replaceChain(result.placeIds);
       setSubmittedPrompt(nextPrompt);
       setCourseAnchor(result.anchor);
       setCourseAreaFilter(null);
@@ -652,7 +667,7 @@ export function MobileAppShell() {
     const cachedChainIds = radiusChainCacheRef.current.get(nextRadius);
     if (cachedChainIds) {
       setRadiusKm(nextRadius);
-      setChainIds(cachedChainIds);
+      replaceChain(cachedChainIds);
       setRadiusMessage(null);
       return;
     }
@@ -674,7 +689,7 @@ export function MobileAppShell() {
     }
 
     setRadiusKm(nextRadius);
-    setChainIds(result.placeIds);
+    replaceChain(result.placeIds);
     setRecommendReason(null);
     setRadiusMessage(null);
   }
@@ -684,8 +699,24 @@ export function MobileAppShell() {
   // re-checks earlier stops), and a shared/loaded course carries whatever order its
   // original author left it in. This re-sorts the CURRENT stops for the shortest walk
   // without changing which places are in the chain.
-  function optimizeCurrentRoute() {
-    setChainIds(optimizeRoute(chainPlaces).map((place) => place.id));
+  // The shortest-walk order is the default whenever a stop is added or swapped in — there's
+  // no separate "optimize" button. Pinned stops stay exactly where they are and the rest
+  // are re-sorted around them; that's also how a hand-dragged order survives (pin it).
+  // Past EXACT_ROUTE_MAX stops the only optimizer left is a greedy approximation that
+  // would scramble a long hand-built chain, so those keep the cheapest-insertion order.
+  function autoOrder(ids: string[]): string[] {
+    if (ids.length > EXACT_ROUTE_MAX) {
+      return ids;
+    }
+    return optimizeRoutePreservingPins(getPlacesByIds(ids), pinnedIds).map((place) => place.id);
+  }
+
+  // Every wholesale chain replacement (new search, refresh, radius step, loaded trip, ...)
+  // starts a different course, so pins and swap history from the old one don't carry over.
+  function replaceChain(ids: string[]) {
+    setChainIds(ids);
+    setPinnedIds(new Set());
+    swappedOutRef.current.clear();
   }
 
   function locateNearby() {
@@ -709,20 +740,48 @@ export function MobileAppShell() {
     );
   }
 
-  function moveStop(index: number, direction: -1 | 1) {
-    const nextIndex = index + direction;
-    if (nextIndex < 0 || nextIndex >= chainIds.length) {
-      return;
-    }
-    setChainIds((current) => {
-      const next = [...current];
-      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+  function removeStop(id: string) {
+    setChainIds((current) => current.filter((placeId) => placeId !== id));
+    setPinnedIds((current) => {
+      if (!current.has(id)) {
+        return current;
+      }
+      const next = new Set(current);
+      next.delete(id);
       return next;
     });
   }
 
-  function removeStop(id: string) {
-    setChainIds((current) => current.filter((placeId) => placeId !== id));
+  function togglePin(id: string) {
+    setPinnedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  // Replaces just this one stop (same slot, same position in the route) with a nearby
+  // alternative — the rest of the chain is untouched.
+  function swapStop(index: number) {
+    const old = chainPlaces[index];
+    if (!old) {
+      return;
+    }
+    const replacement = pickReplacementStop(chainPlaces, index, {
+      areaFilter: courseAreaFilter,
+      excludeIds: swappedOutRef.current,
+    });
+    if (!replacement) {
+      setRadiusMessage(t("swapStopNone"));
+      return;
+    }
+    swappedOutRef.current.add(old.id);
+    setRadiusMessage(null);
+    setChainIds((current) => autoOrder(current.map((id) => (id === old.id ? replacement.id : id))));
   }
 
   function reorderChainTo(id: string, toIndex: number) {
@@ -731,17 +790,54 @@ export function MobileAppShell() {
       if (fromIndex === -1 || fromIndex === toIndex) {
         return current;
       }
-      const next = [...current];
-      const [moved] = next.splice(fromIndex, 1);
-      next.splice(toIndex, 0, moved);
-      return next;
+      const desired = [...current];
+      const [moved] = desired.splice(fromIndex, 1);
+      desired.splice(toIndex, 0, moved);
+      if (pinnedIds.size === 0) {
+        return desired;
+      }
+
+      // Pinned stops never move: keep them at their current slots and deal the unpinned
+      // ones into the remaining slots in the order the drag just produced, so dragging
+      // past a pinned card hops over it instead of nudging it.
+      const freeOrder = desired.filter((placeId) => !pinnedIds.has(placeId));
+      let cursor = 0;
+      const next = current.map((placeId) => (pinnedIds.has(placeId) ? placeId : freeOrder[cursor++]));
+      return next.every((placeId, index) => placeId === current[index]) ? current : next;
     });
   }
 
+  function getChainCard(id: string): HTMLElement | null {
+    return chainListRef.current?.querySelector<HTMLElement>(`[data-chain-id="${CSS.escape(id)}"]`) ?? null;
+  }
+
+  // Keeps the dragged card glued to the pointer: its slot (offsetTop) jumps whenever the
+  // order changes mid-drag, so the transform is whatever offset closes the gap between
+  // where the pointer is and where the card's slot currently sits.
+  function positionDraggedCard() {
+    const dragState = dragStateRef.current;
+    const card = dragState ? getChainCard(dragState.id) : null;
+    if (!dragState || !card) {
+      return;
+    }
+    const offset = dragState.lastY - dragState.startY - (card.offsetTop - dragState.startTop);
+    card.style.transform = `translateY(${offset}px) scale(1.02)`;
+  }
+
   function handleChainDragStart(event: ReactPointerEvent<HTMLButtonElement>, id: string) {
+    // React only suppresses mouse/click handlers on a disabled button, not pointer ones.
+    if (pinnedIds.has(id)) {
+      return;
+    }
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
-    dragStateRef.current = { id };
+    const card = getChainCard(id);
+    dragStateRef.current = {
+      id,
+      lastY: event.clientY,
+      startTop: card?.offsetTop ?? 0,
+      startY: event.clientY,
+    };
     setDraggingChainId(id);
   }
 
@@ -752,29 +848,85 @@ export function MobileAppShell() {
       return;
     }
 
+    dragState.lastY = event.clientY;
+
+    // Slot geometry comes from untransformed offsets (not getBoundingClientRect) so the
+    // dragged card's own follow-the-pointer transform can't feed back into which slot it
+    // thinks it's hovering and make the order flicker.
     const cards = [...container.querySelectorAll<HTMLElement>("[data-chain-id]")];
+    const origin = cards[0]?.offsetTop ?? 0;
+    const pointerY = event.clientY - container.getBoundingClientRect().top;
     let targetIndex = cards.length - 1;
 
     for (let i = 0; i < cards.length; i++) {
-      const rect = cards[i].getBoundingClientRect();
-      if (event.clientY < rect.top + rect.height / 2) {
+      const mid = cards[i].offsetTop - origin + cards[i].offsetHeight / 2;
+      if (pointerY < mid) {
         targetIndex = i;
         break;
       }
     }
 
     reorderChainTo(dragState.id, targetIndex);
+    positionDraggedCard();
   }
 
   function handleChainDragEnd() {
+    const dragState = dragStateRef.current;
+    const card = dragState ? getChainCard(dragState.id) : null;
     dragStateRef.current = null;
     setDraggingChainId(null);
+
+    if (!card) {
+      return;
+    }
+    // Settle into the slot instead of snapping: animate from where the finger left it.
+    const from = card.style.transform || "translateY(0)";
+    card.style.transform = "";
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      card.animate([{ transform: from }, { transform: "translateY(0) scale(1)" }], {
+        duration: 220,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+      });
+    }
   }
+
+  // FLIP: whenever the order (or membership) changes, every card that landed somewhere
+  // else slides from its previous position to its new one rather than teleporting — this
+  // is what makes dragging, deleting, and swapping read as motion. The dragged card is
+  // skipped (it's driven by the pointer instead), and nothing animates on first paint.
+  useLayoutEffect(() => {
+    const container = chainListRef.current;
+    if (!container) {
+      cardTopsRef.current = new Map();
+      return;
+    }
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const draggingId = dragStateRef.current?.id;
+    const nextTops = new Map<string, number>();
+
+    for (const card of container.querySelectorAll<HTMLElement>("[data-chain-id]")) {
+      const id = card.dataset.chainId as string;
+      const top = card.offsetTop;
+      nextTops.set(id, top);
+      const previousTop = cardTopsRef.current.get(id);
+      if (!reduceMotion && previousTop !== undefined && previousTop !== top && id !== draggingId) {
+        card.animate(
+          [{ transform: `translateY(${previousTop - top}px)` }, { transform: "translateY(0)" }],
+          { duration: 240, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
+        );
+      }
+    }
+
+    cardTopsRef.current = nextTops;
+    positionDraggedCard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chainIds]);
 
   function addToChain(place: MobilePlace) {
     if (!hasResult) {
       setSubmittedPrompt(t("startedFromPlacePrompt", { name: place.name }));
-      setChainIds([place.id]);
+      replaceChain([place.id]);
       setSelectedPlaceId(null);
       return;
     }
@@ -784,7 +936,7 @@ export function MobileAppShell() {
         return current;
       }
       const insertAt = findBestInsertionIndex(getPlacesByIds(current), place);
-      return [...current.slice(0, insertAt), place.id, ...current.slice(insertAt)];
+      return autoOrder([...current.slice(0, insertAt), place.id, ...current.slice(insertAt)]);
     });
     setSelectedPlaceId(null);
   }
@@ -814,7 +966,7 @@ export function MobileAppShell() {
     setOpenTripId(trip.id);
     setPrompt("");
     setSubmittedPrompt("");
-    setChainIds([]);
+    replaceChain([]);
     setRecommendReason(null);
 
     // Published in whatever language the user typed — translate in the background
@@ -936,7 +1088,7 @@ export function MobileAppShell() {
   // Brings a published trip's stops into the user's own working chain — reordering,
   // adding, or removing stops from here doesn't touch the original published trip.
   function loadTripToChain(trip: FeedTrip) {
-    setChainIds(trip.placeIds);
+    replaceChain(trip.placeIds);
     setSubmittedPrompt(localizeTrip(trip, locale).title);
     setRecommendReason(null);
     setIsAiCourse(false);
@@ -994,7 +1146,20 @@ export function MobileAppShell() {
   return (
     <main className="h-[var(--app-vh,100svh)] bg-[#edf2f7] text-foreground">
       <section className="relative mx-auto flex h-[var(--app-vh,100svh)] w-full max-w-[430px] flex-col overflow-hidden bg-background shadow-panel [padding-top:env(safe-area-inset-top)] sm:max-h-[900px]">
-        <div className="app-scroll-area min-h-0 flex-1 overflow-y-auto">
+        <div
+          className="app-scroll-area min-h-0 flex-1 overflow-y-auto"
+          onScroll={(event) => {
+            // Once the page title has scrolled up under the floating profile/explore
+            // buttons, a frosted fade appears behind them so they stay legible over
+            // whatever is scrolling past.
+            const container = event.currentTarget;
+            const title = container.querySelector<HTMLElement>("[data-home-title]");
+            const next = title
+              ? title.getBoundingClientRect().bottom < container.getBoundingClientRect().top + 56
+              : false;
+            setIsTitleScrolledAway((current) => (current === next ? current : next));
+          }}
+        >
           {activeTab === "home" && (
             !hasResult ? (
               <div className={cn(tabSlideClass, "relative min-h-full")}>
@@ -1084,20 +1249,23 @@ export function MobileAppShell() {
                 <button
                   className="absolute inset-x-0 z-10 text-center text-xs font-semibold opacity-60 transition hover:opacity-100 [bottom:calc(1.5rem+env(safe-area-inset-bottom))]"
                   data-tour="quick-browse"
-                  onClick={() => startCourse(t("popularCoursePrompt"))}
+                  onClick={() => setActiveTab("explore")}
                   style={{ color: "var(--success)" }}
                   type="button"
                 >
                   {t("quickBrowse")}
                 </button>
 
-                <LanguageMenuButton className="absolute right-5 z-20 [bottom:calc(0.75rem+env(safe-area-inset-bottom))]" />
+                <LanguageMenuButton className="absolute left-5 z-20 [bottom:calc(1rem+env(safe-area-inset-bottom))]" />
               </div>
             ) : (
               <div className={cn(tabSlideClass, "relative flex min-h-full flex-col px-5 pb-24 pt-5")}>
                 <header className="relative z-10 text-left">
                   <p className="text-xs font-extrabold text-primary">Trip Chain Beta</p>
-                  <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-normal text-balance">
+                  <h1
+                    className="mt-3 text-3xl font-extrabold leading-tight tracking-normal text-balance"
+                    data-home-title
+                  >
                     {t("heroTitle")}
                   </h1>
                 </header>
@@ -1214,17 +1382,6 @@ export function MobileAppShell() {
                             )}
                           </div>
                         )}
-                        {chainPlaces.length >= 3 && (
-                          <button
-                            aria-label={t("optimizeRouteAria")}
-                            className="grid h-8 w-8 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary"
-                            onClick={optimizeCurrentRoute}
-                            title={t("optimizeRouteTitle")}
-                            type="button"
-                          >
-                            <OptimizeRouteIcon className="h-3.5 w-3.5" />
-                          </button>
-                        )}
                       </div>
                     </div>
                     <h2 className="mt-3 text-xl font-extrabold text-balance">{submittedPrompt}</h2>
@@ -1248,19 +1405,29 @@ export function MobileAppShell() {
                   <div className="grid gap-2" ref={chainListRef}>
                     {chainPlaces.map((place, index) => {
                       const localizedPlace = localizePlace(place, locale);
+                      const isPinned = pinnedIds.has(place.id);
+                      const isDragging = draggingChainId === place.id;
                       return (
                       <article
                         className={cn(
-                          "chain-card-in flex min-w-0 items-center gap-2 rounded-lg border border-border bg-surface p-2.5 shadow-soft transition",
-                          draggingChainId === place.id && "opacity-60",
+                          "relative flex min-w-0 items-center gap-2 rounded-lg border bg-surface p-2.5 shadow-soft",
+                          !enteredIds.has(place.id) && "chain-card-in",
+                          isPinned ? "border-primary" : "border-border",
+                          isDragging ? "z-10 shadow-panel" : "transition-[border-color,box-shadow]",
                         )}
                         data-chain-id={place.id}
                         key={place.id}
+                        onAnimationEnd={(event) => {
+                          if (event.target === event.currentTarget) {
+                            setEnteredIds((current) => new Set(current).add(place.id));
+                          }
+                        }}
                         style={{ animationDelay: `${index * 60}ms` }}
                       >
                         <button
                           aria-label={t("reorderAria")}
-                          className="grid h-8 w-6 shrink-0 touch-none place-items-center text-muted"
+                          className="grid h-8 w-6 shrink-0 touch-none place-items-center text-muted disabled:opacity-30"
+                          disabled={isPinned}
                           onPointerCancel={handleChainDragEnd}
                           onPointerDown={(event) => handleChainDragStart(event, place.id)}
                           onPointerMove={handleChainDragMove}
@@ -1291,22 +1458,29 @@ export function MobileAppShell() {
 
                         <div className="flex shrink-0 items-center gap-1">
                           <button
-                            aria-label={t("moveUpAria")}
-                            className="grid h-7 w-7 place-items-center rounded-sm border border-border text-muted-strong disabled:opacity-30"
-                            disabled={index === 0}
-                            onClick={() => moveStop(index, -1)}
+                            aria-label={isPinned ? t("unpinStopAria") : t("pinStopAria")}
+                            aria-pressed={isPinned}
+                            className={cn(
+                              "grid h-7 w-7 place-items-center rounded-sm border",
+                              isPinned
+                                ? "border-primary bg-primary text-white"
+                                : "border-border text-muted-strong",
+                            )}
+                            onClick={() => togglePin(place.id)}
+                            title={isPinned ? t("unpinStopAria") : t("pinStopAria")}
                             type="button"
                           >
-                            <ChevronUpIcon className="h-4 w-4" />
+                            <PinIcon className="h-4 w-4" />
                           </button>
                           <button
-                            aria-label={t("moveDownAria")}
+                            aria-label={t("swapStopAria")}
                             className="grid h-7 w-7 place-items-center rounded-sm border border-border text-muted-strong disabled:opacity-30"
-                            disabled={index === chainPlaces.length - 1}
-                            onClick={() => moveStop(index, 1)}
+                            disabled={isPinned}
+                            onClick={() => swapStop(index)}
+                            title={t("swapStopAria")}
                             type="button"
                           >
-                            <ChevronDownIcon className="h-4 w-4" />
+                            <SwapIcon className="h-4 w-4" />
                           </button>
                           <button
                             aria-label={t("deleteAria")}
@@ -1387,8 +1561,21 @@ export function MobileAppShell() {
 
           {activeTab === "explore" && (
             <div className={cn(tabSlideClass, "flex h-full min-h-full flex-col px-5 py-4")}>
+              <button
+                className="-ml-1 mb-2 self-start px-1 py-1 text-xs font-bold text-muted-strong transition hover:text-primary"
+                onClick={() => setActiveTab("home")}
+                type="button"
+              >
+                {t("back")}
+              </button>
               <h1 className="text-xl font-extrabold">{t("exploreHeading")}</h1>
-              <p className="mt-1 text-xs text-muted text-balance">{t("exploreSubtitle")}</p>
+              <p className="mt-1 text-xs text-muted text-balance">
+                {exploreSort === "weekly"
+                  ? t("rankingWeeklySubtitle")
+                  : exploreSort === "live"
+                    ? t("rankingLiveSubtitle")
+                    : t("exploreSubtitle")}
+              </p>
 
               <div className="glass-panel mt-4 flex h-11 shrink-0 items-center gap-2 rounded-lg px-3">
                 <SearchIcon className="h-4 w-4 shrink-0 text-muted" />
@@ -1402,7 +1589,26 @@ export function MobileAppShell() {
                 />
               </div>
 
-              <div className="mt-3 flex items-center justify-end gap-2">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex shrink-0 rounded-sm border border-border bg-surface p-0.5 text-xs font-extrabold">
+                  {(["all", "weekly", "live"] as const).map((sort) => (
+                    <button
+                      className={cn(
+                        "rounded-xs px-2.5 py-1.5",
+                        exploreSort === sort ? "bg-primary text-white" : "text-muted-strong",
+                      )}
+                      key={sort}
+                      onClick={() => setExploreSort(sort)}
+                      type="button"
+                    >
+                      {sort === "all"
+                        ? t("exploreSortAll")
+                        : sort === "weekly"
+                          ? t("rankingWeekly")
+                          : t("rankingLive")}
+                    </button>
+                  ))}
+                </div>
                 <div className="flex shrink-0 rounded-sm border border-border bg-surface p-0.5 text-xs font-extrabold">
                   {(["list", "map"] as const).map((mode) => (
                     <button
@@ -1425,7 +1631,7 @@ export function MobileAppShell() {
                   <TripFeedList
                     emptyLabel={t("exploreEmpty")}
                     likedIds={likedIds}
-                    mode="explore"
+                    mode={exploreSort === "all" ? "explore" : "ranking"}
                     onOpenTrip={viewTrip}
                     onToggleLike={toggleLike}
                     onToggleSave={toggleSave}
@@ -1447,46 +1653,15 @@ export function MobileAppShell() {
             </div>
           )}
 
-          {activeTab === "ranking" && (
-            <div className={cn(tabSlideClass, "px-5 py-4")}>
-              <h1 className="text-xl font-extrabold">{t("rankingHeading")}</h1>
-              <p className="mt-1 text-xs text-muted text-balance">
-                {rankingPeriod === "weekly" ? t("rankingWeeklySubtitle") : t("rankingLiveSubtitle")}
-              </p>
-
-              <div className="mt-3 flex rounded-sm border border-border bg-surface p-0.5 text-xs font-extrabold">
-                {(["weekly", "live"] as const).map((period) => (
-                  <button
-                    className={cn(
-                      "flex-1 rounded-xs py-1.5",
-                      rankingPeriod === period ? "bg-primary text-white" : "text-muted-strong",
-                    )}
-                    key={period}
-                    onClick={() => setRankingPeriod(period)}
-                    type="button"
-                  >
-                    {period === "weekly" ? t("rankingWeekly") : t("rankingLive")}
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-4">
-                <TripFeedList
-                  emptyLabel={t("rankingEmpty")}
-                  likedIds={likedIds}
-                  mode="ranking"
-                  onOpenTrip={viewTrip}
-                  onToggleLike={toggleLike}
-                  onToggleSave={toggleSave}
-                  savedIds={savedIds}
-                  trips={rankingTrips}
-                />
-              </div>
-            </div>
-          )}
-
           {activeTab === "profile" && (
             <div className={tabSlideClass}>
+              <button
+                className="ml-4 mt-4 px-1 py-1 text-xs font-bold text-muted-strong transition hover:text-primary"
+                onClick={() => setActiveTab("home")}
+                type="button"
+              >
+                {t("back")}
+              </button>
               <ProfileTab
                 bookmarkedPlaces={bookmarkedPlaces}
                 isSignedIn={isSignedIn}
@@ -1506,27 +1681,51 @@ export function MobileAppShell() {
           )}
         </div>
 
-        {showBottomNav && (
-          <nav className="nav-pop-in grid shrink-0 grid-cols-4 border-t border-border bg-surface/95 [padding-bottom:env(safe-area-inset-bottom)]">
-            {tabs.map(({ icon: Icon, id, label }) => (
-              <button
-                className={cn(
-                  "flex flex-col items-center gap-1 py-2.5 text-xs font-bold text-muted transition-colors duration-300",
-                  activeTab === id && "text-primary",
-                )}
-                data-tour={`nav-${id}`}
-                key={id}
-                onClick={() => setActiveTab(id)}
-                type="button"
-              >
-                <span className="relative grid place-items-center">
-                  {activeTab === id && <span aria-hidden="true" className="nav-icon-glow" />}
-                  <Icon className="relative z-10 h-5 w-5" />
-                </span>
-                {label}
-              </button>
-            ))}
-          </nav>
+        {/* The first screen stays bare ("바로 탐색하기" is its way into explore). Profile and
+            explore icons only appear once a course exists. */}
+        {activeTab === "home" && hasResult && (
+          <>
+            <div
+              aria-hidden="true"
+              className={cn(
+                "pointer-events-none absolute inset-x-0 top-0 z-10 h-[5.25rem] transition-opacity duration-300",
+                isTitleScrolledAway ? "opacity-100" : "opacity-0",
+              )}
+              style={{
+                background:
+                  "linear-gradient(to bottom, color-mix(in srgb, var(--background) 88%, transparent) 0%, color-mix(in srgb, var(--background) 62%, transparent) 55%, transparent 100%)",
+                backdropFilter: "blur(10px)",
+                WebkitBackdropFilter: "blur(10px)",
+                maskImage: "linear-gradient(to bottom, black 55%, transparent 100%)",
+                WebkitMaskImage: "linear-gradient(to bottom, black 55%, transparent 100%)",
+              }}
+            />
+            <div
+              className={cn(
+                "pointer-events-none absolute left-5 top-3 z-20 flex h-10 items-center transition-opacity duration-300",
+                isTitleScrolledAway ? "opacity-100" : "opacity-0",
+              )}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img alt="Trip Chain" className="block h-[22px] w-auto" src="/tripchain-logo-horizontal.svg" />
+            </div>
+            <button
+              aria-label={t("navProfile")}
+              className="absolute right-4 top-3 z-20 grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/90 text-muted-strong shadow-soft backdrop-blur transition hover:border-primary hover:text-primary"
+              onClick={() => setActiveTab("profile")}
+              type="button"
+            >
+              <UserIcon className="h-5 w-5" />
+            </button>
+            <button
+              aria-label={t("navExplore")}
+              className="absolute right-16 top-3 z-20 grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/90 text-muted-strong shadow-soft backdrop-blur transition hover:border-primary hover:text-primary"
+              onClick={() => setActiveTab("explore")}
+              type="button"
+            >
+              <CompassIcon className="h-5 w-5" />
+            </button>
+          </>
         )}
 
         {viewingCategory && (
