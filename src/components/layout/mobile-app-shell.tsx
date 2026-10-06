@@ -17,6 +17,7 @@ import {
   GripIcon,
   LightbulbIcon,
   LocateIcon,
+  MapPinPlusIcon,
   MinusIcon,
   NavigationIcon,
   PinIcon,
@@ -81,6 +82,15 @@ type ExploreSort = "all" | "weekly" | "live";
 const TAB_ORDER: TabId[] = ["home", "explore", "profile"];
 
 const OTHER_PLACES_PER_CATEGORY = 3;
+
+// How many "near this stop" suggestions a chain card shows when expanded, and the letters
+// that tie each one to its marker on the map (letters, so they can't be confused with the
+// numbered stops of the chain itself).
+const NEARBY_LABELS = ["A", "B", "C", "D", "E"];
+
+function formatDistance(km: number): string {
+  return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
+}
 const CATEGORY_ORDER: PlaceCategory[] = ["관광지", "문화재", "문화시설", "축제행사"];
 const SEOUL_CENTER = { lat: 37.5665, lng: 126.978 };
 const PROFILE_STORAGE_KEY = "tripchain:profile";
@@ -138,6 +148,8 @@ export function MobileAppShell() {
   const chainListRef = useRef<HTMLDivElement | null>(null);
   // Stops the user pinned keep their exact position: drag/optimize/swap work around them.
   const [isTitleScrolledAway, setIsTitleScrolledAway] = useState(false);
+  // The one chain card whose "근처" panel is open (accordion — opening another closes it).
+  const [expandedStopId, setExpandedStopId] = useState<string | null>(null);
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => new Set());
   // Places already swapped out of the current course, so repeated swaps don't just
   // ping-pong between the same two options.
@@ -350,6 +362,27 @@ export function MobileAppShell() {
   const [isNavigateMenuOpen, setIsNavigateMenuOpen] = useState(false);
 
   const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds]);
+  // Closest places to the expanded stop that aren't already in the chain (and don't sit
+  // on a stop's exact coordinate), staying inside a named district if the course has one.
+  const nearbyStops = useMemo(() => {
+    const expanded = chainPlaces.find((place) => place.id === expandedStopId);
+    if (!expanded) {
+      return [];
+    }
+    const chainIdSet = new Set(chainPlaces.map((place) => place.id));
+    const usedCoords = new Set(chainPlaces.map((place) => `${place.lat.toFixed(4)},${place.lng.toFixed(4)}`));
+    return places
+      .filter(
+        (place) =>
+          !chainIdSet.has(place.id) &&
+          !usedCoords.has(`${place.lat.toFixed(4)},${place.lng.toFixed(4)}`) &&
+          (!courseAreaFilter || place.area === courseAreaFilter),
+      )
+      .map((place) => ({ place, distanceKm: haversineKm(expanded, place) }))
+      .sort((a, b) => a.distanceKm - b.distanceKm)
+      .slice(0, NEARBY_LABELS.length);
+  }, [chainPlaces, expandedStopId, courseAreaFilter]);
+  const nearbyPlaces = useMemo(() => nearbyStops.map((entry) => entry.place), [nearbyStops]);
   // The full set of places "넓게" could ever draw from for the current course — the
   // named district's places, or every place in Seoul otherwise. Comparing the current
   // radius's coverage against this tells us whether widening further would actually add
@@ -716,6 +749,7 @@ export function MobileAppShell() {
   function replaceChain(ids: string[]) {
     setChainIds(ids);
     setPinnedIds(new Set());
+    setExpandedStopId(null);
     swappedOutRef.current.clear();
   }
 
@@ -742,6 +776,7 @@ export function MobileAppShell() {
 
   function removeStop(id: string) {
     setChainIds((current) => current.filter((placeId) => placeId !== id));
+    setExpandedStopId((current) => (current === id ? null : current));
     setPinnedIds((current) => {
       if (!current.has(id)) {
         return current;
@@ -780,6 +815,7 @@ export function MobileAppShell() {
       return;
     }
     swappedOutRef.current.add(old.id);
+    setExpandedStopId((current) => (current === old.id ? null : current));
     setRadiusMessage(null);
     setChainIds((current) => autoOrder(current.map((id) => (id === old.id ? replacement.id : id))));
   }
@@ -889,6 +925,31 @@ export function MobileAppShell() {
       });
     }
   }
+
+  function refreshCardTops() {
+    const container = chainListRef.current;
+    if (!container) {
+      return;
+    }
+    cardTopsRef.current = new Map(
+      [...container.querySelectorAll<HTMLElement>("[data-chain-id]")].map((card) => [
+        card.dataset.chainId as string,
+        card.offsetTop,
+      ]),
+    );
+  }
+
+  // Opening/closing a "근처" panel moves every card below it without changing the order,
+  // so the cached positions the FLIP below compares against go stale. While a panel is
+  // animating open they're dropped (its onAnimationEnd re-measures); after a close
+  // there's nothing animating, so they're re-measured straight away.
+  useLayoutEffect(() => {
+    if (expandedStopId === null) {
+      refreshCardTops();
+    } else {
+      cardTopsRef.current = new Map();
+    }
+  }, [expandedStopId]);
 
   // FLIP: whenever the order (or membership) changes, every card that landed somewhere
   // else slides from its previous position to its new one rather than teleporting — this
@@ -1392,7 +1453,7 @@ export function MobileAppShell() {
                       <p className="mt-1 text-xs font-semibold text-danger">{radiusMessage}</p>
                     )}
                     <div className="mt-3">
-                      <ConstellationCard places={chainPlaces} />
+                      <ConstellationCard places={chainPlaces} suggestions={nearbyPlaces} />
                     </div>
                     {recommendReason && (
                       <p className="mt-2 text-xs leading-5 text-muted-strong">{recommendReason}</p>
@@ -1406,11 +1467,12 @@ export function MobileAppShell() {
                     {chainPlaces.map((place, index) => {
                       const localizedPlace = localizePlace(place, locale);
                       const isPinned = pinnedIds.has(place.id);
+                      const isExpanded = expandedStopId === place.id;
                       const isDragging = draggingChainId === place.id;
                       return (
                       <article
                         className={cn(
-                          "relative flex min-w-0 items-center gap-2 rounded-lg border bg-surface p-2.5 shadow-soft",
+                          "relative min-w-0 rounded-lg border bg-surface p-2.5 shadow-soft",
                           !enteredIds.has(place.id) && "chain-card-in",
                           isPinned ? "border-primary" : "border-border",
                           isDragging ? "z-10 shadow-panel" : "transition-[border-color,box-shadow]",
@@ -1424,6 +1486,7 @@ export function MobileAppShell() {
                         }}
                         style={{ animationDelay: `${index * 60}ms` }}
                       >
+                        <div className="flex min-w-0 items-center gap-2">
                         <button
                           aria-label={t("reorderAria")}
                           className="grid h-8 w-6 shrink-0 touch-none place-items-center text-muted disabled:opacity-30"
@@ -1437,26 +1500,49 @@ export function MobileAppShell() {
                           <GripIcon className="h-4 w-4" />
                         </button>
 
-                        <button
-                          className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
-                          onClick={() => setSelectedPlaceId(place.id)}
-                          type="button"
-                        >
-                          <span className="relative shrink-0">
+                        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                          <button
+                            className="relative shrink-0"
+                            onClick={() => setSelectedPlaceId(place.id)}
+                            type="button"
+                          >
                             <PlaceThumb category={place.category} size="sm" />
                             <span className="absolute -bottom-1 -left-1 grid h-4 w-4 place-items-center rounded-full bg-primary text-[9px] font-extrabold text-white ring-2 ring-background">
                               {index + 1}
                             </span>
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-extrabold">{localizedPlace.name}</span>
+                          </button>
+                          <div className="min-w-0 flex-1 text-left">
+                            {/* Typography goes on the inner span: the global `button { font: inherit }`
+                                is unlayered and would beat these utilities on the button itself. */}
+                            <button
+                              className="block w-full text-left"
+                              onClick={() => setSelectedPlaceId(place.id)}
+                              type="button"
+                            >
+                              <span className="block truncate text-sm font-extrabold">{localizedPlace.name}</span>
+                            </button>
                             <span className="block truncate text-xs text-muted">
                               {localizedPlace.area} · {localizedPlace.duration}
                             </span>
-                          </span>
-                        </button>
+                          </div>
+                        </div>
 
                         <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            aria-expanded={isExpanded}
+                            aria-label={t("nearbyToggleAria")}
+                            className={cn(
+                              "grid h-7 w-7 place-items-center rounded-sm border transition-colors duration-200",
+                              isExpanded
+                                ? "border-primary bg-surface text-primary"
+                                : "border-border text-muted-strong",
+                            )}
+                            onClick={() => setExpandedStopId((current) => (current === place.id ? null : place.id))}
+                            title={t("nearbyToggleAria")}
+                            type="button"
+                          >
+                            <MapPinPlusIcon className="h-4 w-4" />
+                          </button>
                           <button
                             aria-label={isPinned ? t("unpinStopAria") : t("pinStopAria")}
                             aria-pressed={isPinned}
@@ -1491,6 +1577,61 @@ export function MobileAppShell() {
                             <TrashIcon className="h-4 w-4" />
                           </button>
                         </div>
+                        </div>
+
+                        {isExpanded && (
+                          <div className="nearby-panel-in grid" onAnimationEnd={refreshCardTops}>
+                            <div className="min-h-0 overflow-hidden">
+                              <div className="mt-2.5 border-t border-border pt-2.5">
+                                <p className="mb-1.5 text-[11px] font-bold text-muted">
+                                  {t("nearbyHeading", { name: localizedPlace.name })}
+                                </p>
+                                {nearbyStops.length === 0 ? (
+                                  <p className="text-xs text-muted">{t("nearbyEmpty")}</p>
+                                ) : (
+                                  <ul className="grid gap-1.5">
+                                    {nearbyStops.map(({ place: nearby, distanceKm }, nearbyIndex) => {
+                                      const localizedNearby = localizePlace(nearby, locale);
+                                      return (
+                                        <li className="flex min-w-0 items-center gap-2" key={nearby.id}>
+                                          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-primary bg-white text-[10px] font-extrabold text-primary">
+                                            {NEARBY_LABELS[nearbyIndex]}
+                                          </span>
+                                          <button
+                                            className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                                            onClick={() => setSelectedPlaceId(nearby.id)}
+                                            type="button"
+                                          >
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img
+                                              alt=""
+                                              className="h-9 w-9 shrink-0 rounded-sm bg-surface-muted object-cover"
+                                              loading="lazy"
+                                              src={getPlaceImageUrl(nearby.id)}
+                                            />
+                                            <span className="min-w-0 flex-1">
+                                              <span className="block truncate text-xs font-bold">{localizedNearby.name}</span>
+                                              <span className="block truncate text-[11px] text-muted">
+                                                {localizedNearby.area} · {formatDistance(distanceKm)}
+                                              </span>
+                                            </span>
+                                          </button>
+                                          <button
+                                            className="shrink-0 rounded-full border border-primary px-2.5 py-1 text-primary transition hover:bg-primary hover:text-white"
+                                            onClick={() => addToChain(nearby)}
+                                            type="button"
+                                          >
+                                            <span className="text-[11px] font-extrabold">+ {t("addToChainLabel")}</span>
+                                          </button>
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </article>
                       );
                     })}

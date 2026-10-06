@@ -45,7 +45,31 @@ function spreadOverlappingMarkers(places: MobilePlace[]): { lat: number; lng: nu
 
 type ConstellationCardProps = {
   places: MobilePlace[];
+  // Places shown as lettered "could add here" markers alongside the numbered route
+  // (e.g. the options listed under an expanded chain card). They're not part of the
+  // route line; the map just widens to include them while they're present.
+  suggestions?: MobilePlace[];
 };
+
+const SUGGESTION_LABELS = ["A", "B", "C", "D", "E"];
+
+function createSuggestionMarker(label: string) {
+  const marker = document.createElement("div");
+  marker.textContent = label;
+  marker.style.display = "grid";
+  marker.style.placeItems = "center";
+  marker.style.width = "22px";
+  marker.style.height = "22px";
+  marker.style.borderRadius = "999px";
+  marker.style.background = "white";
+  marker.style.color = "#4f8df7";
+  marker.style.fontWeight = "900";
+  marker.style.fontSize = "11px";
+  marker.style.border = "2px solid #4f8df7";
+  marker.style.boxShadow = "0 3px 10px rgba(11, 18, 32, 0.35)";
+
+  return marker;
+}
 
 const WIDTH = 400;
 const HEIGHT = 240;
@@ -186,7 +210,12 @@ function AbstractConstellation({ places }: { places: MobilePlace[] }) {
   );
 }
 
-export function ConstellationCard({ places }: ConstellationCardProps) {
+// A shared empty array, not a fresh `[]` default per render — `suggestions` is an effect
+// dependency, and a new array each render would rebuild the map overlays (and re-fit the
+// view, undoing any pan/zoom) on every parent re-render.
+const NO_SUGGESTIONS: MobilePlace[] = [];
+
+export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS }: ConstellationCardProps) {
   const t = useT();
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -243,6 +272,7 @@ export function ConstellationCard({ places }: ConstellationCardProps) {
 
     const bounds = new maps.LatLngBounds();
     places.forEach((place) => bounds.extend(new maps.LatLng(place.lat, place.lng)));
+    suggestions.forEach((place) => bounds.extend(new maps.LatLng(place.lat, place.lng)));
     map.setBounds(bounds, 32);
 
     polylineRef.current?.setMap(null);
@@ -271,11 +301,23 @@ export function ConstellationCard({ places }: ConstellationCardProps) {
       return overlay;
     });
 
+    suggestions.forEach((place, index) => {
+      const overlay = new maps.CustomOverlay({
+        content: createSuggestionMarker(SUGGESTION_LABELS[index] ?? "+"),
+        position: new maps.LatLng(place.lat, place.lng),
+        xAnchor: 0.5,
+        yAnchor: 0.5,
+        zIndex: 9,
+      });
+      overlay.setMap(map);
+      overlaysRef.current.push(overlay);
+    });
+
     return () => {
       polylineRef.current?.setMap(null);
       overlaysRef.current.forEach((overlay) => overlay.setMap(null));
     };
-  }, [places, status]);
+  }, [places, suggestions, status]);
 
   function zoomBy(delta: number) {
     const map = mapRef.current;

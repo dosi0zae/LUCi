@@ -33,6 +33,25 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase AY: "근처" Panel on Each Chain Card (meeting item 4)
+
+Status: Complete
+
+Scope — meeting feedback that the bottom "다른 장소도 볼까요?" area feels detached from the chain and the map: let a stop's own card unfold its nearby options, show them on the map, and add one straight into the chain.
+
+- The toggle is a map-pin-with-plus icon button (`MapPinPlusIcon`) at the left end of each card's button group, same 28px square style as pin/swap/delete (order: nearby · pin · swap · delete); open state gets a blue outline. It went through two earlier looks first — a plain blue "근처 ▾" text link on the subtitle line (read as part of the place's description, not an action) and an outlined "＋ 근처" pill (still not icon-like) — before landing on an icon after comparing six candidates side by side. Four buttons fit on a 375px card with names still readable. i18n key is now `nearbyToggleAria` (label/tooltip only). It opens an accordion panel (one at a time) under that card listing the 5 closest places not already in the chain — never on a stop's exact coordinate, and inside the named district if the course has one — each with a photo, distance ("229m"/"1.2km"), a letter A–E and a "+ 담기" button. Tapping the row opens the place sheet.
+- **Map link**: `ConstellationCard` takes a new `suggestions` prop and draws those places as white, blue-ringed lettered markers (A–E; letters so they can't be mistaken for the numbered stops) and widens the view to include them; closing the panel removes them. The shell memoizes the prop, and `ConstellationCard` uses a shared empty default, because `suggestions` is an effect dependency — a fresh array per render would rebuild the overlays and reset any pan/zoom on every re-render.
+- Adding from the panel goes through the normal `addToChain` (so it lands in its shortest-walk slot, pins respected) and the panel stays open with the next-nearest options, so several can be added in a row. Panel opening animates `grid-template-rows` 0fr→1fr (`nearby-panel-in`, reduced-motion aware), so the cards below follow it down smoothly.
+- The FLIP slide cache goes stale when a panel moves cards without changing the order: it's dropped while a panel is opening and re-measured on its `animationend` (and immediately on close). Verified a delete after an open/close still slides the cards the right distance (70px = one card + gap).
+- Gotcha found while testing: the global, unlayered `button { font: inherit }` beats Tailwind's layered utilities, so `text-sm font-extrabold` placed on a `<button>` silently does nothing — typography for the new buttons lives on inner spans (matching how the rest of this file already does it).
+- i18n: `nearbyToggle`, `nearbyHeading` ("{name} 근처에서 더 담아보기"), `nearbyEmpty` in ko/en/ja/zh.
+
+Verification:
+
+- Passed: `pnpm exec tsc --noEmit`, `pnpm lint` (pre-existing `no-img-element` warnings only)
+- Passed: browser — opening 건청궁's panel lists 5 places by distance with letters, A–E markers appear on the map, cards below shift down and the card above doesn't; "+ 담기" on A inserts it at its best slot (3rd) while the panel stays open with the next five; collapsing removes the markers
+- Not checked: touch behavior and the panel on very small screens
+
 ### Mobile Phase AX: Chain Cards — Pin, Per-Stop Swap, and Real Reorder Motion
 
 Status: Complete
