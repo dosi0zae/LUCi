@@ -347,19 +347,18 @@ export function optimizeRoutePreservingPins(places: MobilePlace[], pinnedIds: Se
   return best;
 }
 
-// Swap one stop for a fresh alternative without touching the rest of the chain. Favors
-// places near the one being replaced (so the walk still hangs together), of the same
-// category, and better known — then picks randomly among the top few so pressing swap
-// repeatedly cycles through different options instead of ping-ponging between two.
-// `excludeIds` is for places the user has already swapped away from in this course.
-export function pickReplacementStop(
+// Ranked alternatives for one stop, best first, without touching the rest of the chain.
+// Favors places near the one being replaced (so the walk still hangs together), of the
+// same category, and better known. Each entry carries its distance from the stop being
+// replaced so the UI can show it.
+export function rankReplacementStops(
   chain: MobilePlace[],
   index: number,
-  options: { areaFilter?: string | null; excludeIds?: Set<string> } = {},
-): MobilePlace | null {
+  options: { areaFilter?: string | null; limit?: number } = {},
+): { place: MobilePlace; distanceKm: number }[] {
   const current = chain[index];
   if (!current) {
-    return null;
+    return [];
   }
 
   const chainIds = new Set(chain.map((place) => place.id));
@@ -382,16 +381,12 @@ export function pickReplacementStop(
         -haversineKm(reference, place) -
         haversineKm(current, place) * 0.5 +
         (place.fameScore ?? 40) / 40 +
-        (place.category === current.category ? 1.5 : 0) -
-        (options.excludeIds?.has(place.id) ? 100 : 0),
+        (place.category === current.category ? 1.5 : 0),
     }))
     .sort((a, b) => b.score - a.score)
-    .slice(0, 4);
+    .slice(0, options.limit ?? 5);
 
-  if (ranked.length === 0) {
-    return null;
-  }
-  return ranked[Math.floor(Math.random() * ranked.length)].place;
+  return ranked.map(({ place }) => ({ place, distanceKm: haversineKm(current, place) }));
 }
 
 // Sampling from the top few candidates (instead of always the single best) spreads

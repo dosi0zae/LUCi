@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { LocateIcon, SparklesIcon } from "@/components/layout/app-icons";
+import { LocateIcon, RouteIcon, SparklesIcon } from "@/components/layout/app-icons";
 import {
   loadKakaoMaps,
   type KakaoCustomOverlay,
@@ -49,6 +49,9 @@ type ConstellationCardProps = {
   // (e.g. the options listed under an expanded chain card). They're not part of the
   // route line; the map just widens to include them while they're present.
   suggestions?: MobilePlace[];
+  // When given, a route-optimize button appears above the view toggle. It returns whether
+  // the order actually changed, so the card can say "done" or "already the shortest".
+  onOptimize?: () => boolean;
 };
 
 const SUGGESTION_LABELS = ["A", "B", "C", "D", "E"];
@@ -215,7 +218,7 @@ function AbstractConstellation({ places }: { places: MobilePlace[] }) {
 // view, undoing any pan/zoom) on every parent re-render.
 const NO_SUGGESTIONS: MobilePlace[] = [];
 
-export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS }: ConstellationCardProps) {
+export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOptimize }: ConstellationCardProps) {
   const t = useT();
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -225,6 +228,17 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS }: Cons
   const polylineRef = useRef<KakaoPolyline | null>(null);
   const [status, setStatus] = useState<"idle" | "ready" | "error">(appKey ? "idle" : "error");
   const [viewMode, setViewMode] = useState<"map" | "abstract">("map");
+  const [optimizeNote, setOptimizeNote] = useState<"done" | "already" | null>(null);
+  const optimizeNoteTimerRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(optimizeNoteTimerRef.current), []);
+
+  function handleOptimize() {
+    const changed = onOptimize?.() ?? false;
+    setOptimizeNote(changed ? "done" : "already");
+    window.clearTimeout(optimizeNoteTimerRef.current);
+    optimizeNoteTimerRef.current = window.setTimeout(() => setOptimizeNote(null), 1800);
+  }
 
   useEffect(() => {
     if (!appKey || !containerRef.current || places.length < 2) {
@@ -408,6 +422,27 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS }: Cons
               <LocateIcon className="h-3.5 w-3.5" />
             </button>
           </div>
+        </>
+      )}
+      {status === "ready" && onOptimize && places.length > 2 && (
+        <>
+          <button
+            aria-label={t("optimizeRouteAria")}
+            className="absolute bottom-[3rem] right-2 z-10 grid h-8 w-8 place-items-center rounded-full border border-white/30 bg-white/90 text-foreground shadow-soft backdrop-blur-sm transition hover:bg-surface-muted"
+            onClick={handleOptimize}
+            title={t("optimizeRouteAria")}
+            type="button"
+          >
+            <RouteIcon className="h-4 w-4" />
+          </button>
+          {optimizeNote && (
+            <p
+              className="optimize-note pointer-events-none absolute bottom-[3.25rem] right-12 z-10 rounded-full bg-foreground/85 px-2.5 py-1 text-[11px] font-bold text-white"
+              role="status"
+            >
+              {optimizeNote === "done" ? t("optimizeDone") : t("optimizeAlready")}
+            </p>
+          )}
         </>
       )}
       {status === "ready" && (

@@ -33,6 +33,20 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase BA: "다른 장소 보기" Replaces the Instant Swap
+
+Status: Complete
+
+- [x] The swap button (instant, random replacement) is now a map + magnifier button (`MapSearchIcon`, aria "다른 장소 보기") that opens the same accordion panel as "근처" under the card, listing up to 5 ranked alternatives (lettered A–E, also shown as markers on the map). Picking "교체" swaps that one stop and re-optimizes the route.
+- [x] `pickReplacementStop` (random) replaced by `rankReplacementStops` in `recommend-engine.ts` (same scoring, returns ranked list with distance); swap history ref removed.
+- [x] Only one panel (nearby or swap) is open at a time; pinning a stop closes its swap panel; the swap button stays disabled for pinned stops. New i18n keys `swapToggleAria`, `swapHeading`, `swapEmpty`, `swapPickLabel` in 4 locales (old `swapStopAria`/`swapStopNone` removed).
+- [x] Panel rows now use icon buttons instead of text pills: exchange (`ExchangeIcon`, "교체", swap panel only) and playlist-add (`PlaylistAddIcon`, "담기", both panels).
+- [x] Swapping hands the slot over: the stop that was replaced takes the picked alternative's row (same letter) in the panel, the panel stays open on the new card, the new card slides in with a highlight ring + "교체됨" badge and the old stop's row slides in with a highlight. Candidate list is frozen in `swapCandidateIds` while the panel is open; adding a candidate removes it from the list.
+- [x] Swap icon is now a vertically flipped rotate arrow (`RotateUpIcon`, head pointing up). Swapping no longer re-optimizes the order, so the card being worked on stays put.
+- [x] New route-optimize button on the map (`RouteIcon`, above the constellation/map toggle, shown for 3+ stops; `ConstellationCard` `onOptimize` prop). It reorders the unpinned stops by shortest walk (`optimizeRoutePreservingPins`, any stop count) and shows a short note: "동선을 가장 짧게 정리했어요" / "이미 가장 짧은 동선이에요" (4 locales).
+- [x] Swap feedback trimmed: the "교체됨" pill now sits left of the exchange button in the swapped row, and the card/row slide motion was removed — only the blue glow/highlight remains.
+- [x] `tsc --noEmit` and `lint` pass; verified open → pick → replaced (animations present) and switching between the two panels in the browser.
+
 ### Mobile Phase AZ: "체인" → "코스" Wording and Intro Splash
 
 Status: Complete

@@ -240,13 +240,54 @@ export function MapPinPlusIcon({ className }: IconProps) {
   );
 }
 
-export function SwapIcon({ className }: IconProps) {
+export function RouteIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>
-      <path d="M4 8h14" />
-      <path d="m14 4 4 4-4 4" />
-      <path d="M20 16H6" />
-      <path d="m10 12-4 4 4 4" />
+      <circle cx="5" cy="19" r="2" />
+      <circle cx="19" cy="5" r="2" />
+      <path d="M11 19h5.5a3.5 3.5 0 0 0 0-7h-8a3.5 3.5 0 0 1 0-7H13" />
+    </svg>
+  );
+}
+
+export function RotateUpIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      {/* A circular arrow with its head at the top ("swap this one out"), drawn as a
+          vertical mirror of the usual rotate icon so the arrow points upward. */}
+      <g transform="matrix(1 0 0 -1 0 24)">
+        <path d="M15 4.55a8 8 0 0 0-6 14.9m0-4.45v5H4" />
+        <path d="M18.37 7.16v.01" />
+        <path d="M13 19.94v.01" />
+        <path d="M16.84 18.37v.01" />
+        <path d="M19.37 15.1v.01" />
+        <path d="M19.94 11v.01" />
+      </g>
+    </svg>
+  );
+}
+
+export function PlaylistAddIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M19 8H5" />
+      <path d="M5 12h9" />
+      <path d="M11 16H5" />
+      <path d="M15 16h6" />
+      <path d="M18 13v6" />
+    </svg>
+  );
+}
+
+export function MapSearchIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      {/* A folded map with a magnifier at its corner: "look for other places here". */}
+      <path d="M11 18 9 17l-6 3V7l6-3 6 3 6-3v7.5" />
+      <path d="M9 4v13" />
+      <path d="M15 7v5" />
+      <circle cx="18" cy="18" r="3" />
+      <path d="m20.2 20.2 1.8 1.8" />
     </svg>
   );
 }

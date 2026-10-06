@@ -18,13 +18,15 @@ import {
   LightbulbIcon,
   LocateIcon,
   MapPinPlusIcon,
+  MapSearchIcon,
   MinusIcon,
   NavigationIcon,
   PinIcon,
+  PlaylistAddIcon,
   PlusIcon,
   RefreshIcon,
+  RotateUpIcon,
   SearchIcon,
-  SwapIcon,
   TrashIcon,
   UserIcon,
 } from "@/components/layout/app-icons";
@@ -67,8 +69,8 @@ import {
   EXACT_ROUTE_MAX,
   findBestInsertionIndex,
   optimizeRoutePreservingPins,
-  pickReplacementStop,
   RADIUS_STEPS_KM,
+  rankReplacementStops,
 } from "@/features/mobile/recommend-engine";
 import { TripDetailSheet } from "@/features/mobile/trip-detail-sheet";
 import { TripFeedList } from "@/features/mobile/trip-feed-list";
@@ -149,12 +151,19 @@ export function MobileAppShell() {
   const chainListRef = useRef<HTMLDivElement | null>(null);
   // Stops the user pinned keep their exact position: drag/optimize/swap work around them.
   const [isTitleScrolledAway, setIsTitleScrolledAway] = useState(false);
-  // The one chain card whose "근처" panel is open (accordion — opening another closes it).
+  // The one chain card whose panel is open (accordion — opening another closes it), and
+  // which one: "nearby" lists places to add, "swap" lists alternatives to replace it with.
   const [expandedStopId, setExpandedStopId] = useState<string | null>(null);
+  const [expandedKind, setExpandedKind] = useState<"nearby" | "swap">("nearby");
+  // The alternatives listed in the open swap panel. Frozen when it opens so that swapping
+  // one in can hand its slot (same letter, same row) to the stop that was just replaced.
+  const [swapCandidateIds, setSwapCandidateIds] = useState<string[]>([]);
+  // After a swap: the stop that just moved into the course and the one that moved into
+  // the panel, so both can play the "swapped" animation. `staticPanelId` keeps the new
+  // card's panel from replaying its open animation (it's already open).
+  const [swapFlash, setSwapFlash] = useState<{ cardId: string; rowId: string } | null>(null);
+  const [staticPanelId, setStaticPanelId] = useState<string | null>(null);
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => new Set());
-  // Places already swapped out of the current course, so repeated swaps don't just
-  // ping-pong between the same two options.
-  const swappedOutRef = useRef<Set<string>>(new Set());
   // Cards whose entrance animation has finished. A card that's merely been moved in the DOM
   // by a reorder must not replay it (the class would restart on every move).
   const [enteredIds, setEnteredIds] = useState<Set<string>>(() => new Set());
@@ -365,10 +374,18 @@ export function MobileAppShell() {
   const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds]);
   // Closest places to the expanded stop that aren't already in the chain (and don't sit
   // on a stop's exact coordinate), staying inside a named district if the course has one.
-  const nearbyStops = useMemo(() => {
-    const expanded = chainPlaces.find((place) => place.id === expandedStopId);
+  const panelStops = useMemo(() => {
+    const expandedIndex = chainPlaces.findIndex((place) => place.id === expandedStopId);
+    const expanded = chainPlaces[expandedIndex];
     if (!expanded) {
       return [];
+    }
+    if (expandedKind === "swap") {
+      const inChain = new Set(chainPlaces.map((place) => place.id));
+      return getPlacesByIds(swapCandidateIds.filter((id) => !inChain.has(id))).map((place) => ({
+        place,
+        distanceKm: haversineKm(expanded, place),
+      }));
     }
     const chainIdSet = new Set(chainPlaces.map((place) => place.id));
     const usedCoords = new Set(chainPlaces.map((place) => `${place.lat.toFixed(4)},${place.lng.toFixed(4)}`));
@@ -382,8 +399,8 @@ export function MobileAppShell() {
       .map((place) => ({ place, distanceKm: haversineKm(expanded, place) }))
       .sort((a, b) => a.distanceKm - b.distanceKm)
       .slice(0, NEARBY_LABELS.length);
-  }, [chainPlaces, expandedStopId, courseAreaFilter]);
-  const nearbyPlaces = useMemo(() => nearbyStops.map((entry) => entry.place), [nearbyStops]);
+  }, [chainPlaces, expandedStopId, expandedKind, swapCandidateIds, courseAreaFilter]);
+  const nearbyPlaces = useMemo(() => panelStops.map((entry) => entry.place), [panelStops]);
   // The full set of places "넓게" could ever draw from for the current course — the
   // named district's places, or every place in Seoul otherwise. Comparing the current
   // radius's coverage against this tells us whether widening further would actually add
@@ -746,12 +763,11 @@ export function MobileAppShell() {
   }
 
   // Every wholesale chain replacement (new search, refresh, radius step, loaded trip, ...)
-  // starts a different course, so pins and swap history from the old one don't carry over.
+  // starts a different course, so pins from the old one don't carry over.
   function replaceChain(ids: string[]) {
     setChainIds(ids);
     setPinnedIds(new Set());
     setExpandedStopId(null);
-    swappedOutRef.current.clear();
   }
 
   function locateNearby() {
@@ -788,7 +804,22 @@ export function MobileAppShell() {
     });
   }
 
+  // The explicit "shortest walk" action (the map's route button): reorders the unpinned
+  // stops, whatever the count, and reports whether anything actually moved.
+  function optimizeOrder(): boolean {
+    const nextIds = optimizeRoutePreservingPins(chainPlaces, pinnedIds).map((place) => place.id);
+    const changed = nextIds.some((id, index) => id !== chainPlaces[index]?.id);
+    if (changed) {
+      setChainIds(nextIds);
+    }
+    return changed;
+  }
+
   function togglePin(id: string) {
+    // A pinned stop can't be swapped, so pinning closes its alternatives panel.
+    if (expandedStopId === id && expandedKind === "swap") {
+      setExpandedStopId(null);
+    }
     setPinnedIds((current) => {
       const next = new Set(current);
       if (next.has(id)) {
@@ -800,25 +831,38 @@ export function MobileAppShell() {
     });
   }
 
-  // Replaces just this one stop (same slot, same position in the route) with a nearby
-  // alternative — the rest of the chain is untouched.
-  function swapStop(index: number) {
-    const old = chainPlaces[index];
-    if (!old) {
+  function toggleStopPanel(id: string, kind: "nearby" | "swap") {
+    setStaticPanelId(null);
+    if (expandedStopId === id && expandedKind === kind) {
+      setExpandedStopId(null);
       return;
     }
-    const replacement = pickReplacementStop(chainPlaces, index, {
-      areaFilter: courseAreaFilter,
-      excludeIds: swappedOutRef.current,
-    });
-    if (!replacement) {
-      setRadiusMessage(t("swapStopNone"));
-      return;
+    if (kind === "swap") {
+      const index = chainPlaces.findIndex((place) => place.id === id);
+      setSwapCandidateIds(
+        rankReplacementStops(chainPlaces, index, {
+          areaFilter: courseAreaFilter,
+          limit: NEARBY_LABELS.length,
+        }).map((entry) => entry.place.id),
+      );
     }
-    swappedOutRef.current.add(old.id);
-    setExpandedStopId((current) => (current === old.id ? null : current));
-    setRadiusMessage(null);
-    setChainIds((current) => autoOrder(current.map((id) => (id === old.id ? replacement.id : id))));
+    setExpandedKind(kind);
+    setExpandedStopId(id);
+  }
+
+  // Puts the picked alternative into the stop's slot and hands the old stop the
+  // alternative's row in the panel (so "C" now offers what C replaced). The panel stays open
+  // on the new card, and both sides play a short animation so the swap is visible.
+  function replaceStop(oldId: string, replacement: MobilePlace) {
+    setSwapCandidateIds((current) => current.map((id) => (id === replacement.id ? oldId : id)));
+    setEnteredIds((current) => new Set(current).add(replacement.id));
+    setExpandedStopId(replacement.id);
+    setStaticPanelId(replacement.id);
+    setSwapFlash({ cardId: replacement.id, rowId: oldId });
+    window.setTimeout(() => setSwapFlash(null), 1100);
+    // The slot stays where it is: re-optimizing here would move the card the user is
+    // working on out from under them. Reordering is a separate, explicit action.
+    setChainIds((current) => current.map((id) => (id === oldId ? replacement.id : id)));
   }
 
   function reorderChainTo(id: string, toIndex: number) {
@@ -940,7 +984,7 @@ export function MobileAppShell() {
     );
   }
 
-  // Opening/closing a "근처" panel moves every card below it without changing the order,
+  // Opening/closing a card's panel moves every card below it without changing the order,
   // so the cached positions the FLIP below compares against go stale. While a panel is
   // animating open they're dropped (its onAnimationEnd re-measures); after a close
   // there's nothing animating, so they're re-measured straight away.
@@ -950,7 +994,7 @@ export function MobileAppShell() {
     } else {
       cardTopsRef.current = new Map();
     }
-  }, [expandedStopId]);
+  }, [expandedStopId, expandedKind]);
 
   // FLIP: whenever the order (or membership) changes, every card that landed somewhere
   // else slides from its previous position to its new one rather than teleporting — this
@@ -1007,7 +1051,6 @@ export function MobileAppShell() {
     const trip: FeedTrip = {
       // handlePublish only ever runs from PublishSheet's submit click, never during
       // render, so a timestamp-based id here is a safe, one-shot side effect.
-      // eslint-disable-next-line react-hooks/purity
       id: `mine-${Date.now()}`,
       title: input.title,
       description: input.description,
@@ -1455,7 +1498,7 @@ export function MobileAppShell() {
                       <p className="mt-1 text-xs font-semibold text-danger">{radiusMessage}</p>
                     )}
                     <div className="mt-3">
-                      <ConstellationCard places={chainPlaces} suggestions={nearbyPlaces} />
+                      <ConstellationCard onOptimize={optimizeOrder} places={chainPlaces} suggestions={nearbyPlaces} />
                     </div>
                     {recommendReason && (
                       <p className="mt-2 text-xs leading-5 text-muted-strong">{recommendReason}</p>
@@ -1469,13 +1512,16 @@ export function MobileAppShell() {
                     {chainPlaces.map((place, index) => {
                       const localizedPlace = localizePlace(place, locale);
                       const isPinned = pinnedIds.has(place.id);
-                      const isExpanded = expandedStopId === place.id;
+                      const isNearbyOpen = expandedStopId === place.id && expandedKind === "nearby";
+                      const isSwapOpen = expandedStopId === place.id && expandedKind === "swap";
+                      const isExpanded = isNearbyOpen || isSwapOpen;
                       const isDragging = draggingChainId === place.id;
                       return (
                       <article
                         className={cn(
                           "relative min-w-0 rounded-lg border bg-surface p-2.5 shadow-soft",
                           !enteredIds.has(place.id) && "chain-card-in",
+                          swapFlash?.cardId === place.id && "chain-card-swapped",
                           isPinned ? "border-primary" : "border-border",
                           isDragging ? "z-10 shadow-panel" : "transition-[border-color,box-shadow]",
                         )}
@@ -1531,15 +1577,15 @@ export function MobileAppShell() {
 
                         <div className="flex shrink-0 items-center gap-1">
                           <button
-                            aria-expanded={isExpanded}
+                            aria-expanded={isNearbyOpen}
                             aria-label={t("nearbyToggleAria")}
                             className={cn(
                               "grid h-7 w-7 place-items-center rounded-sm border transition-colors duration-200",
-                              isExpanded
+                              isNearbyOpen
                                 ? "border-primary bg-surface text-primary"
                                 : "border-border text-muted-strong",
                             )}
-                            onClick={() => setExpandedStopId((current) => (current === place.id ? null : place.id))}
+                            onClick={() => toggleStopPanel(place.id, "nearby")}
                             title={t("nearbyToggleAria")}
                             type="button"
                           >
@@ -1561,14 +1607,20 @@ export function MobileAppShell() {
                             <PinIcon className="h-4 w-4" />
                           </button>
                           <button
-                            aria-label={t("swapStopAria")}
-                            className="grid h-7 w-7 place-items-center rounded-sm border border-border text-muted-strong disabled:opacity-30"
+                            aria-expanded={isSwapOpen}
+                            aria-label={t("swapToggleAria")}
+                            className={cn(
+                              "grid h-7 w-7 place-items-center rounded-sm border transition-colors duration-200 disabled:opacity-30",
+                              isSwapOpen
+                                ? "border-primary bg-surface text-primary"
+                                : "border-border text-muted-strong",
+                            )}
                             disabled={isPinned}
-                            onClick={() => swapStop(index)}
-                            title={t("swapStopAria")}
+                            onClick={() => toggleStopPanel(place.id, "swap")}
+                            title={t("swapToggleAria")}
                             type="button"
                           >
-                            <SwapIcon className="h-4 w-4" />
+                            <MapSearchIcon className="h-4 w-4" />
                           </button>
                           <button
                             aria-label={t("deleteAria")}
@@ -1582,20 +1634,32 @@ export function MobileAppShell() {
                         </div>
 
                         {isExpanded && (
-                          <div className="nearby-panel-in grid" onAnimationEnd={refreshCardTops}>
+                          <div
+                            className={cn("grid", staticPanelId !== place.id && "nearby-panel-in")}
+                            key={expandedKind}
+                            onAnimationEnd={refreshCardTops}
+                          >
                             <div className="min-h-0 overflow-hidden">
                               <div className="mt-2.5 border-t border-border pt-2.5">
                                 <p className="mb-1.5 text-[11px] font-bold text-muted">
-                                  {t("nearbyHeading", { name: localizedPlace.name })}
+                                  {isSwapOpen
+                                    ? t("swapHeading", { name: localizedPlace.name })
+                                    : t("nearbyHeading", { name: localizedPlace.name })}
                                 </p>
-                                {nearbyStops.length === 0 ? (
-                                  <p className="text-xs text-muted">{t("nearbyEmpty")}</p>
+                                {panelStops.length === 0 ? (
+                                  <p className="text-xs text-muted">{isSwapOpen ? t("swapEmpty") : t("nearbyEmpty")}</p>
                                 ) : (
                                   <ul className="grid gap-1.5">
-                                    {nearbyStops.map(({ place: nearby, distanceKm }, nearbyIndex) => {
+                                    {panelStops.map(({ place: nearby, distanceKm }, nearbyIndex) => {
                                       const localizedNearby = localizePlace(nearby, locale);
                                       return (
-                                        <li className="flex min-w-0 items-center gap-2" key={nearby.id}>
+                                        <li
+                                          className={cn(
+                                            "flex min-w-0 items-center gap-2 rounded-sm",
+                                            swapFlash?.rowId === nearby.id && "swap-row-in",
+                                          )}
+                                          key={nearby.id}
+                                        >
                                           <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-primary bg-white text-[10px] font-extrabold text-primary">
                                             {NEARBY_LABELS[nearbyIndex]}
                                           </span>
@@ -1618,12 +1682,30 @@ export function MobileAppShell() {
                                               </span>
                                             </span>
                                           </button>
+                                          {swapFlash?.rowId === nearby.id && (
+                                            <span className="swap-badge shrink-0 rounded-full bg-primary px-2 py-0.5 text-[10px] font-extrabold text-white">
+                                              {t("swappedBadge")}
+                                            </span>
+                                          )}
+                                          {isSwapOpen && (
+                                            <button
+                                              aria-label={t("swapPickLabel")}
+                                              className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-primary text-primary transition hover:bg-primary hover:text-white"
+                                              onClick={() => replaceStop(place.id, nearby)}
+                                              title={t("swapPickLabel")}
+                                              type="button"
+                                            >
+                                              <RotateUpIcon className="h-4 w-4" />
+                                            </button>
+                                          )}
                                           <button
-                                            className="shrink-0 rounded-full border border-primary px-2.5 py-1 text-primary transition hover:bg-primary hover:text-white"
+                                            aria-label={t("addToChainLabel")}
+                                            className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-primary text-primary transition hover:bg-primary hover:text-white"
                                             onClick={() => addToChain(nearby)}
+                                            title={t("addToChainLabel")}
                                             type="button"
                                           >
-                                            <span className="text-[11px] font-extrabold">+ {t("addToChainLabel")}</span>
+                                            <PlaylistAddIcon className="h-4 w-4" />
                                           </button>
                                         </li>
                                       );
