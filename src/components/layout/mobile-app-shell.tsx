@@ -61,6 +61,7 @@ import { OnboardingTour } from "@/features/mobile/onboarding-tour";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import { PlaceScroller } from "@/features/mobile/place-scroller";
 import { SlidingTabs } from "@/features/mobile/sliding-tabs";
+import { buildTasteProfile, tasteScore, type TasteProfile } from "@/features/mobile/taste";
 import { useHorizontalSwipe } from "@/features/mobile/use-swipe";
 import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
 import { PublishSheet } from "@/features/mobile/publish-sheet";
@@ -84,7 +85,7 @@ import { ProfileTab } from "@/features/mobile/profile-tab";
 // explore as a sort option rather than its own screen.
 type TabId = "home" | "explore" | "profile";
 type ExploreSort = "all" | "weekly" | "live";
-const EXPLORE_SORT_ORDER: ExploreSort[] = ["all", "weekly", "live"];
+const EXPLORE_SORT_ORDER: ExploreSort[] = ["all", "live", "weekly"];
 // Where (px below the scroll area's top) the pinned sort tabs sit: centered on the back button.
 const EXPLORE_TABS_PIN_TOP = 9;
 
@@ -605,12 +606,27 @@ export function MobileAppShell() {
       onChange={selectExploreSort}
       options={[
         { value: "all", label: t("exploreSortAll") },
-        { value: "weekly", label: t("rankingWeekly") },
         { value: "live", label: t("rankingLive") },
+        { value: "weekly", label: t("rankingWeekly") },
       ]}
       value={exploreSort}
     />
   );
+
+  // The taste behind the 전체 order is taken when Explore opens, not live: liking or saving a
+  // course while browsing shouldn't make cards jump around under the finger. It updates the
+  // next time the screen is opened.
+  const [tasteSnapshot, setTasteSnapshot] = useState<TasteProfile>(() =>
+    buildTasteProfile({ likedTrips: [], savedTrips: [], savedPlaces: [] }),
+  );
+  useLayoutEffect(() => {
+    if (activeTab === "explore") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTasteSnapshot(buildTasteProfile({ likedTrips, savedTrips, savedPlaces: bookmarkedPlaces }));
+    }
+    // Deliberately only when the tab changes (see above).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const exploreTrips = useMemo(() => {
     let matching: FeedTrip[];
@@ -642,12 +658,16 @@ export function MobileAppShell() {
     if (exploreSort === "weekly") {
       return [...matching].sort((a, b) => b.rankScore - a.rankScore);
     }
-    // 전체: newest first — except when Gemini picked the courses, whose order is by relevance.
+    // 전체: ordered by the user's taste (what they saved and liked) — except when Gemini
+    // picked the courses for a search, whose order is by relevance. Ties go to the newer one.
     if (normalizedExploreQuery && aiSearchIds && aiSearchIds.length > 0) {
       return matching;
     }
-    return [...matching].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
-  }, [allTrips, normalizedExploreQuery, aiSearchIds, exploreSort]);
+    return matching
+      .map((trip) => ({ trip, score: tasteScore(trip, tasteSnapshot) }))
+      .sort((a, b) => b.score - a.score || b.trip.publishedAt.localeCompare(a.trip.publishedAt))
+      .map((entry) => entry.trip);
+  }, [allTrips, normalizedExploreQuery, aiSearchIds, exploreSort, tasteSnapshot]);
 
   // Best-effort current position, used as the default anchor whenever a search doesn't
   // name its own area — never blocks the search on a slow/denied permission prompt.

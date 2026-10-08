@@ -39,7 +39,8 @@ Status: Complete
 
 - [x] The "탐색" title sits to the right of the floating back button on the same line (centers match at 32 px) and scrolls away with the content; the subtitle is centered, and the live-ranking subtitle now reads "지금 가장 인기있는 코스예요." (en/ja/zh reworded too).
 - [x] The 전체/주간 랭킹/실시간 랭킹 pill stays in the page until it reaches the back button's line, then a floating copy pins there (above the white fade; the in-flow one turns `invisible` so nothing jumps), scroll-detected in the shared scroll handler (`exploreTabsRef`, `EXPLORE_TABS_PIN_TOP`).
-- [x] Subtitle is 14 px. Explore "전체" is now explicitly newest-first by `publishedAt` (before it was just my trips, then the seed list's creation order); when Gemini picked the courses for a search, its relevance order is kept. 주간 = rank score, 실시간 = likes + saves + comments.
+- [x] The Explore switch order is 전체 · 실시간 · 주간 (swipe order follows).
+- [x] Subtitle is 14 px. Explore "전체" is now ordered by the user's taste (`taste.ts`): a profile built from the places they saved (weight 2), courses they saved (1.5) and courses they liked (1) votes for categories, districts and tags; a course scores by how much of its places' category/district/tag match, +1.5× the share of its places the user saved, + a small popularity nudge (cold start = popularity); ties → newer. The taste is snapshotted when Explore opens, so cards don't jump while liking/saving; it refreshes on the next visit. Gemini search results keep their relevance order. Subtitles: 전체 "나의 취향을 반영한 코스 순서예요.", 주간 "주간 인기있는 코스 순서예요." (rank score), 실시간 "실시간 인기있는 코스 순서예요." (likes+saves+comments); en/ja/zh reworded.
 - [x] `tsc --noEmit` and `lint` pass; verified the title/back alignment, centered subtitle, and the pinned pill after scrolling.
 
 ### Mobile Phase BM: Swipe Between Sections
