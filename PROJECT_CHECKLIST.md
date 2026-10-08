@@ -33,6 +33,15 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase BN: Explore Header
+
+Status: Complete
+
+- [x] The "탐색" title sits to the right of the floating back button on the same line (centers match at 32 px) and scrolls away with the content; the subtitle is centered, and the live-ranking subtitle now reads "지금 가장 인기있는 코스예요." (en/ja/zh reworded too).
+- [x] The 전체/주간 랭킹/실시간 랭킹 pill stays in the page until it reaches the back button's line, then a floating copy pins there (above the white fade; the in-flow one turns `invisible` so nothing jumps), scroll-detected in the shared scroll handler (`exploreTabsRef`, `EXPLORE_TABS_PIN_TOP`).
+- [x] Subtitle is 14 px. Explore "전체" is now explicitly newest-first by `publishedAt` (before it was just my trips, then the seed list's creation order); when Gemini picked the courses for a search, its relevance order is kept. 주간 = rank score, 실시간 = likes + saves + comments.
+- [x] `tsc --noEmit` and `lint` pass; verified the title/back alignment, centered subtitle, and the pinned pill after scrolling.
+
 ### Mobile Phase BM: Swipe Between Sections
 
 Status: Complete

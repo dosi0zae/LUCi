@@ -85,6 +85,8 @@ import { ProfileTab } from "@/features/mobile/profile-tab";
 type TabId = "home" | "explore" | "profile";
 type ExploreSort = "all" | "weekly" | "live";
 const EXPLORE_SORT_ORDER: ExploreSort[] = ["all", "weekly", "live"];
+// Where (px below the scroll area's top) the pinned sort tabs sit: centered on the back button.
+const EXPLORE_TABS_PIN_TOP = 9;
 
 const TAB_ORDER: TabId[] = ["home", "explore", "profile"];
 
@@ -156,6 +158,10 @@ export function MobileAppShell() {
   const [isTitleScrolledAway, setIsTitleScrolledAway] = useState(false);
   // Explore/profile have no title to wait for: the top fade shows as soon as the page scrolls.
   const [isScrolled, setIsScrolled] = useState(false);
+  // Explore: once its sort tabs have scrolled up to the back button's line they are pinned
+  // there (a floating copy takes over from the in-flow one).
+  const exploreTabsRef = useRef<HTMLDivElement>(null);
+  const [isExploreTabsPinned, setIsExploreTabsPinned] = useState(false);
   // The one chain card whose alternatives panel is open (accordion — opening another
   // closes it).
   const [expandedStopId, setExpandedStopId] = useState<string | null>(null);
@@ -594,6 +600,18 @@ export function MobileAppShell() {
     }
   });
 
+  const exploreTabs = (
+    <SlidingTabs
+      onChange={selectExploreSort}
+      options={[
+        { value: "all", label: t("exploreSortAll") },
+        { value: "weekly", label: t("rankingWeekly") },
+        { value: "live", label: t("rankingLive") },
+      ]}
+      value={exploreSort}
+    />
+  );
+
   const exploreTrips = useMemo(() => {
     let matching: FeedTrip[];
     if (!normalizedExploreQuery) {
@@ -624,7 +642,11 @@ export function MobileAppShell() {
     if (exploreSort === "weekly") {
       return [...matching].sort((a, b) => b.rankScore - a.rankScore);
     }
-    return matching;
+    // 전체: newest first — except when Gemini picked the courses, whose order is by relevance.
+    if (normalizedExploreQuery && aiSearchIds && aiSearchIds.length > 0) {
+      return matching;
+    }
+    return [...matching].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
   }, [allTrips, normalizedExploreQuery, aiSearchIds, exploreSort]);
 
   // Best-effort current position, used as the default anchor whenever a search doesn't
@@ -1380,6 +1402,11 @@ export function MobileAppShell() {
             setIsTitleScrolledAway((current) => (current === next ? current : next));
             const scrolled = container.scrollTop > 8;
             setIsScrolled((current) => (current === scrolled ? current : scrolled));
+            const tabs = exploreTabsRef.current;
+            const pinned = tabs
+              ? tabs.getBoundingClientRect().top - container.getBoundingClientRect().top <= EXPLORE_TABS_PIN_TOP
+              : false;
+            setIsExploreTabsPinned((current) => (current === pinned ? current : pinned));
           }}
         >
           {activeTab === "home" && (
@@ -1889,9 +1916,12 @@ export function MobileAppShell() {
           )}
 
           {activeTab === "explore" && (
-            <div className={cn(tabSlideClass, "flex h-full min-h-full flex-col px-5 pb-4 pt-[3.75rem]")}>
-              <h1 className="text-xl font-extrabold">{t("exploreHeading")}</h1>
-              <p className="mt-1 text-xs text-muted text-balance">
+            <div className={cn(tabSlideClass, "flex h-full min-h-full flex-col px-5 pb-4 pt-3")}>
+              {/* The title shares the back button's line (to its right) and scrolls away. */}
+              <div className="flex h-10 shrink-0 items-center pl-12">
+                <h1 className="text-xl font-extrabold">{t("exploreHeading")}</h1>
+              </div>
+              <p className="mt-2 text-center text-sm text-muted text-balance">
                 {exploreSort === "weekly"
                   ? t("rankingWeeklySubtitle")
                   : exploreSort === "live"
@@ -1899,16 +1929,11 @@ export function MobileAppShell() {
                     : t("exploreSubtitle")}
               </p>
 
-              <div className="mt-4 flex justify-center">
-                <SlidingTabs
-                  onChange={selectExploreSort}
-                  options={[
-                    { value: "all", label: t("exploreSortAll") },
-                    { value: "weekly", label: t("rankingWeekly") },
-                    { value: "live", label: t("rankingLive") },
-                  ]}
-                  value={exploreSort}
-                />
+              <div
+                className={cn("mt-4 flex justify-center", isExploreTabsPinned && "invisible")}
+                ref={exploreTabsRef}
+              >
+                {exploreTabs}
               </div>
 
               {/* Room at the bottom for the floating search bar. */}
@@ -2000,6 +2025,11 @@ export function MobileAppShell() {
               <CompassIcon className="h-5 w-5" />
             </button>
               </>
+            )}
+            {activeTab === "explore" && isExploreTabsPinned && (
+              <div className="pointer-events-none absolute inset-x-0 z-20 flex justify-center [top:calc(9px+env(safe-area-inset-top))]">
+                <div className="pointer-events-auto">{exploreTabs}</div>
+              </div>
             )}
             {activeTab === "explore" && (
               <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background via-background/85 to-transparent px-5 pt-10 [padding-bottom:calc(1rem+env(safe-area-inset-bottom))]">
