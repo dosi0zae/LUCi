@@ -33,6 +33,13 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase BM: Swipe Between Sections
+
+Status: Complete
+
+- [x] Swiping the content under a pill tab bar moves to the neighbouring section (left swipe = next, right swipe = previous; stops at the first/last): the five profile sections and Explore's 전체/주간/실시간. New `useHorizontalSwipe` hook (`use-swipe.ts`): needs 56 px of mostly-horizontal travel (1.6× the vertical), works with touch and mouse drags, and ignores drags that start in a horizontally scrolling row (`.place-list-scroll`), a text field or `[data-no-swipe]`. The slide-in direction and the tab highlight follow the swipe.
+- [x] `tsc --noEmit` and `lint` pass; verified left/right mouse swipes on Explore (0→1→0) and on the profile (→ the next sections).
+
 ### Mobile Phase BL: Saved vs. Liked Cleanup and Settings Tab
 
 Status: Complete

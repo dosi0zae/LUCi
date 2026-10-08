@@ -61,6 +61,7 @@ import { OnboardingTour } from "@/features/mobile/onboarding-tour";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import { PlaceScroller } from "@/features/mobile/place-scroller";
 import { SlidingTabs } from "@/features/mobile/sliding-tabs";
+import { useHorizontalSwipe } from "@/features/mobile/use-swipe";
 import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
 import { PublishSheet } from "@/features/mobile/publish-sheet";
 import {
@@ -572,6 +573,26 @@ export function MobileAppShell() {
       window.clearTimeout(timer);
     };
   }, [activeTab, normalizedExploreQuery, aiSearchResults, exploreQuery, allTrips, locale]);
+
+  function selectExploreSort(next: ExploreSort) {
+    if (next === exploreSort) {
+      return;
+    }
+    setExploreSlideClass(
+      EXPLORE_SORT_ORDER.indexOf(next) > EXPLORE_SORT_ORDER.indexOf(exploreSort)
+        ? "tab-slide-in-right"
+        : "tab-slide-in-left",
+    );
+    setExploreSort(next);
+  }
+
+  // Swiping the list left/right moves to the next/previous sort, like the tab switch.
+  const exploreSwipe = useHorizontalSwipe((direction) => {
+    const next = EXPLORE_SORT_ORDER[EXPLORE_SORT_ORDER.indexOf(exploreSort) + direction];
+    if (next) {
+      selectExploreSort(next);
+    }
+  });
 
   const exploreTrips = useMemo(() => {
     let matching: FeedTrip[];
@@ -1880,17 +1901,7 @@ export function MobileAppShell() {
 
               <div className="mt-4 flex justify-center">
                 <SlidingTabs
-                  onChange={(next) => {
-                    if (next === exploreSort) {
-                      return;
-                    }
-                    setExploreSlideClass(
-                      EXPLORE_SORT_ORDER.indexOf(next) > EXPLORE_SORT_ORDER.indexOf(exploreSort)
-                        ? "tab-slide-in-right"
-                        : "tab-slide-in-left",
-                    );
-                    setExploreSort(next);
-                  }}
+                  onChange={selectExploreSort}
                   options={[
                     { value: "all", label: t("exploreSortAll") },
                     { value: "weekly", label: t("rankingWeekly") },
@@ -1901,6 +1912,7 @@ export function MobileAppShell() {
               </div>
 
               {/* Room at the bottom for the floating search bar. */}
+              <div className="min-h-[50vh]" {...exploreSwipe}>
               <div
                 className={cn("mt-4 [padding-bottom:calc(5.5rem+env(safe-area-inset-bottom))]", exploreSlideClass)}
                 key={exploreSort}
@@ -1915,6 +1927,7 @@ export function MobileAppShell() {
                   savedIds={savedIds}
                   trips={exploreTrips}
                 />
+              </div>
               </div>
             </div>
           )}

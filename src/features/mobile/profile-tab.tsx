@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BookmarkIcon, EyeIcon, HeartIcon, SlidersIcon, UserIcon } from "@/components/layout/app-icons";
 import { SlidingTabs } from "@/features/mobile/sliding-tabs";
+import { useHorizontalSwipe } from "@/features/mobile/use-swipe";
 import { TripFeedList } from "@/features/mobile/trip-feed-list";
 import { getPlaceImageUrl, localizePlace, type FeedTrip, type MobilePlace } from "@/features/mobile/mobile-data";
 import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
@@ -89,6 +90,14 @@ export function ProfileTab({
     );
     setSubTab(next);
   }
+
+  // Swiping the content left/right moves to the next/previous section, like the tab bar.
+  const swipe = useHorizontalSwipe((direction) => {
+    const next = PROFILE_SUB_TAB_ORDER[PROFILE_SUB_TAB_ORDER.indexOf(subTab) + direction];
+    if (next) {
+      selectSubTab(next);
+    }
+  });
 
   if (!isSignedIn) {
     return (
@@ -188,6 +197,7 @@ export function ProfileTab({
         />
       </div>
 
+      <div className="min-h-[55vh]" {...swipe}>
       <div className={cn("mt-3", slideClass)} key={subTab}>
         {subTab === "settings" ? (
           <div className="px-1 pt-2">
@@ -246,6 +256,7 @@ export function ProfileTab({
             </>
           )
         )}
+      </div>
       </div>
     </div>
   );
