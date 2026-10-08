@@ -165,7 +165,7 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
           <p className="text-xs font-bold text-primary">
             {stepIndex + 1} / {TOUR_STEPS.length}
           </p>
-          <h3 className="mt-1 text-base font-extrabold text-foreground text-balance">{t(step.titleKey)}</h3>
+          <h3 className="mt-1 text-lg font-extrabold text-foreground text-balance">{t(step.titleKey)}</h3>
           <p className="mt-1.5 text-sm leading-5 text-muted-strong text-pretty">{t(step.descriptionKey)}</p>
           <div className="mt-3 flex items-center justify-between">
             <button

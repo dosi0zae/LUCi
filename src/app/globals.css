@@ -99,11 +99,18 @@ a {
   text-decoration: none;
 }
 
-button,
 input,
 textarea,
 select {
   font: inherit;
+}
+
+/* Buttons inherit the surrounding font too, but inside the base layer: an unlayered reset
+   would beat every Tailwind text-size/weight utility placed on a <button> itself. */
+@layer base {
+  button {
+    font: inherit;
+  }
 }
 
 /* iOS Safari auto-zooms the page on focus for any text field under 16px, and snaps back

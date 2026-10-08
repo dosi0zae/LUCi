@@ -12,10 +12,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  AiSparklesIcon,
+  ArrowLeftIcon,
   ArrowRightIcon,
   CompassIcon,
   GripIcon,
-  LightbulbIcon,
   LocateIcon,
   MapSearchIcon,
   MinusIcon,
@@ -54,13 +55,13 @@ import { LanguageMenuButton } from "@/features/mobile/language-menu-button";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
 import { decodeCourseFromLocation } from "@/features/mobile/course-share";
 import { CreatorProfileSheet } from "@/features/mobile/creator-profile-sheet";
-import { ExploreMap } from "@/features/mobile/explore-map";
 import { loadKakaoMaps } from "@/features/mobile/kakao-loader";
 import { buildGoogleMapsWalkingRouteUrl, buildKakaoWalkingRouteUrl } from "@/features/mobile/route-links";
 import { OnboardingTour } from "@/features/mobile/onboarding-tour";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import { PlaceScroller } from "@/features/mobile/place-scroller";
-import { PlaceThumb } from "@/features/mobile/place-thumb";
+import { SlidingTabs } from "@/features/mobile/sliding-tabs";
+import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
 import { PublishSheet } from "@/features/mobile/publish-sheet";
 import {
   buildChain,
@@ -82,6 +83,7 @@ import { ProfileTab } from "@/features/mobile/profile-tab";
 // explore as a sort option rather than its own screen.
 type TabId = "home" | "explore" | "profile";
 type ExploreSort = "all" | "weekly" | "live";
+const EXPLORE_SORT_ORDER: ExploreSort[] = ["all", "weekly", "live"];
 
 const TAB_ORDER: TabId[] = ["home", "explore", "profile"];
 
@@ -96,7 +98,6 @@ function formatDistance(km: number): string {
   return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
 }
 const CATEGORY_ORDER: PlaceCategory[] = ["관광지", "문화재", "문화시설", "축제행사"];
-const SEOUL_CENTER = { lat: 37.5665, lng: 126.978 };
 const PROFILE_STORAGE_KEY = "tripchain:profile";
 const RECENTLY_VIEWED_LIMIT = 10;
 const TUTORIAL_STORAGE_KEY = "tripchain:tutorialSeen";
@@ -152,6 +153,8 @@ export function MobileAppShell() {
   const chainListRef = useRef<HTMLDivElement | null>(null);
   // Stops the user pinned keep their exact position: drag/optimize/swap work around them.
   const [isTitleScrolledAway, setIsTitleScrolledAway] = useState(false);
+  // Explore/profile have no title to wait for: the top fade shows as soon as the page scrolls.
+  const [isScrolled, setIsScrolled] = useState(false);
   // The one chain card whose alternatives panel is open (accordion — opening another
   // closes it).
   const [expandedStopId, setExpandedStopId] = useState<string | null>(null);
@@ -191,6 +194,8 @@ export function MobileAppShell() {
   const [viewingCategory, setViewingCategory] = useState<PlaceCategory | null>(null);
   const [viewingAuthorHandle, setViewingAuthorHandle] = useState<string | null>(null);
   const [showPublish, setShowPublish] = useState(false);
+  // The stop whose photo is open full-size.
+  const [photoPlaceId, setPhotoPlaceId] = useState<string | null>(null);
   const [isOptimizePromptOpen, setIsOptimizePromptOpen] = useState(false);
   const [openTripId, setOpenTripId] = useState<string | null>(null);
 
@@ -202,11 +207,14 @@ export function MobileAppShell() {
   const [recentlyViewedTripIds, setRecentlyViewedTripIds] = useState<string[]>([]);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
-  const [exploreView, setExploreView] = useState<"list" | "map">("list");
   const [exploreQuery, setExploreQuery] = useState("");
-  const [exploreUserLocation, setExploreUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  // Gemini's picks for a search phrase, keyed by the normalized phrase: the trip ids that
+  // fit it best, in order. An empty list means "no AI result" (failed or nothing fit).
+  const [aiSearchResults, setAiSearchResults] = useState<Record<string, string[]>>({});
 
   const [exploreSort, setExploreSort] = useState<ExploreSort>("all");
+  // Which way the list slides in when the sort changes (null until the first change).
+  const [exploreSlideClass, setExploreSlideClass] = useState<string | null>(null);
 
   const hasResult = submittedPrompt.length > 0;
   const [exampleIndex, setExampleIndex] = useState(0);
@@ -352,21 +360,6 @@ export function MobileAppShell() {
       // Storage may be unavailable (private mode, quota) — persistence is best-effort.
     }
   }, [isSignedIn, publishedTrips, likedIds, savedIds, bookmarkedPlaceIds, userComments, recentlyViewedTripIds]);
-
-  useEffect(() => {
-    if (exploreView !== "map" || exploreUserLocation || !navigator.geolocation) {
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setExploreUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
-      },
-      () => {
-        // Permission denied or unavailable — the map falls back to the Seoul-wide view.
-      },
-      { maximumAge: 5 * 60 * 1000, timeout: 8000 },
-    );
-  }, [exploreView, exploreUserLocation]);
 
   const [isRecommending, setIsRecommending] = useState(false);
   const [recommendReason, setRecommendReason] = useState<string | null>(null);
@@ -526,14 +519,81 @@ export function MobileAppShell() {
   }, [openTrip, userComments]);
 
   const normalizedExploreQuery = exploreQuery.trim().toLowerCase();
-  const exploreTrips = useMemo(() => {
-    const matching = allTrips.filter((trip) => {
-      if (!normalizedExploreQuery) {
-        return true;
+  const aiSearchIds = aiSearchResults[normalizedExploreQuery];
+  const isAiSearching =
+    activeTab === "explore" && normalizedExploreQuery.length >= 2 && aiSearchIds === undefined;
+
+  // Free-form search: after a short pause in typing, Gemini picks the courses that fit the
+  // phrase. Until it answers (or if it can't) the plain text match below is what shows.
+  useEffect(() => {
+    const query = normalizedExploreQuery;
+    if (activeTab !== "explore" || query.length < 2 || aiSearchResults[query] !== undefined) {
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      let ids: string[] = [];
+      try {
+        const response = await fetch("/api/search-trips", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query: exploreQuery.trim(),
+            trips: allTrips.map((trip) => {
+              const localized = localizeTrip(trip, locale);
+              const tripPlaces = getPlacesByIds(trip.placeIds);
+              return {
+                id: trip.id,
+                title: localized.title,
+                description: localized.description,
+                area: tripPlaces[0]?.area ?? "",
+                places: tripPlaces.map((place) => place.name),
+              };
+            }),
+          }),
+          signal: controller.signal,
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data.ids)) {
+            ids = data.ids.filter((id: unknown): id is string => typeof id === "string");
+          }
+        }
+      } catch {
+        if (controller.signal.aborted) {
+          return;
+        }
       }
-      const text = [trip.title, trip.description, trip.authorName].join(" ").toLowerCase();
-      return text.includes(normalizedExploreQuery);
-    });
+      setAiSearchResults((current) => ({ ...current, [query]: ids }));
+    }, 600);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [activeTab, normalizedExploreQuery, aiSearchResults, exploreQuery, allTrips, locale]);
+
+  const exploreTrips = useMemo(() => {
+    let matching: FeedTrip[];
+    if (!normalizedExploreQuery) {
+      matching = allTrips;
+    } else if (aiSearchIds && aiSearchIds.length > 0) {
+      const byId = new Map(allTrips.map((trip) => [trip.id, trip]));
+      matching = aiSearchIds.map((id) => byId.get(id)).filter((trip): trip is FeedTrip => Boolean(trip));
+    } else {
+      matching = allTrips.filter((trip) => {
+        const tripPlaces = getPlacesByIds(trip.placeIds);
+        const text = [
+          trip.title,
+          trip.description,
+          trip.authorName,
+          ...tripPlaces.map((place) => `${place.name} ${place.area}`),
+        ]
+          .join(" ")
+          .toLowerCase();
+        return text.includes(normalizedExploreQuery);
+      });
+    }
 
     if (exploreSort === "live") {
       return [...matching].sort(
@@ -544,10 +604,7 @@ export function MobileAppShell() {
       return [...matching].sort((a, b) => b.rankScore - a.rankScore);
     }
     return matching;
-  }, [allTrips, normalizedExploreQuery, exploreSort]);
-  const exploreMapPlaces = places;
-  const exploreMapCenter = exploreUserLocation ?? SEOUL_CENTER;
-  const exploreMapLevel = exploreUserLocation ? 4 : 9;
+  }, [allTrips, normalizedExploreQuery, aiSearchIds, exploreSort]);
 
   // Best-effort current position, used as the default anchor whenever a search doesn't
   // name its own area — never blocks the search on a slow/denied permission prompt.
@@ -1070,7 +1127,18 @@ export function MobileAppShell() {
     setSelectedPlaceId(null);
   }
 
-  function handlePublish(input: { title: string; description: string; visibility: TripVisibility }) {
+  function setTripCover(tripId: string, placeId: string) {
+    setPublishedTrips((current) =>
+      current.map((trip) => (trip.id === tripId ? { ...trip, coverPlaceId: placeId } : trip)),
+    );
+  }
+
+  function handlePublish(input: {
+    title: string;
+    description: string;
+    visibility: TripVisibility;
+    coverPlaceId: string;
+  }) {
     const trip: FeedTrip = {
       // handlePublish only ever runs from PublishSheet's submit click, never during
       // render, so a timestamp-based id here is a safe, one-shot side effect.
@@ -1082,6 +1150,7 @@ export function MobileAppShell() {
       authorName: t("travelerName"),
       visibility: input.visibility,
       placeIds: chainIds,
+      coverPlaceId: input.coverPlaceId,
       likes: 0,
       comments: 0,
       saved: 0,
@@ -1266,7 +1335,7 @@ export function MobileAppShell() {
         ) : prompt.trim() ? (
           <ArrowRightIcon className="h-4 w-4" />
         ) : (
-          <LightbulbIcon className="h-4 w-4" />
+          <AiSparklesIcon className="h-5 w-5" />
         )}
       </button>
     </form>
@@ -1288,6 +1357,8 @@ export function MobileAppShell() {
               ? title.getBoundingClientRect().bottom < container.getBoundingClientRect().top + 56
               : false;
             setIsTitleScrolledAway((current) => (current === next ? current : next));
+            const scrolled = container.scrollTop > 8;
+            setIsScrolled((current) => (current === scrolled ? current : scrolled));
           }}
         >
           {activeTab === "home" && (
@@ -1340,10 +1411,9 @@ export function MobileAppShell() {
                   />
                 </div>
 
-                <div className="relative z-10 px-5 pt-10 text-center">
+                <div className="relative z-10 px-5 pt-[60px] text-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img alt="Trip Chain" className="mx-auto block h-[85px] w-auto" src="/tripchain-logo.svg" />
-                  <p className="mt-1 text-xs font-extrabold tracking-wide text-primary">Beta</p>
                   <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-normal text-balance">
                     {t("heroTitle")}
                   </h1>
@@ -1377,7 +1447,7 @@ export function MobileAppShell() {
                 </div>
 
                 <button
-                  className="absolute inset-x-0 z-10 text-center text-xs font-semibold opacity-60 transition hover:opacity-100 [bottom:calc(1.5rem+env(safe-area-inset-bottom))]"
+                  className="absolute inset-x-0 z-10 text-center text-sm font-semibold opacity-60 transition hover:opacity-100 [bottom:calc(1.625rem+env(safe-area-inset-bottom))]"
                   data-tour="quick-browse"
                   onClick={() => setActiveTab("explore")}
                   style={{ color: "var(--success)" }}
@@ -1390,10 +1460,9 @@ export function MobileAppShell() {
               </div>
             ) : (
               <div className={cn(tabSlideClass, "relative flex min-h-full flex-col px-5 pb-24 pt-5")}>
-                <header className="relative z-10 text-left">
-                  <p className="text-xs font-extrabold text-primary">Trip Chain Beta</p>
+                <header className="relative z-10 pt-7 text-left">
                   <h1
-                    className="mt-3 text-3xl font-extrabold leading-tight tracking-normal text-balance"
+                    className="text-3xl font-extrabold leading-tight tracking-normal text-balance"
                     data-home-title
                   >
                     {t("heroTitle")}
@@ -1572,16 +1641,18 @@ export function MobileAppShell() {
                         </button>
 
                         <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                          <button
-                            className="relative shrink-0"
-                            onClick={() => setSelectedPlaceId(place.id)}
-                            type="button"
-                          >
-                            <PlaceThumb category={place.category} size="sm" />
-                            <span className="absolute -bottom-1 -left-1 grid h-4 w-4 place-items-center rounded-full bg-primary text-[9px] font-extrabold text-white ring-2 ring-background">
-                              {index + 1}
-                            </span>
-                          </button>
+                          <PlacePhotoThumb
+                            badge={
+                              <span className="absolute -bottom-1 -left-1 grid h-[18px] w-[18px] place-items-center rounded-full border border-white bg-[#b7e86b] text-[11px] font-extrabold text-[#0b1220]">
+                                {index + 1}
+                              </span>
+                            }
+                            label={localizedPlace.name}
+                            onFallback={() => setSelectedPlaceId(place.id)}
+                            onOpenPhoto={() => setPhotoPlaceId(place.id)}
+                            place={place}
+                            size="sm"
+                          />
                           <div className="min-w-0 flex-1 text-left">
                             {/* Typography goes on the inner span: the global `button { font: inherit }`
                                 is unlayered and would beat these utilities on the button itself. */}
@@ -1665,7 +1736,7 @@ export function MobileAppShell() {
                                           )}
                                           key={nearby.id}
                                         >
-                                          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-primary bg-white text-[10px] font-extrabold text-primary">
+                                          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-primary bg-white text-[11px] font-extrabold text-primary">
                                             {NEARBY_LABELS[nearbyIndex]}
                                           </span>
                                           <button
@@ -1688,7 +1759,7 @@ export function MobileAppShell() {
                                             </span>
                                           </button>
                                           {swapFlash?.rowId === nearby.id && (
-                                            <span className="swap-badge shrink-0 rounded-full bg-primary px-2 py-0.5 text-[10px] font-extrabold text-white">
+                                            <span className="swap-badge shrink-0 rounded-full bg-primary px-2 py-0.5 text-[11px] font-extrabold text-white">
                                               {t("swappedBadge")}
                                             </span>
                                           )}
@@ -1797,14 +1868,7 @@ export function MobileAppShell() {
           )}
 
           {activeTab === "explore" && (
-            <div className={cn(tabSlideClass, "flex h-full min-h-full flex-col px-5 py-4")}>
-              <button
-                className="-ml-1 mb-2 self-start px-1 py-1 text-xs font-bold text-muted-strong transition hover:text-primary"
-                onClick={() => setActiveTab("home")}
-                type="button"
-              >
-                {t("back")}
-              </button>
+            <div className={cn(tabSlideClass, "flex h-full min-h-full flex-col px-5 pb-4 pt-[3.75rem]")}>
               <h1 className="text-xl font-extrabold">{t("exploreHeading")}</h1>
               <p className="mt-1 text-xs text-muted text-balance">
                 {exploreSort === "weekly"
@@ -1814,91 +1878,49 @@ export function MobileAppShell() {
                     : t("exploreSubtitle")}
               </p>
 
-              <div className="glass-panel mt-4 flex h-11 shrink-0 items-center gap-2 rounded-lg px-3">
-                <SearchIcon className="h-4 w-4 shrink-0 text-muted" />
-                <input
-                  aria-label={t("exploreSearchAria")}
-                  className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-muted"
-                  onChange={(event) => setExploreQuery(event.target.value)}
-                  placeholder={t("exploreSearchPlaceholder")}
-                  type="search"
-                  value={exploreQuery}
+              <div className="mt-4 flex justify-center">
+                <SlidingTabs
+                  onChange={(next) => {
+                    if (next === exploreSort) {
+                      return;
+                    }
+                    setExploreSlideClass(
+                      EXPLORE_SORT_ORDER.indexOf(next) > EXPLORE_SORT_ORDER.indexOf(exploreSort)
+                        ? "tab-slide-in-right"
+                        : "tab-slide-in-left",
+                    );
+                    setExploreSort(next);
+                  }}
+                  options={[
+                    { value: "all", label: t("exploreSortAll") },
+                    { value: "weekly", label: t("rankingWeekly") },
+                    { value: "live", label: t("rankingLive") },
+                  ]}
+                  value={exploreSort}
                 />
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex shrink-0 rounded-sm border border-border bg-surface p-0.5 text-xs font-extrabold">
-                  {(["all", "weekly", "live"] as const).map((sort) => (
-                    <button
-                      className={cn(
-                        "rounded-xs px-2.5 py-1.5",
-                        exploreSort === sort ? "bg-primary text-white" : "text-muted-strong",
-                      )}
-                      key={sort}
-                      onClick={() => setExploreSort(sort)}
-                      type="button"
-                    >
-                      {sort === "all"
-                        ? t("exploreSortAll")
-                        : sort === "weekly"
-                          ? t("rankingWeekly")
-                          : t("rankingLive")}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex shrink-0 rounded-sm border border-border bg-surface p-0.5 text-xs font-extrabold">
-                  {(["list", "map"] as const).map((mode) => (
-                    <button
-                      className={cn(
-                        "rounded-xs px-2.5 py-1.5",
-                        exploreView === mode ? "bg-primary text-white" : "text-muted-strong",
-                      )}
-                      key={mode}
-                      onClick={() => setExploreView(mode)}
-                      type="button"
-                    >
-                      {mode === "list" ? t("viewList") : t("viewMap")}
-                    </button>
-                  ))}
-                </div>
+              {/* Room at the bottom for the floating search bar. */}
+              <div
+                className={cn("mt-4 [padding-bottom:calc(5.5rem+env(safe-area-inset-bottom))]", exploreSlideClass)}
+                key={exploreSort}
+              >
+                <TripFeedList
+                  emptyLabel={t("exploreEmpty")}
+                  likedIds={likedIds}
+                  mode={exploreSort === "all" ? "explore" : "ranking"}
+                  onOpenTrip={viewTrip}
+                  onToggleLike={toggleLike}
+                  onToggleSave={toggleSave}
+                  savedIds={savedIds}
+                  trips={exploreTrips}
+                />
               </div>
-
-              {exploreView === "list" ? (
-                <div className="mt-4 pb-4">
-                  <TripFeedList
-                    emptyLabel={t("exploreEmpty")}
-                    likedIds={likedIds}
-                    mode={exploreSort === "all" ? "explore" : "ranking"}
-                    onOpenTrip={viewTrip}
-                    onToggleLike={toggleLike}
-                    onToggleSave={toggleSave}
-                    savedIds={savedIds}
-                    trips={exploreTrips}
-                  />
-                </div>
-              ) : (
-                <div className="mt-4 min-h-[360px] flex-1 pb-4">
-                  <ExploreMap
-                    center={exploreMapCenter}
-                    level={exploreMapLevel}
-                    onSelectPlace={(place) => setSelectedPlaceId(place.id)}
-                    places={exploreMapPlaces}
-                    selectedPlaceId={selectedPlaceId}
-                  />
-                </div>
-              )}
             </div>
           )}
 
           {activeTab === "profile" && (
-            <div className={tabSlideClass}>
-              <button
-                className="ml-4 mt-4 px-1 py-1 text-xs font-bold text-muted-strong transition hover:text-primary"
-                onClick={() => setActiveTab("home")}
-                type="button"
-              >
-                {t("back")}
-              </button>
+            <div className={cn(tabSlideClass, "pt-[3.5rem]")}>
               <ProfileTab
                 bookmarkedPlaces={bookmarkedPlaces}
                 isSignedIn={isSignedIn}
@@ -1920,13 +1942,13 @@ export function MobileAppShell() {
 
         {/* The first screen stays bare ("바로 탐색하기" is its way into explore). Profile and
             explore icons only appear once a course exists. */}
-        {activeTab === "home" && hasResult && (
+        {(activeTab !== "home" || hasResult) && (
           <>
             <div
               aria-hidden="true"
               className={cn(
                 "pointer-events-none absolute inset-x-0 top-0 z-10 [height:calc(5.25rem+env(safe-area-inset-top))] transition-opacity duration-300",
-                isTitleScrolledAway ? "opacity-100" : "opacity-0",
+                (activeTab === "home" ? isTitleScrolledAway : isScrolled) ? "opacity-100" : "opacity-0",
               )}
               style={{
                 background:
@@ -1937,6 +1959,8 @@ export function MobileAppShell() {
                 WebkitMaskImage: "linear-gradient(to bottom, black 55%, transparent 100%)",
               }}
             />
+            {activeTab === "home" && (
+              <>
             <div
               className={cn(
                 "pointer-events-none absolute left-5 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 flex h-10 items-center transition-opacity duration-300",
@@ -1962,6 +1986,39 @@ export function MobileAppShell() {
             >
               <CompassIcon className="h-5 w-5" />
             </button>
+              </>
+            )}
+            {activeTab === "explore" && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background via-background/85 to-transparent px-5 pt-10 [padding-bottom:calc(1rem+env(safe-area-inset-bottom))]">
+                <div className="glass-panel pointer-events-auto flex h-12 items-center gap-2 rounded-full px-4 shadow-[0_4px_14px_rgba(15,23,42,0.14)]">
+                  {isAiSearching ? (
+                    <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-border-strong border-t-primary" />
+                  ) : aiSearchIds && aiSearchIds.length > 0 ? (
+                    <AiSparklesIcon className="h-4 w-4 shrink-0 text-primary" />
+                  ) : (
+                    <SearchIcon className="h-4 w-4 shrink-0 text-muted" />
+                  )}
+                  <input
+                    aria-label={t("exploreSearchAria")}
+                    className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-muted"
+                    onChange={(event) => setExploreQuery(event.target.value)}
+                    placeholder={t("exploreSearchPlaceholder")}
+                    type="search"
+                    value={exploreQuery}
+                  />
+                </div>
+              </div>
+            )}
+            {activeTab !== "home" && (
+              <button
+                aria-label={t("backAria")}
+                className="absolute left-4 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/90 text-muted-strong shadow-soft backdrop-blur transition hover:border-primary hover:text-primary"
+                onClick={() => setActiveTab("home")}
+                type="button"
+              >
+                <ArrowLeftIcon className="h-5 w-5" />
+              </button>
+            )}
           </>
         )}
 
@@ -1981,12 +2038,22 @@ export function MobileAppShell() {
 
         {selectedPlace && (
           <PlaceSheet
+            comments={userComments[selectedPlace.id] ?? []}
             isBookmarked={bookmarkedPlaceIds.has(selectedPlace.id)}
             isInChain={chainIds.includes(selectedPlace.id)}
+            onAddComment={(text) => addComment(selectedPlace.id, text)}
             onAddToChain={addToChain}
             onClose={() => setSelectedPlaceId(null)}
             onToggleBookmark={toggleBookmarkPlace}
             place={selectedPlace}
+          />
+        )}
+
+        {photoPlaceId && (
+          <PhotoLightbox
+            name={localizePlace(getPlaceById(photoPlaceId) ?? chainPlaces[0], locale).name}
+            onClose={() => setPhotoPlaceId(null)}
+            place={getPlaceById(photoPlaceId) ?? chainPlaces[0]}
           />
         )}
 
@@ -2003,7 +2070,7 @@ export function MobileAppShell() {
               onClick={(event) => event.stopPropagation()}
               role="dialog"
             >
-              <h3 className="text-base font-extrabold" id="optimize-prompt-title">
+              <h3 className="text-lg font-extrabold" id="optimize-prompt-title">
                 {t("optimizePromptTitle")}
               </h3>
               <p className="mt-1.5 text-sm leading-6 text-muted-strong">{t("optimizePromptBody")}</p>
@@ -2035,6 +2102,13 @@ export function MobileAppShell() {
             onDelete={deleteTrip}
             onLoadToChain={loadTripToChain}
             onOpenAuthor={(handle) => setViewingAuthorHandle(handle)}
+            bookmarkedPlaceIds={bookmarkedPlaceIds}
+            chainIds={chainIds}
+            onAddPlaceComment={addComment}
+            onAddPlaceToChain={addToChain}
+            onSetCover={setTripCover}
+            onToggleBookmarkPlace={toggleBookmarkPlace}
+            placeComments={userComments}
             onToggleLike={toggleLike}
             onToggleSave={toggleSave}
             trip={openTrip}

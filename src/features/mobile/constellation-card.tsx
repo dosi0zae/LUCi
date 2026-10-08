@@ -397,7 +397,7 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
                 "linear-gradient(180deg, rgba(11,18,32,0.28) 0%, rgba(11,18,32,0) 30%, rgba(11,18,32,0) 70%, rgba(11,18,32,0.32) 100%)",
             }}
           />
-          <div className="absolute right-2 top-2 z-10 flex flex-col overflow-hidden rounded-lg border border-white/30 bg-white/90 opacity-50 shadow-soft backdrop-blur-sm transition hover:opacity-100">
+          <div className="absolute right-2 top-2 z-10 flex flex-col overflow-hidden rounded-lg border border-white/30 bg-white/90 shadow-soft backdrop-blur-sm">
             <button
               aria-label={t("zoomInAria")}
               className="grid h-8 w-8 place-items-center text-sm font-extrabold text-foreground transition hover:bg-surface-muted"

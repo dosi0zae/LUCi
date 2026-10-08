@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { PlacePhoto } from "@/features/mobile/place-photo";
 import type { MobilePlace, TripVisibility } from "@/features/mobile/mobile-data";
 import { useT } from "@/features/mobile/i18n/i18n-context";
 import type { TranslationKey } from "@/features/mobile/i18n/translations";
@@ -12,7 +13,12 @@ const CLOSE_ANIMATION_MS = 200;
 type PublishSheetProps = {
   places: MobilePlace[];
   onCancel: () => void;
-  onPublish: (input: { title: string; description: string; visibility: TripVisibility }) => void;
+  onPublish: (input: {
+    title: string;
+    description: string;
+    visibility: TripVisibility;
+    coverPlaceId: string;
+  }) => void;
 };
 
 const visibilityOptionKeys: { id: TripVisibility; labelKey: TranslationKey; hintKey: TranslationKey }[] = [
@@ -26,6 +32,10 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<TripVisibility>("public");
+  // Default cover: the first spot that has a real photo.
+  const [coverPlaceId, setCoverPlaceId] = useState(
+    () => (places.find((place) => place.image) ?? places[0])?.id ?? "",
+  );
   const [error, setError] = useState("");
   const [isClosing, setIsClosing] = useState(false);
 
@@ -48,7 +58,7 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
     }
 
     setError("");
-    onPublish({ title: title.trim(), description: description.trim(), visibility });
+    onPublish({ title: title.trim(), description: description.trim(), visibility, coverPlaceId });
   }
 
   return (
@@ -71,6 +81,28 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
 
         <h2 className="text-lg font-extrabold">{t("publishHeading")}</h2>
         <p className="mt-1 text-xs text-muted text-balance">{t("publishSubtitle", { count: places.length })}</p>
+
+        <div className="mt-4">
+          <p className="text-xs font-bold text-muted-strong">{t("publishCoverLabel")}</p>
+          <div className="place-list-scroll mt-1.5 flex gap-2 overflow-x-auto pb-1">
+            {places.map((place) => (
+              <button
+                aria-label={place.name}
+                aria-pressed={coverPlaceId === place.id}
+                className={cn(
+                  "relative shrink-0 rounded-[12px] p-0.5 transition",
+                  coverPlaceId === place.id ? "ring-2 ring-primary" : "opacity-70 hover:opacity-100",
+                )}
+                key={place.id}
+                onClick={() => setCoverPlaceId(place.id)}
+                type="button"
+              >
+                <PlacePhoto className="h-16 w-16 rounded-[10px]" place={place} />
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-[11px] text-muted">{t("publishCoverHint")}</p>
+        </div>
 
         <label className="mt-4 block text-xs font-bold text-muted-strong">
           {t("publishTitleLabel")}

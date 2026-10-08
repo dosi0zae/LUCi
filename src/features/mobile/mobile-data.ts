@@ -84,6 +84,9 @@ export type FeedTrip = {
   rankScore: number;
   isMine: boolean;
   publishedAt: string;
+  // The spot whose photo represents the course in lists. Unset = the first spot that has
+  // a real photo (see getTripCoverPlace).
+  coverPlaceId?: string;
   // Seed trips carry en/ja/zh from their theme text; published trips get theirs
   // asynchronously from /api/translate-trip after publish (see handlePublish).
   translations?: Partial<Record<Locale, LocalizedTripFields>>;
@@ -145,6 +148,17 @@ export function getPlaceImageUrl(id: string, width = 240, height = 320): string 
 
 export function getPlaceById(id: string): MobilePlace | undefined {
   return places.find((place) => place.id === id);
+}
+
+// The place whose photo stands for a course: the one the author picked, otherwise the first
+// spot with a real photo, otherwise simply the first spot.
+export function getTripCoverPlace(trip: Pick<FeedTrip, "placeIds" | "coverPlaceId">): MobilePlace | undefined {
+  const tripPlaces = getPlacesByIds(trip.placeIds);
+  return (
+    tripPlaces.find((place) => place.id === trip.coverPlaceId) ??
+    tripPlaces.find((place) => Boolean(place.image)) ??
+    tripPlaces[0]
+  );
 }
 
 export function getPlacesByIds(ids: string[]): MobilePlace[] {

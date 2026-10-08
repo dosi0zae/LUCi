@@ -170,6 +170,18 @@ export function SparklesIcon({ className }: IconProps) {
   );
 }
 
+// The familiar "AI" sparkle: one large four-point star with two small ones. (SparklesIcon is
+// a sunburst, which reads as "settings"/"asterisk", so it stays on the map's constellation toggle.)
+export function AiSparklesIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M9 18a6 6 0 0 1 6-6 6 6 0 0 1-6-6 6 6 0 0 1-6 6 6 6 0 0 1 6 6Z" />
+      <path d="M16 6a2 2 0 0 1 2 2 2 2 0 0 1 2-2 2 2 0 0 1-2-2 2 2 0 0 1-2 2Z" />
+      <path d="M16 18a2 2 0 0 1 2 2 2 2 0 0 1 2-2 2 2 0 0 1-2-2 2 2 0 0 1-2 2Z" />
+    </svg>
+  );
+}
+
 export function ArrowRightIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps} strokeWidth={2.4}>
@@ -179,12 +191,11 @@ export function ArrowRightIcon({ className }: IconProps) {
   );
 }
 
-export function LightbulbIcon({ className }: IconProps) {
+export function ArrowLeftIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>
-      <path d="M9 18h6" />
-      <path d="M10 22h4" />
-      <path d="M12 2a6 6 0 0 0-4 10.47c.53.51.9 1.16 1.06 1.87L9.3 16h5.4l.24-1.66c.16-.71.53-1.36 1.06-1.87A6 6 0 0 0 12 2z" />
+      <path d="M19 12H5" />
+      <path d="m11 6-6 6 6 6" />
     </svg>
   );
 }
@@ -225,6 +236,45 @@ export function PinIcon({ className }: IconProps) {
       <path d="M8.5 3h7" />
       <path d="M9.5 3v6.5L7 13.5h10L14.5 9.5V3" />
       <path d="M12 13.5V21" />
+    </svg>
+  );
+}
+
+export function MapPlusIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      {/* A folded map with a plus at its corner: "bring this course onto my map". */}
+      <path d="M12.5 19.5 9 18l-6 3V8l6-3 6 3 6-3v8" />
+      <path d="M9 5v13" />
+      <path d="M15 8v8" />
+      <path d="M16 19h6" />
+      <path d="M19 16v6" />
+    </svg>
+  );
+}
+
+export function ImageIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <rect height="13" rx="1.8" width="16" x="4" y="5" />
+      <circle cx="9" cy="10" r="1.3" />
+      <path d="m6.5 16 3.4-3.7 2.4 2.5 2.1-2 3.1 3.2" />
+    </svg>
+  );
+}
+
+export function SlidersIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M4 6h8" />
+      <path d="M16 6h4" />
+      <circle cx="14" cy="6" r="2" />
+      <path d="M4 12h2" />
+      <path d="M10 12h10" />
+      <circle cx="8" cy="12" r="2" />
+      <path d="M4 18h10" />
+      <path d="M18 18h2" />
+      <circle cx="16" cy="18" r="2" />
     </svg>
   );
 }

@@ -8,10 +8,9 @@ import { cn } from "@/lib/utils";
 
 const CLOSE_ANIMATION_MS = 200;
 
-// A bare, borderless icon button (no background box) that opens a full-screen glass
-// overlay over the current screen — the user asked for the trigger to disappear into
-// a thin blue line-icon and for the picker itself to read as plain, centered text per
-// language rather than a bordered dropdown/list.
+// A round floating icon button (same white circle as the other floating controls) that
+// opens a full-screen glass overlay over the current screen; the picker itself reads as
+// plain, centered text per language rather than a bordered dropdown/list.
 export function LanguageMenuButton({ className }: { className?: string }) {
   const t = useT();
   const { locale, setLocale } = useLocale();
@@ -32,11 +31,11 @@ export function LanguageMenuButton({ className }: { className?: string }) {
         <button
           aria-expanded={isOpen}
           aria-label={t("languageMenuAria")}
-          className="grid h-10 w-10 place-items-center text-primary transition hover:opacity-70"
+          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/90 text-primary shadow-soft backdrop-blur transition hover:border-primary"
           onClick={() => setIsOpen(true)}
           type="button"
         >
-          <GlobeIcon className="h-6 w-6" />
+          <GlobeIcon className="h-5 w-5" />
         </button>
       </div>
 

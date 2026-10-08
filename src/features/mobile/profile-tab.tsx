@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { BookmarkIcon, EyeIcon, HeartIcon, UserIcon } from "@/components/layout/app-icons";
+import { BookmarkIcon, EyeIcon, HeartIcon, SlidersIcon, UserIcon } from "@/components/layout/app-icons";
+import { SlidingTabs } from "@/features/mobile/sliding-tabs";
 import { TripFeedList } from "@/features/mobile/trip-feed-list";
 import { getPlaceImageUrl, localizePlace, type FeedTrip, type MobilePlace } from "@/features/mobile/mobile-data";
 import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
@@ -25,14 +26,15 @@ type ProfileTabProps = {
   onToggleSave: (id: string) => void;
 };
 
-type ProfileSubTab = "mine" | "saved" | "liked" | "recent";
+type ProfileSubTab = "mine" | "saved" | "liked" | "recent" | "settings";
+const PROFILE_SUB_TAB_ORDER: ProfileSubTab[] = ["mine", "saved", "liked", "recent", "settings"];
 
 function LanguageSwitcher() {
   const t = useT();
   const { locale, setLocale } = useLocale();
 
   return (
-    <div className="mt-6">
+    <div>
       <p className="text-xs font-bold text-muted-strong">{t("languageSetting")}</p>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {SUPPORTED_LOCALES.map((option) => (
@@ -73,6 +75,20 @@ export function ProfileTab({
   const t = useT();
   const { locale } = useLocale();
   const [subTab, setSubTab] = useState<ProfileSubTab>("mine");
+  // Which way the list below slides in when the sub-tab changes (null until the first change).
+  const [slideClass, setSlideClass] = useState<string | null>(null);
+
+  function selectSubTab(next: ProfileSubTab) {
+    if (next === subTab) {
+      return;
+    }
+    setSlideClass(
+      PROFILE_SUB_TAB_ORDER.indexOf(next) > PROFILE_SUB_TAB_ORDER.indexOf(subTab)
+        ? "tab-slide-in-right"
+        : "tab-slide-in-left",
+    );
+    setSubTab(next);
+  }
 
   if (!isSignedIn) {
     return (
@@ -87,7 +103,7 @@ export function ProfileTab({
     );
   }
 
-  const subTabs: { id: ProfileSubTab; label: string; trips: FeedTrip[]; emptyLabel: string }[] = [
+  const courseTabs: { id: Exclude<ProfileSubTab, "settings">; label: string; trips: FeedTrip[]; emptyLabel: string }[] = [
     {
       id: "mine",
       label: t("tabMine"),
@@ -113,7 +129,9 @@ export function ProfileTab({
       emptyLabel: t("emptyRecent"),
     },
   ];
-  const activeSubTab = subTabs.find((tab) => tab.id === subTab) ?? subTabs[0];
+  const activeCourseTab = courseTabs.find((tab) => tab.id === subTab);
+  // Saved courses and saved places live together under one "저장" tab.
+  const savedCount = savedTrips.length + bookmarkedPlaces.length;
 
   return (
     <div className="px-5 py-4">
@@ -125,19 +143,19 @@ export function ProfileTab({
           <h2 className="truncate text-lg font-extrabold">{t("travelerName")}</h2>
           <p className="text-xs text-muted">@trip.chain.user</p>
         </div>
-        <Button className="ml-auto" onClick={onToggleSignIn} size="sm" variant="secondary">
+        <Button className="ml-auto" onClick={onToggleSignIn} shape="pill" size="sm" variant="secondary">
           {t("signOut")}
         </Button>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
         {[
-          { label: t("tabMine"), value: myTrips.length, onClick: () => setSubTab("mine") },
-          { label: t("statSaved"), value: savedTrips.length, onClick: () => setSubTab("saved") },
+          { label: t("tabMine"), value: myTrips.length, onClick: () => selectSubTab("mine") },
+          { label: t("statSaved"), value: savedCount, onClick: () => selectSubTab("saved") },
           { label: t("statFollowers"), value: 12, onClick: undefined },
         ].map(({ label, onClick, value }) => (
           <button
-            className="rounded-sm border border-border bg-surface p-3 text-center transition hover:border-primary"
+            className="rounded-lg border border-border bg-surface p-3 text-center transition hover:border-primary"
             disabled={!onClick}
             key={label}
             onClick={onClick}
@@ -149,79 +167,86 @@ export function ProfileTab({
         ))}
       </div>
 
-      <div className="mt-6 flex rounded-sm border border-border bg-surface p-0.5">
-        {subTabs.map((tab) => {
-          const isActive = tab.id === subTab;
-          return (
-            <button
-              aria-label={tab.label}
-              className={cn(
-                "flex flex-1 items-center justify-center rounded-xs py-2 transition",
-                isActive ? "bg-primary text-white" : "text-muted-strong",
-              )}
-              key={tab.id}
-              onClick={() => setSubTab(tab.id)}
-              title={tab.label}
-              type="button"
-            >
-              {tab.id === "mine" && <span className="text-[11px] font-extrabold leading-none">MY</span>}
-              {tab.id === "saved" && <BookmarkIcon className="h-4 w-4" />}
-              {tab.id === "liked" && <HeartIcon className="h-4 w-4" filled={isActive} />}
-              {tab.id === "recent" && <EyeIcon className="h-4 w-4" />}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="mt-3">
-        <TripFeedList
-          emptyLabel={activeSubTab.emptyLabel}
-          likedIds={likedIds}
-          mode="explore"
-          onOpenTrip={onOpenTrip}
-          onToggleLike={onToggleLike}
-          onToggleSave={onToggleSave}
-          savedIds={savedIds}
-          trips={activeSubTab.trips}
+      <div className="mt-6">
+        <SlidingTabs
+          fullWidth
+          onChange={selectSubTab}
+          options={PROFILE_SUB_TAB_ORDER.map((id) => ({
+            value: id,
+            ariaLabel: id === "settings" ? t("tabSettings") : courseTabs.find((tab) => tab.id === id)?.label,
+            label: (
+              <>
+                {id === "mine" && <span className="text-sm font-extrabold leading-5">MY</span>}
+                {id === "saved" && <BookmarkIcon className="h-5 w-5" />}
+                {id === "liked" && <HeartIcon className="h-5 w-5" filled={id === subTab} />}
+                {id === "recent" && <EyeIcon className="h-5 w-5" />}
+                {id === "settings" && <SlidersIcon className="h-5 w-5" />}
+              </>
+            ),
+          }))}
+          value={subTab}
         />
       </div>
 
-      <div className="mt-6">
-        <h3 className="text-sm font-extrabold text-muted-strong">{t("savedPlacesHeading")}</h3>
-        {bookmarkedPlaces.length === 0 ? (
-          <p className="mt-2 text-xs leading-5 text-muted">{t("emptySavedPlaces")}</p>
-        ) : (
-          <div className="place-list-scroll mt-2.5 flex gap-2.5 overflow-x-auto">
-            {bookmarkedPlaces.map((place) => {
-              const localizedPlace = localizePlace(place, locale);
-              return (
-                <button
-                  className="flex w-28 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-surface text-left"
-                  key={place.id}
-                  onClick={() => onSelectPlace(place.id)}
-                  type="button"
-                >
-                  <span className="block h-28 w-full shrink-0 overflow-hidden bg-surface-muted">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      alt=""
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                      src={getPlaceImageUrl(place.id)}
-                    />
-                  </span>
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2">
-                    <span className="truncate text-xs font-bold">{localizedPlace.name}</span>
-                    <span className="truncate text-[11px] text-muted">{localizedPlace.area}</span>
-                  </span>
-                </button>
-              );
-            })}
+      <div className={cn("mt-3", slideClass)} key={subTab}>
+        {subTab === "settings" ? (
+          <div className="px-1 pt-2">
+            <LanguageSwitcher />
           </div>
+        ) : (
+          activeCourseTab && (
+            <>
+              <TripFeedList
+                emptyLabel={activeCourseTab.emptyLabel}
+                likedIds={likedIds}
+                mode="explore"
+                onOpenTrip={onOpenTrip}
+                onToggleLike={onToggleLike}
+                onToggleSave={onToggleSave}
+                savedIds={savedIds}
+                trips={activeCourseTab.trips}
+              />
+
+              {subTab === "saved" && (
+                <div className="mt-6">
+                  <h3 className="text-sm font-extrabold text-muted-strong">{t("savedPlacesHeading")}</h3>
+                  {bookmarkedPlaces.length === 0 ? (
+                    <p className="mt-2 text-xs leading-5 text-muted">{t("emptySavedPlaces")}</p>
+                  ) : (
+                    <div className="place-list-scroll mt-2.5 flex gap-2.5 overflow-x-auto">
+                      {bookmarkedPlaces.map((place) => {
+                        const localizedPlace = localizePlace(place, locale);
+                        return (
+                          <button
+                            className="flex w-28 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-surface text-left"
+                            key={place.id}
+                            onClick={() => onSelectPlace(place.id)}
+                            type="button"
+                          >
+                            <span className="block h-28 w-full shrink-0 overflow-hidden bg-surface-muted">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                alt=""
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                                src={getPlaceImageUrl(place.id)}
+                              />
+                            </span>
+                            <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2">
+                              <span className="truncate text-xs font-bold">{localizedPlace.name}</span>
+                              <span className="truncate text-[11px] text-muted">{localizedPlace.area}</span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )
         )}
       </div>
-
-      <LanguageSwitcher />
     </div>
   );
 }

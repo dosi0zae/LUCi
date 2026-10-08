@@ -2,22 +2,24 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
+  ArrowLeftIcon,
   BookmarkIcon,
   DownloadIcon,
   HeartIcon,
-  MapPinIcon,
+  MapPlusIcon,
   MoreIcon,
   ShareIcon,
   TrashIcon,
+  ImageIcon,
 } from "@/components/layout/app-icons";
 import { FacebookIcon, InstagramIcon, KakaoTalkIcon, WhatsAppIcon, XIcon } from "@/features/mobile/brand-icons";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
 import { buildCourseShareUrl } from "@/features/mobile/course-share";
 import { shareToKakaoTalk } from "@/features/mobile/kakao-share";
 import { buildFacebookShareUrl, buildTwitterShareUrl, buildWhatsAppShareUrl } from "@/features/mobile/sns-share";
-import { PlaceThumb } from "@/features/mobile/place-thumb";
+import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
+import { PlaceSheet } from "@/features/mobile/place-sheet";
 import {
   getPlacesByIds,
   getTotalMinutes,
@@ -26,9 +28,19 @@ import {
   type FeedTrip,
   type MobilePlace,
   type TripComment,
+  getTripCoverPlace,
+  getPlaceById,
 } from "@/features/mobile/mobile-data";
 import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import type { TranslationKey } from "@/features/mobile/i18n/translations";
+import { cn } from "@/lib/utils";
+
+// The detail sheet's floating action buttons: round, on the same white surface as the map
+// controls; the pressed/active state fills with the primary color.
+const FLOAT_BUTTON =
+  "grid h-12 w-12 place-items-center rounded-full border shadow-[0_4px_14px_rgba(15,23,42,0.14)] transition active:scale-95";
+const FLOAT_BUTTON_IDLE = "border-border bg-surface text-foreground hover:border-border-strong";
+const FLOAT_BUTTON_ACTIVE = "border-primary bg-primary text-white";
 
 type TripDetailSheetProps = {
   trip: FeedTrip;
@@ -40,6 +52,14 @@ type TripDetailSheetProps = {
   onDelete: (id: string) => void;
   onLoadToChain: (trip: FeedTrip) => void;
   onOpenAuthor: (handle: string) => void;
+  onSetCover: (tripId: string, placeId: string) => void;
+  // Tapping a spot opens its place sheet, which can bookmark it or add it to the user's course.
+  bookmarkedPlaceIds: Set<string>;
+  chainIds: string[];
+  onAddPlaceComment: (placeId: string, text: string) => void;
+  onAddPlaceToChain: (place: MobilePlace) => void;
+  onToggleBookmarkPlace: (id: string) => void;
+  placeComments: Record<string, TripComment[]>;
   onToggleLike: (id: string) => void;
   onToggleSave: (id: string) => void;
 };
@@ -110,6 +130,13 @@ export function TripDetailSheet({
   onDelete,
   onLoadToChain,
   onOpenAuthor,
+  onSetCover,
+  bookmarkedPlaceIds,
+  chainIds,
+  onAddPlaceComment,
+  onAddPlaceToChain,
+  onToggleBookmarkPlace,
+  placeComments,
   onToggleLike,
   onToggleSave,
   trip,
@@ -121,6 +148,12 @@ export function TripDetailSheet({
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
   const [commentDraft, setCommentDraft] = useState("");
+  // The stop whose photo is open full-size.
+  const [photoPlaceId, setPhotoPlaceId] = useState<string | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+  const selectedPlace = selectedPlaceId ? getPlaceById(selectedPlaceId) : undefined;
+  const coverPlaceId = getTripCoverPlace(trip)?.id;
 
   function submitComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -376,18 +409,44 @@ export function TripDetailSheet({
 
   return (
     <div className="detail-page absolute inset-0 z-40 flex flex-col bg-background">
-      <header className="flex items-center justify-between border-b border-border px-5 pb-4 [padding-top:calc(1rem+env(safe-area-inset-top))]">
-        <button
-          className="text-sm font-bold text-muted-strong"
-          onClick={onClose}
-          type="button"
-        >
-          {t("back")}
-        </button>
-        {trip.isMine && <Badge tone="blue">{t("myCourseBadge")}</Badge>}
-      </header>
+      {/* Floating back button (and "my course" tag) instead of a docked header; a white fade
+          appears behind them once the page scrolls, like the other screens. */}
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-x-0 top-0 z-10 [height:calc(5.25rem+env(safe-area-inset-top))] transition-opacity duration-300",
+          isScrolled ? "opacity-100" : "opacity-0",
+        )}
+        style={{
+          background:
+            "linear-gradient(to bottom, color-mix(in srgb, var(--background) 88%, transparent) 0%, color-mix(in srgb, var(--background) 62%, transparent) 55%, transparent 100%)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+          maskImage: "linear-gradient(to bottom, black 55%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to bottom, black 55%, transparent 100%)",
+        }}
+      />
+      <button
+        aria-label={t("backAria")}
+        className="absolute left-4 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/90 text-muted-strong shadow-soft backdrop-blur transition hover:border-primary hover:text-primary"
+        onClick={onClose}
+        type="button"
+      >
+        <ArrowLeftIcon className="h-5 w-5" />
+      </button>
+      {trip.isMine && (
+        <span className="pointer-events-none absolute right-4 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 flex h-10 items-center">
+          <Badge tone="blue">{t("myCourseBadge")}</Badge>
+        </span>
+      )}
 
-      <div className="app-scroll-area min-w-0 flex-1 overflow-y-auto px-5 py-4">
+      <div
+        className="app-scroll-area min-w-0 flex-1 overflow-y-auto px-5 [padding-bottom:calc(6.5rem+env(safe-area-inset-bottom))] [padding-top:calc(4rem+env(safe-area-inset-top))]"
+        onScroll={(event) => {
+          const scrolled = event.currentTarget.scrollTop > 8;
+          setIsScrolled((current) => (current === scrolled ? current : scrolled));
+        }}
+      >
         <Badge tone="neutral">{localizedPlaces[0]?.area ?? t("seoulWide")}</Badge>
         <div className="mt-3 flex items-start justify-between gap-2">
           <h1 className="text-2xl font-extrabold leading-tight text-balance">{localizedTrip.title}</h1>
@@ -482,20 +541,50 @@ export function TripDetailSheet({
           </div>
         )}
 
-        <div className="mt-5 grid gap-2">
+        {/* minmax(0, 1fr): a bare grid column sizes to its widest row's no-wrap title (a long
+            English place name pushed the cards well past the screen edge). */}
+        <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-2">
           {localizedPlaces.map((place, index) => (
-            <article className="rounded-lg border border-border bg-surface p-3 shadow-soft" key={place.id}>
+            <article className="min-w-0 rounded-lg border border-border bg-surface p-3 shadow-soft" key={place.id}>
               <div className="flex items-center gap-3">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-[11px] font-extrabold text-white">
+                {/* Same lime-green chip as the route markers on the map above. */}
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#b7e86b] text-[11px] font-extrabold text-[#0b1220]">
                   {index + 1}
                 </span>
-                <PlaceThumb category={place.category} size="sm" />
-                <div className="min-w-0 flex-1">
+                <PlacePhotoThumb
+                  label={place.name}
+                  onFallback={() => setPhotoPlaceId(null)}
+                  onOpenPhoto={() => setPhotoPlaceId(place.id)}
+                  place={place}
+                  size="sm"
+                />
+                <button
+                  className="min-w-0 flex-1 text-left"
+                  onClick={() => setSelectedPlaceId(place.id)}
+                  type="button"
+                >
                   <h3 className="truncate text-sm font-extrabold">{place.name}</h3>
                   <p className="mt-1 text-xs text-muted">
                     {place.area} · {place.duration} · {place.fee}
                   </p>
-                </div>
+                </button>
+                {/* The author can pick which spot's photo represents the course in lists. */}
+                {trip.isMine &&
+                  (coverPlaceId === place.id ? (
+                    <span className="shrink-0 rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-extrabold text-primary-strong">
+                      {t("coverBadge")}
+                    </span>
+                  ) : (
+                    <button
+                      aria-label={t("setCoverAria")}
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-strong transition-colors hover:border-primary hover:bg-primary/10 hover:text-primary active:bg-primary active:text-white"
+                      onClick={() => onSetCover(trip.id, place.id)}
+                      title={t("setCoverAria")}
+                      type="button"
+                    >
+                      <ImageIcon className="h-4 w-4" />
+                    </button>
+                  ))}
               </div>
             </article>
           ))}
@@ -538,7 +627,9 @@ export function TripDetailSheet({
         </div>
       </div>
 
-      <footer className="relative border-t border-border px-5 pt-3 [padding-bottom:calc(0.75rem+env(safe-area-inset-bottom))]">
+      {/* Floating round buttons instead of a docked bar. The gradient only fades the page
+          content out behind them; the footer itself ignores pointer events. */}
+      <footer className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/85 to-transparent px-5 pt-10 [padding-bottom:calc(1rem+env(safe-area-inset-bottom))]">
         {shareMessage && (
           <p
             className="share-toast pointer-events-none absolute inset-x-5 bottom-full mb-2 rounded-full border border-border bg-white px-4 py-2 text-center text-xs font-semibold text-primary shadow-soft"
@@ -547,36 +638,41 @@ export function TripDetailSheet({
             {shareMessage}
           </p>
         )}
-        <div className="grid grid-cols-5 gap-2">
-          <Button aria-label={t("loadToChainButton")} onClick={() => onLoadToChain(trip)} size="lg" variant="gradient">
-            <MapPinIcon className="h-5 w-5" />
-          </Button>
-          <Button
+        <div className="pointer-events-auto mx-auto flex w-fit items-center gap-3">
+          <button
+            aria-label={t("loadToChainButton")}
+            className={cn(FLOAT_BUTTON, FLOAT_BUTTON_IDLE)}
+            onClick={() => onLoadToChain(trip)}
+            title={t("loadToChainButton")}
+            type="button"
+          >
+            <MapPlusIcon className="h-5 w-5" />
+          </button>
+          <button
             aria-label={t("likeButton", { count: (trip.likes + (isLiked ? 1 : 0)).toLocaleString() })}
+            className={cn(FLOAT_BUTTON, isLiked ? FLOAT_BUTTON_ACTIVE : FLOAT_BUTTON_IDLE)}
             onClick={() => onToggleLike(trip.id)}
-            size="lg"
-            variant={isLiked ? "primary" : "secondary"}
+            type="button"
           >
             <HeartIcon className="h-5 w-5" filled={isLiked} />
-          </Button>
-          <Button
+          </button>
+          <button
             aria-label={isSaved ? t("savedButton") : t("saveButton")}
+            className={cn(FLOAT_BUTTON, isSaved ? FLOAT_BUTTON_ACTIVE : FLOAT_BUTTON_IDLE)}
             onClick={() => onToggleSave(trip.id)}
-            size="lg"
-            variant={isSaved ? "primary" : "secondary"}
+            type="button"
           >
             <BookmarkIcon className="h-5 w-5" />
-          </Button>
+          </button>
           <div className="relative">
-            <Button
+            <button
               aria-label={t("shareButton")}
-              className="w-full"
+              className={cn(FLOAT_BUTTON, FLOAT_BUTTON_IDLE)}
               onClick={() => setIsShareMenuOpen((open) => !open)}
-              size="lg"
-              variant="secondary"
+              type="button"
             >
               <ShareIcon className="h-5 w-5" />
-            </Button>
+            </button>
             {isShareMenuOpen && (
               <>
                 <button
@@ -651,15 +747,49 @@ export function TripDetailSheet({
                   >
                     <WhatsAppIcon className="h-4 w-4" />
                   </button>
+                  <button
+                    aria-label={t("saveImageButton")}
+                    className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface text-foreground transition hover:bg-surface-muted"
+                    onClick={() => {
+                      setIsShareMenuOpen(false);
+                      void downloadShareCard();
+                    }}
+                    title={t("saveImageButton")}
+                    type="button"
+                  >
+                    <DownloadIcon className="h-4 w-4" />
+                  </button>
                 </div>
               </>
             )}
           </div>
-          <Button aria-label={t("saveImageButton")} onClick={() => void downloadShareCard()} size="lg" variant="secondary">
-            <DownloadIcon className="h-5 w-5" />
-          </Button>
         </div>
       </footer>
+
+      {photoPlaceId && (
+        <PhotoLightbox
+          name={localizedPlaces.find((place) => place.id === photoPlaceId)?.name ?? ""}
+          onClose={() => setPhotoPlaceId(null)}
+          place={localizedPlaces.find((place) => place.id === photoPlaceId) ?? localizedPlaces[0]}
+        />
+      )}
+
+      {selectedPlace && (
+        <PlaceSheet
+          comments={placeComments[selectedPlace.id] ?? []}
+          isBookmarked={bookmarkedPlaceIds.has(selectedPlace.id)}
+          isInChain={chainIds.includes(selectedPlace.id)}
+          onAddComment={(text) => onAddPlaceComment(selectedPlace.id, text)}
+          onAddToChain={(place) => {
+            onAddPlaceToChain(place);
+            setSelectedPlaceId(null);
+            setShareMessage(t("addedToChain"));
+          }}
+          onClose={() => setSelectedPlaceId(null)}
+          onToggleBookmark={onToggleBookmarkPlace}
+          place={selectedPlace}
+        />
+      )}
     </div>
   );
 }

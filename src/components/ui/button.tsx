@@ -7,6 +7,8 @@ type ButtonSize = "sm" | "md" | "lg";
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  // "pill" fully rounds the ends, matching the round floating controls.
+  shape?: "default" | "pill";
 };
 
 const variants: Record<ButtonVariant, string> = {
@@ -30,13 +32,15 @@ export function Button({
   className,
   variant = "primary",
   size = "md",
+  shape = "default",
   type = "button",
   ...props
 }: ButtonProps) {
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-sm font-semibold transition duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 font-semibold transition duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50",
+        shape === "pill" ? "rounded-full" : "rounded-sm",
         variants[variant],
         sizes[size],
         className,

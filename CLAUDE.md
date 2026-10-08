@@ -4,7 +4,7 @@ Korean-first Next.js 16 (Turbopack) + TypeScript + Tailwind app that recommends 
 
 ## Working on it
 
-- The active product is the mobile app at `/mobile` (`src/components/layout/mobile-app-shell.tsx`, `src/features/mobile/`). The desktop web app at `/` and `src/features/map/` are frozen — don't extend them.
+- The active product is the mobile app at `/mobile` (`src/components/layout/mobile-app-shell.tsx`, `src/features/mobile/`). The old desktop web app (once at `/`) has been removed — `/` is now a 404. It's still in git history (before the "retire desktop web" commit) if it's ever needed.
 - Package manager is pnpm via corepack. `pnpm` may not be on PATH in the shell, so use `corepack pnpm ...`.
 - Dev server: `corepack pnpm dev -p 3002` (matches `.claude/launch.json`). Next 16 allows only one `next dev` per project directory, so stop any old one first.
 - Verify with `corepack pnpm exec tsc --noEmit` and `corepack pnpm lint`. Both must pass before reporting work done.

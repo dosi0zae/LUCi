@@ -92,7 +92,7 @@ export function CategorySheet({ areaName, badges, category, onClose, onSelectPla
                     src={getPlaceImageUrl(place.id)}
                   />
                   {badge && (
-                    <span className="absolute right-1 top-1 rounded-xs border border-primary bg-white px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                    <span className="absolute right-1 top-1 rounded-xs border border-primary bg-white px-1.5 py-0.5 text-[11px] font-bold text-primary">
                       {t(BADGE_LABEL_KEY[badge])}
                     </span>
                   )}

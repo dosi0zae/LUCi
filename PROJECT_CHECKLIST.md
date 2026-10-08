@@ -33,6 +33,108 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase BL: Saved vs. Liked Cleanup and Settings Tab
+
+Status: Complete
+
+- [x] "찜" is gone: saving a place and saving a course are the same action (bookmark icon, "저장"). The profile's 저장 tab now holds both saved courses and a "저장한 장소" strip; the 저장 stat counts courses + places. Place-sheet strings changed from 찜/ブックマーク/Bookmark to 저장/保存/Save (zh already said 收藏). ♥ 좋아요 stays a separate public reaction (it feeds the ranking), shown in its own tab.
+- [x] New 5th profile tab "설정" (sliders icon, `SlidersIcon`; `tabSettings`): the language picker moved there from the bottom of the profile page. Tabs: MY · 저장 · 좋아요 · 최근 본 · 설정 (the gliding highlight and slide animation cover all five).
+- [x] `tsc --noEmit` and `lint` pass; verified the five tabs, the saved tab with the places strip, the language chips only under 설정, no "찜" left in the UI.
+
+### Mobile Phase BK: Profile Controls and "Beta" Removal
+
+Status: Complete
+
+- [x] Profile screen controls follow the Explore tone: the sub-tab bar (MY / saved / liked / recent) is a pill `SlidingTabs` (now accepts icon labels, `ariaLabel`, and `fullWidth`) with the gliding highlight; "로그아웃" is a pill (`Button` got a `shape="pill"` prop; default stays 8 px); the three stat cells use the cards' 16 px radius.
+- [x] Switching the profile sub-tabs (and the Explore 전체/주간/실시간 switch) also slides the list below sideways: it enters from the right when moving to a later tab and from the left when moving back (reusing `tab-slide-in-right/left`, keyed per tab so it replays; not on first render). The profile tab icons were enlarged to 20 px ("MY" to 14 px).
+- [x] Removed every "Beta" label (first screen under the logo — logo moved down 20 px so the title stays put — and the "Trip Chain Beta" kicker above the course-page title).
+- [x] First-screen "바로 탐색하기 >" is 14 px; the language button is a round white floating control like the others; AI icon unified (`AiSparklesIcon`, 20 px in the search submit button, replacing the lightbulb).
+- [x] `tsc --noEmit` and `lint` pass; verified the profile tab bar highlight tracks all four options.
+
+### Mobile Phase BJ: App-wide Type Scale
+
+Status: Complete
+
+- [x] One scale for the whole mobile app: 30 hero · 24 trip title / tour intro · 20 page & section titles · 18 item names, card titles, dialog titles, stat numbers · 14 body, values, buttons, tabs · 12 labels, meta, captions · 11 micro marks only (badges, counts, AI pill, chips). Off-scale values were folded in: `text-base` (16) → 18 (feed card titles, optimize dialog title, tour step title), 13 px → 14 (sliding tabs), 10 px/9 px → 11 (badges; the lime route chip on course cards grew from 16 to 18 px to hold the digit).
+- [x] Root cause of the unevenness: the global unlayered `button { font: inherit }` overrode every Tailwind text-size/weight utility put on a `<button>` (they rendered at 16 px/400 whatever the class said). The button reset moved into `@layer base`, so classes on buttons now apply — buttons use their intended size/weight (e.g. the shared `Button` is 14 px semibold). Inputs/textareas/selects keep the unlayered reset and the 16 px floor on purpose (iOS Safari zooms on focus below 16 px), so they sit outside the scale.
+- [x] Measured the rendered sizes on the home, course, explore, trip detail, place sheet and profile screens: only 11/12/14/18/20/24/30 (plus 16 for inputs) remain; the lone 10/9 px text is the Kakao map's own scale label.
+- [x] `tsc --noEmit` and `lint` pass.
+
+### Mobile Phase BI: Lighter Place Sheet, Place Comments, Swipe to Dismiss
+
+Status: Complete
+
+- [x] The place detail sheet drops its many boxes: header (photo, category, name wrapping to two lines if needed, address), one map pictogram button beside the name that fans out round Kakao/Naver/Google logo buttons (like the share menu; `NaverIcon` added to `brand-icons.tsx`; outside press closes it), the saved count in small type under the bookmark icon, the description with a small sparkle marking the AI summary, then the facts in hairline-separated cells (visit time | fee on one row, hours full-width below), comments, and the add button.
+- [x] Place comments: each place has its own comment thread (stored in the same local `userComments` record, keyed by place id, so it persists in `tripchain:profile`) — available from the course screen and from a course's detail page. With 2+ comments an "AI 요약" pill appears; it calls the new `/api/summarize-comments` (Gemini, 2–3 sentences, no invented content, comment text treated as data) and shows the digest in a soft card, which hides itself when a new comment makes it stale. i18n: `commentSummarizeButton`, `commentSummaryLoading`, `commentSummaryLabel`, `commentSummaryFailed`.
+- [x] Swipe down to dismiss: drag the grab handle (mouse or touch), or on touch drag anywhere while the sheet is scrolled to its top; past 110 px (or a quick flick) it slides away, otherwise it springs back.
+- [x] New `AiSparklesIcon` (the familiar big-star-plus-two-small-stars "AI" mark) replaces the sunburst `SparklesIcon` everywhere it meant AI (place summary marker, comment digest, Explore search); the sunburst stays only on the map's constellation toggle.
+- [x] Place sheet type scale made explicit: 18 px name · 14 px body/values/buttons · 12 px labels/meta/author/links · 11 px only for micro marks (AI pill, saved count). Several buttons ("자세히 보기", "AI 요약", "코스에 추가", "예매하기") were silently rendering at the browser's 16 px/400 because the global unlayered `button { font: inherit }` beats Tailwind utilities set on the `<button>` itself; their typography now sits on an inner span.
+- [x] `tsc --noEmit` and `lint` pass; verified the new layout, posting two comments, the AI digest (API ~2 s), spring-back on a short drag and dismissal on a long one.
+
+### Mobile Phase BH: Course Cover Photos
+
+Status: Complete
+
+- [x] Feed cards show a real photo of one of the course's spots instead of the abstract category tile (80 px, 10 px radius to sit inside the card's corners). `FeedTrip.coverPlaceId` (optional) holds the author's pick; `getTripCoverPlace` falls back to the first spot with a real photo, then the first spot. `PlacePhoto` (non-button photo with icon fallback) is used in the feed and the publish sheet.
+- [x] Choosing the cover: the publish sheet has a "대표 사진" row of the course's spot photos to tap (default = first with a photo); for the author's own courses the detail sheet shows a "대표" badge on the current cover spot and an image button on the others to switch it (saved with the trip).
+- [x] The district label in feed cards is plain text aligned with the title's left edge (it was a padded badge).
+- [x] i18n: `coverBadge`, `setCoverAria`, `publishCoverLabel`, `publishCoverHint` (4 locales).
+- [x] Course detail sheet: tapping a spot's name/info opens that place's detail sheet inside the detail page (same `PlaceSheet` as on the course screen: photo, summary, hours, map links, bookmark, "코스에 추가"). Adding from there puts the spot into the user's current course (starting one if none) and shows a "코스에 추가됨" toast. `TripDetailSheet` takes `bookmarkedPlaceIds`, `chainIds`, `onAddPlaceToChain`, `onToggleBookmarkPlace`.
+- [x] Course detail sheet: the docked "← 뒤로" header became the same floating round back button as Explore/Profile, with the "내 코스" tag floating at the top-right and the white fade appearing behind them on scroll (content clears them with top padding).
+- [x] `tsc --noEmit` and `lint` pass; verified the feed photos, alignment (area and title share the same left), and switching the cover in the detail sheet updates the feed card.
+
+### Mobile Phase BG: "내 코스" Badge Placement
+
+Status: Complete
+
+- [x] In feed cards (Explore, profile lists) the "내 코스" badge sits at the card's top-right instead of beside the district badge — same top inset as before and the same inset on the right as the card's left padding (measured 15 px top/right). The title row stays clear below it.
+- [x] `tsc --noEmit` and `lint` pass; verified in the browser.
+
+### Mobile Phase BF: Simplified Explore Screen
+
+Status: Complete
+
+- [x] Removed the list/map toggle and the map view: Explore is just the list. Deleted `ExploreMap` (`explore-map.tsx`), the map state, the geolocation effect and the `viewList`/`viewMap` i18n keys.
+- [x] The 전체 / 주간 랭킹 / 실시간 랭킹 switch is centered under the subtitle.
+- [x] The search field is a floating pill at the bottom over a white fade (the list keeps bottom room so nothing hides behind it).
+- [x] The sort switch is a pill-shaped `SlidingTabs` (`sliding-tabs.tsx`): the highlight glides to the chosen option (300 ms ease-out, measured from the buttons, no motion under reduced motion).
+- [x] Free-form search: after a 600 ms pause, `/api/search-trips` (new, Gemini `gemini-flash-lite-latest`) picks the courses that best fit the phrase — mood, companions, weather, place names — from the trip list sent by the client (≤150 trips, truncated text; output constrained to the given ids so list text can't inject anything else). The search icon spins while Gemini works and turns into a blue sparkle when its picks are shown; until then (or if it fails/finds nothing) the local text match (title, description, author, place names, area) shows. Results are cached per phrase. Placeholder reworded ("원하는 코스를 자유롭게 검색해 보세요", 4 locales).
+- [x] `tsc --noEmit` and `lint` pass; verified the layout, the sliding highlight (tracks each button exactly), the API (~0.7 s) and a natural-language query ("밤에 야경 보면서 데이트하기 좋은 곳" → the three night-view courses) in the browser.
+
+### Mobile Phase BE: Floating Back Button on Explore/Profile
+
+Status: Complete
+
+- [x] The "← 뒤로" text links on the Explore and Profile tabs became a floating round back button (`ArrowLeftIcon`, top-left, same look as the home screen's round buttons; aria `backAria`, 4 locales). Page content moved down (`pt-[3.5–3.75rem]`) to clear it.
+- [x] The frosted white fade behind the floating buttons now also appears on Explore/Profile as soon as the page scrolls (`isScrolled`), like the home course page.
+- [x] `tsc --noEmit` and `lint` pass; verified back navigation and the fade (opacity 0 at top, 1 when scrolled).
+
+### Mobile Phase BD: Course Detail Action Bar
+
+Status: Complete
+
+- [x] The detail sheet's docked bottom bar became four floating round buttons (white surface like the map controls; liked/saved fill with the primary color), over a fade so scrolling content doesn't collide; the scroll area keeps bottom room for them. The gradient "load" button now matches the others and uses a new `MapPlusIcon` (folded map + plus).
+- [x] The fifth "이미지로 저장" (download) button moved into the share popover as one more round option, so the bar is load / like / save / share.
+- [x] Number chips: the course detail list and the home card photo badges use the map's lime-green route color (`#b7e86b`, dark number); the photo badge keeps a thin white border to separate it from the photo.
+- [x] `tsc --noEmit` and `lint` pass; verified the floating bar and the share popover in the browser.
+
+### Mobile Phase BC: Place Photos on Course Cards
+
+Status: Complete
+
+- [x] Course cards and the place detail header show the place's photo instead of the category icon (`PlacePhotoThumb` in `place-photo.tsx`; falls back to the icon if the image fails). Tapping the photo opens it full-size in a `PhotoLightbox` (tap anywhere / close button / Esc to dismiss; inside the detail sheet it closes without closing the sheet). Name tap still opens the detail sheet. New i18n key `photoCloseAria`.
+- [x] The course detail sheet's place rows use the same photo thumbnails + full-size view.
+- [x] Fixed the course detail place list overflowing the screen with long English place names: the bare `grid` column sized to the widest no-wrap title, so it now uses `grid-cols-[minmax(0,1fr)]` and `min-w-0` cards (titles ellipsize).
+- [x] The map's zoom/locate button group no longer sits at 50% opacity — it matches the other map buttons.
+- [x] `tsc --noEmit` and `lint` pass; verified thumbnails, lightbox and the sheet-in-lightbox close behavior in the browser.
+
+### Mobile Phase BB: Remove the Desktop Web Version
+
+Status: Complete
+
+- [x] Deleted the desktop web app: `src/app/page.tsx`, `src/components/layout/app-shell.tsx` and `src/features/map/` (nothing else imported them), plus the empty `src/app/experience/`. `/` is now a 404; only `/mobile` is served. Recoverable from git history. `CLAUDE.md` updated.
+- [x] `tsc --noEmit` and `lint` pass; `curl /` → 404, `/mobile` → 200.
+
 ### Mobile Phase BA: "다른 장소 보기" Replaces the Instant Swap
 
 Status: Complete

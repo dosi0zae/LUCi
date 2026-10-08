@@ -2,8 +2,8 @@
 
 import { Badge } from "@/components/ui/badge";
 import { BookmarkIcon, CommentIcon } from "@/components/layout/app-icons";
-import { PlaceThumb } from "@/features/mobile/place-thumb";
-import { getPlaceById, localizePlace, localizeTrip, type FeedTrip } from "@/features/mobile/mobile-data";
+import { PlacePhoto } from "@/features/mobile/place-photo";
+import { getTripCoverPlace, localizePlace, localizeTrip, type FeedTrip } from "@/features/mobile/mobile-data";
 import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import { cn } from "@/lib/utils";
 
@@ -44,15 +44,21 @@ export function TripFeedList({
       {trips.map((trip, index) => {
         const isLiked = likedIds.has(trip.id);
         const isSaved = savedIds.has(trip.id);
-        const rawCoverPlace = getPlaceById(trip.placeIds[0]);
+        const rawCoverPlace = getTripCoverPlace(trip);
         const coverPlace = rawCoverPlace ? localizePlace(rawCoverPlace, locale) : undefined;
         const localizedTrip = localizeTrip(trip, locale);
 
         return (
           <article
-            className="min-w-0 rounded-lg border border-border bg-surface p-3.5 shadow-soft"
+            className="relative min-w-0 rounded-lg border border-border bg-surface p-3.5 shadow-soft"
             key={trip.id}
           >
+            {/* Pinned to the card's top-right, with the same inset as the content's left edge. */}
+            {trip.isMine && (
+              <span className="pointer-events-none absolute right-3.5 top-3.5">
+                <Badge tone="blue">{t("myCourseBadge")}</Badge>
+              </span>
+            )}
             <button
               className="block w-full text-left"
               onClick={() => onOpenTrip(trip)}
@@ -61,11 +67,11 @@ export function TripFeedList({
               <div className="flex items-start gap-3">
                 {coverPlace && (
                   <span className="relative shrink-0">
-                    <PlaceThumb category={coverPlace.category} size="lg" />
+                    <PlacePhoto className="h-20 w-20 rounded-[10px]" place={coverPlace} />
                     {mode === "ranking" && (
                       <span
                         className={cn(
-                          "absolute -bottom-1 -left-1 grid h-5 w-5 place-items-center rounded-full text-[10px] font-extrabold text-white ring-2 ring-background",
+                          "absolute -bottom-1 -left-1 grid h-5 w-5 place-items-center rounded-full text-[11px] font-extrabold text-white ring-2 ring-background",
                           index === 0 ? "bg-primary" : "bg-muted",
                         )}
                       >
@@ -75,11 +81,12 @@ export function TripFeedList({
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    {coverPlace && <Badge tone="neutral">{coverPlace.area}</Badge>}
-                    {trip.isMine && <Badge tone="blue">{t("myCourseBadge")}</Badge>}
+                  <div className="flex h-7 items-center">
+                    {coverPlace && (
+                      <span className="text-xs font-semibold text-muted-strong">{coverPlace.area}</span>
+                    )}
                   </div>
-                  <h3 className="mt-1.5 truncate text-base font-extrabold">{localizedTrip.title}</h3>
+                  <h3 className="mt-1.5 truncate text-lg font-extrabold">{localizedTrip.title}</h3>
                   <p className="mt-1 truncate text-xs text-muted">
                     {trip.authorName} · {t("placesCount", { count: trip.placeIds.length })}
                   </p>
