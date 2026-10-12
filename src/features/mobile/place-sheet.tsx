@@ -457,7 +457,7 @@ export function PlaceSheet({
               >
                 <BookmarkIcon className="h-4.5 w-4.5" />
               </button>
-              <span className="-mt-0.5 text-[11px] font-bold text-muted">{place.savedBy.toLocaleString()}</span>
+              <span className="-mt-0.5 text-[0.6875rem] font-bold text-muted">{place.savedBy.toLocaleString()}</span>
             </div>
             <button
               aria-label={t("placeDetailCloseAria")}
@@ -533,7 +533,7 @@ export function PlaceSheet({
                 ) : (
                   <AiSparklesIcon className="h-3 w-3" />
                 )}
-                <span className="text-[11px] font-extrabold">
+                <span className="text-[0.6875rem] font-extrabold">
                   {commentSummaryState === "loading" ? t("commentSummaryLoading") : t("commentSummarizeButton")}
                 </span>
               </button>
@@ -542,7 +542,7 @@ export function PlaceSheet({
 
           {visibleCommentSummary && (
             <p className="mt-3 rounded-lg bg-primary-soft px-3 py-2.5 text-sm leading-6 text-foreground text-pretty">
-              <span className="mb-0.5 flex items-center gap-1 text-[11px] font-extrabold text-primary-strong">
+              <span className="mb-0.5 flex items-center gap-1 text-[0.6875rem] font-extrabold text-primary-strong">
                 <AiSparklesIcon className="h-3 w-3" />
                 {t("commentSummaryLabel")}
               </span>

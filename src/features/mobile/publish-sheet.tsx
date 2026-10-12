@@ -90,18 +90,18 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
                 aria-label={place.name}
                 aria-pressed={coverPlaceId === place.id}
                 className={cn(
-                  "relative shrink-0 rounded-[12px] p-0.5 transition",
+                  "relative shrink-0 rounded-[0.75rem] p-0.5 transition",
                   coverPlaceId === place.id ? "ring-2 ring-primary" : "opacity-70 hover:opacity-100",
                 )}
                 key={place.id}
                 onClick={() => setCoverPlaceId(place.id)}
                 type="button"
               >
-                <PlacePhoto className="h-16 w-16 rounded-[10px]" place={place} />
+                <PlacePhoto className="h-16 w-16 rounded-[0.625rem]" place={place} />
               </button>
             ))}
           </div>
-          <p className="mt-1 text-[11px] text-muted">{t("publishCoverHint")}</p>
+          <p className="mt-1 text-[0.6875rem] text-muted">{t("publishCoverHint")}</p>
         </div>
 
         <label className="mt-4 block text-xs font-bold text-muted-strong">

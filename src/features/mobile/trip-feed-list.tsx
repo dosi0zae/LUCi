@@ -67,11 +67,11 @@ export function TripFeedList({
               <div className="flex items-start gap-3">
                 {coverPlace && (
                   <span className="relative shrink-0">
-                    <PlacePhoto className="h-20 w-20 rounded-[10px]" place={coverPlace} />
+                    <PlacePhoto className="h-20 w-20 rounded-[0.625rem]" place={coverPlace} />
                     {mode === "ranking" && (
                       <span
                         className={cn(
-                          "absolute -bottom-1 -left-1 grid h-5 w-5 place-items-center rounded-full text-[11px] font-extrabold text-white ring-2 ring-background",
+                          "absolute -bottom-1 -left-1 grid h-5 w-5 place-items-center rounded-full text-[0.6875rem] font-extrabold text-white ring-2 ring-background",
                           index === 0 ? "bg-primary" : "bg-muted",
                         )}
                       >
@@ -86,7 +86,7 @@ export function TripFeedList({
                       <span className="text-xs font-semibold text-muted-strong">{coverPlace.area}</span>
                     )}
                   </div>
-                  <h3 className="mt-1.5 truncate text-lg font-extrabold">{localizedTrip.title}</h3>
+                  <h3 className="mt-1.5 line-clamp-2 text-lg font-extrabold leading-snug">{localizedTrip.title}</h3>
                   <p className="mt-1 truncate text-xs text-muted">
                     {trip.authorName} · {t("placesCount", { count: trip.placeIds.length })}
                   </p>

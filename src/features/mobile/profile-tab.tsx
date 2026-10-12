@@ -106,7 +106,7 @@ export function ProfileTab({
           <UserIcon className="h-7 w-7" />
         </span>
         <h2 className="text-lg font-extrabold text-balance">{t("signInHeading")}</h2>
-        <p className="max-w-[260px] break-keep text-sm text-muted text-balance">{t("signInSubtitle")}</p>
+        <p className="max-w-[16.25rem] break-keep text-sm text-muted text-balance">{t("signInSubtitle")}</p>
         <Button onClick={onToggleSignIn}>{t("signInButton")}</Button>
       </div>
     );
@@ -244,7 +244,7 @@ export function ProfileTab({
                             </span>
                             <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2">
                               <span className="truncate text-xs font-bold">{localizedPlace.name}</span>
-                              <span className="truncate text-[11px] text-muted">{localizedPlace.area}</span>
+                              <span className="truncate text-[0.6875rem] text-muted">{localizedPlace.area}</span>
                             </span>
                           </button>
                         );

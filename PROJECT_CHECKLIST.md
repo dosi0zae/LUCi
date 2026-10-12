@@ -33,6 +33,14 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase BO: Type Scale Retuned for Phones
+
+Status: Complete
+
+- [x] The app felt small on a phone, so the scale was raised — first by a blanket 110% root size, which overshot (names and titles got too big). Replaced by explicit steps in a Tailwind `@theme` block in `globals.css` (root back at 100%): text-xs 13 · text-sm 15 · text-lg 17 · text-xl 22 · text-2xl 24 · text-3xl 28, with 11 px (`text-[0.6875rem]`) for tiny marks. Arbitrary px sizes were converted to rem (text, chips, radii, logo, text max-widths) so they follow the root size. Feed card titles may wrap to two lines.
+- [x] Checked at a 375 px viewport (no horizontal overflow on home/explore/course); measured sizes: 11 / 13 / 15 / 22 / 28.
+- [x] `tsc --noEmit` and `lint` pass.
+
 ### Mobile Phase BN: Explore Header
 
 Status: Complete

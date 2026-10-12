@@ -443,7 +443,7 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
           </button>
           {optimizeNote && (
             <p
-              className="optimize-note pointer-events-none absolute bottom-[3.25rem] right-12 z-10 rounded-full bg-foreground/85 px-2.5 py-1 text-[11px] font-bold text-white"
+              className="optimize-note pointer-events-none absolute bottom-[3.25rem] right-12 z-10 rounded-full bg-foreground/85 px-2.5 py-1 text-[0.6875rem] font-bold text-white"
               role="status"
             >
               {optimizeNote === "done" ? t("optimizeDone") : t("optimizeAlready")}

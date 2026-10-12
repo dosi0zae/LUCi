@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+/* The app's type scale, tuned against well-liked Korean mobile apps (Toss, 29CM): body 15,
+   secondary 13, item/section names 17, page titles 22, hero 28. 11 px (text-[0.6875rem]) is
+   reserved for tiny marks. Changing a value here re-sizes every use of that Tailwind step. */
+@theme {
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.2rem;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.4rem;
+  --text-lg: 1.0625rem;
+  --text-lg--line-height: 1.5rem;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.8rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.75rem;
+  --text-3xl--line-height: 2.25rem;
+}
+
 :root {
   color-scheme: light;
   --background: #f7fafc;

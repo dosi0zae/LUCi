@@ -110,7 +110,7 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img alt="Trip Chain" className="h-14 w-auto drop-shadow-[0_0_18px_rgba(79,141,247,0.55)]" src="/tripchain-logo.svg" />
         <h2 className="text-2xl font-extrabold text-white text-balance">{t("tourIntroTitle")}</h2>
-        <p className="max-w-[260px] text-sm leading-6 text-white/70 text-pretty">{t("tourIntroSubtitle")}</p>
+        <p className="max-w-[16.25rem] text-sm leading-6 text-white/70 text-pretty">{t("tourIntroSubtitle")}</p>
         <button
           className="mt-2 rounded-full bg-primary px-6 py-3 text-sm font-extrabold text-white transition hover:bg-primary-strong"
           onClick={onStart}
@@ -155,7 +155,7 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
 
       {rect && (
         <div
-          className="fixed z-[61] w-[calc(100%-40px)] max-w-[320px] rounded-xl bg-background p-4 shadow-panel transition-all duration-300"
+          className="fixed z-[61] w-[calc(100%-40px)] max-w-[20rem] rounded-xl bg-background p-4 shadow-panel transition-all duration-300"
           style={{
             left: tooltipLeft,
             top: placeBelow ? rect.bottom + 14 : undefined,

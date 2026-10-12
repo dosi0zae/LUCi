@@ -92,14 +92,14 @@ export function CategorySheet({ areaName, badges, category, onClose, onSelectPla
                     src={getPlaceImageUrl(place.id)}
                   />
                   {badge && (
-                    <span className="absolute right-1 top-1 rounded-xs border border-primary bg-white px-1.5 py-0.5 text-[11px] font-bold text-primary">
+                    <span className="absolute right-1 top-1 rounded-xs border border-primary bg-white px-1.5 py-0.5 text-[0.6875rem] font-bold text-primary">
                       {t(BADGE_LABEL_KEY[badge])}
                     </span>
                   )}
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2">
                   <span className="truncate text-xs font-bold">{localizedPlace.name}</span>
-                  <span className="truncate text-[11px] text-muted">{localizedPlace.area}</span>
+                  <span className="truncate text-[0.6875rem] text-muted">{localizedPlace.area}</span>
                 </span>
               </button>
               );

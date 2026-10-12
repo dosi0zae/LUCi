@@ -548,7 +548,7 @@ export function TripDetailSheet({
             <article className="min-w-0 rounded-lg border border-border bg-surface p-3 shadow-soft" key={place.id}>
               <div className="flex items-center gap-3">
                 {/* Same lime-green chip as the route markers on the map above. */}
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#b7e86b] text-[11px] font-extrabold text-[#0b1220]">
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#b7e86b] text-[0.6875rem] font-extrabold text-[#0b1220]">
                   {index + 1}
                 </span>
                 <PlacePhotoThumb
@@ -571,7 +571,7 @@ export function TripDetailSheet({
                 {/* The author can pick which spot's photo represents the course in lists. */}
                 {trip.isMine &&
                   (coverPlaceId === place.id ? (
-                    <span className="shrink-0 rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-extrabold text-primary-strong">
+                    <span className="shrink-0 rounded-full bg-primary-soft px-2.5 py-1 text-[0.6875rem] font-extrabold text-primary-strong">
                       {t("coverBadge")}
                     </span>
                   ) : (

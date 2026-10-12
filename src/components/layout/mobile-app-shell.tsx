@@ -1479,13 +1479,13 @@ export function MobileAppShell() {
                   />
                 </div>
 
-                <div className="relative z-10 px-5 pt-[60px] text-center">
+                <div className="relative z-10 px-5 pt-[3.75rem] text-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img alt="Trip Chain" className="mx-auto block h-[85px] w-auto" src="/tripchain-logo.svg" />
+                  <img alt="Trip Chain" className="mx-auto block h-[5.3125rem] w-auto" src="/tripchain-logo.svg" />
                   <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-normal text-balance">
                     {t("heroTitle")}
                   </h1>
-                  <p className="mx-auto mt-4 max-w-[310px] whitespace-pre-line text-sm leading-6 text-muted">
+                  <p className="mx-auto mt-4 max-w-[19.375rem] whitespace-pre-line text-sm leading-6 text-muted">
                     {t("heroSubtitle")}
                   </p>
 
@@ -1711,7 +1711,7 @@ export function MobileAppShell() {
                         <div className="flex min-w-0 flex-1 items-center gap-2.5">
                           <PlacePhotoThumb
                             badge={
-                              <span className="absolute -bottom-1 -left-1 grid h-[18px] w-[18px] place-items-center rounded-full border border-white bg-[#b7e86b] text-[11px] font-extrabold text-[#0b1220]">
+                              <span className="absolute -bottom-1 -left-1 grid h-[1.125rem] w-[1.125rem] place-items-center rounded-full border border-white bg-[#b7e86b] text-[0.6875rem] font-extrabold text-[#0b1220]">
                                 {index + 1}
                               </span>
                             }
@@ -1787,7 +1787,7 @@ export function MobileAppShell() {
                           >
                             <div className="min-h-0 overflow-hidden">
                               <div className="mt-2.5 border-t border-border pt-2.5">
-                                <p className="mb-1.5 text-[11px] font-bold text-muted">
+                                <p className="mb-1.5 text-[0.6875rem] font-bold text-muted">
                                   {t("swapHeading", { name: localizedPlace.name })}
                                 </p>
                                 {panelStops.length === 0 ? (
@@ -1804,7 +1804,7 @@ export function MobileAppShell() {
                                           )}
                                           key={nearby.id}
                                         >
-                                          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-primary bg-white text-[11px] font-extrabold text-primary">
+                                          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-primary bg-white text-[0.6875rem] font-extrabold text-primary">
                                             {NEARBY_LABELS[nearbyIndex]}
                                           </span>
                                           <button
@@ -1821,13 +1821,13 @@ export function MobileAppShell() {
                                             />
                                             <span className="min-w-0 flex-1">
                                               <span className="block truncate text-xs font-bold">{localizedNearby.name}</span>
-                                              <span className="block truncate text-[11px] text-muted">
+                                              <span className="block truncate text-[0.6875rem] text-muted">
                                                 {localizedNearby.area} · {formatDistance(distanceKm)}
                                               </span>
                                             </span>
                                           </button>
                                           {swapFlash?.rowId === nearby.id && (
-                                            <span className="swap-badge shrink-0 rounded-full bg-primary px-2 py-0.5 text-[11px] font-extrabold text-white">
+                                            <span className="swap-badge shrink-0 rounded-full bg-primary px-2 py-0.5 text-[0.6875rem] font-extrabold text-white">
                                               {t("swappedBadge")}
                                             </span>
                                           )}
@@ -1908,7 +1908,7 @@ export function MobileAppShell() {
                                     </span>
                                     <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2.5">
                                       <span className="truncate text-xs font-bold">{localizedPlace.name}</span>
-                                      <span className="truncate text-[11px] text-muted">{localizedPlace.area}</span>
+                                      <span className="truncate text-[0.6875rem] text-muted">{localizedPlace.area}</span>
                                     </span>
                                   </button>
                                   <button
@@ -2026,7 +2026,7 @@ export function MobileAppShell() {
               )}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img alt="Trip Chain" className="block h-[22px] w-auto" src="/tripchain-logo-horizontal.svg" />
+              <img alt="Trip Chain" className="block h-[1.375rem] w-auto" src="/tripchain-logo-horizontal.svg" />
             </div>
             <button
               aria-label={t("navProfile")}
@@ -2129,7 +2129,7 @@ export function MobileAppShell() {
             <div
               aria-labelledby="optimize-prompt-title"
               aria-modal="true"
-              className="sheet-panel w-full max-w-[320px] rounded-lg bg-surface p-4 shadow-panel"
+              className="sheet-panel w-full max-w-[20rem] rounded-lg bg-surface p-4 shadow-panel"
               onClick={(event) => event.stopPropagation()}
               role="dialog"
             >
