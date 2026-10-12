@@ -33,6 +33,13 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase BP: Crisp Top Fade (iPhone Home-Screen App)
+
+Status: Complete
+
+- [x] Reported on an iPhone home-screen install: the top band looked smeared. Cause was our own scroll fade (a 10 px blur + semi-transparent white gradient across the status-bar area and the floating buttons, so cards showed through as a ghost), not Safari. The fade behind the floating controls is now solid page background down to 66 % of its height and then a short fade, with no blur — on the main screens and on the course detail page.
+- [x] `tsc --noEmit` and `lint` pass; checked at a 375 px viewport.
+
 ### Mobile Phase BO: Type Scale Retuned for Phones
 
 Status: Complete

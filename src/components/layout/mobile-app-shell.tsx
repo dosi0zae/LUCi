@@ -2008,13 +2008,11 @@ export function MobileAppShell() {
                 "pointer-events-none absolute inset-x-0 top-0 z-10 [height:calc(5.25rem+env(safe-area-inset-top))] transition-opacity duration-300",
                 (activeTab === "home" ? isTitleScrolledAway : isScrolled) ? "opacity-100" : "opacity-0",
               )}
+              // Solid behind the status bar and the controls, then a short fade. (A blurred,
+              // half-transparent fade left a smeared ghost of the cards under the buttons.)
               style={{
                 background:
-                  "linear-gradient(to bottom, color-mix(in srgb, var(--background) 88%, transparent) 0%, color-mix(in srgb, var(--background) 62%, transparent) 55%, transparent 100%)",
-                backdropFilter: "blur(10px)",
-                WebkitBackdropFilter: "blur(10px)",
-                maskImage: "linear-gradient(to bottom, black 55%, transparent 100%)",
-                WebkitMaskImage: "linear-gradient(to bottom, black 55%, transparent 100%)",
+                  "linear-gradient(to bottom, var(--background) 0%, var(--background) 66%, transparent 100%)",
               }}
             />
             {activeTab === "home" && (

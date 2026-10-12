@@ -419,11 +419,7 @@ export function TripDetailSheet({
         )}
         style={{
           background:
-            "linear-gradient(to bottom, color-mix(in srgb, var(--background) 88%, transparent) 0%, color-mix(in srgb, var(--background) 62%, transparent) 55%, transparent 100%)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-          maskImage: "linear-gradient(to bottom, black 55%, transparent 100%)",
-          WebkitMaskImage: "linear-gradient(to bottom, black 55%, transparent 100%)",
+            "linear-gradient(to bottom, var(--background) 0%, var(--background) 66%, transparent 100%)",
         }}
       />
       <button
