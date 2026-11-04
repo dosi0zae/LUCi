@@ -42,3 +42,6 @@ dev-*.log
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local evaluation output of scripts/build-food-pool.mjs (contains third-party ratings: never commit)
+/scripts/.cache/

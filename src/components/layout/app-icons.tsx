@@ -279,6 +279,28 @@ export function SlidersIcon({ className }: IconProps) {
   );
 }
 
+export function UtensilsIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M7 3v8" />
+      <path d="M4 3v4a3 3 0 0 0 6 0V3" />
+      <path d="M7 11v10" />
+      <path d="M17 21V3c-2.5 1.2-4 4-4 8h4" />
+    </svg>
+  );
+}
+
+export function CoffeeIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M5 9h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4Z" />
+      <path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16" />
+      <path d="M8 3v2" />
+      <path d="M12 3v2" />
+    </svg>
+  );
+}
+
 export function CloseIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>

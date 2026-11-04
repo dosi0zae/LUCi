@@ -7,14 +7,16 @@ import {
   BookmarkIcon,
   CheckIcon,
   CloseIcon,
+  CoffeeIcon,
   MapPinIcon,
   PlaylistAddIcon,
+  UtensilsIcon,
   AiSparklesIcon,
 } from "@/components/layout/app-icons";
 import { NaverIcon } from "@/features/mobile/brand-icons";
 import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
 import { localizePlace, type MobilePlace, type TripComment } from "@/features/mobile/mobile-data";
-import { getGoogleMapsUrl, getKakaoMapUrl, getNaverMapUrl } from "@/features/mobile/map-links";
+import { getGoogleMapsUrl, getKakaoMapUrl, getNaverMapUrl, getNearbyUrl } from "@/features/mobile/map-links";
 import { useCategoryLabel, useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import { cn } from "@/lib/utils";
 
@@ -515,6 +517,24 @@ export function PlaceSheet({
               ))}
             </dd>
           </dl>
+        </div>
+
+        {/* Meals and coffee around this spot, searched in a map app. */}
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {(["food", "cafe"] as const).map((kind) => (
+            <a
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-border bg-surface text-muted-strong transition-colors hover:border-primary hover:text-primary active:scale-[0.98]"
+              href={getNearbyUrl(kind, { lat: place.lat, lng: place.lng }, locale)}
+              key={kind}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              {kind === "food" ? <UtensilsIcon className="h-4 w-4" /> : <CoffeeIcon className="h-4 w-4" />}
+              <span className="text-sm font-semibold">
+                {kind === "food" ? t("nearbyFoodButton") : t("nearbyCafeButton")}
+              </span>
+            </a>
+          ))}
         </div>
 
         {/* Comments about this place, and an AI digest of them. */}

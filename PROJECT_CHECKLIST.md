@@ -33,6 +33,30 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
+### Mobile Phase BR: Food/Café/Bar Pool Pipeline (prototype, 성동구)
+
+Status: In progress (성동구 data collected and scored without Google; tags and the answer-key check are next)
+
+Direction: the product stays culture / sightseeing / hot-place courses; food and cafés (bars included) are side stops. The pool is not a full restaurant DB — it feeds a "nearby" suggestion where the AI picks from real candidates, and the score is one input, not the decision.
+
+- [x] `scripts/build-food-pool.mjs --district 성동구` (everything lands in gitignored `scripts/.cache/`). Stages: `candidates` (Kakao Local, recursive map grid because one query caps at 45; 성동구 **4,216 places**, 247 big chains flagged) → `naver` (Naver API HUB search: blog + café + news; the old developers.naver.com search API closed to new apps on 2026-07-30) → `brands` (Kakao keyword search over Seoul to count branches) → `trend` (Naver Datalab via API HUB, 4 places + 1 anchor query per request so ratios compare) → `verify` (Gemini name check) → `tags` (Gemini, closed vocabulary; written, not run yet) → `google` (needs a key; skipped) → `score` (writes `food-성동구-report.json/.csv`).
+- [x] Why titles are matched, not totals: Naver matches loosely (the dong alone satisfies most posts), so plain-word names ("집밥", "제일") showed millions of hits. A post counts only when the brand name is in its title; the loose total is scaled by that share. Posts naming the brand AND this branch's dong tell branches apart.
+- [x] Signal score (no Google): 70 × (0.65 blog + 0.35 café percentile within the kind, blog count reduced by the ad share) + up to 24 for searches (growth 14 + volume 10) + up to 6 news − 20 × ad rate − 10 if the newest post is older than ~18 months − 10 if the name check is unclear. Max in 성동구 is 95, spread evenly instead of piling up at 100. `hot` label: surge ≥ 2×, rising ≥ 1.3×, falling < 0.7×.
+- [x] Verdicts: `top` (best 20 % of a kind), `low`, `review` (everyday-word / ≤ 2-letter names, or the AI says the posts are not about one venue), `chain` (6+ places with the name in Seoul, or the big-chain list — listed and scored but never `top`; 2–5 places = small local group, ranked normally). Known: 한정선 (7 branches) lands in `chain` although it is the hottest spot; the threshold is a guess.
+- [x] Blog / café snippets (≤ 12 per place) are kept in the local cache as raw material for tagging; they are never committed or shown.
+- [x] Tag vocabulary agreed (58 ids in 8 groups: meal, cuisine, café type, bar type, mood, situation, info, space; no course-linked tags). Tags need ≥ 2 supporting posts, else the place stays untagged.
+- [x] Naver search quota (25,000/day) is tracked in `scripts/.cache/hub-usage.json`; a stage saves and stops at 99 %.
+- [ ] Known gaps: same-name branches get equal scores (로우커피스탠드 ×2); chain tier can hide a surging spot; blog counts alone can't separate everyday-word names that the AI check misses; no answer-key validation yet.
+- [ ] Next: run tags (20 places first), answer-key check (about 20 well-known + 20 unknown places), human review of the CSV, then the AI-chooses nearby suggestion (candidates by distance, popularity passed as bands, AI picks and explains, server validates ids) and the platform rework for food and cafés.
+- Google ratings are never committed (their terms don't allow keeping Google content in our own dataset): the in-app version would query Google on demand.
+
+### Mobile Phase BQ: Nearby Food and Café Links in the Place Sheet
+
+Status: Complete
+
+- [x] First tried "근처 식당 / 근처 카페" pills between the course cards; they made the route look broken, so they were removed. They now live in each place's detail sheet (tap a stop's name): two pill links under the facts that open a map-app search centered on that place — Naver Map for Korean (`?c=lng,lat,16`), Google Maps for the other languages (`getNearbyUrl` in `map-links.ts`; 4-locale labels). No restaurant data is stored yet; this is the cheapest first step toward meals/coffee (next: curated nearby picks, then full categories).
+- [x] `tsc --noEmit` and `lint` pass; verified the course list contains only cards again and the sheet shows both links with the right search URLs.
+
 ### Mobile Phase BP: Crisp Top Fade (iPhone Home-Screen App)
 
 Status: Complete
