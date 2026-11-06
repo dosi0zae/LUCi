@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { CloseIcon } from "@/components/layout/app-icons";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
-import { getPlaceImageUrl, type MobilePlace } from "@/features/mobile/mobile-data";
+import { getPlaceImageUrl, isDiningCategory, type MobilePlace } from "@/features/mobile/mobile-data";
 import { useT } from "@/features/mobile/i18n/i18n-context";
 import { cn } from "@/lib/utils";
 
@@ -25,8 +25,9 @@ type PlacePhotoThumbProps = {
   badge?: ReactNode;
 };
 
+// Dining stops have no photo of ours (and a stock photo would mislead), so they start on the icon tile.
 export function PlacePhotoThumb({ badge, label, onFallback, onOpenPhoto, place, size }: PlacePhotoThumbProps) {
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState(isDiningCategory(place.category));
 
   return (
     <button
@@ -107,7 +108,7 @@ export function PhotoLightbox({ name, onClose, place }: PhotoLightboxProps) {
 // A plain (non-interactive) square photo of a place for use inside a button or link; shows
 // the category icon tile if the image can't load.
 export function PlacePhoto({ className, place }: { place: MobilePlace; className: string }) {
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState(isDiningCategory(place.category));
 
   if (failed) {
     return (

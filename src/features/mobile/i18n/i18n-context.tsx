@@ -102,6 +102,9 @@ const categoryKeyByCategory: Record<PlaceCategory, TranslationKey> = {
   관광지: "categoryAttraction",
   문화시설: "categoryCulture",
   축제행사: "categoryFestival",
+  식당: "categoryRestaurant",
+  카페: "categoryCafe",
+  술집: "categoryBar",
 };
 
 export function useCategoryLabel() {

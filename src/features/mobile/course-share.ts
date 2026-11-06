@@ -1,4 +1,4 @@
-import { places } from "@/features/mobile/mobile-data";
+import { getPlaceById } from "@/features/mobile/mobile-data";
 
 // Every place id is static (bundled with the client, synced from TourAPI/heritage data),
 // so a link naming them is fully self-contained — no backend needed to resolve it, unlike
@@ -21,8 +21,7 @@ export function decodeCourseFromLocation(search: string): { placeIds: string[]; 
     return null;
   }
 
-  const knownIds = new Set(places.map((place) => place.id));
-  const placeIds = raw.split(",").filter((id) => knownIds.has(id));
+  const placeIds = raw.split(",").filter((id) => getPlaceById(id) !== undefined);
 
   if (placeIds.length < 2) {
     return null;

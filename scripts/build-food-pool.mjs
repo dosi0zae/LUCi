@@ -18,7 +18,7 @@
 //   node scripts/build-food-pool.mjs --stage google --google-top 60
 //   node scripts/build-food-pool.mjs --stage score
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -32,6 +32,13 @@ const CACHE_DIR = path.join(__dirname, ".cache");
 // by the address text. Add a district here to run the pipeline for it.
 const DISTRICTS = {
   성동구: { west: 127.003, south: 37.527, east: 127.082, north: 37.58 },
+  // Boxes are generous on purpose (neighbouring districts overlap); the address text decides.
+  종로구: { west: 126.945, south: 37.56, east: 127.03, north: 37.64 },
+  중구: { west: 126.955, south: 37.54, east: 127.045, north: 37.585 },
+  용산구: { west: 126.935, south: 37.505, east: 127.025, north: 37.56 },
+  마포구: { west: 126.85, south: 37.52, east: 126.97, north: 37.6 },
+  송파구: { west: 127.06, south: 37.44, east: 127.21, north: 37.57 },
+  영등포구: { west: 126.87, south: 37.47, east: 127.0, north: 37.56 },
 };
 
 // SCORING — final = 100 × (0.55 × ratingScore + 0.45 × mentionPercentile)
@@ -163,7 +170,7 @@ function classify(doc) {
 }
 
 function dongOf(address) {
-  const match = address.match(/성동구\s+(\S+)/);
+  const match = address.match(new RegExp(`${DISTRICT}\\s+(\\S+)`));
   return match ? match[1].replace(/\d+가$/, "").replace(/\d+동$/, "동") : "";
 }
 
@@ -188,7 +195,7 @@ async function runCandidates() {
     console.log(`  ${code} done — ${raw.size} unique so far (${kakaoCalls} calls)`);
   }
 
-  const inDistrict = [...raw.values()].filter((doc) => (doc.address_name ?? "").includes(DISTRICT));
+  const inDistrict = [...raw.values()].filter((doc) => (doc.address_name ?? "").includes(`서울 ${DISTRICT}`));
   const candidates = inDistrict
     .map((doc) => ({
       id: doc.id,
@@ -243,8 +250,38 @@ const DONG_WORDS = {
   하왕십리동: ["왕십리"],
   상왕십리동: ["왕십리"],
   도선동: ["도선", "왕십리"],
+  // popular names people actually write instead of the legal dong
+  관훈동: ["인사동", "관훈"],
+  가회동: ["북촌", "가회"],
+  계동: ["북촌", "계동"],
+  재동: ["북촌", "재동"],
+  누하동: ["서촌", "누하"],
+  누상동: ["서촌", "누상"],
+  통의동: ["서촌", "통의"],
+  체부동: ["서촌", "체부"],
+  옥인동: ["서촌", "옥인"],
+  익선동: ["익선"],
+  이태원동: ["이태원"],
+  한남동: ["한남"],
+  후암동: ["후암"],
+  용산동: ["용산"],
+  남영동: ["남영", "삼각지"],
+  한강로동: ["삼각지", "용리단길", "한강로"],
+  장충동: ["장충"],
+  신당동: ["신당"],
+  서교동: ["홍대", "서교"],
+  동교동: ["연남", "동교"],
+  상수동: ["상수", "홍대"],
+  방이동: ["방이", "올림픽공원"],
+  석촌동: ["석촌", "송리단길"],
+  송파동: ["송리단길", "송파"],
+  신천동: ["잠실", "신천"],
+  여의도동: ["여의도"],
 };
-const dongWords = (dong) => DONG_WORDS[dong] ?? [dong.replace(/동$/, "")];
+const dongWords = (dong) => {
+  const stem = dong.replace(/동$/, "");
+  return DONG_WORDS[dong] ?? [stem.length >= 2 ? stem : dong];
+};
 const ymd = (ms) => new Date(ms).toISOString().slice(0, 10).replaceAll("-", "");
 
 // Estimated real mentions: the loose total scaled by the share of top posts that name the place.
@@ -324,6 +361,10 @@ function summarizeTitles(data, name) {
   return { total: data.total ?? 0, titleHits: hits.length, snips: hits.slice(0, SNIPPETS).map(snippetOf) };
 }
 
+// Café and news lookups only for places with this many blog posts naming them (in 성동구 every
+// place that made the app list had 10+, so nothing is lost and about 10 % of the calls are saved).
+const CAFE_NEWS_MIN_HITS = 10;
+
 async function runNaver() {
   if (!env.NAVER_CLIENT_ID || !env.NAVER_CLIENT_SECRET) {
     console.log("[naver] NAVER_CLIENT_ID / NAVER_CLIENT_SECRET missing — skipped.");
@@ -380,7 +421,7 @@ async function runNaver() {
   );
 
   // pass 2 — café posts and news, only for places with some real blog presence
-  const worthy = (place) => (cache[place.id]?.blog?.titleHits ?? 0) >= 5;
+  const worthy = (place) => (cache[place.id]?.blog?.titleHits ?? 0) >= CAFE_NEWS_MIN_HITS;
   await pass(
     "café + news",
     pool.filter((place) => worthy(place) && (cache[place.id].cafe?.snips === undefined || (newsEnabled && cache[place.id].news === undefined))),
@@ -405,7 +446,11 @@ async function runNaver() {
       entry.news = summarizeTitles(news, brandName(place.name));
     },
   );
-  console.log(`[naver] done — ${hubCalls} API calls this run, ${Object.keys(cache).length} places cached`);
+  console.log(`[naver] ${stop ? "STOPPED" : "done"} — ${hubCalls} API calls this run, ${Object.keys(cache).length} places cached`);
+  // Exit code 2 = cut short (daily limit or an API error): a queue must not go on to the next stage.
+  if (stop) {
+    process.exitCode = 2;
+  }
 }
 
 // ---- stage 2a: brand size (Kakao keyword search over all of Seoul) ---------------------
@@ -550,6 +595,16 @@ async function runTrend() {
   console.log(`[trend] ${Object.keys(cache).length} places have a trend`);
 }
 
+// The places the app gets: this district's `top` places plus spots whose searches are surging
+// (a new hot spot has few posts, and a branchy one such as 한정선 would otherwise sit in `chain`).
+function curatedRows() {
+  return readJson(files.report, []).filter(
+    (row) =>
+      row.verdict === "top" ||
+      (row.hot === "surge" && !row.ambiguous && row.nameCheck !== "word" && row.verdict !== "review" && row.score !== null),
+  );
+}
+
 // ---- stage 2d: name check (Gemini) ----------------------------------------------------------
 
 // Title matching can't tell "브레이크타임" the café from "break time" the phrase. For places that
@@ -557,12 +612,16 @@ async function runTrend() {
 const VERIFY_PROMPT = [
   "너는 서울 식당·카페·술집 이름을 검수하는 편집자야.",
   "각 항목은 가게 이름과, 그 이름이 제목에 들어간 블로그·카페 글의 제목과 요약 발췌다.",
-  "발췌가 서울 성동구의 특정 가게 한 곳(또는 그 가게의 지점들)을 다루면 venue,",
+  `발췌가 서울 ${DISTRICT}의 특정 가게 한 곳(또는 그 가게의 지점들)을 다루면 venue,`,
   "이름이 일반 단어·표현으로 쓰였거나 다른 가게·지역·주제를 다루는 글이 대부분이면 word,",
   "판단하기 어려우면 unclear 로 답한다.",
 ].join("\n");
 
+// Set once Gemini reports its daily free quota is used up.
+let geminiQuotaOut = false;
+
 async function geminiVerify(items) {
+  if (geminiQuotaOut) return null;
   const body = items
     .map(({ place, entry }) => {
       const posts = (entry.blog?.snips ?? []).slice(0, 10).map((snip) => `- ${snip.t} | ${snip.d}`).join("\n");
@@ -597,6 +656,12 @@ async function geminiVerify(items) {
       },
     );
     if (response.status === 429 || response.status >= 500) {
+      // A per-day quota cannot recover by waiting: stop the stage (exit code 2) instead of failing every batch.
+      if (response.status === 429 && /per day/i.test(await response.text().catch(() => ""))) {
+        geminiQuotaOut = true;
+        process.exitCode = 2;
+        return null;
+      }
       await sleep(2000 * attempt);
       continue;
     }
@@ -636,8 +701,12 @@ async function runVerify() {
   console.log(`[verify] ${todo.length} places (${Math.ceil(todo.length / 6)} Gemini calls)`);
   for (let i = 0; i < todo.length; i += 6) {
     const batch = todo.slice(i, i + 6);
-    const result = await geminiVerify(batch);
+    const result = await geminiVerify(batch).catch(() => null);
     if (!result) {
+      if (geminiQuotaOut) {
+        console.log("  Gemini daily quota used up — stopping; run again tomorrow.");
+        break;
+      }
       console.log(`  batch ${i / 6 + 1} failed — will retry on the next run`);
       continue;
     }
@@ -720,6 +789,7 @@ const TAG_PROMPT = [
 ].join("\n");
 
 async function geminiTags(places) {
+  if (geminiQuotaOut) return null;
   const allIds = Object.keys(TAG_LABELS);
   const body = places
     .map(({ place, entry }) => {
@@ -757,6 +827,12 @@ async function geminiTags(places) {
       },
     );
     if (response.status === 429 || response.status >= 500) {
+      // A per-day quota cannot recover by waiting: stop the stage (exit code 2) instead of failing every batch.
+      if (response.status === 429 && /per day/i.test(await response.text().catch(() => ""))) {
+        geminiQuotaOut = true;
+        process.exitCode = 2;
+        return null;
+      }
       await sleep(2000 * attempt);
       continue;
     }
@@ -796,17 +872,22 @@ async function runTags() {
   const mentions = readJson(files.naver, {});
   const cache = readJson(files.tags, {});
   const maxPlaces = Number(arg("tags-max", "5000"));
+  const curated = args.includes("--curated") ? new Set(curatedRows().map((row) => row.id)) : null;
   // Only places with real evidence: at least 5 posts that name them.
   const todo = candidates
-    .filter((place) => !place.isChain && (mentions[place.id]?.blog?.titleHits ?? 0) >= 5 && mentions[place.id].blog.snips && cache[place.id] === undefined)
+    .filter((place) => (!curated || curated.has(place.id)) && (curated || !place.isChain) && (mentions[place.id]?.blog?.titleHits ?? 0) >= 5 && mentions[place.id].blog.snips && cache[place.id] === undefined)
     .slice(0, maxPlaces)
     .map((place) => ({ place, entry: mentions[place.id] }));
   console.log(`[tags] ${todo.length} places (${Math.ceil(todo.length / 4)} Gemini calls)`);
   let done = 0;
   for (let i = 0; i < todo.length; i += 4) {
     const batch = todo.slice(i, i + 4);
-    const result = await geminiTags(batch);
+    const result = await geminiTags(batch).catch(() => null);
     if (!result) {
+      if (geminiQuotaOut) {
+        console.log("  Gemini daily quota used up — stopping; run again tomorrow.");
+        break;
+      }
       console.log(`  batch ${i / 4 + 1} failed — will retry on the next run`);
       continue;
     }
@@ -1096,6 +1177,59 @@ function runScore() {
   console.log(`  full report: ${path.relative(ROOT, files.report)}`);
 }
 
+// ---- stage 5: export for the app ------------------------------------------------------------
+
+const KIND_CATEGORY = { food: "식당", cafe: "카페", bar: "술집" };
+const KIND_MINUTES = { food: 60, cafe: 45, bar: 90 };
+
+// Writes src/features/mobile/dining-places.json: no ratings, no post text — only what we made
+// ourselves (tags, our own popularity band) plus the Kakao place id/coordinates for a map link.
+function runExport() {
+  const candidates = Object.fromEntries(readJson(files.candidates, []).map((place) => [place.id, place]));
+  const tagCache = readJson(files.tags, {});
+  const rows = curatedRows();
+  const out = rows.map((row) => {
+    const place = candidates[row.id];
+    const tagIds = tagCache[row.id]?.tags ?? [];
+    const labels = tagIds.map((id) => TAG_LABELS[id]);
+    const fallback = place.category.split(">").pop().trim();
+    return {
+      id: `dining-${row.id}`,
+      name: place.name,
+      category: KIND_CATEGORY[row.kind],
+      area: DISTRICT,
+      address: place.address,
+      description: (labels.length > 0 ? labels.slice(0, 4) : [fallback]).join(" · "),
+      duration: `${KIND_MINUTES[row.kind]}분`,
+      fee: "정보 없음",
+      tags: labels.slice(0, 3),
+      hours: "정보 없음",
+      savedBy: Math.round((row.score ?? 0) * 10),
+      lat: place.lat,
+      lng: place.lng,
+      source: "dining",
+      dining: {
+        tagIds,
+        pop: (row.score ?? 0) >= 75 ? "high" : "mid",
+        hot: row.hot ?? null,
+        kakaoUrl: place.url,
+      },
+    };
+  });
+  writeJson(path.join(CACHE_DIR, `dining-${DISTRICT}.json`), out);
+  // The app file holds every district exported so far.
+  const merged = readdirSync(CACHE_DIR)
+    .filter((name) => /^dining-.+\.json$/.test(name))
+    .sort()
+    .flatMap((name) => readJson(path.join(CACHE_DIR, name), []));
+  const target = path.join(ROOT, "src", "features", "mobile", "dining-places.json");
+  writeFileSync(target, JSON.stringify(merged, null, 1), "utf8");
+  const count = (category) => out.filter((place) => place.category === category).length;
+  console.log(
+    `[export] ${DISTRICT}: ${out.length} places (app file now ${merged.length}) → ${path.relative(ROOT, target)} (식당 ${count("식당")}, 카페 ${count("카페")}, 술집 ${count("술집")}; ${out.filter((place) => place.dining.tagIds.length > 0).length} tagged)`,
+  );
+}
+
 // ---- main --------------------------------------------------------------------------
 
 const wants = (stage) => STAGE === "all" || STAGE === stage;
@@ -1107,3 +1241,4 @@ if (wants("verify")) await runVerify();
 if (wants("tags")) await runTags();
 if (wants("google")) await runGoogle();
 if (wants("score")) runScore();
+if (STAGE === "export") runExport();

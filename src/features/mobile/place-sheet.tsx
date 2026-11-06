@@ -15,7 +15,7 @@ import {
 } from "@/components/layout/app-icons";
 import { NaverIcon } from "@/features/mobile/brand-icons";
 import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
-import { localizePlace, type MobilePlace, type TripComment } from "@/features/mobile/mobile-data";
+import { isDiningCategory, localizePlace, type MobilePlace, type TripComment } from "@/features/mobile/mobile-data";
 import { getGoogleMapsUrl, getKakaoMapUrl, getNaverMapUrl, getNearbyUrl } from "@/features/mobile/map-links";
 import { useCategoryLabel, useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import { cn } from "@/lib/utils";
@@ -106,6 +106,7 @@ export function PlaceSheet({
   const dragRef = useRef<{ startY: number; lastY: number; lastT: number; velocity: number } | null>(null);
   // Below this length a summary wouldn't actually shorten anything, so skip it entirely
   // (no API call, no toggle) and just show the full text like always.
+  const isDining = isDiningCategory(place.category);
   const isDescLong = localizedPlace.description.length > 90;
   const description = localizedPlace.description;
   const hoursLines = splitHoursLines(localizedPlace.hours);
@@ -459,7 +460,10 @@ export function PlaceSheet({
               >
                 <BookmarkIcon className="h-4.5 w-4.5" />
               </button>
-              <span className="-mt-0.5 text-[0.6875rem] font-bold text-muted">{place.savedBy.toLocaleString()}</span>
+              {/* A dining stop's savedBy is only our sort key, not a real count. */}
+              {!isDining && (
+                <span className="-mt-0.5 text-[0.6875rem] font-bold text-muted">{place.savedBy.toLocaleString()}</span>
+              )}
             </div>
             <button
               aria-label={t("placeDetailCloseAria")}
@@ -499,28 +503,50 @@ export function PlaceSheet({
 
         {/* The practical facts in quiet cells separated by hairlines (no cards). */}
         <div className="mt-5 border-y border-border text-sm">
-          <dl className="grid grid-cols-2 divide-x divide-border">
-            <div className="py-3 pr-4">
-              <dt className="text-xs font-semibold text-muted">{t("statDuration")}</dt>
+          {isDining ? (
+            <dl className="py-3">
+              <dt className="text-xs font-semibold text-muted">{t("statDurationDining")}</dt>
               <dd className="mt-0.5 font-bold">{localizedPlace.duration}</dd>
-            </div>
-            <div className="py-3 pl-4">
-              <dt className="text-xs font-semibold text-muted">{t("statFee")}</dt>
-              <dd className="mt-0.5 font-bold">{localizedPlace.fee}</dd>
-            </div>
-          </dl>
-          <dl className="border-t border-border py-3">
-            <dt className="text-xs font-semibold text-muted">{t("statHours")}</dt>
-            <dd className="mt-0.5 grid gap-0.5 font-bold">
-              {hoursLines.map((line) => (
-                <span key={line}>{line}</span>
-              ))}
-            </dd>
-          </dl>
+            </dl>
+          ) : (
+            <>
+              <dl className="grid grid-cols-2 divide-x divide-border">
+                <div className="py-3 pr-4">
+                  <dt className="text-xs font-semibold text-muted">{t("statDuration")}</dt>
+                  <dd className="mt-0.5 font-bold">{localizedPlace.duration}</dd>
+                </div>
+                <div className="py-3 pl-4">
+                  <dt className="text-xs font-semibold text-muted">{t("statFee")}</dt>
+                  <dd className="mt-0.5 font-bold">{localizedPlace.fee}</dd>
+                </div>
+              </dl>
+              <dl className="border-t border-border py-3">
+                <dt className="text-xs font-semibold text-muted">{t("statHours")}</dt>
+                <dd className="mt-0.5 grid gap-0.5 font-bold">
+                  {hoursLines.map((line) => (
+                    <span key={line}>{line}</span>
+                  ))}
+                </dd>
+              </dl>
+            </>
+          )}
         </div>
 
+        {/* A dining stop has no hours or menu of ours: send people to its Kakao place page. */}
+        {isDining && place.dining && (
+          <a
+            className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full border border-border bg-surface text-muted-strong transition-colors hover:border-primary hover:text-primary active:scale-[0.98]"
+            href={place.dining.kakaoUrl}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <MapPinIcon className="h-4 w-4" />
+            <span className="text-sm font-semibold">{t("diningCheckInfo")}</span>
+          </a>
+        )}
+
         {/* Meals and coffee around this spot, searched in a map app. */}
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className={cn("mt-4 grid grid-cols-2 gap-2", isDining && "hidden")}>
           {(["food", "cafe"] as const).map((kind) => (
             <a
               className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-border bg-surface text-muted-strong transition-colors hover:border-primary hover:text-primary active:scale-[0.98]"

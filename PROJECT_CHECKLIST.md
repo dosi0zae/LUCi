@@ -33,9 +33,30 @@ This project is implemented one phase at a time. A phase must be initialized, re
 
 ## Phase Reviews
 
-### Mobile Phase BR: Food/Café/Bar Pool Pipeline (prototype, 성동구)
+### Mobile Phase BS: Dining Stops in Courses + Natural-Language Course Editing (prototype, 성동구)
 
-Status: In progress (성동구 data collected and scored without Google; tags and the answer-key check are next)
+Status: In progress (works end to end for 성동구; nearby popup, auto meal slots and other districts are not built)
+
+- [x] Three new place categories 식당 / 카페 / 술집 (`PlaceCategory`, `isDiningCategory`, tone colours, icons incl. a new `WineIcon`, four-language labels). They are **stops, not destinations**: `places` still holds only the 413 sights, so the course generator, Explore, "other places" lists and category sheets never pick a restaurant. `diningPlaces` (`dining-places.json`, written by `build-food-pool.mjs --stage export`) is merged into `getPlaceById`, so a course, a share link, a saved trip or a published trip can hold dining ids.
+- [x] Exported data per dining stop: our own tag ids (closed 58-id vocabulary, Gemini, ≥ 2 supporting posts), a popularity band (high/mid), the `hot` search-trend label and the Kakao place URL. No ratings, no post text. 성동구: 540 places (식당 334, 카페 156, 술집 50), 529 tagged.
+- [x] Dining stops have no photo (a stock photo would mislead), so every photo spot falls back to the category icon tile. The place sheet shows category, tags, "머무는 시간" and a "카카오맵에서 영업시간·메뉴 확인" link; no fake saved count, no fee/hours cells, no "nearby food" links.
+- [x] Taste ranking ignores dining stops; share links resolve dining ids.
+- [x] New box at the bottom of the course card (AI recommended courses and others): free-text edits like "카페 하나 더 추가해줘", "마지막 장소는 빼줘", plus three example chips. `POST /api/refine-course` sends Gemini the current stops and candidates (sights within 3 km, dining within 1.2 km, spread by distance and popularity, popularity given as bands not numbers); the answer is constrained to those ids, pinned stops always stay, more than 3 dining stops is rejected, one retry on 429/5xx. Rules in the prompt: food/café requests must come from the dining list (not "카페거리" sights), no two dining stops in a row, popularity is a hint not the decision.
+- [x] Verified in the browser: "카페 하나 더" (first try picked the 서울숲카페거리 sight, prompt fixed), a free-text request for a quiet Korean lunch + a café (수북동 + 퍼먼트 added, 서울숲카페거리 removed), "매콤한 점심 + 베이커리 카페" (전자방 + 성수베이킹스튜디오), and "마지막 장소는 빼줘".
+- [x] No count limit on dining stops (a food-only course is a valid course); only the 8-stop total remains (Kakao route links take 7). The AI call's own timeout is 30 s because Gemini was answering slowly / with 503 under load; `thinkingConfig` is rejected by this model (400), so it is not used.
+- [x] The first course is built to match the wording: `/api/recommend` now reads `focus` (sights / dining / mixed) from the AI intent (phrase list `STRONG_FOOD_PATTERN` only when the AI read fails). `dining` → `buildDiningCourse` (`dining-course.ts`): anchor (named district / landmark / device position, else the densest dining cluster), a spread shortlist of 40 within the radius, Gemini picks 4–6 in eating order from those ids only (meal → café → bar fallback without Gemini). `mixed` → the sights course goes through the same editor as the edit box (`refine-course.ts`, shared by the route and this path). A district with no dining data falls back to the sights course with a one-line note. Verified: "성수동 맛집 카페 투어", "성수동에서 먹는 코스…", "Seongsu food and cafe tour" → dining courses; "경복궁 보고 인사동 걷는 코스" → unchanged; "서울숲 산책하고 전시 보고 점심 먹고 카페 가는 코스" → sights + 식당 + 카페; "이태원 맛집 투어" → sights + the no-data note.
+- [x] Dining data now covers 성동구 (540), 종로구 (839), 중구 (704), 용산구 (649) fully and 마포구 (1,124) partly (names checked for 105 places, no tags yet) = 3,856 places in `dining-places.json` (about 2.3 MB). 송파구 and 영등포구 are collected and scored but not exported.
+- [ ] Known gaps: dining data covers only the districts above (a course elsewhere gets "no dining data" and the AI changes nothing); tags are shown in Korean in every language; the course's first description line is not rewritten after an edit; Kakao's terms for bundling place names/coordinates in the app are still to be checked before this data is committed; the "nearby" popup in the place sheet, automatic meal slots and a district-split data format are next.
+
+### Mobile Phase BR: Food/Café/Bar Pool Pipeline (multi-district queue)
+
+- [x] `scripts/run-food-queue.mjs <구> …` runs every stage per district and resumes from the cache: `node scripts/run-food-queue.mjs 마포구 송파구 영등포구`. Naver stops at 99 % of 25,000/day (exit 2); Gemini stops on its per-day free quota (about 500 calls, resets 17:00 KST), saving score + export first; Gemini timeouts only fail that batch. Café/news lookups only for places with 10+ matching blog titles. Districts: 성동, 종로, 중구, 용산, 마포, 송파, 영등포 (bounding boxes are generous, the address text decides; dong aliases such as 인사동/북촌/서촌/홍대/송리단길).
+- [x] Per-district exports go to `scripts/.cache/dining-<구>.json` and are merged into `src/features/mobile/dining-places.json`.
+- [ ] Next: finish 마포구 verify/tags, 송파구 verify/tags, 영등포구 Naver stage, then 강남·서초·광진·동대문 …; split the data per district and load it lazily (file is 2.3 MB); check Kakao's terms before public release.
+
+### Mobile Phase BR (original prototype): Food/Café/Bar Pool Pipeline (성동구)
+
+Status: In progress (성동구 data collected, scored and tagged without Google; the answer-key check is next)
 
 Direction: the product stays culture / sightseeing / hot-place courses; food and cafés (bars included) are side stops. The pool is not a full restaurant DB — it feeds a "nearby" suggestion where the AI picks from real candidates, and the score is one input, not the decision.
 

@@ -6,7 +6,8 @@ import { BookmarkIcon, EyeIcon, HeartIcon, SlidersIcon, UserIcon } from "@/compo
 import { SlidingTabs } from "@/features/mobile/sliding-tabs";
 import { useHorizontalSwipe } from "@/features/mobile/use-swipe";
 import { TripFeedList } from "@/features/mobile/trip-feed-list";
-import { getPlaceImageUrl, localizePlace, type FeedTrip, type MobilePlace } from "@/features/mobile/mobile-data";
+import { localizePlace, type FeedTrip, type MobilePlace } from "@/features/mobile/mobile-data";
+import { PlacePhoto } from "@/features/mobile/place-photo";
 import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import { SUPPORTED_LOCALES, localeLabel } from "@/features/mobile/i18n/translations";
 import { cn } from "@/lib/utils";
@@ -234,13 +235,7 @@ export function ProfileTab({
                             type="button"
                           >
                             <span className="block h-28 w-full shrink-0 overflow-hidden bg-surface-muted">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                alt=""
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                                src={getPlaceImageUrl(place.id)}
-                              />
+                              <PlacePhoto className="h-full w-full" place={place} />
                             </span>
                             <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2">
                               <span className="truncate text-xs font-bold">{localizedPlace.name}</span>

@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import type { PlaceCategory } from "@/features/mobile/mobile-data";
+import { CoffeeIcon, UtensilsIcon, WineIcon } from "@/components/layout/app-icons";
 
 type IconProps = {
   className?: string;
@@ -59,6 +60,9 @@ const categoryIcons: Record<PlaceCategory, (props: IconProps) => ReactElement> =
   관광지: AttractionIcon,
   문화시설: CultureFacilityIcon,
   축제행사: FestivalIcon,
+  식당: UtensilsIcon,
+  카페: CoffeeIcon,
+  술집: WineIcon,
 };
 
 export function CategoryIcon({ category, className }: { category: PlaceCategory } & IconProps) {

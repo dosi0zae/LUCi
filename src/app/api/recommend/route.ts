@@ -11,6 +11,8 @@ import {
   type RecommendIntent,
 } from "@/features/mobile/recommend-engine";
 import type { MobilePlace, PlaceCategory } from "@/features/mobile/mobile-data";
+import { buildDiningCourse, DINING_UNAVAILABLE_NOTE, STRONG_FOOD_PATTERN } from "@/features/mobile/dining-course";
+import { refineCourseCore } from "@/features/mobile/refine-course";
 
 export const runtime = "nodejs";
 
@@ -76,6 +78,7 @@ function buildSystemPrompt(locale: string): string {
   return `너는 서울 전역의 문화재·관광지·문화시설·축제를 엮어주는 여행 코스 추천 서비스의 의도 분석기야. 사용자의 문장 하나를 분석해서 아래 JSON 스키마로만 답해.
 - categories: 문화재, 관광지, 문화시설, 축제행사 중 문장과 관련 있는 것만 (없으면 빈 배열).
 - attributes: 다음 목록에서만 골라 문장의 분위기/상황을 표현: ${ATTRIBUTE_TAXONOMY.join(", ")}.
+- focus: 요청의 중심. 맛집·카페·술집·먹거리를 도는 코스가 중심이면 dining, 관광·문화 코스에 식사나 카페도 함께 넣으려는 요청이면 mixed, 그 외에는 sights.
 - placeCount: 추천할 장소 개수, 보통 3~5 사이 정수. 특별한 언급 없으면 4.
 - area: 문장이 서울의 특정 구(區)를 명시했으면(어느 언어로 쓰였든, 예: "용산구", "Yongsan", "종로") 아래 목록 중 정확히 일치하는 값 하나로 답해. 특정 구가 명시되지 않았거나 "인사동"처럼 구보다 작은 동네/장소 이름만 나왔으면 null.
   목록: ${SEOUL_DISTRICTS.join(", ")}
@@ -83,6 +86,7 @@ function buildSystemPrompt(locale: string): string {
 }
 
 type GeminiAiIntent = {
+  focus?: string;
   categories?: string[];
   attributes?: string[];
   placeCount?: number;
@@ -105,13 +109,14 @@ async function getAiIntent(prompt: string, locale: string): Promise<GeminiAiInte
       responseSchema: {
         type: "OBJECT",
         properties: {
+          focus: { type: "STRING", enum: ["sights", "dining", "mixed"] },
           categories: { type: "ARRAY", items: { type: "STRING", enum: [...CATEGORIES] } },
           attributes: { type: "ARRAY", items: { type: "STRING", enum: [...ATTRIBUTE_TAXONOMY] } },
           placeCount: { type: "INTEGER" },
           area: { type: "STRING", enum: [...SEOUL_DISTRICTS], nullable: true },
           reason: { type: "STRING" },
         },
-        required: ["categories", "attributes", "placeCount", "area"],
+        required: ["focus", "categories", "attributes", "placeCount", "area"],
       },
     },
   };
@@ -470,6 +475,37 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // An eating course ("성수동 맛집 카페 투어") is built from dining spots from the start. The AI
+  // read decides; the phrase list is only the fallback when that read failed.
+  const focus =
+    aiIntent?.focus === "dining" || aiIntent?.focus === "mixed" || aiIntent?.focus === "sights"
+      ? aiIntent.focus
+      : STRONG_FOOD_PATTERN.test(prompt)
+        ? "dining"
+        : "sights";
+  let diningUnavailableNote: string | null = null;
+  if (focus === "dining") {
+    const dining = await buildDiningCourse({
+      prompt,
+      locale,
+      placeCount: intent.placeCount,
+      areaFilter: intent.areaFilter ?? null,
+      anchor: intent.anchor ?? null,
+      radiusKm,
+    });
+    if (dining) {
+      return NextResponse.json({
+        placeIds: dining.placeIds,
+        anchor: dining.anchor,
+        areaFilter: intent.areaFilter ?? null,
+        reason: dining.reason ?? aiIntent?.reason ?? null,
+        usedAI: Boolean(aiIntent),
+        usedGeminiSelection: dining.usedGemini,
+      });
+    }
+    diningUnavailableNote = DINING_UNAVAILABLE_NOTE[locale] ?? DINING_UNAVAILABLE_NOTE.en;
+  }
+
   const result = buildChain(intent);
   const maxShownNote =
     result.placeIds.length < result.requestedCount
@@ -523,11 +559,25 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // A sights course that also asks for meals or cafés ("전시 보고 점심 먹고 카페 가는 코스"):
+  // weave dining in with the same editor used for "카페 하나 더 추가해줘".
+  let mixedReason: string | null = null;
+  if (focus === "mixed") {
+    const refined = await refineCourseCore({ instruction: prompt.slice(0, 200), stopIds: finalPlaceIds, pinnedIds: [], locale });
+    if (refined.ok) {
+      finalPlaceIds = refined.ids;
+      mixedReason = refined.reason || null;
+    }
+  }
+
   return NextResponse.json({
     placeIds: finalPlaceIds,
     anchor: result.anchor,
     areaFilter: intent.areaFilter ?? null,
-    reason: [selectionReason ?? aiIntent?.reason, weatherNote, maxShownNote].filter(Boolean).join(" ") || null,
+    reason:
+      [mixedReason ?? selectionReason ?? aiIntent?.reason, weatherNote, maxShownNote, diningUnavailableNote]
+        .filter(Boolean)
+        .join(" ") || null,
     usedAI: Boolean(aiIntent),
     usedGeminiSelection: Boolean(selectionReason),
   });

@@ -1,4 +1,4 @@
-import { getPlacesByIds, type FeedTrip, type MobilePlace } from "@/features/mobile/mobile-data";
+import { getPlacesByIds, isDiningCategory, type FeedTrip, type MobilePlace } from "@/features/mobile/mobile-data";
 
 // "나의 취향" for ordering the Explore feed, learned only from what the user has done on this
 // device: places they saved, courses they saved, and courses they liked. Each signal votes for
@@ -34,6 +34,10 @@ export function buildTasteProfile(input: {
   };
 
   function addPlace(place: MobilePlace, weight: number) {
+    // Cafés and restaurants in a course say nothing about which sights someone likes.
+    if (isDiningCategory(place.category)) {
+      return;
+    }
     vote(profile.category, place.category, weight);
     vote(profile.area, place.area, weight);
     for (const tag of place.tags) {

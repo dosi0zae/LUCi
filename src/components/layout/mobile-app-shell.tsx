@@ -374,6 +374,10 @@ export function MobileAppShell() {
   const [isAiCourse, setIsAiCourse] = useState(false);
   const [usedAI, setUsedAI] = useState(false);
   const [isNavigateMenuOpen, setIsNavigateMenuOpen] = useState(false);
+  // The "tell the AI how to change this course" box under the course card.
+  const [refineText, setRefineText] = useState("");
+  const [isRefining, setIsRefining] = useState(false);
+  const [refineNote, setRefineNote] = useState<{ text: string; isError: boolean } | null>(null);
 
   const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds]);
   const isOptimized = useMemo(() => isRouteOptimized(chainPlaces, pinnedIds), [chainPlaces, pinnedIds]);
@@ -898,6 +902,47 @@ export function MobileAppShell() {
       },
       { timeout: 8000 },
     );
+  }
+
+  // Asks /api/refine-course to change the current course as the user worded it ("카페 하나 더",
+  // "두 번째 장소 빼줘"). The server answers with the whole new id list, validated against real
+  // candidates; pinned stops always survive.
+  async function refineCourse(instruction: string) {
+    const text = instruction.trim();
+    if (!text || isRefining || chainIds.length === 0) {
+      return;
+    }
+    setIsRefining(true);
+    setRefineNote(null);
+    try {
+      const response = await fetch("/api/refine-course", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ instruction: text, stopIds: chainIds, pinnedIds: [...pinnedIds], locale }),
+      });
+      const data = await response.json();
+      if (data?.code === "tooManyStops") {
+        setRefineNote({ text: t("refineTooManyStops"), isError: true });
+        return;
+      }
+      if (!response.ok || !data.ok || !Array.isArray(data.ids)) {
+        throw new Error("refine failed");
+      }
+      const ids = data.ids as string[];
+      const changed = ids.join(",") !== chainIds.join(",");
+      setChainIds(ids);
+      setExpandedStopId(null);
+      if (Array.isArray(data.added) && data.added.length > 0) {
+        setAddedId(data.added[0]);
+        window.setTimeout(() => setAddedId(null), 1100);
+      }
+      setRefineNote({ text: data.reason || t(changed ? "refineDone" : "refineNoChange"), isError: false });
+      setRefineText("");
+    } catch {
+      setRefineNote({ text: t("refineFailed"), isError: true });
+    } finally {
+      setIsRefining(false);
+    }
   }
 
   function removeStop(id: string) {
@@ -1667,6 +1712,63 @@ export function MobileAppShell() {
                     {isAiCourse && !usedAI && !isRecommending && (
                       <p className="mt-2 text-xs leading-5 text-muted">{t("aiFallbackNotice")}</p>
                     )}
+
+                    {/* Natural-language edits to this course. */}
+                    <div className="mt-4 border-t border-border pt-3">
+                      <form
+                        className="flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface-muted/60 py-1 pl-3 pr-1"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          void refineCourse(refineText);
+                        }}
+                      >
+                        <AiSparklesIcon className="h-4 w-4 shrink-0 text-primary" />
+                        <input
+                          aria-label={t("refineInputAria")}
+                          className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:font-medium placeholder:text-muted"
+                          disabled={isRefining}
+                          onChange={(event) => setRefineText(event.target.value)}
+                          placeholder={t("refinePlaceholder")}
+                          type="text"
+                          value={refineText}
+                        />
+                        <button
+                          aria-label={t("refineSubmitAria")}
+                          className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:bg-primary-strong disabled:opacity-50"
+                          disabled={isRefining || !refineText.trim()}
+                          type="submit"
+                        >
+                          {isRefining ? (
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                          ) : (
+                            <ArrowRightIcon className="h-4 w-4" />
+                          )}
+                        </button>
+                      </form>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {(["refineExample1", "refineExample2", "refineExample3"] as const).map((key) => (
+                          <button
+                            className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-muted-strong transition hover:border-primary hover:text-primary disabled:opacity-50"
+                            disabled={isRefining}
+                            key={key}
+                            onClick={() => void refineCourse(t(key))}
+                            type="button"
+                          >
+                            {t(key)}
+                          </button>
+                        ))}
+                      </div>
+                      {refineNote && (
+                        <p
+                          className={cn(
+                            "mt-2 text-xs leading-5",
+                            refineNote.isError ? "font-semibold text-danger" : "text-muted-strong",
+                          )}
+                        >
+                          {refineNote.text}
+                        </p>
+                      )}
+                    </div>
                   </article>
 
                   <div className="grid gap-2" ref={chainListRef}>

@@ -1,7 +1,16 @@
 import seoulPlacesData from "./seoul-places.json";
+import diningPlacesData from "./dining-places.json";
 import type { Locale } from "@/features/mobile/i18n/translations";
 
-export type PlaceCategory = "문화재" | "관광지" | "문화시설" | "축제행사";
+// 문화재/관광지/문화시설/축제행사 are destinations. 식당/카페/술집 are dining stops: they can sit in a
+// course but are never picked as a course's destinations (`places` below holds destinations only).
+export type PlaceCategory = "문화재" | "관광지" | "문화시설" | "축제행사" | "식당" | "카페" | "술집";
+
+export const DINING_CATEGORIES: PlaceCategory[] = ["식당", "카페", "술집"];
+
+export function isDiningCategory(category: PlaceCategory): boolean {
+  return DINING_CATEGORIES.includes(category);
+}
 
 type LocalizedPlaceFields = {
   name: string;
@@ -39,7 +48,16 @@ export type MobilePlace = {
   // "kakao" marks places dug up from the Kakao Local API (scripts/dig-kakao-places.mjs)
   // to fill gaps that sync left (실제 한강공원 지점들, 이태원/북촌 같은 동네 등) — Kakao
   // gives no description/fee/hours, so those fields are Gemini-written or "정보 없음".
-  source?: "kakao";
+  source?: "kakao" | "dining";
+  // Only dining stops (scripts/build-food-pool.mjs --stage export): tag ids from our closed
+  // vocabulary, our own popularity band, the "hot" label from search trends, and the Kakao
+  // place page. No ratings or post text are stored.
+  dining?: {
+    tagIds: string[];
+    pop: "high" | "mid";
+    hot: "surge" | "rising" | "steady" | "falling" | null;
+    kakaoUrl: string;
+  };
 };
 
 // The address stays in Korean regardless of locale — it's what a taxi driver or map
@@ -131,11 +149,22 @@ export const places: MobilePlace[] = (seoulPlacesData as MobilePlace[]).filter(
   (place) => !isExpiredFestival(place),
 );
 
+// Dining stops of the districts we have curated so far (성동구 first), kept apart from `places`.
+export const diningPlaces: MobilePlace[] = diningPlacesData as MobilePlace[];
+
+const placeLookup = new Map<string, MobilePlace>();
+for (const place of [...places, ...diningPlaces]) {
+  placeLookup.set(place.id, place);
+}
+
 export const categoryTone: Record<PlaceCategory, string> = {
   문화재: "#b0742f",
   관광지: "#2f9f8f",
   문화시설: "#7c6cf2",
   축제행사: "#e87957",
+  식당: "#d9634a",
+  카페: "#a67c52",
+  술집: "#5d6bb5",
 };
 
 export function getPlaceImageUrl(id: string, width = 240, height = 320): string {
@@ -147,7 +176,7 @@ export function getPlaceImageUrl(id: string, width = 240, height = 320): string 
 }
 
 export function getPlaceById(id: string): MobilePlace | undefined {
-  return places.find((place) => place.id === id);
+  return placeLookup.get(id);
 }
 
 // The place whose photo stands for a course: the one the author picked, otherwise the first

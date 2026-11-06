@@ -301,6 +301,16 @@ export function CoffeeIcon({ className }: IconProps) {
   );
 }
 
+export function WineIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M8 3h8l-.6 5.2a3.4 3.4 0 0 1-6.8 0Z" />
+      <path d="M12 11.6V20" />
+      <path d="M8.5 21h7" />
+    </svg>
+  );
+}
+
 export function CloseIcon({ className }: IconProps) {
   return (
     <svg className={className} {...iconProps}>
