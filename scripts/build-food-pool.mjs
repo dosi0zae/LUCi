@@ -39,6 +39,10 @@ const DISTRICTS = {
   마포구: { west: 126.85, south: 37.52, east: 126.97, north: 37.6 },
   송파구: { west: 127.06, south: 37.44, east: 127.21, north: 37.57 },
   영등포구: { west: 126.87, south: 37.47, east: 127.0, north: 37.56 },
+  강남구: { west: 127.0, south: 37.45, east: 127.12, north: 37.56 },
+  서초구: { west: 126.94, south: 37.42, east: 127.08, north: 37.53 },
+  광진구: { west: 127.05, south: 37.52, east: 127.14, north: 37.58 },
+  동대문구: { west: 127.02, south: 37.55, east: 127.09, north: 37.61 },
 };
 
 // SCORING — final = 100 × (0.55 × ratingScore + 0.45 × mentionPercentile)
@@ -276,6 +280,22 @@ const DONG_WORDS = {
   석촌동: ["석촌", "송리단길"],
   송파동: ["송리단길", "송파"],
   신천동: ["잠실", "신천"],
+  논현동: ["논현", "학동"],
+  역삼동: ["역삼", "강남역"],
+  신사동: ["가로수길", "신사"],
+  청담동: ["청담"],
+  삼성동: ["삼성", "코엑스"],
+  압구정동: ["압구정", "로데오"],
+  서초동: ["서초", "교대"],
+  반포동: ["반포", "고속터미널"],
+  방배동: ["방배", "사이길"],
+  화양동: ["건대", "화양"],
+  자양동: ["건대", "자양"],
+  군자동: ["군자", "어린이대공원"],
+  회기동: ["회기", "경희대"],
+  이문동: ["이문", "외대"],
+  제기동: ["제기", "경동시장"],
+  장안동: ["장안"],
   여의도동: ["여의도"],
 };
 const dongWords = (dong) => {
@@ -620,8 +640,41 @@ const VERIFY_PROMPT = [
 // Set once Gemini reports its daily free quota is used up.
 let geminiQuotaOut = false;
 
+// Token use of this run, printed on exit so the real cost can be worked out (Flash-Lite: $0.30 in / $2.50 out per 1M).
+const geminiUsage = { calls: 0, prompt: 0, output: 0, thoughts: 0 };
+// Spend guard: the running total (USD) is kept in gemini-spend.json and the pipeline stops BEFORE it passes
+// the budget (GEMINI_BUDGET_USD, default 12), so an unexpected charge cannot happen unannounced.
+const SPEND_FILE = path.join(CACHE_DIR, "gemini-spend.json");
+const SPEND_BUDGET = Number(process.env.GEMINI_BUDGET_USD ?? "12");
+const SPEND_MARGIN = 0.2; // stop a little early: the billing pipeline lags by about 10 minutes
+let spentUsd = readJson(SPEND_FILE, { usd: 0 }).usd;
+function overBudget() {
+  if (spentUsd + SPEND_MARGIN < SPEND_BUDGET) return false;
+  if (!geminiQuotaOut) {
+    console.log(`  Gemini spend guard: $${spentUsd.toFixed(2)} of the $${SPEND_BUDGET} budget used — stopping before any extra charge. Raise GEMINI_BUDGET_USD to continue.`);
+  }
+  geminiQuotaOut = true;
+  process.exitCode = 2;
+  return true;
+}
+function countUsage(data) {
+  const usage = data?.usageMetadata ?? {};
+  geminiUsage.calls += 1;
+  geminiUsage.prompt += usage.promptTokenCount ?? 0;
+  geminiUsage.output += usage.candidatesTokenCount ?? 0;
+  geminiUsage.thoughts += usage.thoughtsTokenCount ?? 0;
+  spentUsd += ((usage.promptTokenCount ?? 0) * 0.3 + ((usage.candidatesTokenCount ?? 0) + (usage.thoughtsTokenCount ?? 0)) * 2.5) / 1e6;
+  writeJson(SPEND_FILE, { usd: Number(spentUsd.toFixed(4)) });
+}
+process.on("exit", () => {
+  if (geminiUsage.calls > 0) {
+    const cost = (geminiUsage.prompt * 0.3 + (geminiUsage.output + geminiUsage.thoughts) * 2.5) / 1e6;
+    console.log(`[gemini] ${geminiUsage.calls} calls, in ${geminiUsage.prompt}, out ${geminiUsage.output}, thinking ${geminiUsage.thoughts} tokens = about $${cost.toFixed(3)}`);
+  }
+});
+
 async function geminiVerify(items) {
-  if (geminiQuotaOut) return null;
+  if (geminiQuotaOut || overBudget()) return null;
   const body = items
     .map(({ place, entry }) => {
       const posts = (entry.blog?.snips ?? []).slice(0, 10).map((snip) => `- ${snip.t} | ${snip.d}`).join("\n");
@@ -655,6 +708,13 @@ async function geminiVerify(items) {
         signal: AbortSignal.timeout(60_000),
       },
     );
+    if (response.status === 402) {
+      // Prepaid credits are used up: nothing succeeds until credits are bought, so stop like the daily quota does.
+      console.log("  Gemini prepaid credits depleted (402) — buy credits in AI Studio, then run again.");
+      geminiQuotaOut = true;
+      process.exitCode = 2;
+      return null;
+    }
     if (response.status === 429 || response.status >= 500) {
       // A per-day quota cannot recover by waiting: stop the stage (exit code 2) instead of failing every batch.
       if (response.status === 429 && /per day/i.test(await response.text().catch(() => ""))) {
@@ -667,7 +727,9 @@ async function geminiVerify(items) {
     }
     if (!response.ok) return null;
     try {
-      return JSON.parse((await response.json())?.candidates?.[0]?.content?.parts?.[0]?.text);
+      const data = await response.json();
+      countUsage(data);
+      return JSON.parse(data?.candidates?.[0]?.content?.parts?.[0]?.text);
     } catch {
       return null;
     }
@@ -789,7 +851,7 @@ const TAG_PROMPT = [
 ].join("\n");
 
 async function geminiTags(places) {
-  if (geminiQuotaOut) return null;
+  if (geminiQuotaOut || overBudget()) return null;
   const allIds = Object.keys(TAG_LABELS);
   const body = places
     .map(({ place, entry }) => {
@@ -826,6 +888,13 @@ async function geminiTags(places) {
         signal: AbortSignal.timeout(60_000),
       },
     );
+    if (response.status === 402) {
+      // Prepaid credits are used up: nothing succeeds until credits are bought, so stop like the daily quota does.
+      console.log("  Gemini prepaid credits depleted (402) — buy credits in AI Studio, then run again.");
+      geminiQuotaOut = true;
+      process.exitCode = 2;
+      return null;
+    }
     if (response.status === 429 || response.status >= 500) {
       // A per-day quota cannot recover by waiting: stop the stage (exit code 2) instead of failing every batch.
       if (response.status === 429 && /per day/i.test(await response.text().catch(() => ""))) {
@@ -838,6 +907,7 @@ async function geminiTags(places) {
     }
     if (!response.ok) return null;
     const data = await response.json();
+    countUsage(data);
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     try {
       return JSON.parse(text);
