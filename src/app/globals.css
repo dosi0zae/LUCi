@@ -101,6 +101,10 @@
 html {
   min-height: 100%;
   background: var(--background);
+  /* No double-tap zoom: quick repeated taps (radius −/+, map buttons) otherwise zoom the page
+     in and push the right edge off-screen on iOS. Pinch is left alone. */
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {

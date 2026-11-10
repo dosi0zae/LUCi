@@ -21,8 +21,10 @@ export const metadata: Metadata = {
 // home indicator instead of sitting flush against it.
 // themeColor tints Safari's own toolbar to match the page background instead of
 // leaving it a mismatched default, so the two read as one continuous surface.
+// maximumScale 1 stops the page from ever changing scale by itself (focus auto-zoom, double-tap).
 export const viewport: Viewport = {
   viewportFit: "cover",
+  maximumScale: 1,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f7fafc" },
     { media: "(prefers-color-scheme: dark)", color: "#07111f" },

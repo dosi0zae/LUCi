@@ -262,20 +262,59 @@ export function MobileAppShell() {
     // taller than the actual visible screen, pushing the bottom nav off-screen — a real
     // pixel measurement from visualViewport (falls back to window.innerHeight) sidesteps
     // that unit-resolution bug entirely instead of trusting any CSS viewport unit.
+    //
+    // The on-screen keyboard also shrinks the visual viewport. That must NOT shrink the app:
+    // while a text field is focused the height stays at its last keyboard-free value (so the
+    // screen doesn't jump up when the keyboard opens) and the keyboard's height is published
+    // separately as --kb-h, for the few bottom-anchored items that have to clear it.
+    const viewport = window.visualViewport;
+    let stableHeight = viewport?.height ?? window.innerHeight;
+
+    function isTextFieldFocused() {
+      const element = document.activeElement;
+      if (!(element instanceof HTMLElement)) {
+        return false;
+      }
+      if (element instanceof HTMLInputElement) {
+        return !["checkbox", "radio", "button", "submit", "range", "file"].includes(element.type);
+      }
+      return element instanceof HTMLTextAreaElement || element.isContentEditable;
+    }
+
     function syncAppHeight() {
-      const height = window.visualViewport?.height ?? window.innerHeight;
-      document.documentElement.style.setProperty("--app-vh", `${height}px`);
+      const height = viewport?.height ?? window.innerHeight;
+      const editing = isTextFieldFocused();
+      if (!editing || height >= stableHeight) {
+        stableHeight = height;
+      }
+      // Bottom of the visible area in layout coordinates is offsetTop + height (iOS may pan
+      // the visual viewport while the keyboard is open).
+      const covered = editing ? Math.max(0, Math.round(stableHeight - height - (viewport?.offsetTop ?? 0))) : 0;
+      const root = document.documentElement.style;
+      root.setProperty("--app-vh", `${stableHeight}px`);
+      root.setProperty("--kb-h", `${covered}px`);
     }
 
     syncAppHeight();
-    window.visualViewport?.addEventListener("resize", syncAppHeight);
+    viewport?.addEventListener("resize", syncAppHeight);
+    viewport?.addEventListener("scroll", syncAppHeight);
     window.addEventListener("resize", syncAppHeight);
     window.addEventListener("orientationchange", syncAppHeight);
+    // Only when a text field gains focus: a button taking focus while the keyboard is still
+    // closing must not make the app adopt the keyboard-shrunk height.
+    function handleFocusIn() {
+      if (isTextFieldFocused()) {
+        syncAppHeight();
+      }
+    }
+    document.addEventListener("focusin", handleFocusIn);
 
     return () => {
-      window.visualViewport?.removeEventListener("resize", syncAppHeight);
+      viewport?.removeEventListener("resize", syncAppHeight);
+      viewport?.removeEventListener("scroll", syncAppHeight);
       window.removeEventListener("resize", syncAppHeight);
       window.removeEventListener("orientationchange", syncAppHeight);
+      document.removeEventListener("focusin", handleFocusIn);
     };
   }, []);
 
@@ -1474,6 +1513,9 @@ export function MobileAppShell() {
         <IntroSplash contained />
         <div
           className="app-scroll-area min-h-0 flex-1 overflow-y-auto"
+          // Room to scroll a focused field above the keyboard (the first screen instead lifts
+          // its two bottom buttons, so its layout stays put).
+          style={activeTab === "home" && !hasResult ? undefined : { paddingBottom: "var(--kb-h, 0px)" }}
           onScroll={(event) => {
             // Once the page title has scrolled up under the floating profile/explore
             // buttons, a frosted fade appears behind them so they stay legible over
@@ -1579,7 +1621,7 @@ export function MobileAppShell() {
                 </div>
 
                 <button
-                  className="absolute inset-x-0 z-10 text-center text-sm font-semibold opacity-60 transition hover:opacity-100 [bottom:calc(1.625rem+env(safe-area-inset-bottom))]"
+                  className="absolute inset-x-0 z-10 text-center text-sm font-semibold opacity-60 transition hover:opacity-100 [bottom:calc(1.625rem+max(env(safe-area-inset-bottom),var(--kb-h,0px)))]"
                   data-tour="quick-browse"
                   onClick={() => setActiveTab("explore")}
                   style={{ color: "var(--success)" }}
@@ -1588,7 +1630,7 @@ export function MobileAppShell() {
                   {t("quickBrowse")}
                 </button>
 
-                <LanguageMenuButton className="absolute left-5 z-20 [bottom:calc(1rem+env(safe-area-inset-bottom))]" />
+                <LanguageMenuButton className="absolute left-5 z-20 [bottom:calc(1rem+max(env(safe-area-inset-bottom),var(--kb-h,0px)))]" />
               </div>
             ) : (
               <div className={cn(tabSlideClass, "relative flex min-h-full flex-col px-5 pb-24 pt-5")}>
@@ -1604,9 +1646,11 @@ export function MobileAppShell() {
                 <div className="relative z-10 mt-7">{searchForm}</div>
 
               {hasResult && (
-                <section className="mt-5 grid gap-4">
-                  <article className="rounded-lg border border-border bg-surface p-4 shadow-soft">
-                    <div className="flex items-center justify-between gap-3">
+                // minmax(0,1fr) + min-w-0: a grid item otherwise grows to its widest child (the badge +
+                // radius controls row, a long title or description) and sticks out past the screen.
+                <section className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-4">
+                  <article className="min-w-0 rounded-lg border border-border bg-surface p-4 shadow-soft">
+                    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                       <Badge tone={isAiCourse && usedAI ? "blue" : "neutral"}>
                         {isAiCourse && usedAI ? t("aiCourseBadge") : t("basicCourseBadge")}
                       </Badge>
