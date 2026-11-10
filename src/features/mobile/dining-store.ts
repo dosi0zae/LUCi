@@ -1,4 +1,5 @@
 import districtCodes from "./dining-data/districts.json";
+import districtBounds from "./dining-data/bounds.json";
 import type { MobilePlace } from "@/features/mobile/mobile-data";
 
 // Dining stops live in one JSON file per district (dining-data/<code>.json), loaded only when a
@@ -81,4 +82,26 @@ export async function ensureDiningLoadedForIds(ids: Iterable<string>): Promise<v
 // Server-side recommendation needs the whole pool at once.
 export async function ensureAllDiningLoaded(): Promise<void> {
   await Promise.all(ALL_CODES.map(loadDistrict));
+}
+
+// Loads every exported district whose bounding box lies within `radiusKm` of any of the points,
+// so "restaurants near this course" works across a district border without loading the city.
+export async function ensureDiningNear(points: { lat: number; lng: number }[], radiusKm = 2): Promise<void> {
+  const latPad = radiusKm / 111;
+  const codes = new Set<string>();
+  for (const point of points) {
+    const lngPad = radiusKm / (111 * Math.cos((point.lat * Math.PI) / 180));
+    for (const [code, box] of Object.entries(districtBounds as Record<string, number[]>)) {
+      const [minLat, minLng, maxLat, maxLng] = box;
+      if (
+        point.lat >= minLat - latPad &&
+        point.lat <= maxLat + latPad &&
+        point.lng >= minLng - lngPad &&
+        point.lng <= maxLng + lngPad
+      ) {
+        codes.add(code);
+      }
+    }
+  }
+  await Promise.all([...codes].map(loadDistrict));
 }

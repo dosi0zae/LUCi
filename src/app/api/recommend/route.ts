@@ -11,7 +11,14 @@ import {
   type RecommendIntent,
 } from "@/features/mobile/recommend-engine";
 import type { MobilePlace, PlaceCategory } from "@/features/mobile/mobile-data";
-import { buildDiningCourse, DINING_UNAVAILABLE_NOTE, STRONG_FOOD_PATTERN } from "@/features/mobile/dining-course";
+import {
+  buildDiningCourse,
+  DINING_UNAVAILABLE_NOTE,
+  DINING_WOVEN_NOTE,
+  NO_DINING_PATTERN,
+  STRONG_FOOD_PATTERN,
+  weaveDefaultDining,
+} from "@/features/mobile/dining-course";
 import { refineCourseCore } from "@/features/mobile/refine-course";
 
 export const runtime = "nodejs";
@@ -570,12 +577,23 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // The default course is a day out, not only sights: add a nearby meal and café unless the
+  // request is about something specific that rules them out.
+  let wovenNote: string | null = null;
+  if (focus === "sights" && !NO_DINING_PATTERN.test(prompt)) {
+    const woven = await weaveDefaultDining(finalPlaceIds);
+    if (woven) {
+      finalPlaceIds = woven;
+      wovenNote = DINING_WOVEN_NOTE[locale] ?? DINING_WOVEN_NOTE.en;
+    }
+  }
+
   return NextResponse.json({
     placeIds: finalPlaceIds,
     anchor: result.anchor,
     areaFilter: intent.areaFilter ?? null,
     reason:
-      [mixedReason ?? selectionReason ?? aiIntent?.reason, weatherNote, maxShownNote, diningUnavailableNote]
+      [mixedReason ?? selectionReason ?? aiIntent?.reason, wovenNote, weatherNote, maxShownNote, diningUnavailableNote]
         .filter(Boolean)
         .join(" ") || null,
     usedAI: Boolean(aiIntent),

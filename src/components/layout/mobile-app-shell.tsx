@@ -39,6 +39,7 @@ import {
   getSeedComments,
   getTotalMinutes,
   haversineKm,
+  isDiningCategory,
   localizePlace,
   localizeTrip,
   places,
@@ -54,7 +55,13 @@ import { CategorySheet, type PlaceBadgeKind } from "@/features/mobile/category-s
 import { LanguageMenuButton } from "@/features/mobile/language-menu-button";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
 import { decodeCourseFromLocation } from "@/features/mobile/course-share";
-import { ensureDiningLoadedForIds, subscribeDining } from "@/features/mobile/dining-store";
+import {
+  ensureDiningLoadedForIds,
+  ensureDiningNear,
+  getLoadedDiningPlaces,
+  subscribeDining,
+} from "@/features/mobile/dining-store";
+import { PlaceThumb } from "@/features/mobile/place-thumb";
 import { CreatorProfileSheet } from "@/features/mobile/creator-profile-sheet";
 import { loadKakaoMaps } from "@/features/mobile/kakao-loader";
 import { buildGoogleMapsWalkingRouteUrl, buildKakaoWalkingRouteUrl } from "@/features/mobile/route-links";
@@ -103,6 +110,21 @@ function formatDistance(km: number): string {
   return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
 }
 const CATEGORY_ORDER: PlaceCategory[] = ["관광지", "문화재", "문화시설", "축제행사"];
+const DINING_ORDER: PlaceCategory[] = ["식당", "카페", "술집"];
+// Restaurants/cafés/bars listed under "다른 장소도 볼까요?" must be within this of some stop;
+// the full "더보기" list reaches further.
+const OTHER_DINING_RADIUS_KM = 1.5;
+const MORE_DINING_RADIUS_KM = 3;
+
+// Dining stops closest to the course first, with well-known ones (and ones trending up)
+// nudged ahead — a famous place 400 m further beats an unknown one next door.
+function diningRank(place: MobilePlace, chain: MobilePlace[]): number {
+  return (
+    distanceToChainKm(place, chain) -
+    (place.dining?.pop === "high" ? 0.5 : 0) -
+    (place.dining?.hot === "surge" || place.dining?.hot === "rising" ? 0.15 : 0)
+  );
+}
 const PROFILE_STORAGE_KEY = "tripchain:profile";
 const RECENTLY_VIEWED_LIMIT = 10;
 const TUTORIAL_STORAGE_KEY = "tripchain:tutorialSeen";
@@ -496,6 +518,16 @@ export function MobileAppShell() {
     window.history.replaceState(null, "", window.location.pathname);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // Restaurants/cafés/bars around the course also load on their own: a sights course has no
+  // dining stop to pull a district in, yet "다른 장소" should still offer them.
+  const chainKey = chainIds.join(",");
+  useEffect(() => {
+    if (chainPlaces.length > 0) {
+      void ensureDiningNear(chainPlaces, MORE_DINING_RADIUS_KM);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chainKey]);
+
   const otherPlacesByCategory = useMemo(() => {
     const remaining = places.filter((place) => !chainIds.includes(place.id));
     const byCategory = new Map<PlaceCategory, MobilePlace[]>();
@@ -506,24 +538,56 @@ export function MobileAppShell() {
       byCategory.set(place.category, bucket);
     }
 
-    return CATEGORY_ORDER.map((category) => ({
-      category,
-      // Closest to the current chain first — someone already headed to these 4 stops is
-      // far more likely to add a 5th one nearby than a merely popular spot across town.
-      places: (byCategory.get(category) ?? [])
-        .sort((a, b) => distanceToChainKm(a, chainPlaces) - distanceToChainKm(b, chainPlaces))
-        .slice(0, OTHER_PLACES_PER_CATEGORY),
-    })).filter((group) => group.places.length > 0);
-  }, [chainIds, chainPlaces]);
+    const nearbyDining = getLoadedDiningPlaces().filter(
+      (place) => !chainIds.includes(place.id) && distanceToChainKm(place, chainPlaces) <= OTHER_DINING_RADIUS_KM,
+    );
+    for (const place of nearbyDining) {
+      const bucket = byCategory.get(place.category) ?? [];
+      bucket.push(place);
+      byCategory.set(place.category, bucket);
+    }
+
+    // A food-led course lists restaurants/cafés/bars first, a sights course lists them last.
+    const diningLed = chainPlaces.filter((place) => isDiningCategory(place.category)).length * 2 >= chainPlaces.length;
+    const order = diningLed ? [...DINING_ORDER, ...CATEGORY_ORDER] : [...CATEGORY_ORDER, ...DINING_ORDER];
+
+    return order
+      .map((category) => ({
+        category,
+        // Closest to the current chain first — someone already headed to these 4 stops is
+        // far more likely to add a 5th one nearby than a merely popular spot across town.
+        places: (byCategory.get(category) ?? [])
+          .sort((a, b) =>
+            isDiningCategory(category)
+              ? diningRank(a, chainPlaces) - diningRank(b, chainPlaces)
+              : distanceToChainKm(a, chainPlaces) - distanceToChainKm(b, chainPlaces),
+          )
+          .slice(0, OTHER_PLACES_PER_CATEGORY),
+      }))
+      .filter((group) => group.places.length > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chainIds, chainPlaces, diningVersion]);
 
   const viewingCategoryPlaces = useMemo(() => {
     if (!viewingCategory) {
       return [];
     }
+    if (isDiningCategory(viewingCategory)) {
+      return getLoadedDiningPlaces()
+        .filter(
+          (place) =>
+            place.category === viewingCategory &&
+            !chainIds.includes(place.id) &&
+            distanceToChainKm(place, chainPlaces) <= MORE_DINING_RADIUS_KM,
+        )
+        .sort((a, b) => diningRank(a, chainPlaces) - diningRank(b, chainPlaces))
+        .slice(0, 60);
+    }
     return places
       .filter((place) => place.category === viewingCategory && !chainIds.includes(place.id))
       .sort((a, b) => distanceToChainKm(a, chainPlaces) - distanceToChainKm(b, chainPlaces));
-  }, [chainIds, chainPlaces, viewingCategory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chainIds, chainPlaces, viewingCategory, diningVersion]);
 
   // One badge per place in the open category sheet, explaining at a glance why it's
   // listed: genuinely walkable from the current chain, objectively popular among the
@@ -1059,13 +1123,16 @@ export function MobileAppShell() {
     });
   }
 
-  function toggleSwapPanel(id: string) {
+  async function toggleSwapPanel(id: string) {
     setStaticPanelId(null);
     if (expandedStopId === id) {
       setExpandedStopId(null);
       return;
     }
     const index = chainPlaces.findIndex((place) => place.id === id);
+    // Alternatives for a restaurant/café/bar are other ones nearby, which may sit in a
+    // district that isn't loaded yet.
+    await ensureDiningNear([chainPlaces[index]], 2);
     setSwapCandidateIds(
       rankReplacementStops(chainPlaces, index, {
         areaFilter: courseAreaFilter,
@@ -1977,13 +2044,17 @@ export function MobileAppShell() {
                                             onClick={() => setSelectedPlaceId(nearby.id)}
                                             type="button"
                                           >
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img
-                                              alt=""
-                                              className="h-9 w-9 shrink-0 rounded-sm bg-surface-muted object-cover"
-                                              loading="lazy"
-                                              src={getPlaceImageUrl(nearby.id)}
-                                            />
+                                            {isDiningCategory(nearby.category) ? (
+                                              <PlaceThumb category={nearby.category} size="sm" className="h-9 w-9" />
+                                            ) : (
+                                              // eslint-disable-next-line @next/next/no-img-element
+                                              <img
+                                                alt=""
+                                                className="h-9 w-9 shrink-0 rounded-sm bg-surface-muted object-cover"
+                                                loading="lazy"
+                                                src={getPlaceImageUrl(nearby.id)}
+                                              />
+                                            )}
                                             <span className="min-w-0 flex-1">
                                               <span className="block truncate text-xs font-bold">{localizedNearby.name}</span>
                                               <span className="block truncate text-[0.6875rem] text-muted">
@@ -2063,13 +2134,19 @@ export function MobileAppShell() {
                                     type="button"
                                   >
                                     <span className="block h-28 w-full shrink-0 overflow-hidden bg-surface-muted">
-                                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                                      <img
-                                        alt=""
-                                        className="h-full w-full object-cover"
-                                        loading="lazy"
-                                        src={getPlaceImageUrl(place.id)}
-                                      />
+                                      {isDiningCategory(place.category) ? (
+                                        <span className="grid h-full w-full place-items-center">
+                                          <PlaceThumb category={place.category} size="lg" />
+                                        </span>
+                                      ) : (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                          alt=""
+                                          className="h-full w-full object-cover"
+                                          loading="lazy"
+                                          src={getPlaceImageUrl(place.id)}
+                                        />
+                                      )}
                                     </span>
                                     <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2.5">
                                       <span className="truncate text-xs font-bold">{localizedPlace.name}</span>

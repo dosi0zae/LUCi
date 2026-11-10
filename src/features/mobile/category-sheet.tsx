@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { getPlaceImageUrl, localizePlace, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
+import { getPlaceImageUrl, isDiningCategory, localizePlace, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
+import { PlaceThumb } from "@/features/mobile/place-thumb";
 import { useCategoryLabel, useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import { cn } from "@/lib/utils";
 
@@ -84,13 +85,19 @@ export function CategorySheet({ areaName, badges, category, onClose, onSelectPla
                 type="button"
               >
                 <span className="relative block h-24 w-full shrink-0 overflow-hidden bg-surface-muted">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    alt=""
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                    src={getPlaceImageUrl(place.id)}
-                  />
+                  {isDiningCategory(place.category) ? (
+                    <span className="grid h-full w-full place-items-center">
+                      <PlaceThumb category={place.category} size="lg" />
+                    </span>
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      alt=""
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                      src={getPlaceImageUrl(place.id)}
+                    />
+                  )}
                   {badge && (
                     <span className="absolute right-1 top-1 rounded-xs border border-primary bg-white px-1.5 py-0.5 text-[0.6875rem] font-bold text-primary">
                       {t(BADGE_LABEL_KEY[badge])}

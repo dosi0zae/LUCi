@@ -1,4 +1,8 @@
-import { haversineKm, places, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
+import { getLoadedDiningPlaces } from "@/features/mobile/dining-store";
+import { haversineKm, isDiningCategory, places, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
+
+// How far from the stop being replaced a restaurant/café/bar alternative may be.
+const SWAP_DINING_RADIUS_KM = 1.5;
 
 export const ATTRIBUTE_TAXONOMY = [
   "실내",
@@ -348,9 +352,11 @@ export function optimizeRoutePreservingPins(places: MobilePlace[], pinnedIds: Se
 }
 
 // Ranked alternatives for one stop, best first, without touching the rest of the chain.
-// Favors places near the one being replaced (so the walk still hangs together), of the
-// same category, and better known. Each entry carries its distance from the stop being
-// replaced so the UI can show it.
+// "Similar" matters more than anything else: a restaurant is only offered restaurants (a café
+// only cafés, a bar only bars) that share its tags, a sight is offered sights of its category
+// with overlapping tags. Then near the stop (so the walk still hangs together) and better
+// known. Each entry carries its distance from the stop being replaced so the UI can show it.
+// Dining alternatives come from the districts already loaded (see ensureDiningNear).
 export function rankReplacementStops(
   chain: MobilePlace[],
   index: number,
@@ -367,7 +373,36 @@ export function rankReplacementStops(
   );
   const anchor = [chain[index - 1], chain[index + 1]].filter(Boolean);
   const reference = anchor.length > 0 ? centroid(anchor as MobilePlace[]) : current;
+  const limit = options.limit ?? 5;
 
+  if (isDiningCategory(current.category)) {
+    const currentTags = new Set(current.dining?.tagIds ?? []);
+    return getLoadedDiningPlaces()
+      .filter(
+        (place) =>
+          place.category === current.category &&
+          !chainIds.has(place.id) &&
+          !usedCoords.has(`${place.lat.toFixed(4)},${place.lng.toFixed(4)}`) &&
+          haversineKm(current, place) <= SWAP_DINING_RADIUS_KM,
+      )
+      .map((place) => {
+        const shared = (place.dining?.tagIds ?? []).filter((id) => currentTags.has(id)).length;
+        return {
+          place,
+          score:
+            -haversineKm(reference, place) -
+            haversineKm(current, place) * 0.5 +
+            Math.min(shared, 3) * 0.9 +
+            (place.dining?.pop === "high" ? 0.8 : 0) +
+            (place.dining?.hot === "surge" || place.dining?.hot === "rising" ? 0.3 : 0),
+        };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map(({ place }) => ({ place, distanceKm: haversineKm(current, place) }));
+  }
+
+  const currentTags = new Set(current.tags);
   const ranked = places
     .filter(
       (place) =>
@@ -381,10 +416,11 @@ export function rankReplacementStops(
         -haversineKm(reference, place) -
         haversineKm(current, place) * 0.5 +
         (place.fameScore ?? 40) / 40 +
-        (place.category === current.category ? 1.5 : 0),
+        (place.category === current.category ? 2.5 : 0) +
+        Math.min(place.tags.filter((tag) => currentTags.has(tag)).length, 3) * 0.7,
     }))
     .sort((a, b) => b.score - a.score)
-    .slice(0, options.limit ?? 5);
+    .slice(0, limit);
 
   return ranked.map(({ place }) => ({ place, distanceKm: haversineKm(current, place) }));
 }

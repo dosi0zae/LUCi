@@ -1,5 +1,5 @@
 import { ensureAllDiningLoaded, getLoadedDiningPlaces } from "@/features/mobile/dining-store";
-import { haversineKm, type MobilePlace } from "@/features/mobile/mobile-data";
+import { getPlaceById, haversineKm, isDiningCategory, type MobilePlace } from "@/features/mobile/mobile-data";
 import { describeDining, geminiJson, spreadDining } from "@/features/mobile/refine-course";
 
 // A course made of restaurants, cafés and bars ("성수동 맛집 카페 투어", "먹는 코스"). Candidates
@@ -156,4 +156,74 @@ export async function buildDiningCourse(input: {
 
   const chain = fallbackChain(shortlist, count);
   return chain.length >= 3 ? { placeIds: chain.map((place) => place.id), anchor, reason: null, usedGemini: false } : null;
+}
+
+// ---- default sights courses also get a meal and a café -------------------------------------
+
+export const DINING_WOVEN_NOTE: Record<string, string> = {
+  ko: "근처 식당과 카페도 함께 넣었어요.",
+  en: "A nearby restaurant and cafe are included too.",
+  ja: "近くの飲食店とカフェも一緒に入れました。",
+  zh: "也加入了附近的餐厅和咖啡馆。",
+};
+
+// A request that rules eating out ("식당 빼고", "no restaurants") keeps the plain sights course.
+export const NO_DINING_PATTERN =
+  /(식당|맛집|카페|먹는\s*것?|음식)\s*(은\s*)?(빼|말고|없이|제외)|no\s*(food|restaurants?|cafes?)|without\s*(food|eating)|食事なし|不要(餐|吃)/i;
+
+const WEAVE_RADIUS_KM = 0.9;
+const WEAVE_MAX_STOPS = 8;
+const WEAVE_TOP_PICKS = 3;
+
+// A day out is not only sights: unless the request is about eating (handled elsewhere) or rules
+// it out, drop one restaurant and one café that sit near the course into it, placed where they
+// add the least walking. Returns null when there is no dining data near the stops.
+export async function weaveDefaultDining(stopIds: string[]): Promise<string[] | null> {
+  await ensureAllDiningLoaded();
+  const stops = stopIds.map((id) => getPlaceById(id)).filter((place): place is MobilePlace => Boolean(place));
+  if (stops.length < 2 || stops.length >= WEAVE_MAX_STOPS || stops.some((stop) => isDiningCategory(stop.category))) {
+    return null;
+  }
+
+  const pool = getLoadedDiningPlaces();
+  const chain = [...stops];
+  let added = 0;
+  // A meal lands in the middle of the sights, a café at the very end — the order a day out
+  // actually runs in — and each is picked near the stop it follows.
+  const slots = [
+    { category: "식당", after: Math.floor((stops.length - 1) / 2) },
+    { category: "카페", after: -1 },
+  ];
+  for (const slot of slots) {
+    if (chain.length >= WEAVE_MAX_STOPS) {
+      break;
+    }
+    const anchorStop = slot.after === -1 ? chain[chain.length - 1] : stops[slot.after];
+    const usedCoords = new Set(chain.map((stop) => `${stop.lat.toFixed(4)},${stop.lng.toFixed(4)}`));
+    const ranked = pool
+      .filter((place) => place.category === slot.category && !usedCoords.has(`${place.lat.toFixed(4)},${place.lng.toFixed(4)}`))
+      .map((place) => ({ place, km: haversineKm(anchorStop, place) }))
+      .filter((entry) => entry.km <= WEAVE_RADIUS_KM)
+      .map(({ place, km }) => ({
+        place,
+        score:
+          (place.dining?.pop === "high" ? 1 : 0) +
+          (place.dining?.hot === "surge" || place.dining?.hot === "rising" ? 0.3 : 0) +
+          ((place.dining?.tagIds.length ?? 0) > 0 ? 0.3 : 0) -
+          km * 1.2,
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, WEAVE_TOP_PICKS);
+    if (ranked.length === 0) {
+      continue;
+    }
+    const pick = ranked[Math.floor(Math.random() * ranked.length)].place;
+    if (slot.after === -1) {
+      chain.push(pick);
+    } else {
+      chain.splice(chain.indexOf(anchorStop) + 1, 0, pick);
+    }
+    added += 1;
+  }
+  return added > 0 ? chain.map((place) => place.id) : null;
 }

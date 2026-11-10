@@ -48,6 +48,14 @@ Status: In progress (works end to end for 성동구; nearby popup, auto meal slo
 - [x] Dining data now covers 8 districts fully: 성동구 (540), 종로구 (839), 중구 (704), 용산구 (649), 마포구 (1,116), 송파구 (852), 영등포구 (790), 강남구 (1,245) = 6,735 places in `dining-places.json` (4.4 MB). 서초구 has candidates and part of its Naver lookups.
 - [ ] Known gaps: dining data covers only the districts above (a course elsewhere gets "no dining data" and the AI changes nothing); tags are shown in Korean in every language; the course's first description line is not rewritten after an edit; Kakao's terms for bundling place names/coordinates in the app are still to be checked before this data is committed; the "nearby" popup in the place sheet, automatic meal slots and a district-split data format are next.
 
+### Mobile Phase BU: Dining in Default Courses, Similar Swap Candidates, Dining under "다른 장소도 볼까요?"
+
+- [x] Default (sights) courses now get a meal and a café: `weaveDefaultDining` (`dining-course.ts`) puts one restaurant after the middle sight and one café at the end, each picked within 0.9 km of the stop it follows (popular / trending / tagged ranked first, one of the top 3 at random). Skipped when the request is about eating (already handled), already holds dining, there is no dining data near the stops, or the request rules it out (`NO_DINING_PATTERN`: "식당 빼고", "no restaurants"…). Adds a one-line note to the reason in four languages. Example: sight, sight, 식당, sight, sight, 카페.
+- [x] "X 대신 갈 만한 곳": `rankReplacementStops` now offers only the same kind — a restaurant gets restaurants, a café cafés, a bar bars (within 1.5 km, shared tag ids, popularity/trend as tie-breakers); a sight gets sights of its category with overlapping tags. Dining districts around the stop are loaded first (`ensureDiningNear`).
+- [x] "다른 장소도 볼까요?" and the "더보기" sheet list 식당 / 카페 / 술집 within 1.5 km (sheet: 3 km, top 60) of the course, well-known first; dining-led courses list them before the sights groups. Dining cards use the category icon tile instead of a stock photo.
+- [x] `dining-data/bounds.json` (district bounding boxes, written by the export) lets the app load only the districts near a point.
+- [ ] Not changed: the offline fallback (`startCourse`, used by the "near me" button) still builds a sights-only course; swap/other-place lists only show dining for the 11 exported districts.
+
 ### Mobile Phase BT: Per-District Dining Data, Loaded on Demand
 
 - [x] `dining-places.json` (5.5 MB, 11 districts) is gone. Each district now exports to `src/features/mobile/dining-data/<code>.json` (e.g. `seongdong.json`, ~250–670 KB); `dining-data/districts.json` maps all 25 district names to their code. `build-food-pool.mjs --stage export` writes only the current district's file (no merge step); the `scripts/.cache/dining-<구>.json` copies are no longer written.

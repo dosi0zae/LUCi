@@ -1298,6 +1298,16 @@ function runExport() {
   const target = path.join(DINING_DATA_DIR, `${DISTRICT_CODE}.json`);
   mkdirSync(DINING_DATA_DIR, { recursive: true });
   writeFileSync(target, JSON.stringify(out), "utf8");
+  // Bounding box per district (minLat, minLng, maxLat, maxLng): lets the app load just the
+  // districts around a point instead of guessing from administrative borders.
+  const boundsFile = path.join(DINING_DATA_DIR, "bounds.json");
+  const bounds = readJson(boundsFile, {});
+  const lats = out.map((place) => place.lat);
+  const lngs = out.map((place) => place.lng);
+  bounds[DISTRICT_CODE] = [Math.min(...lats), Math.min(...lngs), Math.max(...lats), Math.max(...lngs)].map(
+    (value) => Math.round(value * 10000) / 10000,
+  );
+  writeFileSync(boundsFile, JSON.stringify(Object.fromEntries(Object.entries(bounds).sort()), null, 1), "utf8");
   const count = (category) => out.filter((place) => place.category === category).length;
   console.log(
     `[export] ${DISTRICT}: ${out.length} places → ${path.relative(ROOT, target)} (식당 ${count("식당")}, 카페 ${count("카페")}, 술집 ${count("술집")}; ${out.filter((place) => place.dining.tagIds.length > 0).length} tagged)`,
