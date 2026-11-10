@@ -1,5 +1,5 @@
 import seoulPlacesData from "./seoul-places.json";
-import diningPlacesData from "./dining-places.json";
+import { getLoadedDiningPlace } from "./dining-store";
 import type { Locale } from "@/features/mobile/i18n/translations";
 
 // 문화재/관광지/문화시설/축제행사 are destinations. 식당/카페/술집 are dining stops: they can sit in a
@@ -149,11 +149,10 @@ export const places: MobilePlace[] = (seoulPlacesData as MobilePlace[]).filter(
   (place) => !isExpiredFestival(place),
 );
 
-// Dining stops of the districts we have curated so far (성동구 first), kept apart from `places`.
-export const diningPlaces: MobilePlace[] = diningPlacesData as MobilePlace[];
-
+// Dining stops are not in `places` and not bundled here: they sit in per-district files that
+// dining-store loads on demand (see dining-store.ts). getPlaceById finds them once loaded.
 const placeLookup = new Map<string, MobilePlace>();
-for (const place of [...places, ...diningPlaces]) {
+for (const place of places) {
   placeLookup.set(place.id, place);
 }
 
@@ -176,7 +175,7 @@ export function getPlaceImageUrl(id: string, width = 240, height = 320): string 
 }
 
 export function getPlaceById(id: string): MobilePlace | undefined {
-  return placeLookup.get(id);
+  return placeLookup.get(id) ?? getLoadedDiningPlace(id);
 }
 
 // The place whose photo stands for a course: the one the author picked, otherwise the first

@@ -1,4 +1,5 @@
-import { diningPlaces, getPlaceById, haversineKm, places, type MobilePlace } from "@/features/mobile/mobile-data";
+import { ensureAllDiningLoaded, getLoadedDiningPlaces } from "@/features/mobile/dining-store";
+import { getPlaceById, haversineKm, places, type MobilePlace } from "@/features/mobile/mobile-data";
 
 // Server-side: changes a course the way a user words it ("카페 하나 더", "마지막 장소 빼줘"),
 // also used to weave dining into a sights course that asked for meals. Gemini only chooses among
@@ -108,6 +109,8 @@ export async function geminiJson(requestBody: string, label: string, timeoutMs =
 }
 
 export async function refineCourseCore(input: RefineInput): Promise<RefineResult> {
+  await ensureAllDiningLoaded();
+  const diningPlaces = getLoadedDiningPlaces();
   const stops = input.stopIds.map((id) => getPlaceById(id)).filter((place): place is MobilePlace => Boolean(place));
   if (stops.length === 0) {
     return { ok: false };

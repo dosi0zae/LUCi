@@ -48,12 +48,20 @@ Status: In progress (works end to end for 성동구; nearby popup, auto meal slo
 - [x] Dining data now covers 8 districts fully: 성동구 (540), 종로구 (839), 중구 (704), 용산구 (649), 마포구 (1,116), 송파구 (852), 영등포구 (790), 강남구 (1,245) = 6,735 places in `dining-places.json` (4.4 MB). 서초구 has candidates and part of its Naver lookups.
 - [ ] Known gaps: dining data covers only the districts above (a course elsewhere gets "no dining data" and the AI changes nothing); tags are shown in Korean in every language; the course's first description line is not rewritten after an edit; Kakao's terms for bundling place names/coordinates in the app are still to be checked before this data is committed; the "nearby" popup in the place sheet, automatic meal slots and a district-split data format are next.
 
+### Mobile Phase BT: Per-District Dining Data, Loaded on Demand
+
+- [x] `dining-places.json` (5.5 MB, 11 districts) is gone. Each district now exports to `src/features/mobile/dining-data/<code>.json` (e.g. `seongdong.json`, ~250–670 KB); `dining-data/districts.json` maps all 25 district names to their code. `build-food-pool.mjs --stage export` writes only the current district's file (no merge step); the `scripts/.cache/dining-<구>.json` copies are no longer written.
+- [x] Dining ids are now `dining-<code>-<kakaoId>`, so the file to load is readable from the id. Old-format ids (`dining-<kakaoId>`) in a browser's saved/published trips no longer resolve and are silently dropped (only dev data existed).
+- [x] `dining-store.ts`: lazy per-district loader (`ensureDiningLoadedForIds`, `ensureAllDiningLoaded`), `getPlaceById` reads it once loaded. The app shell loads the districts for the course, swap candidates, bookmarks and published trips, and re-reads places when one finishes (`diningVersion`); `/api/recommend` and `/api/refine-course` answers are awaited into the store before the course is drawn; share links accept dining ids and load their district. The server loads every district on first use (`buildDiningCourse`, `refineCourseCore`).
+- [x] Verified: the first page load fetches only a 7 KB manifest chunk (no district data); a share link with 성동구 ids loads just `seongdong.json` and shows the four stops; `/api/recommend` still returns a 성동구 dining course; `tsc`, `lint` and `next build` pass. Adding a district needs no code change beyond its export.
+- [ ] Not tested: a course that mixes districts on a slow network (brief gap before the second district's stops appear).
+
 ### Mobile Phase BR: Food/Café/Bar Pool Pipeline (multi-district queue)
 
 - [x] `scripts/run-food-queue.mjs <구> …` runs every stage per district and resumes from the cache: `node scripts/run-food-queue.mjs 마포구 송파구 영등포구`. Naver stops at 99 % of 25,000/day (exit 2); Gemini stops on its per-day free quota (about 500 calls, resets 17:00 KST), saving score + export first; Gemini timeouts only fail that batch. Café/news lookups only for places with 10+ matching blog titles. Districts: 성동, 종로, 중구, 용산, 마포, 송파, 영등포 (bounding boxes are generous, the address text decides; dong aliases such as 인사동/북촌/서촌/홍대/송리단길).
-- [x] Per-district exports go to `scripts/.cache/dining-<구>.json` and are merged into `src/features/mobile/dining-places.json`.
+- [x] Per-district exports go to `src/features/mobile/dining-data/<code>.json` (see Phase BT).
 - [x] Gemini is on prepaid credits (402 = credits depleted; the pipeline stops and saves). Token use and a running USD total are logged (`[gemini] …` line, `scripts/.cache/gemini-spend.json`); the pipeline stops before the budget `GEMINI_BUDGET_USD` (default 12) is passed. Measured: about $0.8–1.5 per district, no thinking tokens (송파·영등포·강남: 1,216 calls ≈ $3.1).
-- [ ] Next: Naver is now the bottleneck (~10k calls per district, 25k/day): finish 서초구, then 광진·동대문 and the remaining 14 districts (bounding boxes still to add); split the data per district and load it lazily (file is 4.4 MB); check Kakao's terms before public release.
+- [ ] Next: Naver is now the bottleneck (~10k calls per district, 25k/day): finish 서초구, then 광진·동대문 and the remaining 14 districts (bounding boxes still to add); (per-district lazy data is done, Phase BT); check Kakao's terms before public release.
 
 ### Mobile Phase BR (original prototype): Food/Café/Bar Pool Pipeline (성동구)
 

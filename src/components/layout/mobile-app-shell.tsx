@@ -54,6 +54,7 @@ import { CategorySheet, type PlaceBadgeKind } from "@/features/mobile/category-s
 import { LanguageMenuButton } from "@/features/mobile/language-menu-button";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
 import { decodeCourseFromLocation } from "@/features/mobile/course-share";
+import { ensureDiningLoadedForIds, subscribeDining } from "@/features/mobile/dining-store";
 import { CreatorProfileSheet } from "@/features/mobile/creator-profile-sheet";
 import { loadKakaoMaps } from "@/features/mobile/kakao-loader";
 import { buildGoogleMapsWalkingRouteUrl, buildKakaoWalkingRouteUrl } from "@/features/mobile/route-links";
@@ -379,7 +380,22 @@ export function MobileAppShell() {
   const [isRefining, setIsRefining] = useState(false);
   const [refineNote, setRefineNote] = useState<{ text: string; isError: boolean } | null>(null);
 
-  const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds]);
+  // Dining stops come from per-district files loaded on demand (dining-store). Whatever ids the
+  // screen may show — the course, its swap candidates, saved trips, bookmarks — get their
+  // districts loaded here, and diningVersion bumps so the lookups below are read again.
+  const [diningVersion, setDiningVersion] = useState(0);
+  useEffect(() => subscribeDining(() => setDiningVersion((version) => version + 1)), []);
+  useEffect(() => {
+    void ensureDiningLoadedForIds([
+      ...chainIds,
+      ...swapCandidateIds,
+      ...bookmarkedPlaceIds,
+      ...publishedTrips.flatMap((trip) => trip.placeIds),
+    ]);
+  }, [chainIds, swapCandidateIds, bookmarkedPlaceIds, publishedTrips]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds, diningVersion]);
   const isOptimized = useMemo(() => isRouteOptimized(chainPlaces, pinnedIds), [chainPlaces, pinnedIds]);
   // The alternatives listed under the open card: the frozen candidate list minus anything
   // that has since joined the course, with distances from the stop they'd replace.
@@ -418,7 +434,8 @@ export function MobileAppShell() {
   // this person has already shown they like, without needing a backend to store it.
   const preference = useMemo(
     () => derivePreference([...bookmarkedPlaceIds]),
-    [bookmarkedPlaceIds],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [bookmarkedPlaceIds, diningVersion],
   );
 
   useEffect(() => {
@@ -748,6 +765,7 @@ export function MobileAppShell() {
         throw new Error("recommend response malformed");
       }
 
+      await ensureDiningLoadedForIds(data.placeIds);
       replaceChain(data.placeIds);
       setRecommendReason(typeof data.reason === "string" ? data.reason : null);
       setUsedAI(data.usedAI === true);
@@ -930,6 +948,7 @@ export function MobileAppShell() {
       }
       const ids = data.ids as string[];
       const changed = ids.join(",") !== chainIds.join(",");
+      await ensureDiningLoadedForIds(ids);
       setChainIds(ids);
       setExpandedStopId(null);
       if (Array.isArray(data.added) && data.added.length > 0) {

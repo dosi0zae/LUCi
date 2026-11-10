@@ -1,3 +1,4 @@
+import { isDiningId } from "@/features/mobile/dining-store";
 import { getPlaceById } from "@/features/mobile/mobile-data";
 
 // Every place id is static (bundled with the client, synced from TourAPI/heritage data),
@@ -21,7 +22,9 @@ export function decodeCourseFromLocation(search: string): { placeIds: string[]; 
     return null;
   }
 
-  const placeIds = raw.split(",").filter((id) => getPlaceById(id) !== undefined);
+  // Dining stops load per district on demand (dining-store), so they can't be looked up yet
+  // here; the app loads their district right after and drops any id that still doesn't resolve.
+  const placeIds = raw.split(",").filter((id) => isDiningId(id) || getPlaceById(id) !== undefined);
 
   if (placeIds.length < 2) {
     return null;

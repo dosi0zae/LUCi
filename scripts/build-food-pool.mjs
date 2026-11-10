@@ -18,7 +18,7 @@
 //   node scripts/build-food-pool.mjs --stage google --google-top 60
 //   node scripts/build-food-pool.mjs --stage score
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -91,6 +91,14 @@ const GOOGLE_TOP = Number(arg("google-top", "60"));
 const box = DISTRICTS[DISTRICT];
 if (!box) {
   console.error(`Unknown district "${DISTRICT}". Known: ${Object.keys(DISTRICTS).join(", ")}`);
+  process.exit(1);
+}
+
+// District name → short code used in app ids and file names (src/features/mobile/dining-data/).
+const DINING_DATA_DIR = path.join(ROOT, "src", "features", "mobile", "dining-data");
+const DISTRICT_CODE = JSON.parse(readFileSync(path.join(DINING_DATA_DIR, "districts.json"), "utf8"))[DISTRICT];
+if (!DISTRICT_CODE) {
+  console.error(`No code for "${DISTRICT}" in dining-data/districts.json`);
   process.exit(1);
 }
 
@@ -1252,7 +1260,7 @@ function runScore() {
 const KIND_CATEGORY = { food: "식당", cafe: "카페", bar: "술집" };
 const KIND_MINUTES = { food: 60, cafe: 45, bar: 90 };
 
-// Writes src/features/mobile/dining-places.json: no ratings, no post text — only what we made
+// Writes src/features/mobile/dining-data/<code>.json: no ratings, no post text — only what we made
 // ourselves (tags, our own popularity band) plus the Kakao place id/coordinates for a map link.
 function runExport() {
   const candidates = Object.fromEntries(readJson(files.candidates, []).map((place) => [place.id, place]));
@@ -1264,7 +1272,7 @@ function runExport() {
     const labels = tagIds.map((id) => TAG_LABELS[id]);
     const fallback = place.category.split(">").pop().trim();
     return {
-      id: `dining-${row.id}`,
+      id: `dining-${DISTRICT_CODE}-${row.id}`,
       name: place.name,
       category: KIND_CATEGORY[row.kind],
       area: DISTRICT,
@@ -1286,17 +1294,13 @@ function runExport() {
       },
     };
   });
-  writeJson(path.join(CACHE_DIR, `dining-${DISTRICT}.json`), out);
-  // The app file holds every district exported so far.
-  const merged = readdirSync(CACHE_DIR)
-    .filter((name) => /^dining-.+\.json$/.test(name))
-    .sort()
-    .flatMap((name) => readJson(path.join(CACHE_DIR, name), []));
-  const target = path.join(ROOT, "src", "features", "mobile", "dining-places.json");
-  writeFileSync(target, JSON.stringify(merged, null, 1), "utf8");
+  // One app file per district; the app loads a district only when a course needs it.
+  const target = path.join(DINING_DATA_DIR, `${DISTRICT_CODE}.json`);
+  mkdirSync(DINING_DATA_DIR, { recursive: true });
+  writeFileSync(target, JSON.stringify(out), "utf8");
   const count = (category) => out.filter((place) => place.category === category).length;
   console.log(
-    `[export] ${DISTRICT}: ${out.length} places (app file now ${merged.length}) → ${path.relative(ROOT, target)} (식당 ${count("식당")}, 카페 ${count("카페")}, 술집 ${count("술집")}; ${out.filter((place) => place.dining.tagIds.length > 0).length} tagged)`,
+    `[export] ${DISTRICT}: ${out.length} places → ${path.relative(ROOT, target)} (식당 ${count("식당")}, 카페 ${count("카페")}, 술집 ${count("술집")}; ${out.filter((place) => place.dining.tagIds.length > 0).length} tagged)`,
   );
 }
 

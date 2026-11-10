@@ -1,4 +1,5 @@
-import { diningPlaces, haversineKm, type MobilePlace } from "@/features/mobile/mobile-data";
+import { ensureAllDiningLoaded, getLoadedDiningPlaces } from "@/features/mobile/dining-store";
+import { haversineKm, type MobilePlace } from "@/features/mobile/mobile-data";
 import { describeDining, geminiJson, spreadDining } from "@/features/mobile/refine-course";
 
 // A course made of restaurants, cafés and bars ("성수동 맛집 카페 투어", "먹는 코스"). Candidates
@@ -30,6 +31,7 @@ type Anchor = { lat: number; lng: number };
 // Where the eating course is centred: the user's anchor if there is dining data around it,
 // otherwise (no anchor, or a district was named) the densest cluster of dining spots available.
 function pickAnchor(areaFilter: string | null, anchor: Anchor | null, radiusKm: number): Anchor | null {
+  const diningPlaces = getLoadedDiningPlaces();
   const pool = areaFilter ? diningPlaces.filter((place) => place.area === areaFilter) : diningPlaces;
   if (pool.length === 0) {
     return null;
@@ -93,6 +95,8 @@ export async function buildDiningCourse(input: {
   anchor: Anchor | null;
   radiusKm?: number;
 }): Promise<DiningCourse | null> {
+  await ensureAllDiningLoaded();
+  const diningPlaces = getLoadedDiningPlaces();
   const radiusKm = Math.min(4, Math.max(1.2, input.radiusKm ?? DEFAULT_RADIUS_KM));
   const anchor = pickAnchor(input.areaFilter, input.anchor, radiusKm);
   if (!anchor) {
