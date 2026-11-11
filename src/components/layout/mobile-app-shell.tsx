@@ -61,6 +61,7 @@ import {
   getLoadedDiningPlaces,
   subscribeDining,
 } from "@/features/mobile/dining-store";
+import { placeSubtitle } from "@/features/mobile/dining-tags";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
 import { CreatorProfileSheet } from "@/features/mobile/creator-profile-sheet";
 import { loadKakaoMaps } from "@/features/mobile/kakao-loader";
@@ -114,6 +115,8 @@ const DINING_ORDER: PlaceCategory[] = ["식당", "카페", "술집"];
 // Restaurants/cafés/bars listed under "다른 장소도 볼까요?" must be within this of some stop;
 // the full "더보기" list reaches further.
 const OTHER_DINING_RADIUS_KM = 1.5;
+// Sights under the same heading: nothing across the river from a course in Yongsan.
+const OTHER_SIGHTS_RADIUS_KM = 4;
 const MORE_DINING_RADIUS_KM = 3;
 
 // Dining stops closest to the course first, with well-known ones (and ones trending up)
@@ -529,7 +532,9 @@ export function MobileAppShell() {
   }, [chainKey]);
 
   const otherPlacesByCategory = useMemo(() => {
-    const remaining = places.filter((place) => !chainIds.includes(place.id));
+    const remaining = places.filter(
+      (place) => !chainIds.includes(place.id) && distanceToChainKm(place, chainPlaces) <= OTHER_SIGHTS_RADIUS_KM,
+    );
     const byCategory = new Map<PlaceCategory, MobilePlace[]>();
 
     for (const place of remaining) {
@@ -1132,7 +1137,9 @@ export function MobileAppShell() {
     const index = chainPlaces.findIndex((place) => place.id === id);
     // Alternatives for a restaurant/café/bar are other ones nearby, which may sit in a
     // district that isn't loaded yet.
-    await ensureDiningNear([chainPlaces[index]], 2);
+    if (isDiningCategory(chainPlaces[index].category)) {
+      await ensureDiningNear([chainPlaces[index]], 2);
+    }
     setSwapCandidateIds(
       rankReplacementStops(chainPlaces, index, {
         areaFilter: courseAreaFilter,
@@ -1876,7 +1883,13 @@ export function MobileAppShell() {
                         </button>
                       </form>
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        {(["refineExample1", "refineExample2", "refineExample3"] as const).map((key) => (
+                        {(
+                          [
+                            "refineExample1",
+                            chainPlaces.some((place) => place.category === "식당") ? "refineExample4" : "refineExample2",
+                            "refineExample3",
+                          ] as const
+                        ).map((key) => (
                           <button
                             className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-muted-strong transition hover:border-primary hover:text-primary disabled:opacity-50"
                             disabled={isRefining}
@@ -1964,7 +1977,7 @@ export function MobileAppShell() {
                               <span className="block truncate text-sm font-extrabold">{localizedPlace.name}</span>
                             </button>
                             <span className="block truncate text-xs text-muted">
-                              {localizedPlace.area} · {localizedPlace.duration}
+                              {placeSubtitle(localizedPlace, categoryLabel(place.category), locale)}
                             </span>
                           </div>
                         </div>
@@ -2150,7 +2163,9 @@ export function MobileAppShell() {
                                     </span>
                                     <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2.5">
                                       <span className="truncate text-xs font-bold">{localizedPlace.name}</span>
-                                      <span className="truncate text-[0.6875rem] text-muted">{localizedPlace.area}</span>
+                                      <span className="truncate text-[0.6875rem] text-muted">
+                                        {localizedPlace.area} · {formatDistance(distanceToChainKm(place, chainPlaces))}
+                                      </span>
                                     </span>
                                   </button>
                                   <button

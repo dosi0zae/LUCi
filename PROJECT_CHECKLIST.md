@@ -48,6 +48,15 @@ Status: In progress (works end to end for 성동구; nearby popup, auto meal slo
 - [x] Dining data now covers 8 districts fully: 성동구 (540), 종로구 (839), 중구 (704), 용산구 (649), 마포구 (1,116), 송파구 (852), 영등포구 (790), 강남구 (1,245) = 6,735 places in `dining-places.json` (4.4 MB). 서초구 has candidates and part of its Naver lookups.
 - [ ] Known gaps: dining data covers only the districts above (a course elsewhere gets "no dining data" and the AI changes nothing); tags are shown in Korean in every language; the course's first description line is not rewritten after an edit; Kakao's terms for bundling place names/coordinates in the app are still to be checked before this data is committed; the "nearby" popup in the place sheet, automatic meal slots and a district-split data format are next.
 
+### Mobile Phase BV: Walkthrough Fixes (meal order, translations, near-duplicates)
+
+- [x] Route optimisation keeps a course's shape: `optimizeRoutePreservingPins` reorders only the sights; each restaurant/café/bar stays after the same number of sights it followed. Before, "최적화하고 확정" moved the café to the first stop.
+- [x] Restaurants/cafés/bars are localized: `dining-tags.ts` has the 58 tag ids in ko/en/ja/zh (+ minutes format); `localizePlace` translates district, duration, tags and description for dining stops (names/addresses stay Korean). Course/trip rows show "식당 · 한식 · 60분" instead of "용산구 · 60분 · 정보 없음".
+- [x] "다른 장소도 볼까요?" cards show the distance from the course; sights are limited to 4 km (nothing across the river).
+- [x] Near-duplicate stops: places within 250 m, or within 800 m with the same first two letters of the name (롯데월드 …, 남산 …), count as one spot when a course is built and in the list handed to Gemini.
+- [x] Edit chips follow the course ("저녁에 술 한잔할 곳 넣어줘" replaces "점심 먹을 식당" once it has a restaurant). The swap panel only loads neighbouring dining districts for dining stops.
+- [ ] Not done: exact-distance walking times between stops, translated sight names for sights without translations (some show Korean area in English UI), explicit data-quality filter (a bridge, 한남대교, appears as a 송파구 bar).
+
 ### Mobile Phase BU: Dining in Default Courses, Similar Swap Candidates, Dining under "다른 장소도 볼까요?"
 
 - [x] Default (sights) courses now get a meal and a café: `weaveDefaultDining` (`dining-course.ts`) puts one restaurant after the middle sight and one café at the end, each picked within 0.9 km of the stop it follows (popular / trending / tagged ranked first, one of the top 3 at random). Skipped when the request is about eating (already handled), already holds dining, there is no dining data near the stops, or the request rules it out (`NO_DINING_PATTERN`: "식당 빼고", "no restaurants"…). Adds a one-line note to the reason in four languages. Example: sight, sight, 식당, sight, sight, 카페.

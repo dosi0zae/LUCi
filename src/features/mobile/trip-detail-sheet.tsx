@@ -16,6 +16,7 @@ import {
 import { FacebookIcon, InstagramIcon, KakaoTalkIcon, WhatsAppIcon, XIcon } from "@/features/mobile/brand-icons";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
 import { buildCourseShareUrl } from "@/features/mobile/course-share";
+import { placeSubtitle } from "@/features/mobile/dining-tags";
 import { shareToKakaoTalk } from "@/features/mobile/kakao-share";
 import { buildFacebookShareUrl, buildTwitterShareUrl, buildWhatsAppShareUrl } from "@/features/mobile/sns-share";
 import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
@@ -31,7 +32,7 @@ import {
   getTripCoverPlace,
   getPlaceById,
 } from "@/features/mobile/mobile-data";
-import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
+import { useCategoryLabel, useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import type { TranslationKey } from "@/features/mobile/i18n/translations";
 import { cn } from "@/lib/utils";
 
@@ -142,6 +143,7 @@ export function TripDetailSheet({
   trip,
 }: TripDetailSheetProps) {
   const t = useT();
+  const categoryLabel = useCategoryLabel();
   const { locale } = useLocale();
   const [shareMessage, setShareMessage] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -561,7 +563,9 @@ export function TripDetailSheet({
                 >
                   <h3 className="truncate text-sm font-extrabold">{place.name}</h3>
                   <p className="mt-1 text-xs text-muted">
-                    {place.area} · {place.duration} · {place.fee}
+                    {place.source === "dining"
+                      ? placeSubtitle(place, categoryLabel(place.category), locale)
+                      : `${place.area} · ${place.duration} · ${place.fee}`}
                   </p>
                 </button>
                 {/* The author can pick which spot's photo represents the course in lists. */}

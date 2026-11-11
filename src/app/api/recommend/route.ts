@@ -7,6 +7,7 @@ import {
   getScoredPool,
   localizeDistrictName,
   optimizeRoute,
+  isSameSpot,
   SEOUL_DISTRICTS,
   type RecommendIntent,
 } from "@/features/mobile/recommend-engine";
@@ -533,11 +534,11 @@ export async function POST(request: NextRequest) {
 
   if (result.placeIds.length === result.requestedCount) {
     const { scored } = getScoredPool(intent);
-    const seenCoords = new Set<string>();
+    // `scored` is best-first, so keeping the first of each cluster keeps the best one.
+    const kept: MobilePlace[] = [];
     const shortlist = scored.filter(({ place }) => {
-      const key = `${place.lat.toFixed(4)},${place.lng.toFixed(4)}`;
-      if (seenCoords.has(key)) return false;
-      seenCoords.add(key);
+      if (kept.some((other) => isSameSpot(other, place))) return false;
+      kept.push(place);
       return true;
     });
 

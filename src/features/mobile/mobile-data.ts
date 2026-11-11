@@ -1,5 +1,6 @@
 import seoulPlacesData from "./seoul-places.json";
 import { getLoadedDiningPlace } from "./dining-store";
+import { diningTagLabel, localizeMinutes } from "./dining-tags";
 import type { Locale } from "@/features/mobile/i18n/translations";
 
 // 문화재/관광지/문화시설/축제행사 are destinations. 식당/카페/술집 are dining stops: they can sit in a
@@ -65,6 +66,19 @@ export type MobilePlace = {
 export function localizePlace(place: MobilePlace, locale: Locale): MobilePlace {
   if (locale === "ko") {
     return place;
+  }
+
+  // Dining stops carry no translations of their own: the name stays as written, while the
+  // district, duration and tags come from shared tables.
+  if (place.source === "dining" && place.dining) {
+    const tags = place.dining.tagIds.map((id) => diningTagLabel(id, locale)).filter((label): label is string => Boolean(label));
+    return {
+      ...place,
+      area: localizedDistrictName(place.area, locale),
+      duration: localizeMinutes(place.duration, locale),
+      tags: tags.slice(0, 3),
+      description: tags.slice(0, 4).join(" · ") || place.description,
+    };
   }
 
   const translated = place.translations?.[locale];
@@ -154,6 +168,22 @@ export const places: MobilePlace[] = (seoulPlacesData as MobilePlace[]).filter(
 const placeLookup = new Map<string, MobilePlace>();
 for (const place of places) {
   placeLookup.set(place.id, place);
+}
+
+// District name in the UI language, borrowed from the translations the sights already carry.
+const districtNames = new Map<string, Partial<Record<"en" | "ja" | "zh", string>>>();
+for (const place of places) {
+  if (place.translations && !districtNames.has(place.area)) {
+    districtNames.set(place.area, {
+      en: place.translations.en?.area,
+      ja: place.translations.ja?.area,
+      zh: place.translations.zh?.area,
+    });
+  }
+}
+
+function localizedDistrictName(area: string, locale: Locale): string {
+  return locale === "ko" ? area : (districtNames.get(area)?.[locale] ?? area);
 }
 
 export const categoryTone: Record<PlaceCategory, string> = {

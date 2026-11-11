@@ -1,6 +1,26 @@
 import { getLoadedDiningPlaces } from "@/features/mobile/dining-store";
 import { haversineKm, isDiningCategory, places, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
 
+// Places this close are the same spot for course-building purposes; a bit further still
+// counts when they share the start of their name (Lotte World Adventure / Magic Island /
+// Lotti sculpture, Namsan Park / Namsan Cable Car).
+export const SAME_SPOT_RADIUS_KM = 0.25;
+const SAME_NAME_SPOT_RADIUS_KM = 0.8;
+const GENERIC_NAME_PREFIX = /^(서울|국립|한국|대한민국|구\s|옛\s)\s*/;
+
+function nameKey(name: string): string {
+  return name.replace(GENERIC_NAME_PREFIX, "").replace(/\s+/g, "").slice(0, 2);
+}
+
+export function isSameSpot(a: MobilePlace, b: MobilePlace): boolean {
+  const km = haversineKm(a, b);
+  if (km <= SAME_SPOT_RADIUS_KM) {
+    return true;
+  }
+  const keyA = nameKey(a.name);
+  return km <= SAME_NAME_SPOT_RADIUS_KM && keyA.length >= 2 && keyA === nameKey(b.name);
+}
+
 // How far from the stop being replaced a restaurant/café/bar alternative may be.
 const SWAP_DINING_RADIUS_KM = 1.5;
 
@@ -313,6 +333,42 @@ export function optimizeRoute(places: MobilePlace[]): MobilePlace[] {
 // Brute-forces the unpinned ordering when there are few enough of them, otherwise falls
 // back to optimizing them on their own and filling the free slots in that order.
 export function optimizeRoutePreservingPins(places: MobilePlace[], pinnedIds: Set<string>): MobilePlace[] {
+  const meals = places.filter((place) => isDiningCategory(place.category));
+  if (meals.length === 0 || meals.length === places.length) {
+    return optimizeRoutePinsOnly(places, pinnedIds);
+  }
+
+  // A course with a meal or café keeps its shape: "sight, sight, lunch, sight, café" must not
+  // turn into "café first". Only the sights are reordered for the shortest walk; every
+  // restaurant/café/bar stays after the same number of sights it followed before.
+  const sights = places.filter((place) => !isDiningCategory(place.category));
+  const afterCount = new Map<string, number>();
+  let sightsSoFar = 0;
+  for (const place of places) {
+    if (isDiningCategory(place.category)) {
+      afterCount.set(place.id, sightsSoFar);
+    } else {
+      sightsSoFar += 1;
+    }
+  }
+  const orderedSights = optimizeRoutePinsOnly(sights, pinnedIds);
+  const result: MobilePlace[] = [];
+  const placeMealsAfter = (count: number) => {
+    for (const meal of meals) {
+      if (afterCount.get(meal.id) === count) {
+        result.push(meal);
+      }
+    }
+  };
+  placeMealsAfter(0);
+  orderedSights.forEach((sight, index) => {
+    result.push(sight);
+    placeMealsAfter(index + 1);
+  });
+  return result;
+}
+
+function optimizeRoutePinsOnly(places: MobilePlace[], pinnedIds: Set<string>): MobilePlace[] {
   const pinnedSlots = places.flatMap((place, index) => (pinnedIds.has(place.id) ? [index] : []));
   if (pinnedSlots.length === 0) {
     return optimizeRoute(places);
@@ -555,6 +611,9 @@ export function buildChain(intent: RecommendIntent): RecommendResult {
   // coordinate already in the chain, independent of place id.
   const usedCoords = new Set<string>();
   const picked: MobilePlace[] = [];
+  // Several attractions of one park (Lotte World Adventure, Moon Boat, Magic Castle…) are one
+  // visit, not three stops: while any other place remains, skip ones this close to a pick.
+  const notNearPicked = (place: MobilePlace) => picked.every((stop) => !isSameSpot(stop, place));
   let round = 0;
   let safety = 0;
 
@@ -562,7 +621,8 @@ export function buildChain(intent: RecommendIntent): RecommendResult {
     const category = categoryOrder[round % categoryOrder.length];
     const notAtUsedCoord = (place: MobilePlace) => !usedCoords.has(`${place.lat.toFixed(4)},${place.lng.toFixed(4)}`);
     const next =
-      pickCandidate(scored, used, (place) => place.category === category && notAtUsedCoord(place)) ??
+      pickCandidate(scored, used, (place) => place.category === category && notAtUsedCoord(place) && notNearPicked(place)) ??
+      pickCandidate(scored, used, (place) => notAtUsedCoord(place) && notNearPicked(place)) ??
       pickCandidate(scored, used, notAtUsedCoord) ??
       pickCandidate(scored, used, () => true);
 
