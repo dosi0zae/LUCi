@@ -48,6 +48,12 @@ Status: In progress (works end to end for 성동구; nearby popup, auto meal slo
 - [x] Dining data now covers 8 districts fully: 성동구 (540), 종로구 (839), 중구 (704), 용산구 (649), 마포구 (1,116), 송파구 (852), 영등포구 (790), 강남구 (1,245) = 6,735 places in `dining-places.json` (4.4 MB). 서초구 has candidates and part of its Naver lookups.
 - [ ] Known gaps: dining data covers only the districts above (a course elsewhere gets "no dining data" and the AI changes nothing); tags are shown in Korean in every language; the course's first description line is not rewritten after an edit; Kakao's terms for bundling place names/coordinates in the app are still to be checked before this data is committed; the "nearby" popup in the place sheet, automatic meal slots and a district-split data format are next.
 
+### Mobile Phase BW: Dining Data for 서대문구, 성북구, 동작구; Root Redirect
+
+- [x] Three more districts exported (`seodaemun.json` 470, `seongbuk.json` 452, `dongjak.json` 401), 14 districts in total with `bounds.json` updated. Naver used 19,030 calls that day (guard 24,750); Gemini spend total about $5.40 of the $12 guard.
+- [x] `next.config.ts`: `/` redirects to `/mobile` so a bare domain opens the app; `DEV_LAN_ORIGIN` (in `.env.local`) lets a phone on the same Wi-Fi open the dev server.
+- [ ] 11 districts left (강동, 강북, 강서, 관악, 구로, 금천, 노원, 도봉, 양천, 은평, 중랑), each needs a bbox and dong aliases first.
+
 ### Mobile Phase BV: Walkthrough Fixes (meal order, translations, near-duplicates)
 
 - [x] Route optimisation keeps a course's shape: `optimizeRoutePreservingPins` reorders only the sights; each restaurant/café/bar stays after the same number of sights it followed. Before, "최적화하고 확정" moved the café to the first stop.
