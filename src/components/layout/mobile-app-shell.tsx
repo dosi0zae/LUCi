@@ -436,6 +436,9 @@ export function MobileAppShell() {
 
   const [isRecommending, setIsRecommending] = useState(false);
   const [recommendReason, setRecommendReason] = useState<string | null>(null);
+  // The AI's name for the course, kept with the request it answered: it is shown only while that
+  // request is still the course heading (loading a trip or a shared link replaces the heading).
+  const [courseTitle, setCourseTitle] = useState<{ title: string; prompt: string } | null>(null);
   const [isAiCourse, setIsAiCourse] = useState(false);
   const [usedAI, setUsedAI] = useState(false);
   const [isNavigateMenuOpen, setIsNavigateMenuOpen] = useState(false);
@@ -843,6 +846,7 @@ export function MobileAppShell() {
     radiusChainCacheRef.current.clear();
     setIsRecommending(true);
     setRecommendReason(null);
+    setCourseTitle(null);
     setIsAiCourse(true);
     setUsedAI(false);
     const effectiveRadius = radiusOverride ?? radiusKm;
@@ -876,6 +880,7 @@ export function MobileAppShell() {
       await ensureDiningLoadedForIds(data.placeIds);
       replaceChain(data.placeIds);
       setRecommendReason(typeof data.reason === "string" ? data.reason : null);
+      setCourseTitle(typeof data.title === "string" && data.title ? { title: data.title, prompt: nextPrompt } : null);
       setUsedAI(data.usedAI === true);
       setSubmittedPrompt(nextPrompt);
       setCourseAnchor(
@@ -1833,7 +1838,14 @@ export function MobileAppShell() {
                         )}
                       </div>
                     </div>
-                    <h2 className="mt-3 text-xl font-extrabold text-balance">{submittedPrompt}</h2>
+                    {courseTitle && courseTitle.prompt === submittedPrompt ? (
+                      <>
+                        <h2 className="mt-3 text-xl font-extrabold text-balance">{courseTitle.title}</h2>
+                        <p className="mt-1 line-clamp-1 text-xs text-muted">{submittedPrompt}</p>
+                      </>
+                    ) : (
+                      <h2 className="mt-3 text-xl font-extrabold text-balance">{submittedPrompt}</h2>
+                    )}
                     <p className="mt-1 text-xs leading-5 text-muted">
                       {t("courseSummary", { minutes: getTotalMinutes(chainPlaces) })}
                     </p>

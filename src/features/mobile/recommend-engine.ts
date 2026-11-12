@@ -1,4 +1,5 @@
 import { getLoadedDiningPlaces } from "@/features/mobile/dining-store";
+import vocab from "@/features/mobile/attribute-vocab.json";
 import { haversineKm, isDiningCategory, places, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
 
 // Places this close are the same spot for course-building purposes; a bit further still
@@ -24,23 +25,15 @@ export function isSameSpot(a: MobilePlace, b: MobilePlace): boolean {
 // How far from the stop being replaced a restaurant/café/bar alternative may be.
 const SWAP_DINING_RADIUS_KM = 1.5;
 
-export const ATTRIBUTE_TAXONOMY = [
-  "실내",
-  "실외",
-  "무료",
-  "도보코스",
-  "혼자",
-  "친구모임",
-  "가족동반",
-  "역사탐방",
-  "전통문화",
-  "체험형",
-  "포토존",
-  "야경",
-  "조용함",
-  "활기참",
-  "휴식",
-] as const;
+// The closed list of moods/situations the intent parser may name. Shared with the enrichment script
+// (scripts/enrich-places.mjs) through attribute-vocab.json, so what a request asks for and what a
+// place is tagged with can never drift apart.
+export const ATTRIBUTE_TAXONOMY: readonly string[] = vocab.attributes;
+
+// A place's tags plus the moods the enrichment pass gave it.
+function attributesOf(place: MobilePlace): string[] {
+  return place.moods?.length ? [...place.tags, ...place.moods] : place.tags;
+}
 
 export const CATEGORY_TAXONOMY: PlaceCategory[] = ["문화재", "관광지", "문화시설", "축제행사"];
 
@@ -72,7 +65,17 @@ export const DEFAULT_RADIUS_KM: (typeof RADIUS_STEPS_KM)[number] = 1;
 
 const MIN_POOL_SIZE = 6;
 
+// The rhythm of a request, read from how it is worded (not from keywords):
+//  variety  "focused" = more of one thing is wanted ("궁궐만 쭉", "카페 위주"), "mixed" = a varied day;
+//  pace     how full the day should feel; startTime when it begins ("저녁에 시작", "아침 일찍").
+export type CourseVariety = "focused" | "mixed";
+export type CoursePace = "relaxed" | "balanced" | "packed";
+export type CourseStartTime = "morning" | "afternoon" | "evening" | "night";
+
 export type RecommendIntent = {
+  variety?: CourseVariety;
+  pace?: CoursePace;
+  startTime?: CourseStartTime;
   categories: PlaceCategory[];
   attributes: string[];
   placeCount: number;
@@ -169,8 +172,9 @@ function scorePlace(place: MobilePlace, intent: RecommendIntent): number {
     score += 50;
   }
 
+  const attributes = attributesOf(place);
   for (const attribute of intent.attributes) {
-    if (place.tags.includes(attribute)) {
+    if (attributes.includes(attribute)) {
       score += 20;
     }
   }
@@ -192,7 +196,7 @@ function scorePlace(place: MobilePlace, intent: RecommendIntent): number {
     score += 12;
   }
   for (const tag of intent.preferredTags ?? []) {
-    if (place.tags.includes(tag)) {
+    if (attributes.includes(tag)) {
       score += 6;
     }
   }
@@ -223,7 +227,7 @@ export function derivePreference(bookmarkedPlaceIds: string[]): {
 
   for (const place of bookmarked) {
     categoryCounts.set(place.category, (categoryCounts.get(place.category) ?? 0) + 1);
-    for (const tag of place.tags) {
+    for (const tag of attributesOf(place)) {
       tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
     }
   }
@@ -239,6 +243,35 @@ export function derivePreference(bookmarkedPlaceIds: string[]): {
     .map(([tag]) => tag);
 
   return { preferredCategories, preferredTags };
+}
+
+// Where a place sits in a day: 0 morning ... 3 night. Uses the enrichment's bestTime when a place
+// has it, otherwise a guess from its kind (palaces and old streets are a morning walk, festivals
+// and night views come last).
+function dayRank(place: MobilePlace): number {
+  const order = { morning: 0, afternoon: 1, evening: 2, night: 3 } as const;
+  if (place.bestTime?.length) {
+    return Math.min(...place.bestTime.map((time) => order[time]));
+  }
+  if (place.category === "문화재") return 0;
+  if (place.category === "축제행사") return 2;
+  return 1;
+}
+
+// Extra "kilometres" charged for every pair of stops that run against the shape of a day, so a
+// shortest walk may be a bit longer when that puts the morning place first and the night view
+// last, but never wanders far for it.
+const DAY_ORDER_PENALTY_KM = 0.6;
+function dayOrderPenalty(route: MobilePlace[]): number {
+  let penalty = 0;
+  for (let i = 0; i < route.length; i++) {
+    for (let j = i + 1; j < route.length; j++) {
+      if (dayRank(route[i]) > dayRank(route[j])) {
+        penalty += DAY_ORDER_PENALTY_KM;
+      }
+    }
+  }
+  return penalty;
 }
 
 function routeDistance(places: MobilePlace[]): number {
@@ -274,7 +307,7 @@ function orderByRoute(places: MobilePlace[]): MobilePlace[] {
   let bestDistance = Infinity;
 
   for (const candidate of permutations(places)) {
-    const distance = routeDistance(candidate);
+    const distance = routeDistance(candidate) + dayOrderPenalty(candidate);
     if (distance < bestDistance) {
       bestDistance = distance;
       best = candidate;
@@ -485,14 +518,102 @@ export function rankReplacementStops(
 // picks across more of the pool over repeated generations.
 const CANDIDATE_POOL_SIZE = 6;
 
+function isIndoor(place: MobilePlace): boolean | null {
+  const attributes = attributesOf(place);
+  if (attributes.includes("실내")) return true;
+  if (attributes.includes("실외")) return false;
+  return null;
+}
+
+// What a candidate is worth NEXT, given the stops already picked and where in the course it goes,
+// the part that makes a course read as a day instead of the top of a ranking:
+//  - the first stop is the anchor people have heard of, the last one winds the day down;
+//  - kind, district and mood should not repeat (no three palaces in a row, no single-district
+//    course unless one was asked for);
+//  - indoor and outdoor alternate unless the request chose one;
+//  - one stop that is not on every list ("a find"), so two requests never read the same.
+function flowAdjustment(
+  place: MobilePlace,
+  picked: MobilePlace[],
+  index: number,
+  count: number,
+  intent: RecommendIntent,
+): number {
+  let adjustment = 0;
+  const fame = typeof place.fameScore === "number" ? place.fameScore : 50;
+  // Asked for more of one thing: no variety rules, the request is the shape.
+  const focused = intent.variety === "focused";
+
+  // Start time: a course that begins in the evening has no place for a palace that closes at six.
+  if (intent.startTime === "evening" || intent.startTime === "night") {
+    if (dayRank(place) === 0) adjustment -= 8;
+    if (dayRank(place) >= 2) adjustment += 5;
+  } else if (intent.startTime === "morning" && dayRank(place) >= 3) {
+    adjustment -= 6;
+  }
+  // Pace: a relaxed day leans on easy places, a packed one does not mind walking.
+  if (intent.pace === "relaxed") {
+    if (place.energy === 3) adjustment -= 5;
+    if (place.energy === 1) adjustment += 4;
+  } else if (intent.pace === "packed" && place.energy === 3) {
+    adjustment += 2;
+  }
+
+  if (index === 0) {
+    adjustment += (fame / 100) * 10;
+  } else if (index === count - 1) {
+    adjustment += dayRank(place) >= 2 ? 6 : 0;
+    if (place.energy === 3) adjustment -= 4;
+    if (place.energy === 1) adjustment += 3;
+  } else if (!focused && fame < 55 && !picked.some((stop) => (stop.fameScore ?? 50) < 55)) {
+    // The "find": a lesser-known place, once per course, in the middle.
+    adjustment += 7;
+  }
+
+  if (!focused && intent.categories.length === 0) {
+    adjustment -= picked.filter((stop) => stop.category === place.category).length * 9;
+  }
+  if (!focused && !intent.areaFilter) {
+    adjustment -= picked.filter((stop) => stop.area === place.area).length * 5;
+  }
+
+  const asked = new Set(intent.attributes);
+  const moods = (place.moods ?? []).filter((mood) => !asked.has(mood));
+  if (!focused) {
+    for (const stop of picked) {
+      adjustment -= moods.filter((mood) => stop.moods?.includes(mood)).length * 3;
+    }
+  }
+
+  const last = picked[picked.length - 1];
+  if (last) {
+    const indoor = isIndoor(place);
+    const lastIndoor = isIndoor(last);
+    const choseOne = intent.attributes.includes("실내") || intent.attributes.includes("실외");
+    if (!choseOne && indoor !== null && lastIndoor !== null && indoor !== lastIndoor) {
+      adjustment += 6;
+    }
+    adjustment -= haversineKm(last, place) * (intent.pace === "relaxed" ? 3 : 1.5);
+  }
+
+  return adjustment;
+}
+
 function pickCandidate(
   scored: { place: MobilePlace; score: number }[],
   used: Set<string>,
   predicate: (place: MobilePlace) => boolean,
+  adjust?: (place: MobilePlace) => number,
 ): MobilePlace | undefined {
-  const candidates = scored
-    .filter((entry) => !used.has(entry.place.id) && predicate(entry.place))
-    .slice(0, CANDIDATE_POOL_SIZE);
+  let candidates = scored.filter((entry) => !used.has(entry.place.id) && predicate(entry.place));
+
+  if (adjust) {
+    candidates = candidates
+      .map((entry) => ({ place: entry.place, score: entry.score + adjust(entry.place) }))
+      .sort((a, b) => b.score - a.score);
+  }
+
+  candidates = candidates.slice(0, CANDIDATE_POOL_SIZE);
 
   if (candidates.length === 0) {
     return undefined;
@@ -618,11 +739,18 @@ export function buildChain(intent: RecommendIntent): RecommendResult {
   let safety = 0;
 
   while (picked.length < count && used.size < scored.length && safety < count * 6) {
-    const category = categoryOrder[round % categoryOrder.length];
+    // With no kind asked for, the flow decides (so kinds mix); with several asked for, take turns.
+    const category = intent.categories.length > 1 ? categoryOrder[round % categoryOrder.length] : null;
     const notAtUsedCoord = (place: MobilePlace) => !usedCoords.has(`${place.lat.toFixed(4)},${place.lng.toFixed(4)}`);
+    const flow = (place: MobilePlace) => flowAdjustment(place, picked, picked.length, count, intent);
     const next =
-      pickCandidate(scored, used, (place) => place.category === category && notAtUsedCoord(place) && notNearPicked(place)) ??
-      pickCandidate(scored, used, (place) => notAtUsedCoord(place) && notNearPicked(place)) ??
+      pickCandidate(
+        scored,
+        used,
+        (place) => (category === null || place.category === category) && notAtUsedCoord(place) && notNearPicked(place),
+        flow,
+      ) ??
+      pickCandidate(scored, used, (place) => notAtUsedCoord(place) && notNearPicked(place), flow) ??
       pickCandidate(scored, used, notAtUsedCoord) ??
       pickCandidate(scored, used, () => true);
 

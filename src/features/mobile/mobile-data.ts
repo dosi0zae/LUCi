@@ -1,4 +1,5 @@
 import seoulPlacesData from "./seoul-places.json";
+import enrichmentData from "./place-enrichment.json";
 import { getLoadedDiningPlace } from "./dining-store";
 import { diningTagLabel, localizeMinutes } from "./dining-tags";
 import type { Locale } from "@/features/mobile/i18n/translations";
@@ -40,6 +41,17 @@ export type MobilePlace = {
   // id, not real popularity), this tracks actual fame. Optional: places added by hand or
   // before a given enrichment run may not have it yet.
   fameScore?: number;
+  // Optional recommendation signals, written by scripts/enrich-places.mjs into
+  // place-enrichment.json (an overlay merged in below, so replacing seoul-places.json never
+  // loses them). Every one is optional; the engine uses whichever a place has.
+  // moods: ids from attribute-vocab.json; energy: 1 restful … 3 a lot of walking/standing;
+  // bestTime: parts of the day it is at its best; durationMin: realistic visit length;
+  // story: one line on why it is worth going (Korean; handed to Gemini, not shown yet).
+  moods?: string[];
+  energy?: 1 | 2 | 3;
+  bestTime?: ("morning" | "afternoon" | "evening" | "night")[];
+  durationMin?: number;
+  story?: string;
   lat: number;
   lng: number;
   image?: string;
@@ -86,7 +98,9 @@ export function localizePlace(place: MobilePlace, locale: Locale): MobilePlace {
     return place;
   }
 
-  return { ...place, ...translated };
+  const localized = { ...place, ...translated };
+  // A measured visit length beats the translated category default ("50 min" for every sight).
+  return place.durationMin ? { ...localized, duration: localizeMinutes(place.duration, locale) } : localized;
 }
 
 export type TripVisibility = "public" | "link" | "private";
@@ -159,9 +173,26 @@ function isExpiredFestival(place: MobilePlace): boolean {
 
 // Real, Seoul-wide POI data synced from TourAPI (관광지/문화시설/축제행사) and the
 // national heritage open API (문화재) — see scripts/sync-seoul-places.mjs.
-export const places: MobilePlace[] = (seoulPlacesData as MobilePlace[]).filter(
-  (place) => !isExpiredFestival(place),
-);
+// place-enrichment.json (id → optional recommendation signals) is merged over the base data.
+type Enrichment = Pick<MobilePlace, "moods" | "energy" | "bestTime" | "durationMin" | "story">;
+const enrichment = enrichmentData as Record<string, Enrichment>;
+
+function withEnrichment(place: MobilePlace): MobilePlace {
+  const extra = enrichment[place.id];
+  if (!extra) {
+    return place;
+  }
+  return {
+    ...place,
+    ...extra,
+    // The category default ("50분") gives way to a measured length.
+    duration: extra.durationMin ? `${extra.durationMin}분` : place.duration,
+  };
+}
+
+export const places: MobilePlace[] = (seoulPlacesData as MobilePlace[])
+  .filter((place) => !isExpiredFestival(place))
+  .map(withEnrichment);
 
 // Dining stops are not in `places` and not bundled here: they sit in per-district files that
 // dining-store loads on demand (see dining-store.ts). getPlaceById finds them once loaded.

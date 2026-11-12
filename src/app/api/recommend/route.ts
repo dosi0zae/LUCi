@@ -87,7 +87,10 @@ function buildSystemPrompt(locale: string): string {
 - categories: 문화재, 관광지, 문화시설, 축제행사 중 문장과 관련 있는 것만 (없으면 빈 배열).
 - attributes: 다음 목록에서만 골라 문장의 분위기/상황을 표현: ${ATTRIBUTE_TAXONOMY.join(", ")}.
 - focus: 요청의 중심. 맛집·카페·술집·먹거리를 도는 코스가 중심이면 dining, 관광·문화 코스에 식사나 카페도 함께 넣으려는 요청이면 mixed, 그 외에는 sights.
-- placeCount: 추천할 장소 개수, 보통 3~5 사이 정수. 특별한 언급 없으면 4.
+- variety: 요청이 한 가지를 더 많이/집중해서 원하면 focused ("궁궐만 쭉", "카페 위주로", "미술관 세 곳", "전부 야외로"처럼 같은 종류의 반복 자체가 원하는 것). 그렇지 않고 여러 가지를 섞은 하루를 원하거나 별말이 없으면 mixed. 단어 하나가 아니라 문장 전체의 뜻으로 판단해.
+- pace: 하루의 속도. "여유롭게", "천천히", "힐링"처럼 느긋하면 relaxed, "알차게", "빡빡하게", "최대한 많이"면 packed, 그 외 balanced.
+- startTime: 시작 시간대를 말했거나 뜻하면 morning/afternoon/evening/night ("저녁 먹고 야경", "퇴근하고"는 evening, "아침 일찍"은 morning), 아무 말 없으면 null.
+- placeCount: 추천할 장소 개수, 보통 3~5 사이 정수. 특별한 언급 없으면 4. relaxed면 3~4로 줄이고 packed면 5~6으로 늘려.
 - area: 문장이 서울의 특정 구(區)를 명시했으면(어느 언어로 쓰였든, 예: "용산구", "Yongsan", "종로") 아래 목록 중 정확히 일치하는 값 하나로 답해. 특정 구가 명시되지 않았거나 "인사동"처럼 구보다 작은 동네/장소 이름만 나왔으면 null.
   목록: ${SEOUL_DISTRICTS.join(", ")}
 - reason: 왜 이렇게 추천하는지 ${languageName}로 쓴 한 문장.`;
@@ -95,6 +98,9 @@ function buildSystemPrompt(locale: string): string {
 
 type GeminiAiIntent = {
   focus?: string;
+  variety?: string;
+  pace?: string;
+  startTime?: string | null;
   categories?: string[];
   attributes?: string[];
   placeCount?: number;
@@ -118,6 +124,9 @@ async function getAiIntent(prompt: string, locale: string): Promise<GeminiAiInte
         type: "OBJECT",
         properties: {
           focus: { type: "STRING", enum: ["sights", "dining", "mixed"] },
+          variety: { type: "STRING", enum: ["focused", "mixed"] },
+          pace: { type: "STRING", enum: ["relaxed", "balanced", "packed"] },
+          startTime: { type: "STRING", enum: ["morning", "afternoon", "evening", "night"], nullable: true },
           categories: { type: "ARRAY", items: { type: "STRING", enum: [...CATEGORIES] } },
           attributes: { type: "ARRAY", items: { type: "STRING", enum: [...ATTRIBUTE_TAXONOMY] } },
           placeCount: { type: "INTEGER" },
@@ -160,15 +169,34 @@ async function getAiIntent(prompt: string, locale: string): Promise<GeminiAiInte
 // How many of the top-scored pool candidates Gemini gets to choose from — big enough to
 // give it a real choice beyond the single best-scoring handful, small enough to keep the
 // request/response size and latency reasonable.
-const SELECTION_SHORTLIST_SIZE = 24;
+const SELECTION_SHORTLIST_SIZE = 28;
+// Plus some lesser-known places from further down the ranking, so the pick is not only ever the
+// best-known sights (a course needs one "find" in it).
+const SELECTION_DISCOVERY_SIZE = 12;
+const DISCOVERY_MAX_FAME = 55;
+
+type CourseRhythm = {
+  variety?: "focused" | "mixed";
+  pace?: "relaxed" | "balanced" | "packed";
+  startTime?: "morning" | "afternoon" | "evening" | "night";
+};
 
 function buildSelectionSystemPrompt(locale: string, count: number): string {
   const languageName = REASON_LANGUAGE_NAME[locale] ?? REASON_LANGUAGE_NAME.en;
-  return `너는 서울 당일 여행 코스를 짜는 큐레이터야. 사용자의 원래 요청과, 이미 조건에 맞게 걸러진 후보 장소 목록(id/이름/카테고리/지역/태그/설명/인지도)을 줄게.
-이 후보들 중에서 정확히 ${count}개를, 하나하나 개별적으로 괜찮은지가 아니라 "하루 코스로 묶였을 때 자연스럽고 분위기가 일관되는 조합"인지를 기준으로 골라.
-성격이 서로 겉도는 조합(예: 조용한 전통 공간과 시끌벅적한 핫플레이스를 억지로 섞는 것)은 피하고, 같은 테마/동선으로 이어지는 조합을 우선해.
+  return `너는 서울 당일 여행 코스를 짜는 큐레이터야. 사용자의 원래 요청과, 이미 조건에 맞게 걸러진 후보 장소 목록을 줄게.
+각 후보에는 id, 이름, 카테고리, 지역, 태그/분위기(moods), 예상 체류분(minutes), 에너지(energy 1 편안함~3 많이 걸음), 어울리는 시간대(bestTime), 운영시간(hours), 한 줄 이야기(story), 설명, 인지도(fameScore 0~100)가 있고, 없는 값은 생략돼 있어.
+이 후보들 중에서 정확히 ${count}개를 골라. "하나하나 좋은 곳"이 아니라 "하루가 흐르는 코스"여야 해:
+- 시작은 코스의 얼굴이 되는 곳, 가운데는 분위기가 바뀌거나 쉬어가는 곳, 마지막은 하루를 마무리하기 좋은 곳(여유롭거나 저녁/야경이 어울리는 곳)으로 이어지게 해.
+- 요청과 함께 rhythm(variety, pace, startTime)을 줄게. 요청을 이미 읽어서 정한 값이니 따라.
+  variety가 mixed(또는 없음)면: 같은 카테고리·같은 지역·같은 분위기가 세 곳 넘게 몰리지 않게 하고 실내와 실외가 번갈아 나오면 좋아.
+  variety가 focused면: 사용자가 한 가지를 더 원하는 것이니 다양성은 신경 쓰지 말고, 그 주제를 깊이 있게 이어서 비슷한 곳을 모아도 돼. 대신 겹치는 곳(같은 건물 등)은 피해.
+  pace가 relaxed면 에너지가 낮고 가까운 곳 위주로 여유 있게, packed면 알차게 이어서 짜. startTime이 있으면 그 시간대에 어울리는 곳으로 시작하고 거기서부터 하루가 이어지게 해.
+- 요청의 분위기·상황(누구와, 어떤 기분, 시간대)을 최우선으로 반영해. 성격이 겉도는 조합(조용한 전통 공간과 시끌벅적한 핫플레이스)은 피해.
+- 인지도가 낮아도 요청과 잘 맞는 곳이 있으면 한 곳쯤은 "숨은 발견"으로 넣어. 단 요청에 어긋나면 넣지 마.
+- 운영시간이나 bestTime이 있으면 시간대가 안 맞는 곳(예: 야경 장소를 오전 첫 코스)은 피해.
 반드시 주어진 id 목록에 있는 값만 쓰고, 중복 없이 정확히 ${count}개를 골라야 해.
-그 다음 왜 이 조합을 골랐는지 ${languageName}로 자연스러운 한 문장을 써줘 — 실제로 고른 장소들을 반영한 설명이어야 해.
+title: 코스 이름. ${languageName}로 12자~20자 안팎, 장소 이름을 나열하지 말고 이 코스만의 분위기나 흐름을 한 구절로. 고른 장소의 특징에서 새로 지어내고, 다른 코스와 겹칠 법한 흔한 문구는 피해. 따옴표나 마침표는 쓰지 마.
+reason: 왜 이 조합인지 ${languageName}로 자연스러운 한 문장, 실제로 고른 장소들을 반영해서.
 다른 말 없이 주어진 스키마로만 답해.`;
 }
 
@@ -178,16 +206,45 @@ type SelectionCandidate = {
   category: string;
   area: string;
   tags: string[];
+  moods?: string[];
+  minutes?: number;
+  energy?: number;
+  bestTime?: string[];
+  hours?: string;
+  story?: string;
   description: string;
   fameScore: number;
 };
+
+// Only fields a place actually has are sent, so a sparse record costs nothing and a richly
+// enriched one (see scripts/enrich-places.mjs) gives the selection everything to reason with.
+function toSelectionCandidate(place: MobilePlace): SelectionCandidate {
+  const minutes = place.durationMin ?? Number.parseInt(place.duration, 10);
+  const candidate: SelectionCandidate = {
+    id: place.id,
+    name: place.name,
+    category: place.category,
+    area: place.area,
+    tags: place.tags,
+    description: place.description.slice(0, place.story ? 80 : 120),
+    fameScore: place.fameScore ?? 0,
+  };
+  if (place.moods?.length) candidate.moods = place.moods;
+  if (Number.isFinite(minutes) && place.durationMin) candidate.minutes = minutes;
+  if (place.energy) candidate.energy = place.energy;
+  if (place.bestTime?.length) candidate.bestTime = place.bestTime;
+  if (place.hours && place.hours !== "정보 없음") candidate.hours = place.hours;
+  if (place.story) candidate.story = place.story;
+  return candidate;
+}
 
 async function selectChainWithGemini(
   prompt: string,
   locale: string,
   candidates: SelectionCandidate[],
   count: number,
-): Promise<{ placeIds: string[]; reason: string } | null> {
+  rhythm: CourseRhythm,
+): Promise<{ placeIds: string[]; reason: string; title: string | null } | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return null;
@@ -195,7 +252,7 @@ async function selectChainWithGemini(
 
   const validIds = candidates.map((candidate) => candidate.id);
   const body = {
-    contents: [{ parts: [{ text: JSON.stringify({ request: prompt, candidates }) }] }],
+    contents: [{ parts: [{ text: JSON.stringify({ request: prompt, rhythm, candidates }) }] }],
     systemInstruction: { parts: [{ text: buildSelectionSystemPrompt(locale, count) }] },
     generationConfig: {
       responseMimeType: "application/json",
@@ -203,9 +260,10 @@ async function selectChainWithGemini(
         type: "OBJECT",
         properties: {
           placeIds: { type: "ARRAY", items: { type: "STRING", enum: validIds } },
+          title: { type: "STRING" },
           reason: { type: "STRING" },
         },
-        required: ["placeIds", "reason"],
+        required: ["placeIds", "title", "reason"],
       },
     },
   };
@@ -230,7 +288,7 @@ async function selectChainWithGemini(
       return null;
     }
 
-    const parsed = JSON.parse(text) as { placeIds?: unknown; reason?: unknown };
+    const parsed = JSON.parse(text) as { placeIds?: unknown; reason?: unknown; title?: unknown };
     const placeIds = Array.isArray(parsed.placeIds) ? parsed.placeIds : [];
     const validIdSet = new Set(validIds);
     // Never trust the model's output blindly, even with a schema enum constraining it —
@@ -244,7 +302,8 @@ async function selectChainWithGemini(
       return null;
     }
 
-    return { placeIds, reason: parsed.reason };
+    const title = typeof parsed.title === "string" ? parsed.title.trim().replace(/^["'“”]+|["'“”.]+$/g, "") : "";
+    return { placeIds, reason: parsed.reason, title: title && title.length <= 40 ? title : null };
   } catch {
     return null;
   }
@@ -410,7 +469,13 @@ function normalizeIntent(
   const landmarkOnly = !areaFilter && !promptLandmarkAnchor && !hangangIntent && genericLandmarkIntent;
   const hangangOnly = !areaFilter && hangangIntent;
 
+  const oneOf = <T extends string>(value: unknown, allowed: readonly T[]): T | undefined =>
+    typeof value === "string" && (allowed as readonly string[]).includes(value) ? (value as T) : undefined;
+
   return {
+    variety: oneOf(aiIntent.variety, ["focused", "mixed"] as const),
+    pace: oneOf(aiIntent.pace, ["relaxed", "balanced", "packed"] as const),
+    startTime: oneOf(aiIntent.startTime, ["morning", "afternoon", "evening", "night"] as const),
     categories,
     attributes,
     placeCount,
@@ -507,6 +572,7 @@ export async function POST(request: NextRequest) {
         anchor: dining.anchor,
         areaFilter: intent.areaFilter ?? null,
         reason: dining.reason ?? aiIntent?.reason ?? null,
+        title: dining.title,
         usedAI: Boolean(aiIntent),
         usedGeminiSelection: dining.usedGemini,
       });
@@ -531,6 +597,7 @@ export async function POST(request: NextRequest) {
   // failure/timeout/invalid output here just leaves the buildChain pick in place.
   let finalPlaceIds = result.placeIds;
   let selectionReason: string | null = null;
+  let courseTitle: string | null = null;
 
   if (result.placeIds.length === result.requestedCount) {
     const { scored } = getScoredPool(intent);
@@ -544,17 +611,18 @@ export async function POST(request: NextRequest) {
 
     if (shortlist.length >= result.requestedCount) {
       const byId = new Map(shortlist.map(({ place }) => [place.id, place]));
-      const candidates: SelectionCandidate[] = shortlist.slice(0, SELECTION_SHORTLIST_SIZE).map(({ place }) => ({
-        id: place.id,
-        name: place.name,
-        category: place.category,
-        area: place.area,
-        tags: place.tags,
-        description: place.description.slice(0, 120),
-        fameScore: place.fameScore ?? 0,
-      }));
+      const top = shortlist.slice(0, SELECTION_SHORTLIST_SIZE);
+      const discoveries = shortlist
+        .slice(SELECTION_SHORTLIST_SIZE)
+        .filter(({ place }) => (place.fameScore ?? 50) <= DISCOVERY_MAX_FAME)
+        .slice(0, SELECTION_DISCOVERY_SIZE);
+      const candidates: SelectionCandidate[] = [...top, ...discoveries].map(({ place }) => toSelectionCandidate(place));
 
-      const selection = await selectChainWithGemini(prompt, locale, candidates, result.requestedCount);
+      const selection = await selectChainWithGemini(prompt, locale, candidates, result.requestedCount, {
+        variety: intent.variety,
+        pace: intent.pace,
+        startTime: intent.startTime,
+      });
       if (selection) {
         const selectedPlaces = selection.placeIds
           .map((id) => byId.get(id))
@@ -562,6 +630,7 @@ export async function POST(request: NextRequest) {
         if (selectedPlaces.length === result.requestedCount) {
           finalPlaceIds = optimizeRoute(selectedPlaces).map((place) => place.id);
           selectionReason = selection.reason;
+          courseTitle = selection.title;
         }
       }
     }
@@ -597,6 +666,7 @@ export async function POST(request: NextRequest) {
       [mixedReason ?? selectionReason ?? aiIntent?.reason, wovenNote, weatherNote, maxShownNote, diningUnavailableNote]
         .filter(Boolean)
         .join(" ") || null,
+    title: courseTitle,
     usedAI: Boolean(aiIntent),
     usedGeminiSelection: Boolean(selectionReason),
   });
