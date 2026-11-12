@@ -2246,10 +2246,10 @@ export function MobileAppShell() {
           {activeTab === "explore" && (
             <div className={cn(tabSlideClass, "flex h-full min-h-full flex-col px-5 pb-4 pt-3")}>
               {/* The title shares the back button's line (to its right) and scrolls away. */}
-              <div className="flex h-10 shrink-0 items-center pl-12">
-                <h1 className="text-xl font-extrabold">{t("exploreHeading")}</h1>
+              <div className="flex h-11 shrink-0 items-center pl-14">
+                <h1 className="text-2xl font-extrabold tracking-tight">{t("exploreHeading")}</h1>
               </div>
-              <p className="mt-2 text-center text-sm text-muted text-balance">
+              <p className="mt-3 text-center text-[0.9375rem] text-muted text-balance">
                 {exploreSort === "weekly"
                   ? t("rankingWeeklySubtitle")
                   : exploreSort === "live"
@@ -2336,19 +2336,19 @@ export function MobileAppShell() {
             </div>
             <button
               aria-label={t("navProfile")}
-              className="absolute right-4 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/90 text-muted-strong shadow-soft backdrop-blur transition hover:border-primary hover:text-primary"
+              className="absolute right-4 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 ios-glass grid h-11 w-11 place-items-center rounded-full text-muted-strong"
               onClick={() => setActiveTab("profile")}
               type="button"
             >
-              <UserIcon className="h-5 w-5" />
+              <UserIcon className="h-[1.375rem] w-[1.375rem]" />
             </button>
             <button
               aria-label={t("navExplore")}
-              className="absolute right-16 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/90 text-muted-strong shadow-soft backdrop-blur transition hover:border-primary hover:text-primary"
+              className="absolute right-[4.25rem] [top:calc(0.75rem+env(safe-area-inset-top))] z-20 ios-glass grid h-11 w-11 place-items-center rounded-full text-muted-strong"
               onClick={() => setActiveTab("explore")}
               type="button"
             >
-              <CompassIcon className="h-5 w-5" />
+              <CompassIcon className="h-[1.375rem] w-[1.375rem]" />
             </button>
               </>
             )}
@@ -2359,17 +2359,17 @@ export function MobileAppShell() {
             )}
             {activeTab === "explore" && (
               <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background via-background/85 to-transparent px-5 pt-10 [padding-bottom:calc(1rem+env(safe-area-inset-bottom))]">
-                <div className="glass-panel pointer-events-auto flex h-12 items-center gap-2 rounded-full px-4 shadow-[0_4px_14px_rgba(15,23,42,0.14)]">
+                <div className="glass-panel pointer-events-auto flex h-14 items-center gap-2.5 rounded-full px-5">
                   {isAiSearching ? (
-                    <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-border-strong border-t-primary" />
+                    <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-border-strong border-t-primary" />
                   ) : aiSearchIds && aiSearchIds.length > 0 ? (
-                    <AiSparklesIcon className="h-4 w-4 shrink-0 text-primary" />
+                    <AiSparklesIcon className="h-5 w-5 shrink-0 text-primary" />
                   ) : (
-                    <SearchIcon className="h-4 w-4 shrink-0 text-muted" />
+                    <SearchIcon className="h-5 w-5 shrink-0 text-muted" />
                   )}
                   <input
                     aria-label={t("exploreSearchAria")}
-                    className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-muted"
+                    className="min-w-0 flex-1 bg-transparent text-base font-semibold outline-none placeholder:text-muted"
                     onChange={(event) => setExploreQuery(event.target.value)}
                     placeholder={t("exploreSearchPlaceholder")}
                     type="search"
@@ -2381,11 +2381,11 @@ export function MobileAppShell() {
             {activeTab !== "home" && (
               <button
                 aria-label={t("backAria")}
-                className="absolute left-4 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/90 text-muted-strong shadow-soft backdrop-blur transition hover:border-primary hover:text-primary"
+                className="absolute left-4 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 ios-glass grid h-11 w-11 place-items-center rounded-full text-muted-strong"
                 onClick={() => setActiveTab("home")}
                 type="button"
               >
-                <ArrowLeftIcon className="h-5 w-5" />
+                <ArrowLeftIcon className="h-[1.375rem] w-[1.375rem]" />
               </button>
             )}
           </>

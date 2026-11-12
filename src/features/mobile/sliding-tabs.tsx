@@ -51,7 +51,7 @@ export function SlidingTabs<T extends string>({ fullWidth = false, onChange, opt
   return (
     <div
       className={cn(
-        "relative flex gap-1 rounded-full border border-border bg-surface p-1 text-sm font-extrabold",
+        "ios-glass relative flex gap-1 rounded-full p-1 text-[0.9375rem] font-extrabold",
         fullWidth ? "w-full" : "shrink-0",
       )}
       ref={containerRef}
@@ -66,7 +66,7 @@ export function SlidingTabs<T extends string>({ fullWidth = false, onChange, opt
         <button
           aria-selected={option.value === value}
           className={cn(
-            "relative z-10 flex items-center justify-center rounded-full py-2 transition-colors duration-200",
+            "relative z-10 flex items-center justify-center rounded-full py-2.5 transition-colors duration-200",
             fullWidth ? "flex-1" : "px-4",
             option.value === value ? "text-white" : "text-muted-strong hover:text-primary",
           )}

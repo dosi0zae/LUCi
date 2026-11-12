@@ -37,15 +37,13 @@ function LanguageSwitcher() {
 
   return (
     <div>
-      <p className="text-xs font-bold text-muted-strong">{t("languageSetting")}</p>
-      <div className="mt-2 flex flex-wrap gap-1.5">
+      <p className="text-sm font-bold text-muted-strong">{t("languageSetting")}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
         {SUPPORTED_LOCALES.map((option) => (
           <button
             className={cn(
-              "rounded-full px-3.5 py-1.5 text-xs font-extrabold transition",
-              locale === option
-                ? "bg-primary text-white"
-                : "border border-border bg-surface text-muted-strong",
+              "rounded-full px-4 py-2 text-sm font-extrabold transition",
+              locale === option ? "bg-primary text-white" : "ios-btn",
             )}
             key={option}
             onClick={() => setLocale(option)}
@@ -103,12 +101,14 @@ export function ProfileTab({
   if (!isSignedIn) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 px-5 py-16 text-center">
-        <span className="grid h-14 w-14 place-items-center rounded-full bg-surface-muted text-muted">
-          <UserIcon className="h-7 w-7" />
+        <span className="ios-glass grid h-16 w-16 place-items-center rounded-full text-muted">
+          <UserIcon className="h-8 w-8" />
         </span>
-        <h2 className="text-lg font-extrabold text-balance">{t("signInHeading")}</h2>
-        <p className="max-w-[16.25rem] break-keep text-sm text-muted text-balance">{t("signInSubtitle")}</p>
-        <Button onClick={onToggleSignIn}>{t("signInButton")}</Button>
+        <h2 className="break-keep text-xl font-extrabold text-balance">{t("signInHeading")}</h2>
+        <p className="max-w-[17.5rem] break-keep text-[0.9375rem] leading-6 text-muted text-balance">{t("signInSubtitle")}</p>
+        <Button className="mt-2 h-14 px-8 text-[1.0625rem] shadow-[0_10px_28px_rgba(47,111,228,0.32)]" onClick={onToggleSignIn} shape="pill">
+          {t("signInButton")}
+        </Button>
       </div>
     );
   }
@@ -146,33 +146,33 @@ export function ProfileTab({
   return (
     <div className="px-5 py-4">
       <div className="flex items-center gap-3">
-        <span className="grid h-14 w-14 place-items-center rounded-full bg-primary-soft text-primary-strong">
-          <UserIcon className="h-7 w-7" />
+        <span className="grid h-16 w-16 place-items-center rounded-full bg-primary-soft text-primary-strong">
+          <UserIcon className="h-8 w-8" />
         </span>
         <div className="min-w-0">
-          <h2 className="truncate text-lg font-extrabold">{t("travelerName")}</h2>
-          <p className="text-xs text-muted">@trip.chain.user</p>
+          <h2 className="truncate text-xl font-extrabold">{t("travelerName")}</h2>
+          <p className="text-sm text-muted">@trip.chain.user</p>
         </div>
         <Button className="ml-auto" onClick={onToggleSignIn} shape="pill" size="sm" variant="secondary">
           {t("signOut")}
         </Button>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div className="mt-5 grid grid-cols-3 gap-3">
         {[
           { label: t("tabMine"), value: myTrips.length, onClick: () => selectSubTab("mine") },
           { label: t("statSaved"), value: savedCount, onClick: () => selectSubTab("saved") },
           { label: t("statFollowers"), value: 12, onClick: undefined },
         ].map(({ label, onClick, value }) => (
           <button
-            className="rounded-lg border border-border bg-surface p-3 text-center transition hover:border-primary"
+            className="ios-row p-3.5 text-center transition active:scale-[0.97]"
             disabled={!onClick}
             key={label}
             onClick={onClick}
             type="button"
           >
-            <p className="text-lg font-extrabold">{value}</p>
-            <p className="mt-0.5 text-xs text-muted">{label}</p>
+            <p className="text-xl font-extrabold">{value}</p>
+            <p className="mt-0.5 text-sm text-muted">{label}</p>
           </button>
         ))}
       </div>
@@ -220,26 +220,26 @@ export function ProfileTab({
 
               {subTab === "saved" && (
                 <div className="mt-6">
-                  <h3 className="text-sm font-extrabold text-muted-strong">{t("savedPlacesHeading")}</h3>
+                  <h3 className="text-lg font-extrabold">{t("savedPlacesHeading")}</h3>
                   {bookmarkedPlaces.length === 0 ? (
-                    <p className="mt-2 text-xs leading-5 text-muted">{t("emptySavedPlaces")}</p>
+                    <p className="mt-2 text-sm leading-5 text-muted">{t("emptySavedPlaces")}</p>
                   ) : (
-                    <div className="place-list-scroll mt-2.5 flex gap-2.5 overflow-x-auto">
+                    <div className="place-list-scroll mt-3 flex gap-3 overflow-x-auto pb-3">
                       {bookmarkedPlaces.map((place) => {
                         const localizedPlace = localizePlace(place, locale);
                         return (
                           <button
-                            className="flex w-28 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-surface text-left"
+                            className="ios-row flex w-36 shrink-0 flex-col overflow-hidden text-left"
                             key={place.id}
                             onClick={() => onSelectPlace(place.id)}
                             type="button"
                           >
-                            <span className="block h-28 w-full shrink-0 overflow-hidden bg-surface-muted">
+                            <span className="block h-36 w-full shrink-0 overflow-hidden bg-surface-muted">
                               <PlacePhoto className="h-full w-full" place={place} />
                             </span>
-                            <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2">
-                              <span className="truncate text-xs font-bold">{localizedPlace.name}</span>
-                              <span className="truncate text-[0.6875rem] text-muted">{localizedPlace.area}</span>
+                            <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-3 py-3">
+                              <span className="truncate text-[0.9375rem] font-bold">{localizedPlace.name}</span>
+                              <span className="truncate text-xs text-muted">{localizedPlace.area}</span>
                             </span>
                           </button>
                         );

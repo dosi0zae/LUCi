@@ -33,14 +33,14 @@ export function TripFeedList({
 
   if (trips.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-border bg-surface/60 p-6 text-center text-sm text-muted">
+      <p className="ios-row p-6 text-center text-[0.9375rem] text-muted">
         {emptyLabel}
       </p>
     );
   }
 
   return (
-    <div className="grid gap-2.5">
+    <div className="grid gap-3">
       {trips.map((trip, index) => {
         const isLiked = likedIds.has(trip.id);
         const isSaved = savedIds.has(trip.id);
@@ -50,12 +50,12 @@ export function TripFeedList({
 
         return (
           <article
-            className="relative min-w-0 rounded-lg border border-border bg-surface p-3.5 shadow-soft"
+            className="ios-row relative min-w-0 p-4"
             key={trip.id}
           >
             {/* Pinned to the card's top-right, with the same inset as the content's left edge. */}
             {trip.isMine && (
-              <span className="pointer-events-none absolute right-3.5 top-3.5">
+              <span className="pointer-events-none absolute right-4 top-4">
                 <Badge tone="blue">{t("myCourseBadge")}</Badge>
               </span>
             )}
@@ -67,11 +67,11 @@ export function TripFeedList({
               <div className="flex items-start gap-3">
                 {coverPlace && (
                   <span className="relative shrink-0">
-                    <PlacePhoto className="h-20 w-20 rounded-[0.625rem]" place={coverPlace} />
+                    <PlacePhoto className="h-24 w-24 rounded-2xl" place={coverPlace} />
                     {mode === "ranking" && (
                       <span
                         className={cn(
-                          "absolute -bottom-1 -left-1 grid h-5 w-5 place-items-center rounded-full text-[0.6875rem] font-extrabold text-white ring-2 ring-background",
+                          "absolute -bottom-1 -left-1 grid h-6 w-6 place-items-center rounded-full text-xs font-extrabold text-white ring-2 ring-background",
                           index === 0 ? "bg-primary" : "bg-muted",
                         )}
                       >
@@ -83,18 +83,18 @@ export function TripFeedList({
                 <div className="min-w-0 flex-1">
                   <div className="flex h-7 items-center">
                     {coverPlace && (
-                      <span className="text-xs font-semibold text-muted-strong">{coverPlace.area}</span>
+                      <span className="text-sm font-semibold text-muted-strong">{coverPlace.area}</span>
                     )}
                   </div>
-                  <h3 className="mt-1.5 line-clamp-2 text-lg font-extrabold leading-snug">{localizedTrip.title}</h3>
-                  <p className="mt-1 truncate text-xs text-muted">
+                  <h3 className="mt-1.5 line-clamp-2 break-keep text-[1.1875rem] font-extrabold leading-snug">{localizedTrip.title}</h3>
+                  <p className="mt-1 truncate text-sm text-muted">
                     {trip.authorName} · {t("placesCount", { count: trip.placeIds.length })}
                   </p>
                 </div>
               </div>
             </button>
 
-            <div className="mt-3 flex items-center gap-3 text-xs font-semibold text-muted-strong">
+            <div className="mt-3.5 flex items-center gap-4 text-sm font-semibold text-muted-strong">
               <button
                 className={cn("flex items-center gap-1", isLiked && "text-primary")}
                 onClick={() => onToggleLike(trip.id)}
@@ -103,7 +103,7 @@ export function TripFeedList({
                 ♥ {(trip.likes + (isLiked ? 1 : 0)).toLocaleString()}
               </button>
               <span className="flex items-center gap-1">
-                <CommentIcon className="h-3.5 w-3.5" />
+                <CommentIcon className="h-4 w-4" />
                 {trip.comments.toLocaleString()}
               </span>
               <button
@@ -111,7 +111,7 @@ export function TripFeedList({
                 onClick={() => onToggleSave(trip.id)}
                 type="button"
               >
-                <BookmarkIcon className="h-3.5 w-3.5" />
+                <BookmarkIcon className="h-4 w-4" />
                 {(trip.saved + (isSaved ? 1 : 0)).toLocaleString()}
               </button>
             </div>

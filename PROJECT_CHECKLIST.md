@@ -48,6 +48,12 @@ Status: In progress (works end to end for 성동구; nearby popup, auto meal slo
 - [x] Dining data now covers 8 districts fully: 성동구 (540), 종로구 (839), 중구 (704), 용산구 (649), 마포구 (1,116), 송파구 (852), 영등포구 (790), 강남구 (1,245) = 6,735 places in `dining-places.json` (4.4 MB). 서초구 has candidates and part of its Naver lookups.
 - [ ] Known gaps: dining data covers only the districts above (a course elsewhere gets "no dining data" and the AI changes nothing); tags are shown in Korean in every language; the course's first description line is not rewritten after an edit; Kakao's terms for bundling place names/coordinates in the app are still to be checked before this data is committed; the "nearby" popup in the place sheet, automatic meal slots and a district-split data format are next.
 
+### Mobile Phase CA: Glass Style for the Explore and Profile Screens
+
+- [x] Floating profile / explore / back buttons are 44 px `ios-glass` circles (explore sits at `right-[4.25rem]`). Explore: 24 px heading, 15 px subtitle, glass segmented tabs (`SlidingTabs`, also used in the profile), a 56 px glass search bar with 16 px text.
+- [x] `TripFeedList` cards use `ios-row` (96 px rounded cover, 19 px title with `break-keep`, 14 px author/area, 14 px stats, 24 px rank badge). Profile: 64 px avatar, 20 px name, glass stat tiles, saved-place cards at 144 px, larger language chips (`ios-btn`), a pill sign-in button.
+- [ ] Not done: place sheet, trip-detail sheet, category sheet, publish sheet and onboarding tour still use the old flat style.
+
 ### Mobile Phase BZ: iOS-Style Glass Redesign of the Course Screen and a Lighter First Screen
 
 - [x] New surface classes in `globals.css` (`ios-card`, `ios-row`, `ios-pill`, `ios-btn`, `ios-btn-on`, `ios-menu`, with dark-mode variants): big radii, frosted fill with a bright top edge, tinted round controls instead of outlined buttons. Modifier classes (`ios-row-pinned`, `ios-row-dragging`) come after their base so no utility has to fight them (`cn` does not merge Tailwind classes).
