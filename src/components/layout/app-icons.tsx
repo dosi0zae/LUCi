@@ -439,12 +439,21 @@ export function EyeIcon({ className }: IconProps) {
   );
 }
 
-export function GlobeIcon({ className }: IconProps) {
+export function LanguageIcon({ className }: IconProps) {
   return (
-    <svg className={className} {...iconProps} strokeWidth={1}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M3 12h18" />
-      <path d="M12 3c2.5 2.4 4 5.6 4 9s-1.5 6.6-4 9c-2.5-2.4-4-5.6-4-9s1.5-6.6 4-9z" />
+    // Two overlapping tiles: a filled one with an "A" and a white one with "文" (translation).
+    <svg className={className} {...iconProps} fill="currentColor" stroke="none">
+      <rect height="14" rx="4" width="14" x="2" y="2" />
+      <path d="M5.2 11.6 9 4.8l3.8 6.8M6.5 9.6h5" fill="none" stroke="#fff" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} />
+      <rect fill="#fff" height="12.4" rx="3.7" stroke="currentColor" strokeWidth={1.6} width="12.4" x="9.4" y="9.4" />
+      <path
+        d="M15.6 11.8v.9M12.6 13.3h6M13.6 13.5l4.2 4.6M17.6 13.5c-.5 2.2-1.9 3.8-4 4.6"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.4}
+      />
     </svg>
   );
 }

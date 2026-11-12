@@ -43,7 +43,7 @@ export const promptExamplesByLocale: Record<Locale, string[]> = {
 const ko = {
   heroTitle: "오늘은 어디로 갈까요?",
   heroSubtitle: "서울의 매력적인 장소와 경험을 잇고,\n하나의 여행으로 연결합니다.",
-  quickBrowse: "바로 탐색하기 >",
+  quickBrowse: "바로 탐색하기",
   searchInputAria: "원하는 코스 입력",
   searchPlaceholder: "원하는 코스를 말해보세요.",
   locateNearbyAria: "내 주변 지역으로 찾기",
@@ -271,7 +271,7 @@ type Dictionary = Record<TranslationKey, string>;
 const en: Dictionary = {
   heroTitle: "Where should we go today?",
   heroSubtitle: "Connecting Seoul's most captivating places and experiences into a single journey.",
-  quickBrowse: "Explore now >",
+  quickBrowse: "Explore now",
   searchInputAria: "Enter your desired course",
   searchPlaceholder: "Tell us the course you want.",
   locateNearbyAria: "Find places near me",
@@ -496,7 +496,7 @@ const en: Dictionary = {
 const ja: Dictionary = {
   heroTitle: "今日はどこへ行きましょうか?",
   heroSubtitle: "ソウルの魅力的な場所と体験をつなぎ、\nひとつの旅へと結びます。",
-  quickBrowse: "今すぐ探す >",
+  quickBrowse: "今すぐ探す",
   searchInputAria: "希望のコースを入力",
   searchPlaceholder: "希望するコースを話してください。",
   locateNearbyAria: "近くのエリアで探す",
@@ -721,7 +721,7 @@ const ja: Dictionary = {
 const zh: Dictionary = {
   heroTitle: "今天要去哪里呢?",
   heroSubtitle: "串联首尔充满魅力的地点与体验,\n连接成一段完整的旅程。",
-  quickBrowse: "立即探索 >",
+  quickBrowse: "立即探索",
   searchInputAria: "输入想要的路线",
   searchPlaceholder: "告诉我们您想要的路线。",
   locateNearbyAria: "查找附近区域",

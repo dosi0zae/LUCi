@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { GlobeIcon } from "@/components/layout/app-icons";
+import { LanguageIcon } from "@/components/layout/app-icons";
 import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import { SUPPORTED_LOCALES, localeLabel } from "@/features/mobile/i18n/translations";
 import { cn } from "@/lib/utils";
@@ -31,11 +31,11 @@ export function LanguageMenuButton({ className }: { className?: string }) {
         <button
           aria-expanded={isOpen}
           aria-label={t("languageMenuAria")}
-          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/90 text-primary shadow-soft backdrop-blur transition hover:border-primary"
+          className="ios-glass grid h-12 w-12 place-items-center rounded-full text-primary"
           onClick={() => setIsOpen(true)}
           type="button"
         >
-          <GlobeIcon className="h-5 w-5" />
+          <LanguageIcon className="h-6 w-6" />
         </button>
       </div>
 

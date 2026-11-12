@@ -9,7 +9,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   AiSparklesIcon,
@@ -20,6 +19,7 @@ import {
   LocateIcon,
   MapSearchIcon,
   MinusIcon,
+  MoreIcon,
   NavigationIcon,
   PinIcon,
   PlaylistAddIcon,
@@ -439,6 +439,8 @@ export function MobileAppShell() {
   // The AI's name for the course, kept with the request it answered: it is shown only while that
   // request is still the course heading (loading a trip or a shared link replaces the heading).
   const [courseTitle, setCourseTitle] = useState<{ title: string; prompt: string } | null>(null);
+  // Which stop's "..." menu (pin / delete) is open.
+  const [stopMenuId, setStopMenuId] = useState<string | null>(null);
   const [isAiCourse, setIsAiCourse] = useState(false);
   const [usedAI, setUsedAI] = useState(false);
   const [isNavigateMenuOpen, setIsNavigateMenuOpen] = useState(false);
@@ -1541,14 +1543,14 @@ export function MobileAppShell() {
 
   const searchForm = (
     <form
-      className="glass-panel flex min-h-14 items-center gap-2 rounded-xl p-2.5"
+      className="glass-panel flex min-h-16 items-center gap-2 rounded-[2rem] py-2.5 pl-4 pr-2.5"
       data-tour="search-form"
       onSubmit={recommend}
     >
-      <SearchIcon className="h-5 w-5 shrink-0 text-muted" />
+      <SearchIcon className="h-[1.375rem] w-[1.375rem] shrink-0 text-muted" />
       <input
         aria-label={t("searchInputAria")}
-        className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-muted"
+        className="min-w-0 flex-1 bg-transparent text-base font-bold outline-none placeholder:font-semibold placeholder:text-muted"
         onChange={(event) => setPrompt(event.target.value)}
         placeholder={t("searchPlaceholder")}
         type="search"
@@ -1556,7 +1558,7 @@ export function MobileAppShell() {
       />
       <button
         aria-label={t("locateNearbyAria")}
-        className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted transition hover:bg-surface-muted hover:text-foreground disabled:opacity-60"
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted transition hover:bg-surface-muted hover:text-foreground active:scale-95 disabled:opacity-60"
         disabled={isLocating}
         onClick={locateNearby}
         title={t("locateNearbyTitle")}
@@ -1565,12 +1567,12 @@ export function MobileAppShell() {
         {isLocating ? (
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-border-strong border-t-primary" />
         ) : (
-          <LocateIcon className="h-4 w-4" />
+          <LocateIcon className="h-[1.125rem] w-[1.125rem]" />
         )}
       </button>
       <button
         aria-label={prompt.trim() ? t("searchSubmitPromptAria") : t("searchSubmitAutoAria")}
-        className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:bg-primary-strong disabled:opacity-60"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary text-white shadow-[0_6px_16px_rgba(47,111,228,0.35)] transition hover:bg-primary-strong active:scale-95 disabled:opacity-60"
         disabled={isRecommending}
         title={prompt.trim() ? t("searchSubmitPromptTitle") : t("searchSubmitAutoTitle")}
         type="submit"
@@ -1578,9 +1580,9 @@ export function MobileAppShell() {
         {isRecommending ? (
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
         ) : prompt.trim() ? (
-          <ArrowRightIcon className="h-4 w-4" />
+          <ArrowRightIcon className="h-[1.125rem] w-[1.125rem]" />
         ) : (
-          <AiSparklesIcon className="h-5 w-5" />
+          <AiSparklesIcon className="h-[1.375rem] w-[1.375rem]" />
         )}
       </button>
     </form>
@@ -1667,10 +1669,10 @@ export function MobileAppShell() {
                 <div className="relative z-10 px-5 pt-[3.75rem] text-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img alt="Trip Chain" className="mx-auto block h-[5.3125rem] w-auto" src="/tripchain-logo.svg" />
-                  <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-normal text-balance">
+                  <h1 className="mt-3 break-keep text-[2rem] font-extrabold leading-[2.5rem] tracking-tight text-balance">
                     {t("heroTitle")}
                   </h1>
-                  <p className="mx-auto mt-4 max-w-[19.375rem] whitespace-pre-line text-sm leading-6 text-muted">
+                  <p className="mx-auto mt-4 max-w-[20.5rem] whitespace-pre-line break-keep text-base leading-7 text-muted">
                     {t("heroSubtitle")}
                   </p>
 
@@ -1700,13 +1702,17 @@ export function MobileAppShell() {
                 </div>
 
                 <button
-                  className="absolute inset-x-0 z-10 text-center text-sm font-semibold opacity-60 transition hover:opacity-100 [bottom:calc(1.625rem+max(env(safe-area-inset-bottom),var(--kb-h,0px)))]"
+                  className="ios-glass absolute inset-x-0 z-10 mx-auto flex h-12 w-fit items-center gap-2.5 rounded-full pl-6 pr-2 text-base font-bold [bottom:calc(1rem+max(env(safe-area-inset-bottom),var(--kb-h,0px)))]"
                   data-tour="quick-browse"
                   onClick={() => setActiveTab("explore")}
                   style={{ color: "var(--success)" }}
                   type="button"
                 >
                   {t("quickBrowse")}
+                  {/* The same --success lime as the label, with a white arrow. */}
+                  <span className="grid h-8 w-8 place-items-center rounded-full bg-success text-white">
+                    <ArrowRightIcon className="h-4 w-4" />
+                  </span>
                 </button>
 
                 <LanguageMenuButton className="absolute left-5 z-20 [bottom:calc(1rem+max(env(safe-area-inset-bottom),var(--kb-h,0px)))]" />
@@ -1728,64 +1734,69 @@ export function MobileAppShell() {
                 // minmax(0,1fr) + min-w-0: a grid item otherwise grows to its widest child (the badge +
                 // radius controls row, a long title or description) and sticks out past the screen.
                 <section className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-4">
-                  <article className="min-w-0 rounded-lg border border-border bg-surface p-4 shadow-soft">
+                  <article className="min-w-0 ios-card p-5">
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                      <Badge tone={isAiCourse && usedAI ? "blue" : "neutral"}>
+                      <span
+                        className={cn(
+                          "inline-flex h-8 shrink-0 items-center rounded-full px-3.5 text-sm font-bold",
+                          isAiCourse && usedAI ? "bg-primary-soft text-primary-strong" : "bg-surface-muted text-muted-strong",
+                        )}
+                      >
                         {isAiCourse && usedAI ? t("aiCourseBadge") : t("basicCourseBadge")}
-                      </Badge>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <button
-                          aria-label={t("radiusNarrower")}
-                          className="grid h-8 w-8 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary disabled:opacity-40"
-                          disabled={isRecommending || radiusKm === RADIUS_STEPS_KM[0]}
-                          onClick={() => changeRadius(-1)}
-                          title={t("radiusNarrower")}
-                          type="button"
-                        >
-                          <MinusIcon className="h-3.5 w-3.5" />
-                        </button>
-                        <span className="min-w-[3.25rem] text-center text-xs font-bold text-muted-strong">
-                          {t("radiusLabel", { km: radiusKm })}
-                        </span>
-                        <button
-                          aria-label={t("radiusWider")}
-                          className="grid h-8 w-8 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary disabled:opacity-40"
-                          disabled={
-                            isRecommending ||
-                            radiusKm === RADIUS_STEPS_KM[RADIUS_STEPS_KM.length - 1] ||
-                            isRadiusAtMaxCoverage
-                          }
-                          onClick={() => changeRadius(1)}
-                          title={t("radiusWider")}
-                          type="button"
-                        >
-                          <PlusIcon className="h-3.5 w-3.5" />
-                        </button>
+                      </span>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <div className="ios-pill flex h-10 items-center rounded-full">
+                          <button
+                            aria-label={t("radiusNarrower")}
+                            className="ios-btn-bare grid h-10 w-9 place-items-center rounded-full disabled:opacity-40"
+                            disabled={isRecommending || radiusKm === RADIUS_STEPS_KM[0]}
+                            onClick={() => changeRadius(-1)}
+                            title={t("radiusNarrower")}
+                            type="button"
+                          >
+                            <MinusIcon className="h-4 w-4" />
+                          </button>
+                          <span className="min-w-[3.25rem] text-center text-sm font-bold text-muted-strong">
+                            {t("radiusLabel", { km: radiusKm })}
+                          </span>
+                          <button
+                            aria-label={t("radiusWider")}
+                            className="ios-btn-bare grid h-10 w-9 place-items-center rounded-full disabled:opacity-40"
+                            disabled={
+                              isRecommending ||
+                              radiusKm === RADIUS_STEPS_KM[RADIUS_STEPS_KM.length - 1] ||
+                              isRadiusAtMaxCoverage
+                            }
+                            onClick={() => changeRadius(1)}
+                            title={t("radiusWider")}
+                            type="button"
+                          >
+                            <PlusIcon className="h-4 w-4" />
+                          </button>
+                        </div>
                         <button
                           aria-label={t("refreshCourseAria")}
-                          className="grid h-8 w-8 place-items-center rounded-full border border-border text-muted-strong transition hover:border-primary hover:text-primary disabled:opacity-60"
+                          className="ios-btn grid h-10 w-10 place-items-center rounded-full disabled:opacity-60"
                           disabled={isRecommending}
                           onClick={() => refreshCourse()}
                           title={t("refreshCourseTitle")}
                           type="button"
                         >
-                          <RefreshIcon className={cn("h-4 w-4", isRecommending && "animate-spin")} />
+                          <RefreshIcon className={cn("h-[1.125rem] w-[1.125rem]", isRecommending && "animate-spin")} />
                         </button>
                         {chainPlaces.length >= 2 && (
                           <div className="relative">
                             <button
                               aria-label={t("navigateCourseAria")}
                               className={cn(
-                                "grid h-8 w-8 place-items-center rounded-full border transition",
-                                isNavigateMenuOpen
-                                  ? "border-primary text-primary"
-                                  : "border-border text-muted-strong hover:border-primary hover:text-primary",
+                                "grid h-10 w-10 place-items-center rounded-full",
+                                isNavigateMenuOpen ? "ios-btn ios-btn-on" : "ios-btn",
                               )}
                               onClick={() => setIsNavigateMenuOpen((open) => !open)}
                               title={t("navigateCourseTitle")}
                               type="button"
                             >
-                              <NavigationIcon className="h-3.5 w-3.5" />
+                              <NavigationIcon className="h-[1.125rem] w-[1.125rem]" />
                             </button>
                             {isNavigateMenuOpen && (
                               <>
@@ -1795,10 +1806,10 @@ export function MobileAppShell() {
                                   onClick={() => setIsNavigateMenuOpen(false)}
                                   tabIndex={-1}
                                 />
-                                <div className="absolute right-0 top-full z-20 mt-2 flex items-center gap-1.5 rounded-full border border-border bg-surface p-1.5 shadow-soft">
+                                <div className="ios-menu absolute right-0 top-full z-20 mt-2 flex items-center gap-2 p-2">
                                   <button
                                     aria-label={t("mapKakao")}
-                                    className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full transition hover:opacity-80"
+                                    className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full transition hover:opacity-80"
                                     onClick={() => {
                                       setIsNavigateMenuOpen(false);
                                       window.open(buildKakaoWalkingRouteUrl(chainPlaces), "_blank", "noopener,noreferrer");
@@ -1806,11 +1817,12 @@ export function MobileAppShell() {
                                     title={t("mapKakao")}
                                     type="button"
                                   >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img alt="" className="h-full w-full object-cover" src="/map-icons/kakao-map-pin.png" />
                                   </button>
                                   <button
                                     aria-label={t("mapGoogle")}
-                                    className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full border border-border-strong bg-surface-muted transition hover:opacity-80"
+                                    className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full border border-border-strong bg-surface-muted transition hover:opacity-80"
                                     onClick={() => {
                                       setIsNavigateMenuOpen(false);
                                       window.open(
@@ -1825,6 +1837,7 @@ export function MobileAppShell() {
                                     {/* Sized down so the rainbow pin itself roughly matches the size of
                                         the blue pin inside the Kakao badge (not the badge/frame size) —
                                         the extra room this reveals is the white background beneath it. */}
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                       alt=""
                                       className="h-full w-full scale-75 object-cover"
@@ -1840,41 +1853,41 @@ export function MobileAppShell() {
                     </div>
                     {courseTitle && courseTitle.prompt === submittedPrompt ? (
                       <>
-                        <h2 className="mt-3 text-xl font-extrabold text-balance">{courseTitle.title}</h2>
-                        <p className="mt-1 line-clamp-1 text-xs text-muted">{submittedPrompt}</p>
+                        <h2 className="mt-5 break-keep text-[1.75rem] font-extrabold leading-9 tracking-tight text-balance">{courseTitle.title}</h2>
+                        <p className="mt-2 line-clamp-1 text-sm text-muted">{submittedPrompt}</p>
                       </>
                     ) : (
-                      <h2 className="mt-3 text-xl font-extrabold text-balance">{submittedPrompt}</h2>
+                      <h2 className="mt-5 break-keep text-[1.75rem] font-extrabold leading-9 tracking-tight text-balance">{submittedPrompt}</h2>
                     )}
-                    <p className="mt-1 text-xs leading-5 text-muted">
+                    <p className="mt-2 text-sm font-semibold leading-5 text-muted-strong">
                       {t("courseSummary", { minutes: getTotalMinutes(chainPlaces) })}
                     </p>
                     {radiusMessage && (
-                      <p className="mt-1 text-xs font-semibold text-danger">{radiusMessage}</p>
+                      <p className="mt-1 text-sm font-semibold text-danger">{radiusMessage}</p>
                     )}
-                    <div className="mt-3">
+                    <div className="mt-4 overflow-hidden rounded-3xl">
                       <ConstellationCard nudgeOptimize={!isOptimized} onOptimize={optimizeOrder} places={chainPlaces} suggestions={suggestionPlaces} />
                     </div>
                     {recommendReason && (
-                      <p className="mt-2 text-xs leading-5 text-muted-strong">{recommendReason}</p>
+                      <p className="mt-4 break-keep text-[0.9375rem] leading-6 text-muted-strong text-pretty">{recommendReason}</p>
                     )}
                     {isAiCourse && !usedAI && !isRecommending && (
-                      <p className="mt-2 text-xs leading-5 text-muted">{t("aiFallbackNotice")}</p>
+                      <p className="mt-3 text-sm leading-5 text-muted">{t("aiFallbackNotice")}</p>
                     )}
 
                     {/* Natural-language edits to this course. */}
-                    <div className="mt-4 border-t border-border pt-3">
+                    <div className="mt-5 border-t border-border pt-4">
                       <form
-                        className="flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface-muted/60 py-1 pl-3 pr-1"
+                        className="ios-pill flex min-h-12 items-center gap-2.5 rounded-full py-1 pl-4 pr-1"
                         onSubmit={(event) => {
                           event.preventDefault();
                           void refineCourse(refineText);
                         }}
                       >
-                        <AiSparklesIcon className="h-4 w-4 shrink-0 text-primary" />
+                        <AiSparklesIcon className="h-[1.125rem] w-[1.125rem] shrink-0 text-primary" />
                         <input
                           aria-label={t("refineInputAria")}
-                          className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:font-medium placeholder:text-muted"
+                          className="min-w-0 flex-1 bg-transparent text-[1rem] font-semibold outline-none placeholder:font-medium placeholder:text-muted"
                           disabled={isRefining}
                           onChange={(event) => setRefineText(event.target.value)}
                           placeholder={t("refinePlaceholder")}
@@ -1883,7 +1896,7 @@ export function MobileAppShell() {
                         />
                         <button
                           aria-label={t("refineSubmitAria")}
-                          className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:bg-primary-strong disabled:opacity-50"
+                          className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:bg-primary-strong active:scale-95 disabled:opacity-50"
                           disabled={isRefining || !refineText.trim()}
                           type="submit"
                         >
@@ -1894,7 +1907,7 @@ export function MobileAppShell() {
                           )}
                         </button>
                       </form>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
+                      <div className="mt-3 flex flex-wrap gap-2">
                         {(
                           [
                             "refineExample1",
@@ -1903,7 +1916,7 @@ export function MobileAppShell() {
                           ] as const
                         ).map((key) => (
                           <button
-                            className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-muted-strong transition hover:border-primary hover:text-primary disabled:opacity-50"
+                            className="ios-btn rounded-full px-3.5 py-2 text-sm font-semibold disabled:opacity-50"
                             disabled={isRefining}
                             key={key}
                             onClick={() => void refineCourse(t(key))}
@@ -1916,7 +1929,7 @@ export function MobileAppShell() {
                       {refineNote && (
                         <p
                           className={cn(
-                            "mt-2 text-xs leading-5",
+                            "mt-3 text-sm leading-5",
                             refineNote.isError ? "font-semibold text-danger" : "text-muted-strong",
                           )}
                         >
@@ -1926,21 +1939,23 @@ export function MobileAppShell() {
                     </div>
                   </article>
 
-                  <div className="grid gap-2" ref={chainListRef}>
+                  <div className="grid gap-3" ref={chainListRef}>
                     {chainPlaces.map((place, index) => {
                       const localizedPlace = localizePlace(place, locale);
                       const isPinned = pinnedIds.has(place.id);
                       const isSwapOpen = expandedStopId === place.id;
                       const isDragging = draggingChainId === place.id;
+                      const isStopMenuOpen = stopMenuId === place.id;
                       return (
                       <article
                         className={cn(
-                          "relative min-w-0 rounded-lg border bg-surface p-2.5 shadow-soft",
+                          "relative min-w-0 p-3",
+                          isPinned ? "ios-row ios-row-pinned" : "ios-row",
+                          isDragging && "ios-row-dragging",
                           !enteredIds.has(place.id) && "chain-card-in",
                           swapFlash?.cardId === place.id && "chain-card-swapped",
                           addedId === place.id && "chain-card-added",
-                          isPinned ? "border-primary" : "border-border",
-                          isDragging ? "z-10 shadow-panel" : "transition-[border-color,box-shadow]",
+                          isDragging || isStopMenuOpen ? "z-20" : "transition-shadow",
                         )}
                         data-chain-id={place.id}
                         key={place.id}
@@ -1954,7 +1969,7 @@ export function MobileAppShell() {
                         <div className="flex min-w-0 items-center gap-2">
                         <button
                           aria-label={t("reorderAria")}
-                          className="grid h-8 w-6 shrink-0 touch-none place-items-center text-muted disabled:opacity-30"
+                          className="grid h-10 w-5 shrink-0 touch-none place-items-center text-muted disabled:opacity-30"
                           disabled={isPinned}
                           onPointerCancel={handleChainDragEnd}
                           onPointerDown={(event) => handleChainDragStart(event, place.id)}
@@ -1965,10 +1980,10 @@ export function MobileAppShell() {
                           <GripIcon className="h-4 w-4" />
                         </button>
 
-                        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
                           <PlacePhotoThumb
                             badge={
-                              <span className="absolute -bottom-1 -left-1 grid h-[1.125rem] w-[1.125rem] place-items-center rounded-full border border-white bg-[#b7e86b] text-[0.6875rem] font-extrabold text-[#0b1220]">
+                              <span className="absolute -bottom-1 -left-1 grid h-6 w-6 place-items-center rounded-full border-2 border-white bg-[#b7e86b] text-xs font-extrabold text-[#0b1220]">
                                 {index + 1}
                               </span>
                             }
@@ -1976,7 +1991,7 @@ export function MobileAppShell() {
                             onFallback={() => setSelectedPlaceId(place.id)}
                             onOpenPhoto={() => setPhotoPlaceId(place.id)}
                             place={place}
-                            size="sm"
+                            size="md"
                           />
                           <div className="min-w-0 flex-1 text-left">
                             {/* Typography goes on the inner span: the global `button { font: inherit }`
@@ -1986,54 +2001,76 @@ export function MobileAppShell() {
                               onClick={() => setSelectedPlaceId(place.id)}
                               type="button"
                             >
-                              <span className="block truncate text-sm font-extrabold">{localizedPlace.name}</span>
+                              <span className="block truncate text-[1.0625rem] font-bold leading-6">{localizedPlace.name}</span>
                             </button>
-                            <span className="block truncate text-xs text-muted">
+                            <span className="block truncate text-sm text-muted">
                               {placeSubtitle(localizedPlace, categoryLabel(place.category), locale)}
                             </span>
                           </div>
                         </div>
 
-                        <div className="flex shrink-0 items-center gap-1">
-                          <button
-                            aria-label={isPinned ? t("unpinStopAria") : t("pinStopAria")}
-                            aria-pressed={isPinned}
-                            className={cn(
-                              "grid h-7 w-7 place-items-center rounded-sm border transition-colors duration-150",
-                              isPinned
-                                ? "border-primary bg-primary text-white hover:border-primary-strong hover:bg-primary-strong active:bg-primary-strong"
-                                : "border-border text-muted-strong hover:border-primary hover:bg-primary/10 hover:text-primary active:border-primary active:bg-primary active:text-white",
-                            )}
-                            onClick={() => togglePin(place.id)}
-                            title={isPinned ? t("unpinStopAria") : t("pinStopAria")}
-                            type="button"
-                          >
-                            <PinIcon className="h-4 w-4" />
-                          </button>
+                        <div className="flex shrink-0 items-center gap-1.5">
                           <button
                             aria-expanded={isSwapOpen}
                             aria-label={t("swapToggleAria")}
                             className={cn(
-                              "grid h-7 w-7 place-items-center rounded-sm border transition-colors duration-150 disabled:opacity-30",
-                              isSwapOpen
-                                ? "border-primary bg-surface text-primary enabled:hover:bg-primary/10 enabled:active:bg-primary enabled:active:text-white"
-                                : "border-border text-muted-strong enabled:hover:border-primary enabled:hover:bg-primary/10 enabled:hover:text-primary enabled:active:border-primary enabled:active:bg-primary enabled:active:text-white",
+                              "grid h-10 w-10 place-items-center rounded-full disabled:opacity-30",
+                              isSwapOpen ? "ios-btn ios-btn-on" : "ios-btn",
                             )}
                             disabled={isPinned}
                             onClick={() => toggleSwapPanel(place.id)}
                             title={t("swapToggleAria")}
                             type="button"
                           >
-                            <MapSearchIcon className="h-4 w-4" />
+                            <MapSearchIcon className="h-[1.125rem] w-[1.125rem]" />
                           </button>
-                          <button
-                            aria-label={t("deleteAria")}
-                            className="grid h-7 w-7 place-items-center rounded-sm border border-border text-danger transition-colors duration-150 hover:border-danger hover:bg-danger/10 active:border-danger active:bg-danger active:text-white"
-                            onClick={() => removeStop(place.id)}
-                            type="button"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
+                          <div className="relative">
+                            <button
+                              aria-expanded={isStopMenuOpen}
+                              aria-label={t("moreOptionsAria")}
+                              className="ios-btn grid h-10 w-10 place-items-center rounded-full"
+                              onClick={() => setStopMenuId(isStopMenuOpen ? null : place.id)}
+                              title={t("moreOptionsAria")}
+                              type="button"
+                            >
+                              <MoreIcon className="h-5 w-5" />
+                            </button>
+                            {isStopMenuOpen && (
+                              <>
+                                <button
+                                  aria-hidden="true"
+                                  className="fixed inset-0 z-10 cursor-default"
+                                  onClick={() => setStopMenuId(null)}
+                                  tabIndex={-1}
+                                />
+                                <div className="ios-menu absolute right-0 top-full z-30 mt-2 w-56 p-1.5">
+                                  <button
+                                    aria-pressed={isPinned}
+                                    className="ios-menu-item flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-[0.9375rem] font-semibold"
+                                    onClick={() => {
+                                      setStopMenuId(null);
+                                      togglePin(place.id);
+                                    }}
+                                    type="button"
+                                  >
+                                    <PinIcon className={cn("h-5 w-5", isPinned ? "text-primary" : "text-muted-strong")} />
+                                    {isPinned ? t("unpinStopAria") : t("pinStopAria")}
+                                  </button>
+                                  <button
+                                    className="ios-menu-item flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-[0.9375rem] font-semibold text-danger"
+                                    onClick={() => {
+                                      setStopMenuId(null);
+                                      removeStop(place.id);
+                                    }}
+                                    type="button"
+                                  >
+                                    <TrashIcon className="h-5 w-5" />
+                                    {t("deleteAria")}
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
                         </div>
 
@@ -2043,14 +2080,14 @@ export function MobileAppShell() {
                             onAnimationEnd={refreshCardTops}
                           >
                             <div className="min-h-0 overflow-hidden">
-                              <div className="mt-2.5 border-t border-border pt-2.5">
-                                <p className="mb-1.5 text-[0.6875rem] font-bold text-muted">
+                              <div className="mt-3 border-t border-border pt-3">
+                                <p className="mb-2 text-sm font-bold text-muted">
                                   {t("swapHeading", { name: localizedPlace.name })}
                                 </p>
                                 {panelStops.length === 0 ? (
-                                  <p className="text-xs text-muted">{t("swapEmpty")}</p>
+                                  <p className="text-sm text-muted">{t("swapEmpty")}</p>
                                 ) : (
-                                  <ul className="grid gap-1.5">
+                                  <ul className="grid gap-2.5">
                                     {panelStops.map(({ place: nearby, distanceKm }, nearbyIndex) => {
                                       const localizedNearby = localizePlace(nearby, locale);
                                       return (
@@ -2061,7 +2098,7 @@ export function MobileAppShell() {
                                           )}
                                           key={nearby.id}
                                         >
-                                          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-primary bg-white text-[0.6875rem] font-extrabold text-primary">
+                                          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-primary bg-white text-xs font-extrabold text-primary">
                                             {NEARBY_LABELS[nearbyIndex]}
                                           </span>
                                           <button
@@ -2070,31 +2107,31 @@ export function MobileAppShell() {
                                             type="button"
                                           >
                                             {isDiningCategory(nearby.category) ? (
-                                              <PlaceThumb category={nearby.category} size="sm" className="h-9 w-9" />
+                                              <PlaceThumb category={nearby.category} size="md" />
                                             ) : (
                                               // eslint-disable-next-line @next/next/no-img-element
                                               <img
                                                 alt=""
-                                                className="h-9 w-9 shrink-0 rounded-sm bg-surface-muted object-cover"
+                                                className="h-12 w-12 shrink-0 rounded-md bg-surface-muted object-cover"
                                                 loading="lazy"
                                                 src={getPlaceImageUrl(nearby.id)}
                                               />
                                             )}
                                             <span className="min-w-0 flex-1">
-                                              <span className="block truncate text-xs font-bold">{localizedNearby.name}</span>
-                                              <span className="block truncate text-[0.6875rem] text-muted">
+                                              <span className="block truncate text-[0.9375rem] font-bold">{localizedNearby.name}</span>
+                                              <span className="block truncate text-xs text-muted">
                                                 {localizedNearby.area} · {formatDistance(distanceKm)}
                                               </span>
                                             </span>
                                           </button>
                                           {swapFlash?.rowId === nearby.id && (
-                                            <span className="swap-badge shrink-0 rounded-full bg-primary px-2 py-0.5 text-[0.6875rem] font-extrabold text-white">
+                                            <span className="swap-badge shrink-0 rounded-full bg-primary px-2.5 py-1 text-xs font-extrabold text-white">
                                               {t("swappedBadge")}
                                             </span>
                                           )}
                                           <button
                                             aria-label={t("swapPickLabel")}
-                                            className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-primary text-primary transition hover:bg-primary hover:text-white"
+                                            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-strong transition hover:bg-primary hover:text-white active:scale-95"
                                             onClick={() => replaceStop(place.id, nearby)}
                                             title={t("swapPickLabel")}
                                             type="button"
@@ -2103,7 +2140,7 @@ export function MobileAppShell() {
                                           </button>
                                           <button
                                             aria-label={t("addToChainLabel")}
-                                            className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-primary text-primary transition hover:bg-primary hover:text-white"
+                                            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-strong transition hover:bg-primary hover:text-white active:scale-95"
                                             onClick={() => addToChain(nearby)}
                                             title={t("addToChainLabel")}
                                             type="button"
@@ -2125,26 +2162,28 @@ export function MobileAppShell() {
                   </div>
 
                   <Button
+                    className="h-14 text-[1.0625rem] shadow-[0_10px_28px_rgba(47,111,228,0.32)] active:scale-[0.98]"
                     disabled={chainPlaces.length < 2}
                     onClick={requestPublish}
+                    shape="pill"
                   >
                     {t("confirmCourse", { count: chainPlaces.length })}
                   </Button>
 
                   {otherPlacesByCategory.length > 0 && (
-                    <div className="grid gap-3.5">
-                      <h3 className="text-sm font-extrabold text-muted-strong">{t("otherPlacesHeading")}</h3>
+                    <div className="grid gap-4">
+                      <h3 className="mt-2 text-xl font-extrabold tracking-tight">{t("otherPlacesHeading")}</h3>
                       {otherPlacesByCategory.map((group) => (
                         <div className="min-w-0" key={group.category}>
-                          <div className="mb-1.5 flex items-center justify-between gap-2">
-                            <p className="text-xs font-bold text-muted">{categoryLabel(group.category)}</p>
+                          <div className="mb-2 flex items-center justify-between gap-2">
+                            <p className="text-base font-bold text-muted-strong">{categoryLabel(group.category)}</p>
                             <button
                               aria-label={t("categoryMoreAria", { category: categoryLabel(group.category) })}
                               className="text-primary transition hover:opacity-70"
                               onClick={() => setViewingCategory(group.category)}
                               type="button"
                             >
-                              <span className="text-xs font-bold">{t("categoryMore")}</span>
+                              <span className="text-sm font-bold">{t("categoryMore")}</span>
                             </button>
                           </div>
                           <div className="relative">
@@ -2152,13 +2191,13 @@ export function MobileAppShell() {
                               {group.places.map((place) => {
                                 const localizedPlace = localizePlace(place, locale);
                                 return (
-                                <div className="relative w-28 shrink-0" key={place.id}>
+                                <div className="relative w-36 shrink-0" key={place.id}>
                                   <button
-                                    className="flex w-full flex-col overflow-hidden rounded-lg border border-border bg-surface text-left"
+                                    className="ios-row flex w-full flex-col overflow-hidden text-left"
                                     onClick={() => setSelectedPlaceId(place.id)}
                                     type="button"
                                   >
-                                    <span className="block h-28 w-full shrink-0 overflow-hidden bg-surface-muted">
+                                    <span className="block h-36 w-full shrink-0 overflow-hidden bg-surface-muted">
                                       {isDiningCategory(place.category) ? (
                                         <span className="grid h-full w-full place-items-center">
                                           <PlaceThumb category={place.category} size="lg" />
@@ -2173,16 +2212,16 @@ export function MobileAppShell() {
                                         />
                                       )}
                                     </span>
-                                    <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2.5">
-                                      <span className="truncate text-xs font-bold">{localizedPlace.name}</span>
-                                      <span className="truncate text-[0.6875rem] text-muted">
+                                    <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-3 py-3">
+                                      <span className="truncate text-[0.9375rem] font-bold">{localizedPlace.name}</span>
+                                      <span className="truncate text-xs text-muted">
                                         {localizedPlace.area} · {formatDistance(distanceToChainKm(place, chainPlaces))}
                                       </span>
                                     </span>
                                   </button>
                                   <button
                                     aria-label={t("addToChainLabel")}
-                                    className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full border border-white bg-primary text-white shadow-[0_1px_5px_rgba(0,0,0,0.38)] transition-colors duration-150 hover:bg-primary-strong active:scale-95"
+                                    className="absolute right-2.5 top-2.5 grid h-9 w-9 place-items-center rounded-full border border-white/80 bg-primary text-white shadow-[0_2px_10px_rgba(15,23,42,0.35)] transition duration-150 hover:bg-primary-strong active:scale-95"
                                     onClick={() => addToChain(place)}
                                     title={t("addToChainLabel")}
                                     type="button"

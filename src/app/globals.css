@@ -196,6 +196,154 @@ input[type="search"]::-webkit-search-cancel-button {
   box-shadow: none;
 }
 
+/* iOS-style glass for the course screen: big radii, a light frosted fill with a bright top edge,
+   and tinted capsule controls instead of outlined buttons. The modifier classes below come after
+   their base on purpose (same property, later rule wins) so no utility class has to fight them. */
+.ios-card {
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 28px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.62));
+  box-shadow:
+    0 14px 44px rgba(15, 23, 42, 0.1),
+    0 1px 3px rgba(15, 23, 42, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(30px) saturate(1.7);
+  backdrop-filter: blur(30px) saturate(1.7);
+}
+
+.ios-row {
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow:
+    0 8px 28px rgba(15, 23, 42, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+}
+
+.ios-row-pinned {
+  border-color: var(--primary);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--primary) 40%, transparent),
+    0 8px 28px rgba(15, 23, 42, 0.07);
+}
+
+.ios-row-dragging {
+  box-shadow:
+    0 22px 60px rgba(15, 23, 42, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+/* A capsule that holds a few controls (the radius − / 1km / +). */
+.ios-pill {
+  background: rgba(100, 116, 139, 0.13);
+}
+
+/* Tinted round control: no outline, a soft grey fill, a quick press-in. */
+.ios-btn,
+.ios-btn-bare {
+  color: var(--muted-strong);
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease,
+    color 150ms ease;
+}
+
+.ios-btn {
+  background: rgba(100, 116, 139, 0.13);
+}
+
+.ios-btn:active,
+.ios-btn-bare:active {
+  transform: scale(0.92);
+}
+
+.ios-btn:hover:not(:disabled) {
+  background: rgba(100, 116, 139, 0.22);
+}
+
+.ios-btn-on {
+  background: var(--primary);
+  color: #fff;
+}
+
+.ios-btn-on:hover:not(:disabled) {
+  background: var(--primary-strong);
+}
+
+/* Popovers (the stop "..." menu, the map picker) sit over other rows, so they are nearly opaque. */
+.ios-menu {
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow:
+    0 18px 48px rgba(15, 23, 42, 0.2),
+    0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+/* Floating controls on the first screen (language button, quick browse): frosted white, bright edge. */
+.ios-glass {
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 8px 24px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(24px) saturate(1.6);
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease;
+}
+
+.ios-glass:active {
+  transform: scale(0.95);
+}
+
+.ios-menu-item:active {
+  background: rgba(100, 116, 139, 0.14);
+}
+
+@media (prefers-color-scheme: dark) {
+  .ios-card {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: linear-gradient(160deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.62));
+    box-shadow:
+      0 14px 44px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  .ios-row {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(30, 41, 59, 0.7);
+    box-shadow:
+      0 8px 28px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .ios-menu {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(30, 41, 59, 0.97);
+  }
+
+  .ios-glass {
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(30, 41, 59, 0.6);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  .ios-pill,
+  .ios-btn {
+    background: rgba(148, 163, 184, 0.2);
+  }
+
+  .ios-btn:hover:not(:disabled) {
+    background: rgba(148, 163, 184, 0.3);
+  }
+}
+
 .place-list-scroll {
   scrollbar-width: none;
 }

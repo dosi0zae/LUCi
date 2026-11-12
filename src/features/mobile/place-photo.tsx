@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 
 const SIZES = {
   sm: "h-10 w-10 rounded-sm",
+  // Course rows: a 56 px tile with iOS-style rounded corners.
+  md: "h-14 w-14 rounded-2xl",
   lg: "h-16 w-16 rounded-lg",
 };
 
@@ -37,7 +39,7 @@ export function PlacePhotoThumb({ badge, label, onFallback, onOpenPhoto, place, 
       type="button"
     >
       {failed ? (
-        <PlaceThumb category={place.category} size={size} />
+        <PlaceThumb category={place.category} size={size === "md" ? "row" : size} />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img
