@@ -227,10 +227,23 @@ export const categoryTone: Record<PlaceCategory, string> = {
   술집: "#5d6bb5",
 };
 
+// The app is served over https, and a browser may block or refuse an http:// image on such a page
+// (mixed content). These hosts serve the same files over https, so their addresses are upgraded;
+// any other host is left as it is (an https page cannot be sure the host answers on https).
+const HTTPS_IMAGE_HOSTS = new Set(["tong.visitkorea.or.kr", "www.khs.go.kr", "t1.daumcdn.net", "t1.kakaocdn.net"]);
+
+export function secureImageUrl(url: string): string {
+  if (!url.startsWith("http://")) {
+    return url;
+  }
+  const host = url.slice("http://".length).split("/")[0];
+  return HTTPS_IMAGE_HOSTS.has(host) ? `https://${url.slice("http://".length)}` : url;
+}
+
 export function getPlaceImageUrl(id: string, width = 240, height = 320): string {
   const place = getPlaceById(id);
   if (place?.image) {
-    return place.image;
+    return secureImageUrl(place.image);
   }
   return `https://picsum.photos/seed/${id}/${width}/${height}`;
 }

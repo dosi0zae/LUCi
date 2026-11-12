@@ -48,6 +48,13 @@ Status: In progress (works end to end for 성동구; nearby popup, auto meal slo
 - [x] Dining data now covers 8 districts fully: 성동구 (540), 종로구 (839), 중구 (704), 용산구 (649), 마포구 (1,116), 송파구 (852), 영등포구 (790), 강남구 (1,245) = 6,735 places in `dining-places.json` (4.4 MB). 서초구 has candidates and part of its Naver lookups.
 - [ ] Known gaps: dining data covers only the districts above (a course elsewhere gets "no dining data" and the AI changes nothing); tags are shown in Korean in every language; the course's first description line is not rewritten after an edit; Kakao's terms for bundling place names/coordinates in the app are still to be checked before this data is committed; the "nearby" popup in the place sheet, automatic meal slots and a district-split data format are next.
 
+### Mobile Phase CB: Public-Launch Basics (https images, API rate limit)
+
+- [x] Photos: most sight photos were `http://` (183 visitkorea, 67 khs.go.kr, 8+2 daum/kakao). A browser may refuse these on an https page. `secureImageUrl` in `mobile-data.ts` upgrades the four hosts that were checked to serve the same files over https (tong.visitkorea.or.kr, www.khs.go.kr, t1.daumcdn.net, t1.kakaocdn.net); every photo goes through `getPlaceImageUrl`. Verified: 0 http and 16 https image requests on a course. Other hosts (a few news sites) are left as they are.
+- [x] `src/proxy.ts` (Next 16 replaces `middleware.ts`) counts every `/api` request per client address: `/api/recommend` 10 per minute and 80 per hour, `/api/refine-course` and `/api/search-trips` 15 / 120, any other route 20 / 200; over the limit it answers 429 with `Retry-After`. The app already survives that (the first course falls back to the plain builder with its notice). Verified: 10 requests pass, the 11th to 13th get 429 with `Retry-After: 60`. `RATE_LIMIT_DISABLED=1` switches it off.
+- [ ] Limits: the counters live in each server instance's memory, so on Vercel every warm instance counts on its own (this stops a script hammering the site, it is not an exact global limit). For an exact limit use a shared store (Upstash Redis or Vercel KV) with the same rules. A daily spend cap on the Gemini key itself (Google AI Studio) is the other half of the protection and is a console setting for the owner.
+- [ ] Still open before launch: privacy notice for location use, Kakao Local terms check, og:image / share preview, PWA install.
+
 ### Mobile Phase CA: Glass Style for the Explore and Profile Screens
 
 - [x] Floating profile / explore / back buttons are 44 px `ios-glass` circles (explore sits at `right-[4.25rem]`). Explore: 24 px heading, 15 px subtitle, glass segmented tabs (`SlidingTabs`, also used in the profile), a 56 px glass search bar with 16 px text.
