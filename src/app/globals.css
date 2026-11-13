@@ -1362,19 +1362,65 @@ button.ios-card:not(:disabled):active {
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
-.hero-example-item {
-  opacity: 0;
-  transform: translateY(10px);
-  transition:
-    opacity 380ms ease,
-    transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
-    scale 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  transition-delay: calc(var(--i, 0) * 80ms), calc(var(--i, 0) * 80ms), 0ms;
+/* The logo when the search box is used: it is pulled into a dot (the fade is much quicker than the
+   shrink, so it is already invisible while still big and never covers the title), the space it held
+   closes, and the title and box underneath catch up with a springy settle. On leaving the box the
+   logo pops back with a little overshoot. */
+.hero-logo-rows {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 420ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.hero-root[data-focus="true"] .hero-example-item {
-  opacity: 1;
-  transform: translateY(0);
+.hero-logo-pop {
+  transform-origin: 50% 100%;
+  transition:
+    transform 460ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 200ms ease-out;
+}
+
+.hero-root[data-focus="true"] .hero-logo-rows {
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 360ms cubic-bezier(0.22, 1, 0.36, 1) 140ms;
+}
+
+.hero-root[data-focus="true"] .hero-logo-pop {
+  opacity: 0;
+  transform: scale(0.08);
+  transition:
+    transform 300ms cubic-bezier(0.5, 0, 0.9, 0.4),
+    opacity 120ms ease-in;
+}
+
+.hero-root[data-focus="true"] .hero-settle {
+  animation: hero-settle 560ms cubic-bezier(0.34, 1.56, 0.64, 1) 140ms both;
+}
+
+@keyframes hero-settle {
+  from {
+    transform: translateY(18px);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* The suggestion under the search box: when the box is used (the keyboard takes most of the screen) it
+   shrinks up into the box and is gone, fast; when the box is left it eases back. */
+.example-suck {
+  transform-origin: 50% 0;
+  transition:
+    opacity 300ms ease-out,
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hero-root[data-focus="true"] .example-suck {
+  opacity: 0;
+  transform: translateY(-3.25rem) scale(0.3);
+  transition:
+    opacity 260ms ease-in,
+    transform 260ms cubic-bezier(0.5, 0, 0.9, 0.4);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1395,8 +1441,17 @@ button.ios-card:not(:disabled):active {
   }
 
   .hero-search form,
-  .hero-example-item {
+  .example-suck,
+  .hero-root[data-focus="true"] .example-suck,
+  .hero-logo-rows,
+  .hero-logo-pop,
+  .hero-root[data-focus="true"] .hero-logo-rows,
+  .hero-root[data-focus="true"] .hero-logo-pop {
     transition: none;
+  }
+
+  .hero-root[data-focus="true"] .hero-settle {
+    animation: none;
   }
 
   button:not(:disabled):not([aria-hidden="true"]):active {

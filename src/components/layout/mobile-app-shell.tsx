@@ -1888,20 +1888,18 @@ export function MobileAppShell() {
                 >
                   {/* While the keyboard is up only the logo makes way (it folds to nothing), so the title
                       and the search box stay in view at the top. */}
-                  <div
-                    aria-hidden={isHeroSearchFocused}
-                    className={cn(
-                      "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
-                      isHeroSearchFocused ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100",
-                    )}
-                  >
-                    <div className="min-h-0 overflow-hidden">
+                  <div aria-hidden={isHeroSearchFocused} className="hero-logo-rows">
+                    <div className="min-h-0">
                       <div className="hero-rise py-1 [--rise:0ms]">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img alt="Trip Chain" className="hero-logo-float mx-auto block h-[5.3125rem] w-auto" src="/tripchain-logo.svg" />
+                        <div className="hero-logo-pop">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img alt="Trip Chain" className="hero-logo-float mx-auto block h-[5.3125rem] w-auto" src="/tripchain-logo.svg" />
+                        </div>
                       </div>
                     </div>
                   </div>
+                  {/* Everything under the logo gets a springy catch-up when the logo folds away. */}
+                  <div className="hero-settle">
                   <h1 className="hero-rise mt-3 break-keep text-[2rem] font-extrabold leading-[2.5rem] tracking-tight text-balance [--rise:110ms]">
                     {t("heroTitle")}
                   </h1>
@@ -1925,51 +1923,28 @@ export function MobileAppShell() {
                   >
                     {searchForm}
 
-                    <div className="relative">
-                      <button
-                        className={cn(
-                          "relative mt-7 block w-full text-center text-sm font-medium text-muted transition-opacity duration-300 disabled:opacity-60",
-                          isHeroSearchFocused && "pointer-events-none opacity-0",
-                        )}
-                        disabled={isRecommending}
-                        onClick={() => {
-                          const example = promptExamples[exampleIndex];
-                          setPrompt(example);
-                          void startCourseFromPrompt(example);
-                        }}
-                        tabIndex={isHeroSearchFocused ? -1 : 0}
-                        type="button"
-                      >
-                        <span className="example-rotator block" key={exampleIndex}>
-                          “{promptExamples[exampleIndex]}”
-                        </span>
-                      </button>
-
-                      {/* While the search box is in use the rotating example makes way for a few to pick from.
-                          pointerdown is cancelled so tapping one does not blur the box (and fold the list) first. */}
-                      <ul
-                        aria-hidden={!isHeroSearchFocused}
-                        className={cn("absolute inset-x-0 top-5 grid gap-0.5", !isHeroSearchFocused && "pointer-events-none")}
-                      >
-                        {promptExamples.map((example, index) => (
-                          <li key={example}>
-                            <button
-                              className="hero-example-item block w-full py-2 text-center text-[0.9375rem] font-medium text-muted-strong"
-                              onClick={() => {
-                                setPrompt(example);
-                                void startCourseFromPrompt(example);
-                              }}
-                              onPointerDown={(event) => event.preventDefault()}
-                              style={{ "--i": index } as CSSProperties}
-                              tabIndex={isHeroSearchFocused ? 0 : -1}
-                              type="button"
-                            >
-                              “{example}”
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    {/* While the search box is in use (the keyboard covers most of the screen) the example
+                        shrinks up into the box and is gone; it eases back when the box is left. */}
+                    <button
+                      aria-hidden={isHeroSearchFocused}
+                      className={cn(
+                        "example-suck relative mt-7 block w-full text-center text-sm font-medium text-muted disabled:opacity-60",
+                        isHeroSearchFocused && "pointer-events-none",
+                      )}
+                      disabled={isRecommending}
+                      onClick={() => {
+                        const example = promptExamples[exampleIndex];
+                        setPrompt(example);
+                        void startCourseFromPrompt(example);
+                      }}
+                      tabIndex={isHeroSearchFocused ? -1 : 0}
+                      type="button"
+                    >
+                      <span className="example-rotator block" key={exampleIndex}>
+                        “{promptExamples[exampleIndex]}”
+                      </span>
+                    </button>
+                  </div>
                   </div>
                 </div>
 
