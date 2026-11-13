@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeftIcon,
@@ -19,7 +19,7 @@ import { buildCourseShareUrl } from "@/features/mobile/course-share";
 import { placeSubtitle } from "@/features/mobile/dining-tags";
 import { shareToKakaoTalk } from "@/features/mobile/kakao-share";
 import { buildFacebookShareUrl, buildTwitterShareUrl, buildWhatsAppShareUrl } from "@/features/mobile/sns-share";
-import { PopOnActive } from "@/features/mobile/motion";
+import { PopOnActive, updateScrollSheen } from "@/features/mobile/motion";
 import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import {
@@ -32,6 +32,7 @@ import {
   type TripComment,
   getTripCoverPlace,
   getPlaceById,
+  getPlaceImageUrl,
 } from "@/features/mobile/mobile-data";
 import { useCategoryLabel, useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import type { TranslationKey } from "@/features/mobile/i18n/translations";
@@ -49,6 +50,8 @@ export type DetailOrigin = { top: number; right: number; bottom: number; left: n
 type TripDetailSheetProps = {
   trip: FeedTrip;
   origin?: DetailOrigin | null;
+  // The on-screen rectangle of the card's photo: the cover photo here grows out of it.
+  photoFrom?: DOMRect | null;
   comments: TripComment[];
   isLiked: boolean;
   isSaved: boolean;
@@ -128,6 +131,7 @@ function getCardPoints(places: MobilePlace[]) {
 
 export function TripDetailSheet({
   origin,
+  photoFrom,
   comments,
   isLiked,
   isSaved,
@@ -165,6 +169,38 @@ export function TripDetailSheet({
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const selectedPlace = selectedPlaceId ? getPlaceById(selectedPlaceId) : undefined;
   const coverPlaceId = getTripCoverPlace(trip)?.id;
+  const coverSrc = coverPlaceId ? getPlaceImageUrl(coverPlaceId) : null;
+  const [coverFailed, setCoverFailed] = useState(false);
+  const coverRef = useRef<HTMLDivElement>(null);
+
+  // Shared photo: the cover starts exactly over the card's photo (same size, same crop shape) and
+  // eases to its place at the top while the screen opens around it.
+  useLayoutEffect(() => {
+    const cover = coverRef.current;
+    if (!cover || !photoFrom || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+    const to = cover.getBoundingClientRect();
+    if (to.width === 0 || photoFrom.width === 0) {
+      return;
+    }
+    const scale = photoFrom.width / to.width;
+    const dx = photoFrom.left + photoFrom.width / 2 - (to.left + to.width / 2);
+    const dy = photoFrom.top + photoFrom.height / 2 - (to.top + to.height / 2);
+    const crop = Math.max(0, (to.height - photoFrom.height / scale) / 2);
+    cover.animate(
+      [
+        {
+          transform: `translate(${dx}px, ${dy}px) scale(${scale})`,
+          clipPath: `inset(${crop}px 0px ${crop}px 0px round ${16 / scale}px)`,
+        },
+        { transform: "translate(0px, 0px) scale(1)", clipPath: "inset(0px 0px 0px 0px round 28px)" },
+      ],
+      { duration: 540, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "backwards" },
+    );
+    // Runs once, when the screen opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleClose() {
     if (isClosing) {
@@ -531,10 +567,17 @@ export function TripDetailSheet({
       <div
         className="app-scroll-area min-w-0 flex-1 overflow-y-auto px-5 [padding-bottom:calc(6.5rem+env(safe-area-inset-bottom))] [padding-top:calc(4rem+env(safe-area-inset-top))]"
         onScroll={(event) => {
+          updateScrollSheen(event.currentTarget);
           const scrolled = event.currentTarget.scrollTop > 8;
           setIsScrolled((current) => (current === scrolled ? current : scrolled));
         }}
       >
+        {coverSrc && !coverFailed && (
+          <div className="mb-4 overflow-hidden rounded-[1.75rem] will-change-transform" ref={coverRef}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img alt="" className="block h-52 w-full object-cover" onError={() => setCoverFailed(true)} src={coverSrc} />
+          </div>
+        )}
         <Badge tone="neutral">{localizedPlaces[0]?.area ?? t("seoulWide")}</Badge>
         <div className="mt-3 flex items-start justify-between gap-2">
           <h1 className="break-keep text-[1.75rem] font-extrabold leading-9 tracking-tight text-balance">{localizedTrip.title}</h1>

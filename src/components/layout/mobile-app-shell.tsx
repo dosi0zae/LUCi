@@ -33,7 +33,7 @@ import {
 } from "@/components/layout/app-icons";
 import { IntroSplash } from "@/components/layout/intro-splash";
 import { CourseSkeleton } from "@/features/mobile/course-skeleton";
-import { haptic } from "@/features/mobile/motion";
+import { flyDot, haptic, updateScrollSheen } from "@/features/mobile/motion";
 import { cn } from "@/lib/utils";
 import {
   getPlaceById,
@@ -488,6 +488,66 @@ export function MobileAppShell() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isHeroSearchFocused, setIsHeroSearchFocused] = useState(false);
   const frameRef = useRef<HTMLElement>(null);
+  const addSourceRef = useRef<DOMRect | null>(null);
+  const [detailPhoto, setDetailPhoto] = useState<DOMRect | null>(null);
+
+  // Remember which "add" button was just tapped so the stop can fly from it to the course.
+  useEffect(() => {
+    function remember(event: MouseEvent) {
+      const button = (event.target as Element | null)?.closest("[data-add-source]");
+      if (button) {
+        addSourceRef.current = button.getBoundingClientRect();
+      }
+    }
+    document.addEventListener("click", remember, true);
+    return () => document.removeEventListener("click", remember, true);
+  }, []);
+
+  // First screen: tilting the phone moves the glow blobs (iOS asks for motion access on the first tap).
+  useEffect(() => {
+    if (activeTab !== "home" || hasResult || isGenerating) {
+      return;
+    }
+    const Orientation = (window as unknown as { DeviceOrientationEvent?: { requestPermission?: () => Promise<string> } })
+      .DeviceOrientationEvent;
+    if (!Orientation) {
+      return;
+    }
+    const clamp = (value: number) => Math.max(-1, Math.min(1, value));
+    let attached = false;
+    // Set straight away: the CSS transition on the blobs already smooths the jumps between readings.
+    function onTilt(event: DeviceOrientationEvent) {
+      if (event.gamma === null || event.beta === null) {
+        return;
+      }
+      heroBlobsRef.current?.style.setProperty("--px", clamp(event.gamma / 22).toFixed(3));
+      heroBlobsRef.current?.style.setProperty("--py", clamp((event.beta - 45) / 22).toFixed(3));
+    }
+    function attach() {
+      if (!attached) {
+        attached = true;
+        window.addEventListener("deviceorientation", onTilt);
+      }
+    }
+    const askForAccess = () => {
+      Orientation.requestPermission?.()
+        .then((state) => {
+          if (state === "granted") {
+            attach();
+          }
+        })
+        .catch(() => undefined);
+    };
+    if (typeof Orientation.requestPermission === "function") {
+      window.addEventListener("pointerdown", askForAccess, { once: true });
+    } else {
+      attach();
+    }
+    return () => {
+      window.removeEventListener("pointerdown", askForAccess);
+      window.removeEventListener("deviceorientation", onTilt);
+    };
+  }, [activeTab, hasResult, isGenerating]);
   const [detailOrigin, setDetailOrigin] = useState<DetailOrigin | null>(null);
   // The stop that is sliding away before it is really removed from the course.
   const [removing, setRemoving] = useState<{ id: string; height: number } | null>(null);
@@ -1443,6 +1503,13 @@ export function MobileAppShell() {
     }
 
     if (!chainIds.includes(place.id)) {
+      const from = addSourceRef.current;
+      addSourceRef.current = null;
+      if (from) {
+        flyDot(from, () =>
+          (chainListRef.current?.querySelector(`[data-chain-id="${CSS.escape(place.id)}"]`) ?? chainListRef.current)?.getBoundingClientRect() ?? null,
+        );
+      }
       // Same blue glow as a swap, so the card that just joined is easy to spot.
       setAddedId(place.id);
       window.setTimeout(() => setAddedId(null), 1100);
@@ -1609,7 +1676,8 @@ export function MobileAppShell() {
     setOpenTripId(null);
   }
 
-  function viewTrip(trip: FeedTrip, origin?: DOMRect) {
+  function viewTrip(trip: FeedTrip, origin?: DOMRect, photo?: DOMRect) {
+    setDetailPhoto(photo ?? null);
     const frame = frameRef.current?.getBoundingClientRect();
     setDetailOrigin(
       origin && frame
@@ -1705,6 +1773,7 @@ export function MobileAppShell() {
               : false;
             setIsTitleScrolledAway((current) => (current === next ? current : next));
             container.style.setProperty("--title-p", Math.min(1, container.scrollTop / 70).toFixed(3));
+            updateScrollSheen(container);
             const scrolled = container.scrollTop > 8;
             setIsScrolled((current) => (current === scrolled ? current : scrolled));
             const tabs = exploreTabsRef.current;
@@ -2295,6 +2364,7 @@ export function MobileAppShell() {
                                           </button>
                                           <button
                                             aria-label={t("addToChainLabel")}
+                                            data-add-source
                                             className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-strong transition hover:bg-primary hover:text-white active:scale-95"
                                             onClick={() => addToChain(nearby)}
                                             title={t("addToChainLabel")}
@@ -2370,6 +2440,7 @@ export function MobileAppShell() {
                                   </button>
                                   <button
                                     aria-label={t("addToChainLabel")}
+                                            data-add-source
                                     className="absolute right-2.5 top-2.5 grid h-9 w-9 place-items-center rounded-full border border-white/80 bg-primary text-white shadow-[0_2px_10px_rgba(15,23,42,0.35)] transition duration-150 hover:bg-primary-strong active:scale-95"
                                     onClick={() => addToChain(place)}
                                     title={t("addToChainLabel")}
@@ -2617,6 +2688,7 @@ export function MobileAppShell() {
         {openTrip && (
           <TripDetailSheet
             origin={detailOrigin}
+            photoFrom={detailPhoto}
             comments={openTripComments}
             isLiked={likedIds.has(openTrip.id)}
             isSaved={savedIds.has(openTrip.id)}

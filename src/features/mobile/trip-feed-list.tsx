@@ -14,7 +14,7 @@ type TripFeedListProps = {
   likedIds: Set<string>;
   savedIds: Set<string>;
   // The card's on-screen rectangle comes along so the course screen can grow out of it.
-  onOpenTrip: (trip: FeedTrip, origin?: DOMRect) => void;
+  onOpenTrip: (trip: FeedTrip, origin?: DOMRect, photo?: DOMRect) => void;
   onToggleLike: (id: string) => void;
   onToggleSave: (id: string) => void;
   emptyLabel: string;
@@ -63,7 +63,10 @@ export function TripFeedList({
             )}
             <button
               className="block w-full text-left"
-              onClick={(event) => onOpenTrip(trip, event.currentTarget.closest("article")?.getBoundingClientRect())}
+              onClick={(event) => {
+                const card = event.currentTarget.closest("article");
+                onOpenTrip(trip, card?.getBoundingClientRect(), card?.querySelector("img")?.getBoundingClientRect());
+              }}
               type="button"
             >
               <div className="flex items-start gap-3">

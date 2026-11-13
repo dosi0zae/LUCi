@@ -29,7 +29,7 @@ type ProfileTabProps = {
   bookmarkedPlaces: MobilePlace[];
   likedIds: Set<string>;
   savedIds: Set<string>;
-  onOpenTrip: (trip: FeedTrip, origin?: DOMRect) => void;
+  onOpenTrip: (trip: FeedTrip, origin?: DOMRect, photo?: DOMRect) => void;
   onSelectPlace: (id: string) => void;
   onToggleLike: (id: string) => void;
   onToggleSave: (id: string) => void;

@@ -1318,24 +1318,20 @@ button.ios-card:not(:disabled):active {
 @keyframes detail-zoom-in {
   from {
     clip-path: inset(var(--o-top, 0px) var(--o-right, 0px) var(--o-bottom, 0px) var(--o-left, 0px) round 28px);
-    opacity: 0.6;
   }
 
   to {
     clip-path: inset(0px 0px 0px 0px round 0px);
-    opacity: 1;
   }
 }
 
 @keyframes detail-zoom-out {
   from {
     clip-path: inset(0px 0px 0px 0px round 0px);
-    opacity: 1;
   }
 
   to {
     clip-path: inset(var(--o-top, 0px) var(--o-right, 0px) var(--o-bottom, 0px) var(--o-left, 0px) round 28px);
-    opacity: 0.4;
   }
 }
 
@@ -1423,5 +1419,36 @@ button.ios-card:not(:disabled):active {
 
   .scroll-title {
     transform: none;
+  }
+}
+
+
+/* The glass highlight: a soft band of light across each card that slides with the scroll position and
+   shows up while the page is moving fast (--sy / --sheen are set on the scroller, see updateScrollSheen). */
+.ios-row::after,
+.ios-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 32%,
+    rgba(255, 255, 255, 0.75) 47%,
+    rgba(255, 255, 255, 0.12) 55%,
+    transparent 68%
+  );
+  background-size: 280% 100%;
+  background-position: calc(110% - var(--sy, 0) * 0.45px) 0;
+  opacity: calc(var(--sheen, 0) * 0.85);
+  transition: opacity 240ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ios-row::after,
+  .ios-card::after {
+    opacity: 0;
+    transition: none;
   }
 }

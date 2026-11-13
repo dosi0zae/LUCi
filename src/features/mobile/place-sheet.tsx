@@ -657,7 +657,12 @@ export function PlaceSheet({
               {t("addedToChain")}
             </div>
           ) : (
-            <Button className="h-14 w-full shadow-[0_10px_28px_rgba(47,111,228,0.32)] active:scale-[0.98]" onClick={handleAdd} shape="pill">
+            <Button
+              className="h-14 w-full shadow-[0_10px_28px_rgba(47,111,228,0.32)] active:scale-[0.98]"
+              data-add-source
+              onClick={handleAdd}
+              shape="pill"
+            >
               <PlaylistAddIcon className="h-5 w-5" />
               <span className="text-[1.0625rem] font-semibold">{t("addToChain")}</span>
             </Button>
