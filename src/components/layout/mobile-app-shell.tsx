@@ -360,11 +360,6 @@ export function MobileAppShell() {
       const root = document.documentElement.style;
       root.setProperty("--app-vh", `${stableHeight}px`);
       root.setProperty("--kb-h", `${covered}px`);
-      // On the first screen the layout is built so the search box is already above the keyboard, so
-      // iOS's habit of panning the page up (which pushes the title off the top) is undone.
-      if (editing && (viewport?.offsetTop ?? 0) > 0 && document.activeElement?.closest(".hero-search")) {
-        window.scrollTo(0, 0);
-      }
     }
 
     syncAppHeight();
@@ -1882,7 +1877,9 @@ export function MobileAppShell() {
 
                 <div
                   className={cn(
-                    "relative z-10 px-5 text-center transition-[padding] duration-300 ease-out",
+                    // Same duration and curve as the logo's space closing (.hero-logo-rows), so the whole
+                    // column glides up as one piece instead of two movements that disagree.
+                    "relative z-10 px-5 text-center transition-[padding] duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
                     isHeroSearchFocused ? "pt-[2.75rem]" : "pt-[3.75rem]",
                   )}
                 >
@@ -1898,8 +1895,7 @@ export function MobileAppShell() {
                       </div>
                     </div>
                   </div>
-                  {/* Everything under the logo gets a springy catch-up when the logo folds away. */}
-                  <div className="hero-settle">
+                  <>
                   <h1 className="hero-rise mt-3 break-keep text-[2rem] font-extrabold leading-[2.5rem] tracking-tight text-balance [--rise:110ms]">
                     {t("heroTitle")}
                   </h1>
@@ -1952,7 +1948,7 @@ export function MobileAppShell() {
                       </span>
                     </button>
                   </div>
-                  </div>
+                  </>
                 </div>
 
                 <button
