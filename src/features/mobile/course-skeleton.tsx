@@ -4,17 +4,19 @@ import { useEffect, useState } from "react";
 import { AiSparklesIcon } from "@/components/layout/app-icons";
 import { useT } from "@/features/mobile/i18n/i18n-context";
 
-// Where the pretend stops drop onto the placeholder map, in the order they pop in.
+// Where the pretend stops drop onto the placeholder map, in the order they pop in. Each is the CENTRE of
+// a dot (the dot is shifted back by half its size), and the x values are symmetric around 50 % so the
+// group sits in the middle of the map.
 const MARKER_SPOTS = [
-  { left: "16%", top: "58%" },
-  { left: "34%", top: "30%" },
-  { left: "54%", top: "56%" },
-  { left: "70%", top: "28%" },
-  { left: "84%", top: "56%" },
+  { left: "20%", top: "62%" },
+  { left: "35%", top: "34%" },
+  { left: "50%", top: "58%" },
+  { left: "65%", top: "30%" },
+  { left: "80%", top: "56%" },
 ];
 
 // Shown while a course is being made (a few seconds): the card's own shape, shimmering, with a
-// line that says what is happening and numbered stops dropping onto the map one after another.
+// line that says what is happening and green dots popping onto the map one after another.
 export function CourseSkeleton() {
   const t = useT();
   const [step, setStep] = useState(0);
@@ -46,12 +48,10 @@ export function CourseSkeleton() {
           <div className="skeleton absolute inset-0" />
           {MARKER_SPOTS.map((spot, index) => (
             <span
-              className="skeleton-marker absolute grid h-6 w-6 place-items-center rounded-full border-2 border-white bg-[#b7e86b] text-xs font-extrabold text-[#0b1220] shadow-[0_3px_10px_rgba(11,18,32,0.35)]"
+              className="skeleton-marker absolute h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white bg-[#b7e86b] shadow-[0_4px_12px_rgba(11,18,32,0.3)]"
               key={index}
               style={{ ...spot, animationDelay: `${500 + index * 380}ms` }}
-            >
-              {index + 1}
-            </span>
+            />
           ))}
         </div>
       </article>
