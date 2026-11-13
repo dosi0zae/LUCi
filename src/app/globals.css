@@ -1344,13 +1344,6 @@ button.ios-card:not(:disabled):active {
   --depth: -12px;
 }
 
-/* Undoes iOS's pan of the page while the first-screen box is focused (--hero-pan is set from
-   visualViewport.offsetTop in the shell). `translate` is its own property, so it does not fight the
-   tab-slide animation's transform. */
-.hero-root {
-  translate: 0 var(--hero-pan, 0px);
-}
-
 .hero-root[data-focus="true"] .hero-blob {
   filter: blur(30px) saturate(1.6) brightness(1.05);
 }
@@ -1369,46 +1362,35 @@ button.ios-card:not(:disabled):active {
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
-/* The header (logo, title, subtitle) when the search box is used: the logo is pulled into a dot (its fade
-   is much quicker than the shrink, so it is already invisible while still big), the text fades out
-   first, then the space they held closes and the box glides up to the top. On leaving the box the
-   logo pops back with a little overshoot and the text fades in. */
-.hero-head-rows {
-  display: grid;
-  grid-template-rows: 1fr;
-  transition: grid-template-rows 420ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
+/* While the first-screen box is in use only opacity and a small logo change; nothing in the layout moves
+   (iOS pans the page itself when the keyboard opens and closes, and any layout change at the same time
+   fights that pan). The big logo, title and subtitle fade out; a half-size logo that always sits just above
+   the box (hidden otherwise) pops in. */
 .hero-head-text {
   transition: opacity 260ms ease-out 80ms;
 }
 
 .hero-root[data-focus="true"] .hero-head-text {
   opacity: 0;
-  transition: opacity 140ms ease-in;
+  transition: opacity 160ms ease-in;
 }
 
-/* The logo keeps its place and just gets half as tall (the width follows) while the box is in use. */
-.hero-logo-img {
-  height: 5.3125rem;
-  transition: height 380ms cubic-bezier(0.22, 1, 0.36, 1);
+.hero-mini-logo {
+  bottom: calc(100% + 1.25rem);
+  opacity: 0;
+  transform: translateX(-50%) scale(0.6);
+  transform-origin: 50% 100%;
+  transition:
+    opacity 160ms ease-in,
+    transform 160ms ease-in;
 }
 
-.hero-logo-wrap {
-  transition: margin-bottom 380ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.hero-root[data-focus="true"] .hero-logo-img {
-  height: 2.65625rem;
-}
-
-.hero-root[data-focus="true"] .hero-logo-wrap {
-  margin-bottom: 1.25rem;
-}
-
-.hero-root[data-focus="true"] .hero-head-rows {
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 380ms cubic-bezier(0.22, 1, 0.36, 1);
+.hero-root[data-focus="true"] .hero-mini-logo {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  transition:
+    opacity 220ms ease-out 100ms,
+    transform 460ms cubic-bezier(0.34, 1.56, 0.64, 1) 100ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1429,12 +1411,10 @@ button.ios-card:not(:disabled):active {
   }
 
   .hero-search form,
-  .hero-head-rows,
   .hero-head-text,
-  .hero-logo-img,
-  .hero-logo-wrap,
-  .hero-root[data-focus="true"] .hero-head-rows,
-  .hero-root[data-focus="true"] .hero-head-text {
+  .hero-mini-logo,
+  .hero-root[data-focus="true"] .hero-head-text,
+  .hero-root[data-focus="true"] .hero-mini-logo {
     transition: none;
   }
 
