@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BookmarkIcon, EyeIcon, HeartIcon, SlidersIcon, UserIcon } from "@/components/layout/app-icons";
+import { renderGoogleSignInButton, type GoogleAccount } from "@/features/mobile/google-auth";
 import { SlidingTabs } from "@/features/mobile/sliding-tabs";
 import { useHorizontalSwipe } from "@/features/mobile/use-swipe";
 import { TripFeedList } from "@/features/mobile/trip-feed-list";
@@ -15,6 +16,12 @@ import { cn } from "@/lib/utils";
 type ProfileTabProps = {
   isSignedIn: boolean;
   onToggleSignIn: () => void;
+  // The signed-in Google account (name, email, photo), when the person signed in with Google.
+  account: GoogleAccount | null;
+  // True when NEXT_PUBLIC_GOOGLE_CLIENT_ID is set; otherwise the mock sign-in button is shown.
+  googleEnabled: boolean;
+  signInError: string | null;
+  onGoogleCredential: (credential: string) => void;
   myTrips: FeedTrip[];
   savedTrips: FeedTrip[];
   likedTrips: FeedTrip[];
@@ -30,6 +37,31 @@ type ProfileTabProps = {
 
 type ProfileSubTab = "mine" | "saved" | "liked" | "recent" | "settings";
 const PROFILE_SUB_TAB_ORDER: ProfileSubTab[] = ["mine", "saved", "liked", "recent", "settings"];
+
+// Google draws its own button (an iframe), so it is mounted into a plain div once the script is in.
+function GoogleSignInButton({ onCredential }: { onCredential: (credential: string) => void }) {
+  const { locale } = useLocale();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const onCredentialRef = useRef(onCredential);
+
+  useEffect(() => {
+    onCredentialRef.current = onCredential;
+  }, [onCredential]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+    renderGoogleSignInButton(container, {
+      locale: locale === "zh" ? "zh-CN" : locale,
+      width: 280,
+      onCredential: (credential) => onCredentialRef.current(credential),
+    }).catch(() => undefined);
+  }, [locale]);
+
+  return <div className="flex h-11 w-[280px] max-w-full items-center justify-center" ref={containerRef} />;
+}
 
 function LanguageSwitcher() {
   const t = useT();
@@ -58,7 +90,9 @@ function LanguageSwitcher() {
 }
 
 export function ProfileTab({
+  account,
   bookmarkedPlaces,
+  googleEnabled,
   isSignedIn,
   likedIds,
   likedTrips,
@@ -67,10 +101,12 @@ export function ProfileTab({
   onSelectPlace,
   onToggleLike,
   onToggleSave,
+  onGoogleCredential,
   onToggleSignIn,
   recentlyViewedTrips,
   savedIds,
   savedTrips,
+  signInError,
 }: ProfileTabProps) {
   const t = useT();
   const { locale } = useLocale();
@@ -105,10 +141,19 @@ export function ProfileTab({
           <UserIcon className="h-8 w-8" />
         </span>
         <h2 className="break-keep text-xl font-extrabold text-balance">{t("signInHeading")}</h2>
-        <p className="max-w-[17.5rem] break-keep text-[0.9375rem] leading-6 text-muted text-balance">{t("signInSubtitle")}</p>
-        <Button className="mt-2 h-14 px-8 text-[1.0625rem] shadow-[0_10px_28px_rgba(47,111,228,0.32)]" onClick={onToggleSignIn} shape="pill">
-          {t("signInButton")}
-        </Button>
+        <p className="max-w-[20rem] whitespace-pre-line break-keep text-[0.9375rem] leading-6 text-muted text-balance">
+          {googleEnabled ? t("signInSubtitleGoogle") : t("signInSubtitle")}
+        </p>
+        {googleEnabled ? (
+          <div className="mt-2">
+            <GoogleSignInButton onCredential={onGoogleCredential} />
+          </div>
+        ) : (
+          <Button className="mt-2 h-14 px-8 text-[1.0625rem] shadow-[0_10px_28px_rgba(47,111,228,0.32)]" onClick={onToggleSignIn} shape="pill">
+            {t("signInButton")}
+          </Button>
+        )}
+        {signInError && <p className="text-sm font-semibold text-danger">{signInError}</p>}
       </div>
     );
   }
@@ -146,12 +191,22 @@ export function ProfileTab({
   return (
     <div className="px-5 py-4">
       <div className="flex items-center gap-3">
-        <span className="grid h-16 w-16 place-items-center rounded-full bg-primary-soft text-primary-strong">
-          <UserIcon className="h-8 w-8" />
-        </span>
+        {account?.picture ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            alt=""
+            className="h-16 w-16 shrink-0 rounded-full object-cover"
+            referrerPolicy="no-referrer"
+            src={account.picture}
+          />
+        ) : (
+          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-strong">
+            <UserIcon className="h-8 w-8" />
+          </span>
+        )}
         <div className="min-w-0">
-          <h2 className="truncate text-xl font-extrabold">{t("travelerName")}</h2>
-          <p className="text-sm text-muted">@trip.chain.user</p>
+          <h2 className="truncate text-xl font-extrabold">{account?.name ?? t("travelerName")}</h2>
+          <p className="truncate text-sm text-muted">{account?.email ?? "@trip.chain.user"}</p>
         </div>
         <Button className="ml-auto" onClick={onToggleSignIn} shape="pill" size="sm" variant="secondary">
           {t("signOut")}
@@ -165,7 +220,7 @@ export function ProfileTab({
           { label: t("statFollowers"), value: 12, onClick: undefined },
         ].map(({ label, onClick, value }) => (
           <button
-            className="ios-row p-3.5 text-center transition active:scale-[0.97]"
+            className="ios-row px-2 py-3.5 text-center transition active:scale-[0.97]"
             disabled={!onClick}
             key={label}
             onClick={onClick}
@@ -224,7 +279,7 @@ export function ProfileTab({
                   {bookmarkedPlaces.length === 0 ? (
                     <p className="mt-2 text-sm leading-5 text-muted">{t("emptySavedPlaces")}</p>
                   ) : (
-                    <div className="place-list-scroll mt-3 flex gap-3 overflow-x-auto pb-3">
+                    <div className="place-list-scroll -mx-1 mt-2 -mb-6 flex gap-3 overflow-x-auto px-1 pb-6 pt-1">
                       {bookmarkedPlaces.map((place) => {
                         const localizedPlace = localizePlace(place, locale);
                         return (

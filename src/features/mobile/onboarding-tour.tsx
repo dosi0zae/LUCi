@@ -109,17 +109,17 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
       <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-4 bg-black/80 px-8 text-center backdrop-blur-sm">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img alt="Trip Chain" className="h-14 w-auto drop-shadow-[0_0_18px_rgba(79,141,247,0.55)]" src="/tripchain-logo.svg" />
-        <h2 className="text-2xl font-extrabold text-white text-balance">{t("tourIntroTitle")}</h2>
-        <p className="max-w-[16.25rem] text-sm leading-6 text-white/70 text-pretty">{t("tourIntroSubtitle")}</p>
+        <h2 className="break-keep text-3xl font-extrabold tracking-tight text-white text-balance">{t("tourIntroTitle")}</h2>
+        <p className="max-w-[18rem] break-keep text-base leading-7 text-white/75 text-pretty">{t("tourIntroSubtitle")}</p>
         <button
-          className="mt-2 rounded-full bg-primary px-6 py-3 text-sm font-extrabold text-white transition hover:bg-primary-strong"
+          className="mt-3 h-14 rounded-full bg-primary px-9 text-[1.0625rem] font-extrabold text-white shadow-[0_10px_28px_rgba(47,111,228,0.45)] transition hover:bg-primary-strong active:scale-95"
           onClick={onStart}
           type="button"
         >
           {t("tourStart")}
         </button>
         <button
-          className="text-xs font-semibold text-white/50 transition hover:text-white hover:underline"
+          className="py-2 text-sm font-semibold text-white/60 transition hover:text-white"
           onClick={onSkip}
           type="button"
         >
@@ -139,7 +139,7 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
     <div className="fixed inset-0 z-[60]">
       {rect ? (
         <div
-          className="fixed rounded-xl transition-all duration-300"
+          className="fixed rounded-[2.25rem] transition-all duration-300"
           style={{
             top: rect.top - padding,
             left: rect.left - padding,
@@ -155,21 +155,21 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
 
       {rect && (
         <div
-          className="fixed z-[61] w-[calc(100%-40px)] max-w-[20rem] rounded-xl bg-background p-4 shadow-panel transition-all duration-300"
+          className="ios-menu fixed z-[61] w-[calc(100%-40px)] max-w-[21rem] p-5 transition-all duration-300"
           style={{
             left: tooltipLeft,
             top: placeBelow ? rect.bottom + 14 : undefined,
             bottom: placeBelow ? undefined : viewportHeight - rect.top + 14,
           }}
         >
-          <p className="text-xs font-bold text-primary">
+          <p className="text-sm font-bold text-primary">
             {stepIndex + 1} / {TOUR_STEPS.length}
           </p>
-          <h3 className="mt-1 text-lg font-extrabold text-foreground text-balance">{t(step.titleKey)}</h3>
-          <p className="mt-1.5 text-sm leading-5 text-muted-strong text-pretty">{t(step.descriptionKey)}</p>
-          <div className="mt-3 flex items-center justify-between">
+          <h3 className="mt-1 break-keep text-xl font-extrabold text-foreground text-balance">{t(step.titleKey)}</h3>
+          <p className="mt-2 break-keep text-[0.9375rem] leading-6 text-muted-strong text-pretty">{t(step.descriptionKey)}</p>
+          <div className="mt-4 flex items-center justify-between">
             <button
-              className="text-xs font-semibold text-muted transition hover:text-foreground"
+              className="py-2 text-sm font-semibold text-muted transition hover:text-foreground"
               onClick={onSkip}
               type="button"
             >
@@ -178,7 +178,7 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
             <div className="flex gap-2">
               {stepIndex > 0 && (
                 <button
-                  className="rounded-full border border-border px-3 py-1.5 text-xs font-bold text-muted-strong transition hover:border-primary hover:text-primary"
+                  className="ios-btn rounded-full px-4 py-2.5 text-sm font-bold"
                   onClick={goPrev}
                   type="button"
                 >
@@ -186,7 +186,7 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
                 </button>
               )}
               <button
-                className="rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-white transition hover:bg-primary-strong"
+                className="rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-white transition hover:bg-primary-strong active:scale-95"
                 onClick={goNext}
                 type="button"
               >

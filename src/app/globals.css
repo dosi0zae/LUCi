@@ -98,6 +98,19 @@
   box-sizing: border-box;
 }
 
+/* .break-keep (word-break: keep-all) keeps Korean words whole at a line end. Japanese and Chinese
+   have no spaces, so keep-all would leave a whole sentence unbreakable and push it off the screen:
+   outside Korean, lines break normally, and Japanese breaks between phrases where the browser can
+   (word-break: auto-phrase; others ignore it and break between characters). */
+html:not(:lang(ko)) .break-keep {
+  word-break: normal;
+}
+
+html:lang(ja) body,
+html:lang(ja) .break-keep {
+  word-break: auto-phrase;
+}
+
 html {
   min-height: 100%;
   background: var(--background);

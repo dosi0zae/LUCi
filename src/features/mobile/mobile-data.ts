@@ -240,12 +240,12 @@ export function secureImageUrl(url: string): string {
   return HTTPS_IMAGE_HOSTS.has(host) ? `https://${url.slice("http://".length)}` : url;
 }
 
-export function getPlaceImageUrl(id: string, width = 240, height = 320): string {
+// A place's own photo, or null. There is deliberately no stock-photo stand-in: a random picture of
+// somewhere else would mislead (and a stand-in service that is down shows a broken image), so
+// callers show the category icon tile instead.
+export function getPlaceImageUrl(id: string): string | null {
   const place = getPlaceById(id);
-  if (place?.image) {
-    return secureImageUrl(place.image);
-  }
-  return `https://picsum.photos/seed/${id}/${width}/${height}`;
+  return place?.image ? secureImageUrl(place.image) : null;
 }
 
 export function getPlaceById(id: string): MobilePlace | undefined {

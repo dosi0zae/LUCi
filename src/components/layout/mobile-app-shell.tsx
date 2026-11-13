@@ -34,7 +34,6 @@ import { IntroSplash } from "@/components/layout/intro-splash";
 import { cn } from "@/lib/utils";
 import {
   getPlaceById,
-  getPlaceImageUrl,
   getPlacesByIds,
   getSeedComments,
   getTotalMinutes,
@@ -65,6 +64,12 @@ import { placeSubtitle } from "@/features/mobile/dining-tags";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
 import { CreatorProfileSheet } from "@/features/mobile/creator-profile-sheet";
 import { loadKakaoMaps } from "@/features/mobile/kakao-loader";
+import {
+  GOOGLE_CLIENT_ID,
+  disableGoogleAutoSelect,
+  isGoogleAccount,
+  type GoogleAccount,
+} from "@/features/mobile/google-auth";
 import { buildGoogleMapsWalkingRouteUrl, buildKakaoWalkingRouteUrl } from "@/features/mobile/route-links";
 import { OnboardingTour } from "@/features/mobile/onboarding-tour";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
@@ -72,7 +77,7 @@ import { PlaceScroller } from "@/features/mobile/place-scroller";
 import { SlidingTabs } from "@/features/mobile/sliding-tabs";
 import { buildTasteProfile, tasteScore, type TasteProfile } from "@/features/mobile/taste";
 import { useHorizontalSwipe } from "@/features/mobile/use-swipe";
-import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
+import { PhotoLightbox, PlacePhoto, PlacePhotoThumb } from "@/features/mobile/place-photo";
 import { PublishSheet } from "@/features/mobile/publish-sheet";
 import {
   buildChain,
@@ -240,6 +245,8 @@ export function MobileAppShell() {
   const [userComments, setUserComments] = useState<Record<string, TripComment[]>>({});
   const [recentlyViewedTripIds, setRecentlyViewedTripIds] = useState<string[]>([]);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [account, setAccount] = useState<GoogleAccount | null>(null);
+  const [signInError, setSignInError] = useState<string | null>(null);
 
   const [exploreQuery, setExploreQuery] = useState("");
   // Gemini's picks for a search phrase, keyed by the normalized phrase: the trip ids that
@@ -380,6 +387,7 @@ export function MobileAppShell() {
       if (raw) {
         const parsed = JSON.parse(raw) as {
           isSignedIn?: boolean;
+          account?: unknown;
           publishedTrips?: FeedTrip[];
           likedIds?: string[];
           savedIds?: string[];
@@ -391,6 +399,7 @@ export function MobileAppShell() {
         // One-time hydration from localStorage on mount, not a reactive sync loop.
         /* eslint-disable react-hooks/set-state-in-effect */
         if (parsed.isSignedIn) setIsSignedIn(true);
+        if (isGoogleAccount(parsed.account)) setAccount(parsed.account);
         if (Array.isArray(parsed.publishedTrips)) setPublishedTrips(parsed.publishedTrips);
         if (Array.isArray(parsed.likedIds)) setLikedIds(new Set(parsed.likedIds));
         if (Array.isArray(parsed.savedIds)) setSavedIds(new Set(parsed.savedIds));
@@ -421,6 +430,7 @@ export function MobileAppShell() {
         PROFILE_STORAGE_KEY,
         JSON.stringify({
           isSignedIn,
+          account,
           publishedTrips,
           likedIds: [...likedIds],
           savedIds: [...savedIds],
@@ -432,7 +442,39 @@ export function MobileAppShell() {
     } catch {
       // Storage may be unavailable (private mode, quota) — persistence is best-effort.
     }
-  }, [isSignedIn, publishedTrips, likedIds, savedIds, bookmarkedPlaceIds, userComments, recentlyViewedTripIds]);
+  }, [isSignedIn, account, publishedTrips, likedIds, savedIds, bookmarkedPlaceIds, userComments, recentlyViewedTripIds]);
+
+  // The Google button returns an ID token; the server confirms it with Google (and that it was issued
+  // for this app) before the account is trusted. Only the public profile is kept, never the token.
+  async function handleGoogleCredential(credential: string) {
+    setSignInError(null);
+    try {
+      const response = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential }),
+      });
+      const data = await response.json();
+      if (!response.ok || !isGoogleAccount(data?.account)) {
+        throw new Error("sign-in rejected");
+      }
+      setAccount(data.account);
+      setIsSignedIn(true);
+    } catch {
+      setSignInError(t("googleSignInFailed"));
+    }
+  }
+
+  function toggleSignIn() {
+    if (isSignedIn) {
+      setIsSignedIn(false);
+      setAccount(null);
+      setSignInError(null);
+      disableGoogleAutoSelect();
+      return;
+    }
+    setIsSignedIn(true);
+  }
 
   const [isRecommending, setIsRecommending] = useState(false);
   const [recommendReason, setRecommendReason] = useState<string | null>(null);
@@ -1394,7 +1436,7 @@ export function MobileAppShell() {
       title: input.title,
       description: input.description,
       authorHandle: "you",
-      authorName: t("travelerName"),
+      authorName: account?.name ?? t("travelerName"),
       visibility: input.visibility,
       placeIds: chainIds,
       coverPlaceId: input.coverPlaceId,
@@ -1479,7 +1521,7 @@ export function MobileAppShell() {
 
     const comment: TripComment = {
       id: `comment-${Date.now()}`,
-      authorName: t("travelerName"),
+      authorName: account?.name ?? t("travelerName"),
       text: trimmed,
     };
 
@@ -1550,7 +1592,7 @@ export function MobileAppShell() {
       <SearchIcon className="h-[1.375rem] w-[1.375rem] shrink-0 text-muted" />
       <input
         aria-label={t("searchInputAria")}
-        className="min-w-0 flex-1 bg-transparent text-base font-bold outline-none placeholder:font-semibold placeholder:text-muted"
+        className="min-w-0 flex-1 text-ellipsis bg-transparent text-base font-bold outline-none placeholder:font-semibold placeholder:text-muted"
         onChange={(event) => setPrompt(event.target.value)}
         placeholder={t("searchPlaceholder")}
         type="search"
@@ -1719,7 +1761,7 @@ export function MobileAppShell() {
               </div>
             ) : (
               <div className={cn(tabSlideClass, "relative flex min-h-full flex-col px-5 pb-24 pt-5")}>
-                <header className="relative z-10 pt-7 text-left">
+                <header className="relative z-10 pt-12 text-left">
                   <h1
                     className="text-3xl font-extrabold leading-tight tracking-normal text-balance"
                     data-home-title
@@ -1853,11 +1895,11 @@ export function MobileAppShell() {
                     </div>
                     {courseTitle && courseTitle.prompt === submittedPrompt ? (
                       <>
-                        <h2 className="mt-5 break-keep text-[1.75rem] font-extrabold leading-9 tracking-tight text-balance">{courseTitle.title}</h2>
+                        <h2 className="mt-5 break-keep text-2xl font-extrabold leading-8 tracking-tight text-balance min-[360px]:text-[1.75rem] min-[360px]:leading-9">{courseTitle.title}</h2>
                         <p className="mt-2 line-clamp-1 text-sm text-muted">{submittedPrompt}</p>
                       </>
                     ) : (
-                      <h2 className="mt-5 break-keep text-[1.75rem] font-extrabold leading-9 tracking-tight text-balance">{submittedPrompt}</h2>
+                      <h2 className="mt-5 break-keep text-2xl font-extrabold leading-8 tracking-tight text-balance min-[360px]:text-[1.75rem] min-[360px]:leading-9">{submittedPrompt}</h2>
                     )}
                     <p className="mt-2 text-sm font-semibold leading-5 text-muted-strong">
                       {t("courseSummary", { minutes: getTotalMinutes(chainPlaces) })}
@@ -1887,7 +1929,7 @@ export function MobileAppShell() {
                         <AiSparklesIcon className="h-[1.125rem] w-[1.125rem] shrink-0 text-primary" />
                         <input
                           aria-label={t("refineInputAria")}
-                          className="min-w-0 flex-1 bg-transparent text-[1rem] font-semibold outline-none placeholder:font-medium placeholder:text-muted"
+                          className="min-w-0 flex-1 text-ellipsis bg-transparent text-[1rem] font-semibold outline-none placeholder:font-medium placeholder:text-muted"
                           disabled={isRefining}
                           onChange={(event) => setRefineText(event.target.value)}
                           placeholder={t("refinePlaceholder")}
@@ -2109,13 +2151,7 @@ export function MobileAppShell() {
                                             {isDiningCategory(nearby.category) ? (
                                               <PlaceThumb category={nearby.category} size="md" />
                                             ) : (
-                                              // eslint-disable-next-line @next/next/no-img-element
-                                              <img
-                                                alt=""
-                                                className="h-12 w-12 shrink-0 rounded-md bg-surface-muted object-cover"
-                                                loading="lazy"
-                                                src={getPlaceImageUrl(nearby.id)}
-                                              />
+                                              <PlacePhoto className="h-12 w-12 rounded-md" fallbackSize="md" place={nearby} />
                                             )}
                                             <span className="min-w-0 flex-1">
                                               <span className="block truncate text-[0.9375rem] font-bold">{localizedNearby.name}</span>
@@ -2203,13 +2239,7 @@ export function MobileAppShell() {
                                           <PlaceThumb category={place.category} size="lg" />
                                         </span>
                                       ) : (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img
-                                          alt=""
-                                          className="h-full w-full object-cover"
-                                          loading="lazy"
-                                          src={getPlaceImageUrl(place.id)}
-                                        />
+                                        <PlacePhoto className="h-full w-full" place={place} />
                                       )}
                                     </span>
                                     <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-3 py-3">
@@ -2288,7 +2318,9 @@ export function MobileAppShell() {
           {activeTab === "profile" && (
             <div className={cn(tabSlideClass, "pt-[3.5rem]")}>
               <ProfileTab
+                account={account}
                 bookmarkedPlaces={bookmarkedPlaces}
+                googleEnabled={Boolean(GOOGLE_CLIENT_ID)}
                 isSignedIn={isSignedIn}
                 likedIds={likedIds}
                 likedTrips={likedTrips}
@@ -2297,10 +2329,12 @@ export function MobileAppShell() {
                 onSelectPlace={setSelectedPlaceId}
                 onToggleLike={toggleLike}
                 onToggleSave={toggleSave}
-                onToggleSignIn={() => setIsSignedIn((current) => !current)}
+                onGoogleCredential={(credential) => void handleGoogleCredential(credential)}
+                onToggleSignIn={toggleSignIn}
                 recentlyViewedTrips={recentlyViewedTrips}
                 savedIds={savedIds}
                 savedTrips={savedTrips}
+                signInError={signInError}
               />
             </div>
           )}
@@ -2369,7 +2403,7 @@ export function MobileAppShell() {
                   )}
                   <input
                     aria-label={t("exploreSearchAria")}
-                    className="min-w-0 flex-1 bg-transparent text-base font-semibold outline-none placeholder:text-muted"
+                    className="min-w-0 flex-1 text-ellipsis bg-transparent text-base font-semibold outline-none placeholder:text-muted"
                     onChange={(event) => setExploreQuery(event.target.value)}
                     placeholder={t("exploreSearchPlaceholder")}
                     type="search"

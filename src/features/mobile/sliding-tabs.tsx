@@ -66,7 +66,7 @@ export function SlidingTabs<T extends string>({ fullWidth = false, onChange, opt
         <button
           aria-selected={option.value === value}
           className={cn(
-            "relative z-10 flex items-center justify-center rounded-full py-2.5 transition-colors duration-200",
+            "relative z-10 flex items-center justify-center whitespace-nowrap rounded-full py-2.5 transition-colors duration-200",
             fullWidth ? "flex-1" : "px-4",
             option.value === value ? "text-white" : "text-muted-strong hover:text-primary",
           )}

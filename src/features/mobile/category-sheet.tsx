@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { getPlaceImageUrl, isDiningCategory, localizePlace, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
+import { isDiningCategory, localizePlace, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
+import { CloseIcon } from "@/components/layout/app-icons";
+import { PlacePhoto } from "@/features/mobile/place-photo";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
 import { useCategoryLabel, useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import { cn } from "@/lib/utils";
@@ -46,67 +48,61 @@ export function CategorySheet({ areaName, badges, category, onClose, onSelectPla
     >
       <div
         className={cn(
-          "glass-panel flex max-h-[82%] w-full flex-col rounded-t-xl p-5 pb-6",
+          "glass-panel flex max-h-[82%] w-full flex-col rounded-t-[2rem] p-5 pb-6",
           isClosing ? "sheet-panel-out" : "sheet-panel",
         )}
         aria-label={t("categoryListAria", { area: areaName, category: categoryLabel(category) })}
         onClick={(event) => event.stopPropagation()}
         role="dialog"
       >
-        <div className="mx-auto mb-3 h-1 w-10 shrink-0 rounded-full bg-border-strong" />
+        <div className="mx-auto mb-4 h-1.5 w-11 shrink-0 rounded-full bg-border-strong" />
 
         <div className="flex shrink-0 items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-bold" style={{ color: "var(--primary)" }}>
+            <p className="text-sm font-bold" style={{ color: "var(--primary)" }}>
               {areaName}
             </p>
-            <h2 className="mt-1 text-xl font-extrabold">{categoryLabel(category)}</h2>
+            <h2 className="mt-1 text-2xl font-extrabold tracking-tight">{categoryLabel(category)}</h2>
           </div>
           <button
             aria-label={t("categoryListCloseAria")}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-sm text-muted hover:bg-surface-muted hover:text-foreground"
+            className="ios-btn grid h-10 w-10 shrink-0 place-items-center rounded-full"
             onClick={handleClose}
             type="button"
           >
-            ×
+            <CloseIcon className="h-5 w-5" />
           </button>
         </div>
 
         <div className="app-scroll-area mt-4 min-h-0 flex-1 overflow-y-auto">
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-3 pb-2">
             {places.map((place) => {
               const localizedPlace = localizePlace(place, locale);
               const badge = badges.get(place.id);
               return (
               <button
-                className="flex flex-col overflow-hidden rounded-lg border border-border bg-surface text-left"
+                className="ios-row flex flex-col overflow-hidden text-left"
                 key={place.id}
                 onClick={() => onSelectPlace(place.id)}
                 type="button"
               >
-                <span className="relative block h-24 w-full shrink-0 overflow-hidden bg-surface-muted">
+                <span className="relative block h-32 w-full shrink-0 overflow-hidden bg-surface-muted">
                   {isDiningCategory(place.category) ? (
                     <span className="grid h-full w-full place-items-center">
                       <PlaceThumb category={place.category} size="lg" />
                     </span>
                   ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      alt=""
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                      src={getPlaceImageUrl(place.id)}
-                    />
+                    <PlacePhoto className="h-full w-full" place={place} />
                   )}
                   {badge && (
-                    <span className="absolute right-1 top-1 rounded-xs border border-primary bg-white px-1.5 py-0.5 text-[0.6875rem] font-bold text-primary">
+                    <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-primary shadow-sm">
                       {t(BADGE_LABEL_KEY[badge])}
                     </span>
                   )}
                 </span>
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-2">
-                  <span className="truncate text-xs font-bold">{localizedPlace.name}</span>
-                  <span className="truncate text-[0.6875rem] text-muted">{localizedPlace.area}</span>
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-3 py-3">
+                  <span className="truncate text-[0.9375rem] font-bold">{localizedPlace.name}</span>
+                  <span className="truncate text-xs text-muted">{localizedPlace.area}</span>
                 </span>
               </button>
               );

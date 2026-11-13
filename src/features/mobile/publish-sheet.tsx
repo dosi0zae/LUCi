@@ -71,79 +71,77 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
     >
       <form
         className={cn(
-          "app-scroll-area glass-panel flex max-h-[86%] w-full flex-col overflow-y-auto rounded-t-xl p-5 pb-6",
+          "app-scroll-area glass-panel flex max-h-[86%] w-full flex-col overflow-y-auto rounded-t-[2rem] p-5 pb-6",
           isClosing ? "sheet-panel-out" : "sheet-panel",
         )}
         onClick={(event) => event.stopPropagation()}
         onSubmit={handleSubmit}
       >
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border-strong" />
+        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-border-strong" />
 
-        <h2 className="text-lg font-extrabold">{t("publishHeading")}</h2>
-        <p className="mt-1 text-xs text-muted text-balance">{t("publishSubtitle", { count: places.length })}</p>
+        <h2 className="text-2xl font-extrabold tracking-tight">{t("publishHeading")}</h2>
+        <p className="mt-1.5 break-keep text-sm text-muted text-balance">{t("publishSubtitle", { count: places.length })}</p>
 
         <div className="mt-4">
-          <p className="text-xs font-bold text-muted-strong">{t("publishCoverLabel")}</p>
-          <div className="place-list-scroll mt-1.5 flex gap-2 overflow-x-auto pb-1">
+          <p className="text-sm font-bold text-muted-strong">{t("publishCoverLabel")}</p>
+          <div className="place-list-scroll mt-2 flex gap-2.5 overflow-x-auto pb-1">
             {places.map((place) => (
               <button
                 aria-label={place.name}
                 aria-pressed={coverPlaceId === place.id}
                 className={cn(
-                  "relative shrink-0 rounded-[0.75rem] p-0.5 transition",
+                  "relative shrink-0 rounded-[1.25rem] p-0.5 transition",
                   coverPlaceId === place.id ? "ring-2 ring-primary" : "opacity-70 hover:opacity-100",
                 )}
                 key={place.id}
                 onClick={() => setCoverPlaceId(place.id)}
                 type="button"
               >
-                <PlacePhoto className="h-16 w-16 rounded-[0.625rem]" place={place} />
+                <PlacePhoto className="h-[4.5rem] w-[4.5rem] rounded-2xl" place={place} />
               </button>
             ))}
           </div>
-          <p className="mt-1 text-[0.6875rem] text-muted">{t("publishCoverHint")}</p>
+          <p className="mt-1.5 text-xs text-muted">{t("publishCoverHint")}</p>
         </div>
 
-        <label className="mt-4 block text-xs font-bold text-muted-strong">
+        <label className="mt-5 block text-sm font-bold text-muted-strong">
           {t("publishTitleLabel")}
           <input
-            className="mt-1.5 h-11 w-full rounded-sm border border-border bg-surface px-3 text-sm font-semibold outline-none focus:border-primary"
+            className="ios-pill mt-2 h-12 w-full rounded-2xl px-4 text-base font-semibold text-foreground outline-none placeholder:text-muted focus:ring-2 focus:ring-primary/40"
             onChange={(event) => setTitle(event.target.value)}
             placeholder={t("publishTitlePlaceholder")}
             value={title}
           />
         </label>
 
-        <label className="mt-3 block text-xs font-bold text-muted-strong">
+        <label className="mt-4 block text-sm font-bold text-muted-strong">
           {t("publishDescriptionLabel")}
           <textarea
-            className="mt-1.5 min-h-20 w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
+            className="ios-pill mt-2 min-h-24 w-full rounded-2xl px-4 py-3 text-base text-foreground outline-none placeholder:text-muted focus:ring-2 focus:ring-primary/40"
             onChange={(event) => setDescription(event.target.value)}
             placeholder={t("publishDescriptionPlaceholder")}
             value={description}
           />
         </label>
 
-        <div className="mt-3 grid gap-2">
+        <div className="mt-4 grid gap-2.5">
           {visibilityOptionKeys.map((option) => (
             <button
               className={cn(
-                "flex items-center justify-between rounded-sm border px-3 py-2.5 text-left",
-                visibility === option.id
-                  ? "border-primary bg-primary-soft"
-                  : "border-border bg-surface",
+                "flex items-center justify-between rounded-2xl px-4 py-3.5 text-left",
+                visibility === option.id ? "border border-primary bg-primary-soft" : "ios-row",
               )}
               key={option.id}
               onClick={() => setVisibility(option.id)}
               type="button"
             >
               <span>
-                <span className="block text-sm font-bold">{t(option.labelKey)}</span>
-                <span className="block text-xs text-muted">{t(option.hintKey)}</span>
+                <span className="block text-base font-bold">{t(option.labelKey)}</span>
+                <span className="block text-sm text-muted">{t(option.hintKey)}</span>
               </span>
               <span
                 className={cn(
-                  "h-4 w-4 shrink-0 rounded-full border",
+                  "h-5 w-5 shrink-0 rounded-full border-2",
                   visibility === option.id ? "border-primary bg-primary" : "border-border-strong",
                 )}
               />
@@ -151,13 +149,15 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
           ))}
         </div>
 
-        {error && <p className="mt-3 text-xs font-semibold text-danger">{error}</p>}
+        {error && <p className="mt-3 text-sm font-semibold text-danger">{error}</p>}
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button onClick={handleCancel} type="button" variant="secondary">
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <Button className="h-14 text-[1.0625rem]" onClick={handleCancel} shape="pill" type="button" variant="secondary">
             {t("cancel")}
           </Button>
-          <Button type="submit">{t("saveCourse")}</Button>
+          <Button className="h-14 text-[1.0625rem] shadow-[0_10px_28px_rgba(47,111,228,0.32)]" shape="pill" type="submit">
+            {t("saveCourse")}
+          </Button>
         </div>
       </form>
     </div>

@@ -38,10 +38,9 @@ import { cn } from "@/lib/utils";
 
 // The detail sheet's floating action buttons: round, on the same white surface as the map
 // controls; the pressed/active state fills with the primary color.
-const FLOAT_BUTTON =
-  "grid h-12 w-12 place-items-center rounded-full border shadow-[0_4px_14px_rgba(15,23,42,0.14)] transition active:scale-95";
-const FLOAT_BUTTON_IDLE = "border-border bg-surface text-foreground hover:border-border-strong";
-const FLOAT_BUTTON_ACTIVE = "border-primary bg-primary text-white";
+const FLOAT_BUTTON = "grid h-14 w-14 place-items-center rounded-full active:scale-95";
+const FLOAT_BUTTON_IDLE = "ios-glass text-foreground";
+const FLOAT_BUTTON_ACTIVE = "ios-btn-on shadow-[0_8px_24px_rgba(47,111,228,0.4)]";
 
 type TripDetailSheetProps = {
   trip: FeedTrip;
@@ -426,11 +425,11 @@ export function TripDetailSheet({
       />
       <button
         aria-label={t("backAria")}
-        className="absolute left-4 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/90 text-muted-strong shadow-soft backdrop-blur transition hover:border-primary hover:text-primary"
+        className="ios-glass absolute left-4 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 grid h-11 w-11 place-items-center rounded-full text-muted-strong"
         onClick={onClose}
         type="button"
       >
-        <ArrowLeftIcon className="h-5 w-5" />
+        <ArrowLeftIcon className="h-[1.375rem] w-[1.375rem]" />
       </button>
       {trip.isMine && (
         <span className="pointer-events-none absolute right-4 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 flex h-10 items-center">
@@ -447,12 +446,12 @@ export function TripDetailSheet({
       >
         <Badge tone="neutral">{localizedPlaces[0]?.area ?? t("seoulWide")}</Badge>
         <div className="mt-3 flex items-start justify-between gap-2">
-          <h1 className="text-2xl font-extrabold leading-tight text-balance">{localizedTrip.title}</h1>
+          <h1 className="break-keep text-[1.75rem] font-extrabold leading-9 tracking-tight text-balance">{localizedTrip.title}</h1>
           {trip.isMine && (
             <div className="relative shrink-0">
               <button
                 aria-label={t("moreOptionsAria")}
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted-strong transition hover:bg-surface-muted"
+                className="ios-btn grid h-10 w-10 shrink-0 place-items-center rounded-full"
                 onClick={() => setIsMenuOpen((open) => !open)}
                 type="button"
               >
@@ -466,10 +465,10 @@ export function TripDetailSheet({
                     onClick={closeMenu}
                     tabIndex={-1}
                   />
-                  <div className="absolute right-0 top-9 z-20 w-48 overflow-hidden rounded-lg border border-border bg-surface shadow-soft">
+                  <div className="ios-menu absolute right-0 top-11 z-20 w-56 overflow-hidden p-1.5">
                     {!isConfirmingDelete ? (
                       <button
-                        className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-danger transition hover:bg-surface-muted"
+                        className="ios-menu-item flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-[0.9375rem] font-semibold text-danger"
                         onClick={() => setIsConfirmingDelete(true)}
                         type="button"
                       >
@@ -478,18 +477,18 @@ export function TripDetailSheet({
                       </button>
                     ) : (
                       <div className="p-3">
-                        <p className="text-xs font-bold text-foreground">{t("deleteChainConfirmTitle")}</p>
-                        <p className="mt-1 text-xs text-muted">{t("deleteChainConfirmBody")}</p>
+                        <p className="text-sm font-bold text-foreground">{t("deleteChainConfirmTitle")}</p>
+                        <p className="mt-1 text-sm text-muted">{t("deleteChainConfirmBody")}</p>
                         <div className="mt-3 grid grid-cols-2 gap-2">
                           <button
-                            className="rounded-sm border border-border py-1.5 text-xs font-semibold text-muted-strong transition hover:bg-surface-muted"
+                            className="ios-btn rounded-full py-2.5 text-sm font-semibold"
                             onClick={closeMenu}
                             type="button"
                           >
                             {t("cancel")}
                           </button>
                           <button
-                            className="rounded-sm bg-danger py-1.5 text-xs font-bold text-white transition hover:opacity-90"
+                            className="rounded-full bg-danger py-2.5 text-sm font-bold text-white transition hover:opacity-90"
                             onClick={() => onDelete(trip.id)}
                             type="button"
                           >
@@ -504,7 +503,7 @@ export function TripDetailSheet({
             </div>
           )}
         </div>
-        <p className="mt-1 text-xs font-semibold text-muted">
+        <p className="mt-1.5 text-sm font-semibold text-muted">
           <button
             className="font-bold text-foreground hover:underline"
             onClick={() => onOpenAuthor(trip.authorHandle)}
@@ -515,38 +514,38 @@ export function TripDetailSheet({
           · {t(visibilityLabelKey[trip.visibility])}
         </p>
         {localizedTrip.description && (
-          <p className="mt-3 text-sm leading-6 text-muted-strong text-pretty">{localizedTrip.description}</p>
+          <p className="mt-3 break-keep text-[0.9375rem] leading-7 text-muted-strong text-pretty">{localizedTrip.description}</p>
         )}
 
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <div className="rounded-sm border border-border bg-surface p-3">
-            <p className="text-xs font-semibold text-muted">{t("statPlaces")}</p>
-            <p className="mt-1 text-sm font-extrabold">{t("placesCount", { count: places.length })}</p>
+        <div className="mt-5 grid grid-cols-3 gap-3">
+          <div className="ios-row p-3.5">
+            <p className="text-sm font-semibold text-muted">{t("statPlaces")}</p>
+            <p className="mt-1 text-base font-extrabold">{t("placesCount", { count: places.length })}</p>
           </div>
-          <div className="rounded-sm border border-border bg-surface p-3">
-            <p className="text-xs font-semibold text-muted">{t("statDurationTotal")}</p>
-            <p className="mt-1 text-sm font-extrabold">{t("minutesCount", { count: totalMinutes })}</p>
+          <div className="ios-row p-3.5">
+            <p className="text-sm font-semibold text-muted">{t("statDurationTotal")}</p>
+            <p className="mt-1 text-base font-extrabold">{t("minutesCount", { count: totalMinutes })}</p>
           </div>
-          <div className="rounded-sm border border-border bg-surface p-3">
-            <p className="text-xs font-semibold text-muted">{t("statSaved")}</p>
-            <p className="mt-1 text-sm font-extrabold">{trip.saved.toLocaleString()}</p>
+          <div className="ios-row p-3.5">
+            <p className="text-sm font-semibold text-muted">{t("statSaved")}</p>
+            <p className="mt-1 text-base font-extrabold">{trip.saved.toLocaleString()}</p>
           </div>
         </div>
 
         {places.length >= 2 && (
-          <div className="mt-4">
+          <div className="mt-4 overflow-hidden rounded-3xl">
             <ConstellationCard places={places} />
           </div>
         )}
 
         {/* minmax(0, 1fr): a bare grid column sizes to its widest row's no-wrap title (a long
             English place name pushed the cards well past the screen edge). */}
-        <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-2">
+        <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-3">
           {localizedPlaces.map((place, index) => (
-            <article className="min-w-0 rounded-lg border border-border bg-surface p-3 shadow-soft" key={place.id}>
+            <article className="ios-row min-w-0 p-3" key={place.id}>
               <div className="flex items-center gap-3">
                 {/* Same lime-green chip as the route markers on the map above. */}
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#b7e86b] text-[0.6875rem] font-extrabold text-[#0b1220]">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#b7e86b] text-xs font-extrabold text-[#0b1220]">
                   {index + 1}
                 </span>
                 <PlacePhotoThumb
@@ -554,15 +553,15 @@ export function TripDetailSheet({
                   onFallback={() => setPhotoPlaceId(null)}
                   onOpenPhoto={() => setPhotoPlaceId(place.id)}
                   place={place}
-                  size="sm"
+                  size="md"
                 />
                 <button
                   className="min-w-0 flex-1 text-left"
                   onClick={() => setSelectedPlaceId(place.id)}
                   type="button"
                 >
-                  <h3 className="truncate text-sm font-extrabold">{place.name}</h3>
-                  <p className="mt-1 text-xs text-muted">
+                  <h3 className="truncate text-[1.0625rem] font-bold">{place.name}</h3>
+                  <p className="mt-0.5 text-sm text-muted">
                     {place.source === "dining"
                       ? placeSubtitle(place, categoryLabel(place.category), locale)
                       : `${place.area} · ${place.duration} · ${place.fee}`}
@@ -571,13 +570,13 @@ export function TripDetailSheet({
                 {/* The author can pick which spot's photo represents the course in lists. */}
                 {trip.isMine &&
                   (coverPlaceId === place.id ? (
-                    <span className="shrink-0 rounded-full bg-primary-soft px-2.5 py-1 text-[0.6875rem] font-extrabold text-primary-strong">
+                    <span className="shrink-0 rounded-full bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-strong">
                       {t("coverBadge")}
                     </span>
                   ) : (
                     <button
                       aria-label={t("setCoverAria")}
-                      className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-strong transition-colors hover:border-primary hover:bg-primary/10 hover:text-primary active:bg-primary active:text-white"
+                      className="ios-btn grid h-10 w-10 shrink-0 place-items-center rounded-full"
                       onClick={() => onSetCover(trip.id, place.id)}
                       title={t("setCoverAria")}
                       type="button"
@@ -591,20 +590,20 @@ export function TripDetailSheet({
         </div>
 
         <div className="mt-6">
-          <h3 className="text-sm font-extrabold text-muted-strong">
+          <h3 className="text-lg font-extrabold">
             {t("commentsHeading", { count: comments.length })}
           </h3>
 
           <form className="mt-3 flex items-center gap-2" onSubmit={submitComment}>
             <input
-              className="glass-panel min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2.5 text-sm outline-none placeholder:text-muted"
+              className="ios-pill min-w-0 flex-1 rounded-full px-5 py-3 text-base outline-none placeholder:text-muted focus:ring-2 focus:ring-primary/40"
               onChange={(event) => setCommentDraft(event.target.value)}
               placeholder={t("commentPlaceholder")}
               value={commentDraft}
             />
             <button
               aria-label={t("commentSubmitAria")}
-              className="shrink-0 rounded-lg bg-primary px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-primary-strong disabled:opacity-50"
+              className="shrink-0 rounded-full bg-primary px-5 py-3 text-[0.9375rem] font-extrabold text-white transition hover:bg-primary-strong active:scale-95 disabled:opacity-50"
               disabled={!commentDraft.trim()}
               type="submit"
             >
@@ -613,13 +612,13 @@ export function TripDetailSheet({
           </form>
 
           {comments.length === 0 ? (
-            <p className="mt-3 text-xs leading-5 text-muted">{t("commentEmpty")}</p>
+            <p className="mt-3 text-sm leading-5 text-muted">{t("commentEmpty")}</p>
           ) : (
             <div className="mt-3 grid gap-2.5">
               {comments.map((comment) => (
-                <div className="rounded-lg border border-border bg-surface p-3" key={comment.id}>
-                  <p className="text-xs font-extrabold">{comment.authorName}</p>
-                  <p className="mt-1 text-sm leading-5 text-muted-strong text-pretty">{comment.text}</p>
+                <div className="ios-row p-4" key={comment.id}>
+                  <p className="text-sm font-extrabold">{comment.authorName}</p>
+                  <p className="mt-1 text-[0.9375rem] leading-6 text-muted-strong text-pretty">{comment.text}</p>
                 </div>
               ))}
             </div>
@@ -632,7 +631,7 @@ export function TripDetailSheet({
       <footer className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/85 to-transparent px-5 pt-10 [padding-bottom:calc(1rem+env(safe-area-inset-bottom))]">
         {shareMessage && (
           <p
-            className="share-toast pointer-events-none absolute inset-x-5 bottom-full mb-2 rounded-full border border-border bg-white px-4 py-2 text-center text-xs font-semibold text-primary shadow-soft"
+            className="share-toast ios-menu pointer-events-none absolute inset-x-5 bottom-full mb-2 px-4 py-2.5 text-center text-sm font-semibold text-primary"
             key={shareMessage}
           >
             {shareMessage}
@@ -646,7 +645,7 @@ export function TripDetailSheet({
             title={t("loadToChainButton")}
             type="button"
           >
-            <MapPlusIcon className="h-5 w-5" />
+            <MapPlusIcon className="h-[1.375rem] w-[1.375rem]" />
           </button>
           <button
             aria-label={t("likeButton", { count: (trip.likes + (isLiked ? 1 : 0)).toLocaleString() })}
@@ -654,7 +653,7 @@ export function TripDetailSheet({
             onClick={() => onToggleLike(trip.id)}
             type="button"
           >
-            <HeartIcon className="h-5 w-5" filled={isLiked} />
+            <HeartIcon className="h-[1.375rem] w-[1.375rem]" filled={isLiked} />
           </button>
           <button
             aria-label={isSaved ? t("savedButton") : t("saveButton")}
@@ -662,7 +661,7 @@ export function TripDetailSheet({
             onClick={() => onToggleSave(trip.id)}
             type="button"
           >
-            <BookmarkIcon className="h-5 w-5" />
+            <BookmarkIcon className="h-[1.375rem] w-[1.375rem]" />
           </button>
           <div className="relative">
             <button
@@ -671,7 +670,7 @@ export function TripDetailSheet({
               onClick={() => setIsShareMenuOpen((open) => !open)}
               type="button"
             >
-              <ShareIcon className="h-5 w-5" />
+              <ShareIcon className="h-[1.375rem] w-[1.375rem]" />
             </button>
             {isShareMenuOpen && (
               <>
@@ -681,7 +680,7 @@ export function TripDetailSheet({
                   onClick={() => setIsShareMenuOpen(false)}
                   tabIndex={-1}
                 />
-                <div className="absolute bottom-full right-0 z-20 mb-2 flex items-center gap-1.5 rounded-full border border-border bg-surface p-1.5 shadow-soft">
+                <div className="ios-menu absolute bottom-full right-0 z-20 mb-2 flex items-center gap-2 p-2">
                   {/* Instagram has no public share-intent URL (unlike X/Facebook/WhatsApp/
                       Kakao below) — the OS share sheet, triggered by shareTrip(), is the
                       only way this app can reach it (or TikTok), so this badge and the

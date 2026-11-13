@@ -12,7 +12,7 @@ const sizes = {
   sm: { box: "h-10 w-10 rounded-sm", icon: "h-4 w-4" },
   md: { box: "h-12 w-12 rounded-md", icon: "h-5 w-5" },
   row: { box: "h-14 w-14 rounded-2xl", icon: "h-6 w-6" },
-  lg: { box: "h-16 w-16 rounded-lg", icon: "h-6 w-6" },
+  lg: { box: "h-16 w-16 rounded-2xl", icon: "h-6 w-6" },
 };
 
 export function PlaceThumb({ category, className, size = "md" }: PlaceThumbProps) {

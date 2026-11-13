@@ -11,7 +11,7 @@ const SIZES = {
   sm: "h-10 w-10 rounded-sm",
   // Course rows: a 56 px tile with iOS-style rounded corners.
   md: "h-14 w-14 rounded-2xl",
-  lg: "h-16 w-16 rounded-lg",
+  lg: "h-16 w-16 rounded-2xl",
 };
 
 type PlacePhotoThumbProps = {
@@ -29,7 +29,8 @@ type PlacePhotoThumbProps = {
 
 // Dining stops have no photo of ours (and a stock photo would mislead), so they start on the icon tile.
 export function PlacePhotoThumb({ badge, label, onFallback, onOpenPhoto, place, size }: PlacePhotoThumbProps) {
-  const [failed, setFailed] = useState(isDiningCategory(place.category));
+  const src = getPlaceImageUrl(place.id);
+  const [failed, setFailed] = useState(isDiningCategory(place.category) || !src);
 
   return (
     <button
@@ -47,7 +48,7 @@ export function PlacePhotoThumb({ badge, label, onFallback, onOpenPhoto, place, 
           className={cn("block bg-surface-muted object-cover", SIZES[size])}
           loading="lazy"
           onError={() => setFailed(true)}
-          src={getPlaceImageUrl(place.id)}
+          src={src ?? undefined}
         />
       )}
       {badge}
@@ -65,6 +66,7 @@ type PhotoLightboxProps = {
 // Escape to dismiss.
 export function PhotoLightbox({ name, onClose, place }: PhotoLightboxProps) {
   const t = useT();
+  const src = getPlaceImageUrl(place.id);
 
   useEffect(() => {
     function handleKey(event: KeyboardEvent) {
@@ -75,6 +77,10 @@ export function PhotoLightbox({ name, onClose, place }: PhotoLightboxProps) {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
+
+  if (!src) {
+    return null;
+  }
 
   return (
     <div
@@ -99,7 +105,7 @@ export function PhotoLightbox({ name, onClose, place }: PhotoLightboxProps) {
         <img
           alt={name}
           className="max-h-[75vh] max-w-full rounded-lg object-contain"
-          src={getPlaceImageUrl(place.id)}
+          src={src}
         />
         <figcaption className="text-sm font-bold text-white">{name}</figcaption>
       </figure>
@@ -109,13 +115,23 @@ export function PhotoLightbox({ name, onClose, place }: PhotoLightboxProps) {
 
 // A plain (non-interactive) square photo of a place for use inside a button or link; shows
 // the category icon tile if the image can't load.
-export function PlacePhoto({ className, place }: { place: MobilePlace; className: string }) {
-  const [failed, setFailed] = useState(isDiningCategory(place.category));
+export function PlacePhoto({
+  className,
+  fallbackSize = "lg",
+  place,
+}: {
+  place: MobilePlace;
+  className: string;
+  // Size of the category icon tile shown when there is no photo (or it fails to load).
+  fallbackSize?: "sm" | "md" | "row" | "lg";
+}) {
+  const src = getPlaceImageUrl(place.id);
+  const [failed, setFailed] = useState(isDiningCategory(place.category) || !src);
 
-  if (failed) {
+  if (failed || !src) {
     return (
       <span className={cn("grid shrink-0 place-items-center overflow-hidden", className)}>
-        <PlaceThumb category={place.category} size="lg" />
+        <PlaceThumb category={place.category} size={fallbackSize} />
       </span>
     );
   }
@@ -127,7 +143,7 @@ export function PlacePhoto({ className, place }: { place: MobilePlace; className
       className={cn("block shrink-0 bg-surface-muted object-cover", className)}
       loading="lazy"
       onError={() => setFailed(true)}
-      src={getPlaceImageUrl(place.id)}
+      src={src}
     />
   );
 }

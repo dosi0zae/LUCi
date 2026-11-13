@@ -65,6 +65,12 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // The page language drives CSS line-breaking rules (see .break-keep in globals.css) and tells
+  // screen readers and browsers what language the text is in.
+  useEffect(() => {
+    document.documentElement.lang = locale === "zh" ? "zh-CN" : locale;
+  }, [locale]);
+
   const value = useMemo(() => ({ locale, setLocale }), [locale, setLocale]);
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
