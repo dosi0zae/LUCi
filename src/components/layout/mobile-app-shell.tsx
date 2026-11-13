@@ -1876,18 +1876,23 @@ export function MobileAppShell() {
                 </div>
 
                 <div className="relative z-10 px-5 pt-[3.75rem] text-center">
-                  {/* While the box is in use the big logo, title and subtitle just fade out. Nothing in the layout
-                      moves: on iOS the keyboard makes the browser pan the page itself, and anything the page
-                      does at the same time (folding, shifting) fights that pan and judders, most of all when
-                      the keyboard closes. A small logo that is already sitting above the box fades in instead. */}
-                  <div aria-hidden={isHeroSearchFocused} className="hero-head-text">
-                    <div className="hero-rise py-1 [--rise:0ms]">
+                  {/* While the box is in use nothing in the layout moves (on iOS the keyboard makes the browser pan
+                      the page itself, and anything the page does to the layout at the same time fights that pan
+                      and judders). Only transforms and opacity: the logo shrinks to half size and travels down to
+                      sit just above the box (--logo-fly-y is measured when the box gets focus), while the title
+                      and subtitle scatter upward one after the other. Leaving the box plays it all backwards. */}
+                  <div className="hero-rise relative z-10 py-1 [--rise:0ms]">
+                    <div className="hero-logo-fly">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img alt="Trip Chain" className="hero-logo-float mx-auto block h-[5.3125rem] w-auto" src="/tripchain-logo.svg" />
                     </div>
+                  </div>
+                  <div aria-hidden={isHeroSearchFocused} className="hero-head-title">
                     <h1 className="hero-rise mt-3 break-keep text-[2rem] font-extrabold leading-[2.5rem] tracking-tight text-balance [--rise:110ms]">
                       {t("heroTitle")}
                     </h1>
+                  </div>
+                  <div aria-hidden={isHeroSearchFocused} className="hero-head-sub">
                     <p className="hero-rise mx-auto mt-4 max-w-[20.5rem] whitespace-pre-line break-keep text-base leading-7 text-muted [--rise:220ms]">
                       {t("heroSubtitle")}
                     </p>
@@ -1905,19 +1910,23 @@ export function MobileAppShell() {
                     // would move out from under the finger before the tap could land.
                     onFocusCapture={(event) => {
                       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+                        if (!isHeroSearchFocused) {
+                          // How far the logo has to travel: from where it sits to 2.58 rem above the box (its
+                          // bottom edge is the scaling origin, so only the bottom edges matter). Measured now,
+                          // before anything has moved, so the rectangles are the resting ones.
+                          const root = event.currentTarget.closest<HTMLElement>(".hero-root");
+                          const logo = root?.querySelector<HTMLElement>(".hero-logo-fly");
+                          const form = event.currentTarget.querySelector("form");
+                          if (root && logo && form) {
+                            const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+                            const dy = form.getBoundingClientRect().top - 2.58 * rem - logo.getBoundingClientRect().bottom;
+                            root.style.setProperty("--logo-fly-y", `${Math.round(dy)}px`);
+                          }
+                        }
                         setIsHeroSearchFocused(true);
                       }
                     }}
                   >
-                    {/* Half-size logo above the box, shown only while the box is in use. */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      alt=""
-                      aria-hidden="true"
-                      className="hero-mini-logo pointer-events-none absolute left-1/2 block h-[2.65625rem] w-auto"
-                      src="/tripchain-logo.svg"
-                    />
-
                     {searchForm}
 
                     {/* The rotating example stays under the box (also while typing). */}

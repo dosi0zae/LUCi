@@ -1362,35 +1362,46 @@ button.ios-card:not(:disabled):active {
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
-/* While the first-screen box is in use only opacity and a small logo change; nothing in the layout moves
-   (iOS pans the page itself when the keyboard opens and closes, and any layout change at the same time
-   fights that pan). The big logo, title and subtitle fade out; a half-size logo that always sits just above
-   the box (hidden otherwise) pops in. */
-.hero-head-text {
-  transition: opacity 260ms ease-out 80ms;
-}
-
-.hero-root[data-focus="true"] .hero-head-text {
-  opacity: 0;
-  transition: opacity 160ms ease-in;
-}
-
-.hero-mini-logo {
-  bottom: calc(100% + 1.25rem);
-  opacity: 0;
-  transform: translateX(-50%) scale(0.6);
+/* While the first-screen box is in use only transforms, opacity and blur change; nothing in the layout
+   moves (iOS pans the page itself when the keyboard opens and closes, and any layout change at the same
+   time fights that pan). The logo shrinks to half size and travels down to just above the box
+   (--logo-fly-y is measured in the shell when the box gets focus), landing with a little overshoot; the
+   title and then the subtitle scatter upward and fade. Leaving the box plays it backwards: the title and
+   subtitle drop back in one after the other with a bounce while the logo springs up. */
+.hero-logo-fly {
   transform-origin: 50% 100%;
-  transition:
-    opacity 160ms ease-in,
-    transform 160ms ease-in;
+  transition: transform 560ms cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
-.hero-root[data-focus="true"] .hero-mini-logo {
-  opacity: 1;
-  transform: translateX(-50%) scale(1);
+.hero-root[data-focus="true"] .hero-logo-fly {
+  transform: translateY(var(--logo-fly-y, 0px)) scale(0.5);
+}
+
+.hero-head-title,
+.hero-head-sub {
   transition:
-    opacity 220ms ease-out 100ms,
-    transform 460ms cubic-bezier(0.34, 1.56, 0.64, 1) 100ms;
+    opacity 340ms ease-out var(--back-delay, 160ms),
+    transform 520ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--back-delay, 160ms),
+    filter 340ms ease-out var(--back-delay, 160ms);
+}
+
+.hero-head-sub {
+  --back-delay: 260ms;
+}
+
+.hero-root[data-focus="true"] .hero-head-title,
+.hero-root[data-focus="true"] .hero-head-sub {
+  opacity: 0;
+  transform: translateY(-1.25rem) scale(0.94);
+  filter: blur(6px);
+  transition:
+    opacity 200ms ease-in var(--out-delay, 0ms),
+    transform 280ms ease-in var(--out-delay, 0ms),
+    filter 200ms ease-in var(--out-delay, 0ms);
+}
+
+.hero-root[data-focus="true"] .hero-head-sub {
+  --out-delay: 50ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1411,10 +1422,12 @@ button.ios-card:not(:disabled):active {
   }
 
   .hero-search form,
-  .hero-head-text,
-  .hero-mini-logo,
-  .hero-root[data-focus="true"] .hero-head-text,
-  .hero-root[data-focus="true"] .hero-mini-logo {
+  .hero-logo-fly,
+  .hero-head-title,
+  .hero-head-sub,
+  .hero-root[data-focus="true"] .hero-logo-fly,
+  .hero-root[data-focus="true"] .hero-head-title,
+  .hero-root[data-focus="true"] .hero-head-sub {
     transition: none;
   }
 
