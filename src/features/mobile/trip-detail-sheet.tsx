@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeftIcon,
@@ -19,6 +19,7 @@ import { buildCourseShareUrl } from "@/features/mobile/course-share";
 import { placeSubtitle } from "@/features/mobile/dining-tags";
 import { shareToKakaoTalk } from "@/features/mobile/kakao-share";
 import { buildFacebookShareUrl, buildTwitterShareUrl, buildWhatsAppShareUrl } from "@/features/mobile/sns-share";
+import { PopOnActive } from "@/features/mobile/motion";
 import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import {
@@ -42,8 +43,12 @@ const FLOAT_BUTTON = "grid h-14 w-14 place-items-center rounded-full active:scal
 const FLOAT_BUTTON_IDLE = "ios-glass text-foreground";
 const FLOAT_BUTTON_ACTIVE = "ios-btn-on shadow-[0_8px_24px_rgba(47,111,228,0.4)]";
 
+// Where the card this screen grew out of sat, as distances in px from each edge of the app frame.
+export type DetailOrigin = { top: number; right: number; bottom: number; left: number };
+
 type TripDetailSheetProps = {
   trip: FeedTrip;
+  origin?: DetailOrigin | null;
   comments: TripComment[];
   isLiked: boolean;
   isSaved: boolean;
@@ -122,6 +127,7 @@ function getCardPoints(places: MobilePlace[]) {
 }
 
 export function TripDetailSheet({
+  origin,
   comments,
   isLiked,
   isSaved,
@@ -152,9 +158,58 @@ export function TripDetailSheet({
   // The stop whose photo is open full-size.
   const [photoPlaceId, setPhotoPlaceId] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  // Dragging in from the left edge slides the screen away (like the system back swipe).
+  const [edgeDrag, setEdgeDrag] = useState<{ x: number; active: boolean; gone: boolean }>({ x: 0, active: false, gone: false });
+  const edgeStartRef = useRef<{ x: number; t: number; v: number; lastX: number } | null>(null);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const selectedPlace = selectedPlaceId ? getPlaceById(selectedPlaceId) : undefined;
   const coverPlaceId = getTripCoverPlace(trip)?.id;
+
+  function handleClose() {
+    if (isClosing) {
+      return;
+    }
+    setIsClosing(true);
+    window.setTimeout(onClose, origin ? 340 : 240);
+  }
+
+  function beginEdgeDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Capture only keeps the drag going outside the strip.
+    }
+    edgeStartRef.current = { x: event.clientX, t: performance.now(), v: 0, lastX: event.clientX };
+    setEdgeDrag({ x: 0, active: true, gone: false });
+  }
+
+  function moveEdgeDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    const start = edgeStartRef.current;
+    if (!start) {
+      return;
+    }
+    const now = performance.now();
+    start.v = (event.clientX - start.lastX) / Math.max(1, now - start.t);
+    start.lastX = event.clientX;
+    start.t = now;
+    setEdgeDrag({ x: Math.max(0, event.clientX - start.x), active: true, gone: false });
+  }
+
+  function endEdgeDrag() {
+    const start = edgeStartRef.current;
+    edgeStartRef.current = null;
+    if (!start) {
+      return;
+    }
+    const distance = Math.max(0, start.lastX - start.x);
+    if (distance > 110 || (distance > 30 && start.v > 0.6)) {
+      setEdgeDrag({ x: distance, active: false, gone: true });
+      window.setTimeout(onClose, 230);
+    } else {
+      setEdgeDrag({ x: 0, active: false, gone: false });
+    }
+  }
 
   function submitComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -409,7 +464,43 @@ export function TripDetailSheet({
   }
 
   return (
-    <div className="detail-page absolute inset-0 z-40 flex flex-col bg-background">
+    <div
+      className={cn(
+        "absolute inset-0 z-40 flex flex-col bg-background",
+        edgeDrag.active || edgeDrag.x > 0 || edgeDrag.gone
+          ? ""
+          : isClosing
+            ? origin
+              ? "detail-zoom-out"
+              : "detail-page-out"
+            : origin
+              ? "detail-zoom"
+              : "detail-page",
+      )}
+      style={
+        {
+          "--o-top": `${origin?.top ?? 0}px`,
+          "--o-right": `${origin?.right ?? 0}px`,
+          "--o-bottom": `${origin?.bottom ?? 0}px`,
+          "--o-left": `${origin?.left ?? 0}px`,
+          ...(edgeDrag.active || edgeDrag.x > 0 || edgeDrag.gone
+            ? {
+                transform: `translateX(${edgeDrag.gone ? "100%" : `${edgeDrag.x}px`})`,
+                transition: edgeDrag.active ? "none" : "transform 230ms cubic-bezier(0.22, 1, 0.36, 1)",
+                boxShadow: "-18px 0 48px rgba(15, 23, 42, 0.18)",
+              }
+            : {}),
+        } as CSSProperties
+      }
+    >
+      <div
+        aria-hidden="true"
+        className="absolute bottom-0 left-0 top-24 z-30 w-5 touch-none"
+        onPointerCancel={endEdgeDrag}
+        onPointerDown={beginEdgeDrag}
+        onPointerMove={moveEdgeDrag}
+        onPointerUp={endEdgeDrag}
+      />
       {/* Floating back button (and "my course" tag) instead of a docked header; a white fade
           appears behind them once the page scrolls, like the other screens. */}
       <div
@@ -426,7 +517,7 @@ export function TripDetailSheet({
       <button
         aria-label={t("backAria")}
         className="ios-glass absolute left-4 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 grid h-11 w-11 place-items-center rounded-full text-muted-strong"
-        onClick={onClose}
+        onClick={handleClose}
         type="button"
       >
         <ArrowLeftIcon className="h-[1.375rem] w-[1.375rem]" />
@@ -653,7 +744,9 @@ export function TripDetailSheet({
             onClick={() => onToggleLike(trip.id)}
             type="button"
           >
-            <HeartIcon className="h-[1.375rem] w-[1.375rem]" filled={isLiked} />
+            <PopOnActive active={isLiked}>
+              <HeartIcon className="h-[1.375rem] w-[1.375rem]" filled={isLiked} />
+            </PopOnActive>
           </button>
           <button
             aria-label={isSaved ? t("savedButton") : t("saveButton")}
@@ -661,7 +754,9 @@ export function TripDetailSheet({
             onClick={() => onToggleSave(trip.id)}
             type="button"
           >
-            <BookmarkIcon className="h-[1.375rem] w-[1.375rem]" />
+            <PopOnActive active={isSaved}>
+              <BookmarkIcon className="h-[1.375rem] w-[1.375rem]" />
+            </PopOnActive>
           </button>
           <div className="relative">
             <button

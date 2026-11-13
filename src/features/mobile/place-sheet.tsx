@@ -14,6 +14,7 @@ import {
   AiSparklesIcon,
 } from "@/components/layout/app-icons";
 import { NaverIcon } from "@/features/mobile/brand-icons";
+import { PopOnActive } from "@/features/mobile/motion";
 import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
 import { isDiningCategory, localizePlace, type MobilePlace, type TripComment } from "@/features/mobile/mobile-data";
 import { getGoogleMapsUrl, getKakaoMapUrl, getNaverMapUrl, getNearbyUrl } from "@/features/mobile/map-links";
@@ -456,7 +457,9 @@ export function PlaceSheet({
                 onClick={() => onToggleBookmark(place.id)}
                 type="button"
               >
-                <BookmarkIcon className="h-4.5 w-4.5" />
+                <PopOnActive active={isBookmarked}>
+                  <BookmarkIcon className="h-4.5 w-4.5" />
+                </PopOnActive>
               </button>
               {/* A dining stop's savedBy is only our sort key, not a real count. */}
               {!isDining && (

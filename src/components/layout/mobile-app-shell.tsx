@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  CSSProperties,
   FormEvent,
   PointerEvent as ReactPointerEvent,
   useEffect,
@@ -31,6 +32,8 @@ import {
   UserIcon,
 } from "@/components/layout/app-icons";
 import { IntroSplash } from "@/components/layout/intro-splash";
+import { CourseSkeleton } from "@/features/mobile/course-skeleton";
+import { haptic } from "@/features/mobile/motion";
 import { cn } from "@/lib/utils";
 import {
   getPlaceById,
@@ -90,7 +93,7 @@ import {
   RADIUS_STEPS_KM,
   rankReplacementStops,
 } from "@/features/mobile/recommend-engine";
-import { TripDetailSheet } from "@/features/mobile/trip-detail-sheet";
+import { TripDetailSheet, type DetailOrigin } from "@/features/mobile/trip-detail-sheet";
 import { TripFeedList } from "@/features/mobile/trip-feed-list";
 import { ProfileTab } from "@/features/mobile/profile-tab";
 
@@ -133,6 +136,9 @@ function diningRank(place: MobilePlace, chain: MobilePlace[]): number {
     (place.dining?.hot === "surge" || place.dining?.hot === "rising" ? 0.15 : 0)
   );
 }
+// The first screen's pieces rise in after the splash on the very first visit, and straight away when
+// the person comes back to it later in the same session.
+let heroIntroPlayed = false;
 const PROFILE_STORAGE_KEY = "tripchain:profile";
 const RECENTLY_VIEWED_LIMIT = 10;
 const TUTORIAL_STORAGE_KEY = "tripchain:tutorialSeen";
@@ -477,6 +483,19 @@ export function MobileAppShell() {
   }
 
   const [isRecommending, setIsRecommending] = useState(false);
+  // True while an AI course is being made: the loading card shows and the first screen gives way to
+  // the course layout right away instead of sitting still for several seconds.
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isHeroSearchFocused, setIsHeroSearchFocused] = useState(false);
+  const frameRef = useRef<HTMLElement>(null);
+  const [detailOrigin, setDetailOrigin] = useState<DetailOrigin | null>(null);
+  // The stop that is sliding away before it is really removed from the course.
+  const [removing, setRemoving] = useState<{ id: string; height: number } | null>(null);
+  const heroBlobsRef = useRef<HTMLDivElement>(null);
+  const [heroBaseDelay] = useState(() => (heroIntroPlayed ? 0 : 1100));
+  useEffect(() => {
+    heroIntroPlayed = true;
+  }, []);
   const [recommendReason, setRecommendReason] = useState<string | null>(null);
   // The AI's name for the course, kept with the request it answered: it is shown only while that
   // request is still the course heading (loading a trip or a shared link replaces the heading).
@@ -889,6 +908,8 @@ export function MobileAppShell() {
   async function startCourseFromPrompt(nextPrompt: string, radiusOverride?: number) {
     radiusChainCacheRef.current.clear();
     setIsRecommending(true);
+    setIsGenerating(true);
+    setIsHeroSearchFocused(false);
     setRecommendReason(null);
     setCourseTitle(null);
     setIsAiCourse(true);
@@ -947,7 +968,9 @@ export function MobileAppShell() {
       setCourseAreaFilter(null);
     } finally {
       setIsRecommending(false);
+      setIsGenerating(false);
       setRadiusMessage(null);
+      haptic([12, 50, 12]);
     }
   }
 
@@ -1122,6 +1145,23 @@ export function MobileAppShell() {
   }
 
   function removeStop(id: string) {
+    // The card slides away first (it keeps its height until the gap closes), then the stop goes.
+    if (removing) {
+      return;
+    }
+    const card = chainListRef.current?.querySelector<HTMLElement>(`[data-chain-id="${CSS.escape(id)}"]`);
+    if (card && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setRemoving({ id, height: card.offsetHeight });
+      window.setTimeout(() => {
+        setRemoving(null);
+        removeStopNow(id);
+      }, 420);
+      return;
+    }
+    removeStopNow(id);
+  }
+
+  function removeStopNow(id: string) {
     setChainIds((current) => current.filter((placeId) => placeId !== id));
     setExpandedStopId((current) => (current === id ? null : current));
     setPinnedIds((current) => {
@@ -1394,6 +1434,7 @@ export function MobileAppShell() {
   }, [addedId]);
 
   function addToChain(place: MobilePlace) {
+    haptic();
     if (!hasResult) {
       setSubmittedPrompt(t("startedFromPlacePrompt", { name: place.name }));
       replaceChain([place.id]);
@@ -1490,6 +1531,7 @@ export function MobileAppShell() {
   }
 
   function toggleLike(id: string) {
+    haptic();
     setLikedIds((current) => {
       const next = new Set(current);
       if (next.has(id)) {
@@ -1502,6 +1544,7 @@ export function MobileAppShell() {
   }
 
   function toggleSave(id: string) {
+    haptic();
     setSavedIds((current) => {
       const next = new Set(current);
       if (next.has(id)) {
@@ -1532,6 +1575,7 @@ export function MobileAppShell() {
   }
 
   function toggleBookmarkPlace(id: string) {
+    haptic();
     setBookmarkedPlaceIds((current) => {
       const next = new Set(current);
       if (next.has(id)) {
@@ -1565,7 +1609,18 @@ export function MobileAppShell() {
     setOpenTripId(null);
   }
 
-  function viewTrip(trip: FeedTrip) {
+  function viewTrip(trip: FeedTrip, origin?: DOMRect) {
+    const frame = frameRef.current?.getBoundingClientRect();
+    setDetailOrigin(
+      origin && frame
+        ? {
+            top: Math.max(0, origin.top - frame.top),
+            left: Math.max(0, origin.left - frame.left),
+            right: Math.max(0, frame.right - origin.right),
+            bottom: Math.max(0, frame.bottom - origin.bottom),
+          }
+        : null,
+    );
     setRecentlyViewedTripIds((current) =>
       [trip.id, ...current.filter((id) => id !== trip.id)].slice(0, RECENTLY_VIEWED_LIMIT),
     );
@@ -1632,7 +1687,7 @@ export function MobileAppShell() {
 
   return (
     <main className="h-[var(--app-vh,100svh)] bg-[#edf2f7] text-foreground">
-      <section className="relative mx-auto flex h-[var(--app-vh,100svh)] w-full max-w-[430px] flex-col overflow-hidden bg-background shadow-panel [padding-top:env(safe-area-inset-top)] sm:max-h-[900px]">
+      <section className="relative mx-auto flex h-[var(--app-vh,100svh)] w-full max-w-[430px] flex-col overflow-hidden bg-background shadow-panel [padding-top:env(safe-area-inset-top)] sm:max-h-[900px]" ref={frameRef}>
         <IntroSplash contained />
         <div
           className="app-scroll-area min-h-0 flex-1 overflow-y-auto"
@@ -1649,6 +1704,7 @@ export function MobileAppShell() {
               ? title.getBoundingClientRect().bottom < container.getBoundingClientRect().top + 56
               : false;
             setIsTitleScrolledAway((current) => (current === next ? current : next));
+            container.style.setProperty("--title-p", Math.min(1, container.scrollTop / 70).toFixed(3));
             const scrolled = container.scrollTop > 8;
             setIsScrolled((current) => (current === scrolled ? current : scrolled));
             const tabs = exploreTabsRef.current;
@@ -1659,9 +1715,22 @@ export function MobileAppShell() {
           }}
         >
           {activeTab === "home" && (
-            !hasResult ? (
-              <div className={cn(tabSlideClass, "relative min-h-full")}>
-                <div className="hero-blobs" aria-hidden="true">
+            !hasResult && !isGenerating ? (
+              <div
+                className={cn(tabSlideClass, "hero-root relative min-h-full")}
+                data-focus={isHeroSearchFocused}
+                // The glow blobs lean toward the finger (each by its own depth, see .hero-blob).
+                onPointerMove={(event) => {
+                  const box = event.currentTarget.getBoundingClientRect();
+                  const blobs = heroBlobsRef.current;
+                  if (blobs && box.width > 0) {
+                    blobs.style.setProperty("--px", (((event.clientX - box.left) / box.width - 0.5) * 2).toFixed(3));
+                    blobs.style.setProperty("--py", (((event.clientY - box.top) / box.height - 0.5) * 2).toFixed(3));
+                  }
+                }}
+                style={{ "--hero-base": `${heroBaseDelay}ms` } as CSSProperties}
+              >
+                <div className="hero-blobs" aria-hidden="true" ref={heroBlobsRef}>
                   <span
                     className="hero-blob hero-blob--a"
                     style={{
@@ -1709,12 +1778,14 @@ export function MobileAppShell() {
                 </div>
 
                 <div className="relative z-10 px-5 pt-[3.75rem] text-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img alt="Trip Chain" className="mx-auto block h-[5.3125rem] w-auto" src="/tripchain-logo.svg" />
-                  <h1 className="mt-3 break-keep text-[2rem] font-extrabold leading-[2.5rem] tracking-tight text-balance">
+                  <div className="hero-rise [--rise:0ms]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img alt="Trip Chain" className="hero-logo-float mx-auto block h-[5.3125rem] w-auto" src="/tripchain-logo.svg" />
+                  </div>
+                  <h1 className="hero-rise mt-3 break-keep text-[2rem] font-extrabold leading-[2.5rem] tracking-tight text-balance [--rise:110ms]">
                     {t("heroTitle")}
                   </h1>
-                  <p className="mx-auto mt-4 max-w-[20.5rem] whitespace-pre-line break-keep text-base leading-7 text-muted">
+                  <p className="hero-rise mx-auto mt-4 max-w-[20.5rem] whitespace-pre-line break-keep text-base leading-7 text-muted [--rise:220ms]">
                     {t("heroSubtitle")}
                   </p>
 
@@ -1723,28 +1794,67 @@ export function MobileAppShell() {
                       tall the device's visible viewport actually is — a phone with more
                       of its screen taken up by browser chrome shouldn't stretch this gap
                       wider than on one with less. */}
-                  <div className="mt-8 text-left">
+                  <div
+                    className="hero-search hero-rise mt-8 text-left [--rise:330ms]"
+                    onBlurCapture={(event) => {
+                      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                        setIsHeroSearchFocused(false);
+                      }
+                    }}
+                    onFocusCapture={() => setIsHeroSearchFocused(true)}
+                  >
                     {searchForm}
 
-                    <button
-                      className="relative mt-7 block w-full text-center text-sm font-medium text-muted disabled:opacity-60"
-                      disabled={isRecommending}
-                      onClick={() => {
-                        const example = promptExamples[exampleIndex];
-                        setPrompt(example);
-                        void startCourseFromPrompt(example);
-                      }}
-                      type="button"
-                    >
-                      <span className="example-rotator block" key={exampleIndex}>
-                        “{promptExamples[exampleIndex]}”
-                      </span>
-                    </button>
+                    <div className="relative">
+                      <button
+                        className={cn(
+                          "relative mt-7 block w-full text-center text-sm font-medium text-muted transition-opacity duration-300 disabled:opacity-60",
+                          isHeroSearchFocused && "pointer-events-none opacity-0",
+                        )}
+                        disabled={isRecommending}
+                        onClick={() => {
+                          const example = promptExamples[exampleIndex];
+                          setPrompt(example);
+                          void startCourseFromPrompt(example);
+                        }}
+                        tabIndex={isHeroSearchFocused ? -1 : 0}
+                        type="button"
+                      >
+                        <span className="example-rotator block" key={exampleIndex}>
+                          “{promptExamples[exampleIndex]}”
+                        </span>
+                      </button>
+
+                      {/* While the search box is in use the rotating example makes way for a few to pick from.
+                          pointerdown is cancelled so tapping one does not blur the box (and fold the list) first. */}
+                      <ul
+                        aria-hidden={!isHeroSearchFocused}
+                        className={cn("absolute inset-x-0 top-5 grid gap-0.5", !isHeroSearchFocused && "pointer-events-none")}
+                      >
+                        {promptExamples.slice(0, 3).map((example, index) => (
+                          <li key={example}>
+                            <button
+                              className="hero-example-item block w-full py-2 text-center text-[0.9375rem] font-medium text-muted-strong"
+                              onClick={() => {
+                                setPrompt(example);
+                                void startCourseFromPrompt(example);
+                              }}
+                              onPointerDown={(event) => event.preventDefault()}
+                              style={{ "--i": index } as CSSProperties}
+                              tabIndex={isHeroSearchFocused ? 0 : -1}
+                              type="button"
+                            >
+                              “{example}”
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 </div>
 
                 <button
-                  className="ios-glass absolute inset-x-0 z-10 mx-auto flex h-12 w-fit items-center gap-2.5 rounded-full pl-6 pr-2 text-base font-bold [bottom:calc(1rem+max(env(safe-area-inset-bottom),var(--kb-h,0px)))]"
+                  className="ios-glass hero-rise absolute inset-x-0 z-10 mx-auto flex h-12 w-fit items-center gap-2.5 rounded-full pl-6 pr-2 text-base font-bold [--rise:480ms] [bottom:calc(1rem+max(env(safe-area-inset-bottom),var(--kb-h,0px)))]"
                   data-tour="quick-browse"
                   onClick={() => setActiveTab("explore")}
                   style={{ color: "var(--success)" }}
@@ -1757,13 +1867,13 @@ export function MobileAppShell() {
                   </span>
                 </button>
 
-                <LanguageMenuButton className="absolute left-5 z-20 [bottom:calc(1rem+max(env(safe-area-inset-bottom),var(--kb-h,0px)))]" />
+                <LanguageMenuButton className="hero-rise absolute left-5 z-20 [--rise:540ms] [bottom:calc(1rem+max(env(safe-area-inset-bottom),var(--kb-h,0px)))]" />
               </div>
             ) : (
               <div className={cn(tabSlideClass, "relative flex min-h-full flex-col px-5 pb-24 pt-5")}>
                 <header className="relative z-10 pt-12 text-left">
                   <h1
-                    className="text-3xl font-extrabold leading-tight tracking-normal text-balance"
+                    className="scroll-title text-3xl font-extrabold leading-tight tracking-normal text-balance"
                     data-home-title
                   >
                     {t("heroTitle")}
@@ -1772,7 +1882,11 @@ export function MobileAppShell() {
 
                 <div className="relative z-10 mt-7">{searchForm}</div>
 
-              {hasResult && (
+              {isGenerating ? (
+                <section className="mt-5">
+                  <CourseSkeleton />
+                </section>
+              ) : hasResult && (
                 // minmax(0,1fr) + min-w-0: a grid item otherwise grows to its widest child (the badge +
                 // radius controls row, a long title or description) and sticks out past the screen.
                 <section className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-4">
@@ -1997,6 +2111,7 @@ export function MobileAppShell() {
                           !enteredIds.has(place.id) && "chain-card-in",
                           swapFlash?.cardId === place.id && "chain-card-swapped",
                           addedId === place.id && "chain-card-added",
+                          removing?.id === place.id && "chain-card-out",
                           isDragging || isStopMenuOpen ? "z-20" : "transition-shadow",
                         )}
                         data-chain-id={place.id}
@@ -2006,7 +2121,11 @@ export function MobileAppShell() {
                             setEnteredIds((current) => new Set(current).add(place.id));
                           }
                         }}
-                        style={{ animationDelay: `${index * 60}ms` }}
+                        style={
+                          removing?.id === place.id
+                            ? ({ "--card-h": `${removing.height}px` } as CSSProperties)
+                            : { animationDelay: `${index * 60}ms` }
+                        }
                       >
                         <div className="flex min-w-0 items-center gap-2">
                         <button
@@ -2229,7 +2348,7 @@ export function MobileAppShell() {
                                 return (
                                 <div className="relative w-36 shrink-0" key={place.id}>
                                   <button
-                                    className="ios-row flex w-full flex-col overflow-hidden text-left"
+                                    className="ios-row ios-row-strip flex w-full flex-col overflow-hidden text-left"
                                     onClick={() => setSelectedPlaceId(place.id)}
                                     type="button"
                                   >
@@ -2277,7 +2396,7 @@ export function MobileAppShell() {
             <div className={cn(tabSlideClass, "flex h-full min-h-full flex-col px-5 pb-4 pt-3")}>
               {/* The title shares the back button's line (to its right) and scrolls away. */}
               <div className="flex h-11 shrink-0 items-center pl-14">
-                <h1 className="text-2xl font-extrabold tracking-tight">{t("exploreHeading")}</h1>
+                <h1 className="scroll-title text-2xl font-extrabold tracking-tight">{t("exploreHeading")}</h1>
               </div>
               <p className="mt-3 text-center text-[0.9375rem] text-muted text-balance">
                 {exploreSort === "weekly"
@@ -2342,7 +2461,7 @@ export function MobileAppShell() {
 
         {/* The first screen stays bare ("바로 탐색하기" is its way into explore). Profile and
             explore icons only appear once a course exists. */}
-        {(activeTab !== "home" || hasResult) && (
+        {(activeTab !== "home" || hasResult || isGenerating) && (
           <>
             <div
               aria-hidden="true"
@@ -2497,6 +2616,7 @@ export function MobileAppShell() {
 
         {openTrip && (
           <TripDetailSheet
+            origin={detailOrigin}
             comments={openTripComments}
             isLiked={likedIds.has(openTrip.id)}
             isSaved={savedIds.has(openTrip.id)}

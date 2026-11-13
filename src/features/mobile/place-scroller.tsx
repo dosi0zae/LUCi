@@ -46,10 +46,10 @@ export function PlaceScroller({ children }: { children: ReactNode }) {
   return (
     <div
       className={cn(
-        // A scrolling box clips whatever sticks out of it, so the cards' soft shadows were cut off
-        // in a hard grey edge. The padding gives the shadow room; the negative margins give the
-        // layout that space back.
-        "place-list-scroll relative -mx-1 -mb-6 -mt-1 flex min-w-0 gap-3 overflow-x-auto px-1 pb-6 pt-1",
+        // A scrolling box clips whatever sticks out of it, so a card's shadow was cut off in a hard
+        // edge. The padding gives the (tight, .ios-row-strip) shadow room; the negative margins give
+        // the layout that space back.
+        "place-list-scroll relative -mx-3 -mb-6 -mt-2 flex min-w-0 gap-3 overflow-x-auto px-3 pb-6 pt-2",
         overflows && !atEnd && "place-list-fade",
       )}
       ref={ref}

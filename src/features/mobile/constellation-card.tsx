@@ -126,8 +126,13 @@ function hideScaleBar(container: HTMLElement) {
   }
 }
 
-function createStopMarker(label: string) {
+// delayMs: set for a stop that is new on the map, so it drops in after the ones before it.
+function createStopMarker(label: string, delayMs: number | null) {
   const marker = document.createElement("div");
+  if (delayMs !== null && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    marker.style.animation = "marker-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both";
+    marker.style.animationDelay = `${delayMs}ms`;
+  }
   marker.textContent = label;
   marker.style.display = "grid";
   marker.style.placeItems = "center";
@@ -228,6 +233,7 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
   const mapRef = useRef<KakaoMap | null>(null);
   const mapsRef = useRef<KakaoMapsApi | null>(null);
   const overlaysRef = useRef<KakaoCustomOverlay[]>([]);
+  const seenStopIdsRef = useRef<Set<string>>(new Set());
   const polylineRef = useRef<KakaoPolyline | null>(null);
   const [status, setStatus] = useState<"idle" | "ready" | "error">(appKey ? "idle" : "error");
   const [viewMode, setViewMode] = useState<"map" | "abstract">("map");
@@ -305,10 +311,13 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
     const markerPositions = spreadOverlappingMarkers(places);
 
     overlaysRef.current.forEach((overlay) => overlay.setMap(null));
+    // Only stops that were not on the map a moment ago pop in (everything pops on the first draw).
+    let newStops = 0;
     overlaysRef.current = places.map((place, index) => {
       const markerPosition = markerPositions[index];
+      const isNew = !seenStopIdsRef.current.has(place.id);
       const overlay = new maps.CustomOverlay({
-        content: createStopMarker(String(index + 1)),
+        content: createStopMarker(String(index + 1), isNew ? 150 + newStops++ * 130 : null),
         position: new maps.LatLng(markerPosition.lat, markerPosition.lng),
         xAnchor: 0.5,
         yAnchor: 0.5,
@@ -317,6 +326,8 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
       overlay.setMap(map);
       return overlay;
     });
+
+    seenStopIdsRef.current = new Set(places.map((place) => place.id));
 
     suggestions.forEach((place, index) => {
       const overlay = new maps.CustomOverlay({

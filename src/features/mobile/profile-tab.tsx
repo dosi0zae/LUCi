@@ -29,7 +29,7 @@ type ProfileTabProps = {
   bookmarkedPlaces: MobilePlace[];
   likedIds: Set<string>;
   savedIds: Set<string>;
-  onOpenTrip: (trip: FeedTrip) => void;
+  onOpenTrip: (trip: FeedTrip, origin?: DOMRect) => void;
   onSelectPlace: (id: string) => void;
   onToggleLike: (id: string) => void;
   onToggleSave: (id: string) => void;
@@ -279,12 +279,12 @@ export function ProfileTab({
                   {bookmarkedPlaces.length === 0 ? (
                     <p className="mt-2 text-sm leading-5 text-muted">{t("emptySavedPlaces")}</p>
                   ) : (
-                    <div className="place-list-scroll -mx-1 mt-2 -mb-6 flex gap-3 overflow-x-auto px-1 pb-6 pt-1">
+                    <div className="place-list-scroll -mx-3 -mb-6 mt-0 flex gap-3 overflow-x-auto px-3 pb-6 pt-2">
                       {bookmarkedPlaces.map((place) => {
                         const localizedPlace = localizePlace(place, locale);
                         return (
                           <button
-                            className="ios-row flex w-36 shrink-0 flex-col overflow-hidden text-left"
+                            className="ios-row ios-row-strip flex w-36 shrink-0 flex-col overflow-hidden text-left"
                             key={place.id}
                             onClick={() => onSelectPlace(place.id)}
                             type="button"

@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { BookmarkIcon, CommentIcon } from "@/components/layout/app-icons";
+import { PopOnActive, RollingNumber } from "@/features/mobile/motion";
 import { PlacePhoto } from "@/features/mobile/place-photo";
 import { getTripCoverPlace, localizePlace, localizeTrip, type FeedTrip } from "@/features/mobile/mobile-data";
 import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
@@ -12,7 +13,8 @@ type TripFeedListProps = {
   mode: "explore" | "ranking";
   likedIds: Set<string>;
   savedIds: Set<string>;
-  onOpenTrip: (trip: FeedTrip) => void;
+  // The card's on-screen rectangle comes along so the course screen can grow out of it.
+  onOpenTrip: (trip: FeedTrip, origin?: DOMRect) => void;
   onToggleLike: (id: string) => void;
   onToggleSave: (id: string) => void;
   emptyLabel: string;
@@ -61,7 +63,7 @@ export function TripFeedList({
             )}
             <button
               className="block w-full text-left"
-              onClick={() => onOpenTrip(trip)}
+              onClick={(event) => onOpenTrip(trip, event.currentTarget.closest("article")?.getBoundingClientRect())}
               type="button"
             >
               <div className="flex items-start gap-3">
@@ -100,7 +102,8 @@ export function TripFeedList({
                 onClick={() => onToggleLike(trip.id)}
                 type="button"
               >
-                ♥ {(trip.likes + (isLiked ? 1 : 0)).toLocaleString()}
+                <PopOnActive active={isLiked}>♥</PopOnActive>
+                <RollingNumber value={(trip.likes + (isLiked ? 1 : 0)).toLocaleString()} />
               </button>
               <span className="flex items-center gap-1">
                 <CommentIcon className="h-4 w-4" />
@@ -111,8 +114,10 @@ export function TripFeedList({
                 onClick={() => onToggleSave(trip.id)}
                 type="button"
               >
-                <BookmarkIcon className="h-4 w-4" />
-                {(trip.saved + (isSaved ? 1 : 0)).toLocaleString()}
+                <PopOnActive active={isSaved}>
+                  <BookmarkIcon className="h-4 w-4" />
+                </PopOnActive>
+                <RollingNumber value={(trip.saved + (isSaved ? 1 : 0)).toLocaleString()} />
               </button>
             </div>
           </article>
