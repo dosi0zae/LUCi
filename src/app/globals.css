@@ -1362,14 +1362,23 @@ button.ios-card:not(:disabled):active {
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
-/* The logo when the search box is used: it is pulled into a dot (the fade is much quicker than the
-   shrink, so it is already invisible while still big and never covers the title), the space it held
-   closes, and the title and box underneath catch up with a springy settle. On leaving the box the
-   logo pops back with a little overshoot. */
-.hero-logo-rows {
+/* The header (logo, title, subtitle) when the search box is used: the logo is pulled into a dot (its fade
+   is much quicker than the shrink, so it is already invisible while still big), the text fades out
+   first, then the space they held closes and the box glides up to the top. On leaving the box the
+   logo pops back with a little overshoot and the text fades in. */
+.hero-head-rows {
   display: grid;
   grid-template-rows: 1fr;
   transition: grid-template-rows 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hero-head-text {
+  transition: opacity 260ms ease-out 80ms;
+}
+
+.hero-root[data-focus="true"] .hero-head-text {
+  opacity: 0;
+  transition: opacity 140ms ease-in;
 }
 
 .hero-logo-pop {
@@ -1379,7 +1388,7 @@ button.ios-card:not(:disabled):active {
     opacity 200ms ease-out;
 }
 
-.hero-root[data-focus="true"] .hero-logo-rows {
+.hero-root[data-focus="true"] .hero-head-rows {
   grid-template-rows: 0fr;
   transition: grid-template-rows 380ms cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -1390,23 +1399,6 @@ button.ios-card:not(:disabled):active {
   transition:
     transform 300ms cubic-bezier(0.5, 0, 0.9, 0.4),
     opacity 120ms ease-in;
-}
-
-/* The suggestion under the search box: when the box is used (the keyboard takes most of the screen) it
-   shrinks up into the box and is gone, fast; when the box is left it eases back. */
-.example-suck {
-  transform-origin: 50% 0;
-  transition:
-    opacity 300ms ease-out,
-    transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.hero-root[data-focus="true"] .example-suck {
-  opacity: 0;
-  transform: translateY(-3.25rem) scale(0.3);
-  transition:
-    opacity 260ms ease-in,
-    transform 260ms cubic-bezier(0.5, 0, 0.9, 0.4);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1427,11 +1419,11 @@ button.ios-card:not(:disabled):active {
   }
 
   .hero-search form,
-  .example-suck,
-  .hero-root[data-focus="true"] .example-suck,
-  .hero-logo-rows,
+  .hero-head-rows,
+  .hero-head-text,
   .hero-logo-pop,
-  .hero-root[data-focus="true"] .hero-logo-rows,
+  .hero-root[data-focus="true"] .hero-head-rows,
+  .hero-root[data-focus="true"] .hero-head-text,
   .hero-root[data-focus="true"] .hero-logo-pop {
     transition: none;
   }

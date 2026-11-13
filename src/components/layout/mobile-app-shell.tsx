@@ -1877,47 +1877,48 @@ export function MobileAppShell() {
 
                 <div
                   className={cn(
-                    // Same duration and curve as the logo's space closing (.hero-logo-rows), so the whole
+                    // Same duration and curve as the header's space closing (.hero-head-rows), so the whole
                     // column glides up as one piece instead of two movements that disagree.
                     "relative z-10 px-5 text-center transition-[padding] duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
-                    isHeroSearchFocused ? "pt-[2.75rem]" : "pt-[3.75rem]",
+                    // With the keyboard up the box sits near the top of the screen, just below the status bar.
+                    isHeroSearchFocused ? "pt-[max(4.5rem,calc(env(safe-area-inset-top)+2.5rem))]" : "pt-[3.75rem]",
                   )}
                 >
-                  {/* While the keyboard is up only the logo makes way (it folds to nothing), so the title
-                      and the search box stay in view at the top. */}
-                  <div aria-hidden={isHeroSearchFocused} className="hero-logo-rows">
-                    <div className="min-h-0">
-                      <div className="hero-rise py-1 [--rise:0ms]">
-                        <div className="hero-logo-pop">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img alt="Trip Chain" className="hero-logo-float mx-auto block h-[5.3125rem] w-auto" src="/tripchain-logo.svg" />
+                  {/* While the box is in use the keyboard covers most of the screen, so the whole header
+                      (logo, title, subtitle) folds away and the box moves up to the top. The logo shrinks to a
+                      dot with a quick fade; the text fades first, then the space closes. */}
+                  <div aria-hidden={isHeroSearchFocused} className="hero-head-rows">
+                    <div className="min-h-0 overflow-hidden">
+                      {/* The gap below the subtitle (pb-8) is part of the header, so it closes with it. */}
+                      <div className="px-2 pb-8">
+                        <div className="hero-rise py-1 [--rise:0ms]">
+                          <div className="hero-logo-pop">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img alt="Trip Chain" className="hero-logo-float mx-auto block h-[5.3125rem] w-auto" src="/tripchain-logo.svg" />
+                          </div>
+                        </div>
+                        <div className="hero-head-text">
+                          <h1 className="hero-rise mt-3 break-keep text-[2rem] font-extrabold leading-[2.5rem] tracking-tight text-balance [--rise:110ms]">
+                            {t("heroTitle")}
+                          </h1>
+                          <p className="hero-rise mx-auto mt-4 max-w-[20.5rem] whitespace-pre-line break-keep text-base leading-7 text-muted [--rise:220ms]">
+                            {t("heroSubtitle")}
+                          </p>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <>
-                  <h1 className="hero-rise mt-3 break-keep text-[2rem] font-extrabold leading-[2.5rem] tracking-tight text-balance [--rise:110ms]">
-                    {t("heroTitle")}
-                  </h1>
-                  <p className="hero-rise mx-auto mt-4 max-w-[20.5rem] whitespace-pre-line break-keep text-base leading-7 text-muted [--rise:220ms]">
-                    {t("heroSubtitle")}
-                  </p>
 
-                  {/* A fixed gap below the subtitle (not vertically centered in the full
-                      viewport) so this sits at the same relative spot regardless of how
-                      tall the device's visible viewport actually is — a phone with more
-                      of its screen taken up by browser chrome shouldn't stretch this gap
-                      wider than on one with less. */}
                   <div
-                    className="hero-search hero-rise mt-8 text-left [--rise:330ms]"
+                    className="hero-search hero-rise text-left [--rise:330ms]"
                     onBlurCapture={(event) => {
                       if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
                         setIsHeroSearchFocused(false);
                       }
                     }}
                     // Only a text field counts. The example under the box is a button inside this wrapper:
-                    // its own focus (the first thing a tap does) must not start the "box in use" motion,
-                    // or the example would fly away before the tap could land.
+                    // its own focus (the first thing a tap does) must not fold the header, or the example
+                    // would move out from under the finger before the tap could land.
                     onFocusCapture={(event) => {
                       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
                         setIsHeroSearchFocused(true);
@@ -1926,21 +1927,15 @@ export function MobileAppShell() {
                   >
                     {searchForm}
 
-                    {/* While the search box is in use (the keyboard covers most of the screen) the example
-                        shrinks up into the box and is gone; it eases back when the box is left. */}
+                    {/* The rotating example stays under the box (also while typing). */}
                     <button
-                      aria-hidden={isHeroSearchFocused}
-                      className={cn(
-                        "example-suck relative mt-7 block w-full text-center text-sm font-medium text-muted disabled:opacity-60",
-                        isHeroSearchFocused && "pointer-events-none",
-                      )}
+                      className="relative mt-7 block w-full text-center text-sm font-medium text-muted disabled:opacity-60"
                       disabled={isRecommending}
                       onClick={() => {
                         const example = promptExamples[exampleIndex];
                         setPrompt(example);
                         void startCourseFromPrompt(example);
                       }}
-                      tabIndex={isHeroSearchFocused ? -1 : 0}
                       type="button"
                     >
                       <span className="example-rotator block" key={exampleIndex}>
@@ -1948,7 +1943,6 @@ export function MobileAppShell() {
                       </span>
                     </button>
                   </div>
-                  </>
                 </div>
 
                 <button
