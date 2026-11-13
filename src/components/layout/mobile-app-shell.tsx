@@ -360,6 +360,11 @@ export function MobileAppShell() {
       const root = document.documentElement.style;
       root.setProperty("--app-vh", `${stableHeight}px`);
       root.setProperty("--kb-h", `${covered}px`);
+      // iOS pans the page up when the keyboard opens (visualViewport.offsetTop is by how much). On the first
+      // screen the content is laid out for the visible area, so it is shifted back down by exactly that much
+      // (see .hero-root) and the search box stays where it was put, wherever iOS decides to pan to.
+      const heroPan = editing && document.activeElement?.closest(".hero-search") ? Math.max(0, Math.round(viewport?.offsetTop ?? 0)) : 0;
+      root.setProperty("--hero-pan", `${heroPan}px`);
     }
 
     syncAppHeight();
@@ -1880,23 +1885,21 @@ export function MobileAppShell() {
                     // Same duration and curve as the header's space closing (.hero-head-rows), so the whole
                     // column glides up as one piece instead of two movements that disagree.
                     "relative z-10 px-5 text-center transition-[padding] duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
-                    // With the keyboard up the box sits near the top of the screen, just below the status bar.
-                    isHeroSearchFocused ? "pt-[max(4.5rem,calc(env(safe-area-inset-top)+2.5rem))]" : "pt-[3.75rem]",
+                    // With the keyboard up the box sits near the top of the screen, below the status bar,
+                    // with the small logo above it.
+                    isHeroSearchFocused ? "pt-[max(2.5rem,calc(env(safe-area-inset-top)+0.75rem))]" : "pt-[3.75rem]",
                   )}
                 >
-                  {/* While the box is in use the keyboard covers most of the screen, so the whole header
-                      (logo, title, subtitle) folds away and the box moves up to the top. The logo shrinks to a
-                      dot with a quick fade; the text fades first, then the space closes. */}
+                  {/* While the box is in use the keyboard covers most of the screen: the logo shrinks to half
+                      its size and stays above the box, while the title and subtitle fade out and fold away. */}
+                  <div className="hero-rise hero-logo-wrap py-1 [--rise:0ms]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img alt="Trip Chain" className="hero-logo-float hero-logo-img mx-auto block w-auto" src="/tripchain-logo.svg" />
+                  </div>
                   <div aria-hidden={isHeroSearchFocused} className="hero-head-rows">
                     <div className="min-h-0 overflow-hidden">
                       {/* The gap below the subtitle (pb-8) is part of the header, so it closes with it. */}
                       <div className="px-2 pb-8">
-                        <div className="hero-rise py-1 [--rise:0ms]">
-                          <div className="hero-logo-pop">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img alt="Trip Chain" className="hero-logo-float mx-auto block h-[5.3125rem] w-auto" src="/tripchain-logo.svg" />
-                          </div>
-                        </div>
                         <div className="hero-head-text">
                           <h1 className="hero-rise mt-3 break-keep text-[2rem] font-extrabold leading-[2.5rem] tracking-tight text-balance [--rise:110ms]">
                             {t("heroTitle")}

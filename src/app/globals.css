@@ -1344,6 +1344,13 @@ button.ios-card:not(:disabled):active {
   --depth: -12px;
 }
 
+/* Undoes iOS's pan of the page while the first-screen box is focused (--hero-pan is set from
+   visualViewport.offsetTop in the shell). `translate` is its own property, so it does not fight the
+   tab-slide animation's transform. */
+.hero-root {
+  translate: 0 var(--hero-pan, 0px);
+}
+
 .hero-root[data-focus="true"] .hero-blob {
   filter: blur(30px) saturate(1.6) brightness(1.05);
 }
@@ -1381,24 +1388,27 @@ button.ios-card:not(:disabled):active {
   transition: opacity 140ms ease-in;
 }
 
-.hero-logo-pop {
-  transform-origin: 50% 100%;
-  transition:
-    transform 460ms cubic-bezier(0.34, 1.56, 0.64, 1),
-    opacity 200ms ease-out;
+/* The logo keeps its place and just gets half as tall (the width follows) while the box is in use. */
+.hero-logo-img {
+  height: 5.3125rem;
+  transition: height 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hero-logo-wrap {
+  transition: margin-bottom 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hero-root[data-focus="true"] .hero-logo-img {
+  height: 2.65625rem;
+}
+
+.hero-root[data-focus="true"] .hero-logo-wrap {
+  margin-bottom: 1.25rem;
 }
 
 .hero-root[data-focus="true"] .hero-head-rows {
   grid-template-rows: 0fr;
   transition: grid-template-rows 380ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.hero-root[data-focus="true"] .hero-logo-pop {
-  opacity: 0;
-  transform: scale(0.08);
-  transition:
-    transform 300ms cubic-bezier(0.5, 0, 0.9, 0.4),
-    opacity 120ms ease-in;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1421,10 +1431,10 @@ button.ios-card:not(:disabled):active {
   .hero-search form,
   .hero-head-rows,
   .hero-head-text,
-  .hero-logo-pop,
+  .hero-logo-img,
+  .hero-logo-wrap,
   .hero-root[data-focus="true"] .hero-head-rows,
-  .hero-root[data-focus="true"] .hero-head-text,
-  .hero-root[data-focus="true"] .hero-logo-pop {
+  .hero-root[data-focus="true"] .hero-head-text {
     transition: none;
   }
 
