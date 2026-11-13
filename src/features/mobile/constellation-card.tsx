@@ -234,6 +234,8 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
   const mapsRef = useRef<KakaoMapsApi | null>(null);
   const overlaysRef = useRef<KakaoCustomOverlay[]>([]);
   const seenStopIdsRef = useRef<Set<string>>(new Set());
+  // The zoom level at which the whole route fits; anything closer than that counts as "zoomed in".
+  const fitLevelRef = useRef(6);
   const polylineRef = useRef<KakaoPolyline | null>(null);
   const [status, setStatus] = useState<"idle" | "ready" | "error">(appKey ? "idle" : "error");
   const [viewMode, setViewMode] = useState<"map" | "abstract">("map");
@@ -263,13 +265,17 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
         }
 
         mapsRef.current = maps;
+        // The map does not move under a finger or the wheel: it sits in a scrolling page, and dragging
+        // it by accident while scrolling was the most common annoyance. +/- still zoom it, and it can
+        // be dragged once it is zoomed in (see zoomBy).
         mapRef.current = new maps.Map(containerRef.current, {
           center: new maps.LatLng(places[0].lat, places[0].lng),
-          draggable: true,
+          draggable: false,
           level: 6,
-          scrollwheel: true,
+          scrollwheel: false,
         });
-        mapRef.current.setZoomable(true);
+        mapRef.current.setZoomable(false);
+        containerRef.current.classList.add("map-locked");
         hideScaleBar(containerRef.current);
         setStatus("ready");
       })
@@ -297,6 +303,11 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
     places.forEach((place) => bounds.extend(new maps.LatLng(place.lat, place.lng)));
     suggestions.forEach((place) => bounds.extend(new maps.LatLng(place.lat, place.lng)));
     map.setBounds(bounds, 32);
+    fitLevelRef.current = map.getLevel();
+    map.setDraggable(false);
+    if (containerRef.current) {
+      containerRef.current.classList.add("map-locked");
+    }
 
     polylineRef.current?.setMap(null);
     polylineRef.current = new maps.Polyline({
@@ -354,6 +365,11 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
     }
     const next = Math.min(14, Math.max(1, map.getLevel() + delta));
     map.setLevel(next);
+    // Zoomed in past the whole-route view the person wants to look around, so dragging comes on;
+    // at or beyond it there is nothing to pan to and the page scrolls instead.
+    const canDrag = next < fitLevelRef.current;
+    map.setDraggable(canDrag);
+    containerRef.current?.classList.toggle("map-locked", !canDrag);
   }
 
   function resetView() {
@@ -365,6 +381,11 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
     const bounds = new maps.LatLngBounds();
     places.forEach((place) => bounds.extend(new maps.LatLng(place.lat, place.lng)));
     map.setBounds(bounds, 32);
+    fitLevelRef.current = map.getLevel();
+    map.setDraggable(false);
+    if (containerRef.current) {
+      containerRef.current.classList.add("map-locked");
+    }
   }
 
   if (places.length < 2) {

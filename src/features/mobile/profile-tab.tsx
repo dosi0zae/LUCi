@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BookmarkIcon, EyeIcon, HeartIcon, SlidersIcon, UserIcon } from "@/components/layout/app-icons";
-import { renderGoogleSignInButton, type GoogleAccount } from "@/features/mobile/google-auth";
+import { loadGoogleScript, requestGoogleAccessToken, type GoogleAccount } from "@/features/mobile/google-auth";
 import { SlidingTabs } from "@/features/mobile/sliding-tabs";
 import { useHorizontalSwipe } from "@/features/mobile/use-swipe";
 import { TripFeedList } from "@/features/mobile/trip-feed-list";
@@ -21,7 +21,8 @@ type ProfileTabProps = {
   // True when NEXT_PUBLIC_GOOGLE_CLIENT_ID is set; otherwise the mock sign-in button is shown.
   googleEnabled: boolean;
   signInError: string | null;
-  onGoogleCredential: (credential: string) => void;
+  onGoogleToken: (accessToken: string) => Promise<void>;
+  onGoogleError: () => void;
   myTrips: FeedTrip[];
   savedTrips: FeedTrip[];
   likedTrips: FeedTrip[];
@@ -38,29 +39,93 @@ type ProfileTabProps = {
 type ProfileSubTab = "mine" | "saved" | "liked" | "recent" | "settings";
 const PROFILE_SUB_TAB_ORDER: ProfileSubTab[] = ["mine", "saved", "liked", "recent", "settings"];
 
-// Google draws its own button (an iframe), so it is mounted into a plain div once the script is in.
-function GoogleSignInButton({ onCredential }: { onCredential: (credential: string) => void }) {
-  const { locale } = useLocale();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const onCredentialRef = useRef(onCredential);
+// The official multicolour "G" (Google's brand rules: it sits on white, in its own colours).
+function GoogleG({ className }: { className?: string }) {
+  return (
+    <svg aria-hidden="true" className={className} viewBox="0 0 48 48">
+      <path
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+        fill="#EA4335"
+      />
+      <path
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+        fill="#4285F4"
+      />
+      <path
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+        fill="#34A853"
+      />
+    </svg>
+  );
+}
+
+// Tapping opens Google's account chooser (a popup); what comes back goes to `onToken`. The script is
+// fetched when the screen appears so the popup can open straight from the tap.
+function GoogleSignInButton({
+  onError,
+  onToken,
+}: {
+  onError: () => void;
+  onToken: (accessToken: string) => Promise<void>;
+}) {
+  const t = useT();
+  const [isReady, setIsReady] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
 
   useEffect(() => {
-    onCredentialRef.current = onCredential;
-  }, [onCredential]);
+    let cancelled = false;
+    loadGoogleScript()
+      .then(() => {
+        if (!cancelled) {
+          setIsReady(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          onError();
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+    // The error callback is only used if the script cannot be fetched.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
+  async function handleClick() {
+    setIsBusy(true);
+    try {
+      // Called synchronously from the tap, so the browser lets the popup open.
+      const accessToken = await requestGoogleAccessToken();
+      await onToken(accessToken);
+    } catch (error) {
+      if (!(error instanceof Error && error.message === "popup_closed")) {
+        onError();
+      }
+    } finally {
+      setIsBusy(false);
     }
-    renderGoogleSignInButton(container, {
-      locale: locale === "zh" ? "zh-CN" : locale,
-      width: 280,
-      onCredential: (credential) => onCredentialRef.current(credential),
-    }).catch(() => undefined);
-  }, [locale]);
+  }
 
-  return <div className="flex h-11 w-[280px] max-w-full items-center justify-center" ref={containerRef} />;
+  return (
+    <button
+      className="ios-glass flex h-14 w-full max-w-[18rem] items-center justify-center gap-3 rounded-full px-6 text-[1.0625rem] font-semibold text-foreground shadow-[0_10px_28px_rgba(15,23,42,0.14)] disabled:opacity-60"
+      disabled={!isReady || isBusy}
+      onClick={() => void handleClick()}
+      type="button"
+    >
+      {isBusy ? (
+        <span className="h-5 w-5 animate-spin rounded-full border-2 border-border-strong border-t-primary" />
+      ) : (
+        <GoogleG className="h-5 w-5 shrink-0" />
+      )}
+      {t("googleContinue")}
+    </button>
+  );
 }
 
 function LanguageSwitcher() {
@@ -101,7 +166,8 @@ export function ProfileTab({
   onSelectPlace,
   onToggleLike,
   onToggleSave,
-  onGoogleCredential,
+  onGoogleError,
+  onGoogleToken,
   onToggleSignIn,
   recentlyViewedTrips,
   savedIds,
@@ -146,7 +212,7 @@ export function ProfileTab({
         </p>
         {googleEnabled ? (
           <div className="mt-2">
-            <GoogleSignInButton onCredential={onGoogleCredential} />
+            <GoogleSignInButton onError={onGoogleError} onToken={onGoogleToken} />
           </div>
         ) : (
           <Button className="mt-2 h-14 px-8 text-[1.0625rem] shadow-[0_10px_28px_rgba(47,111,228,0.32)]" onClick={onToggleSignIn} shape="pill">

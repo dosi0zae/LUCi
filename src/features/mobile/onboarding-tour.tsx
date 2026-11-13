@@ -106,25 +106,27 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
 
   if (phase === "intro") {
     return (
-      <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-4 bg-black/80 px-8 text-center backdrop-blur-sm">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img alt="Trip Chain" className="h-14 w-auto drop-shadow-[0_0_18px_rgba(79,141,247,0.55)]" src="/tripchain-logo.svg" />
-        <h2 className="break-keep text-3xl font-extrabold tracking-tight text-white text-balance">{t("tourIntroTitle")}</h2>
-        <p className="max-w-[18rem] break-keep text-base leading-7 text-white/75 text-pretty">{t("tourIntroSubtitle")}</p>
-        <button
-          className="mt-3 h-14 rounded-full bg-primary px-9 text-[1.0625rem] font-extrabold text-white shadow-[0_10px_28px_rgba(47,111,228,0.45)] transition hover:bg-primary-strong active:scale-95"
-          onClick={onStart}
-          type="button"
-        >
-          {t("tourStart")}
-        </button>
-        <button
-          className="py-2 text-sm font-semibold text-white/60 transition hover:text-white"
-          onClick={onSkip}
-          type="button"
-        >
-          {t("tourSkip")}
-        </button>
+      <div className="tour-scrim fixed inset-0 z-[60] flex items-center justify-center px-6">
+        <div className="tour-card hero-rise flex w-full max-w-[21rem] flex-col items-center gap-4 px-7 pb-6 pt-9 text-center [--rise:0ms]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img alt="Trip Chain" className="hero-logo-float h-14 w-auto drop-shadow-[0_0_18px_rgba(79,141,247,0.45)]" src="/tripchain-logo.svg" />
+          <h2 className="break-keep text-[1.75rem] font-extrabold leading-9 tracking-tight text-foreground text-balance">{t("tourIntroTitle")}</h2>
+          <p className="max-w-[17rem] break-keep text-base leading-7 text-muted-strong text-pretty">{t("tourIntroSubtitle")}</p>
+          <button
+            className="tour-primary mt-2 h-14 w-full rounded-full px-9 text-[1.0625rem] font-extrabold"
+            onClick={onStart}
+            type="button"
+          >
+            {t("tourStart")}
+          </button>
+          <button
+            className="py-1.5 text-sm font-semibold text-muted transition hover:text-foreground"
+            onClick={onSkip}
+            type="button"
+          >
+            {t("tourSkip")}
+          </button>
+        </div>
       </div>
     );
   }
@@ -135,37 +137,51 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
   const placeBelow = rect ? rect.bottom + 170 < viewportHeight : true;
   const tooltipLeft = rect ? Math.max(20, Math.min(rect.left, viewportWidth - 340)) : 20;
 
+  // The spotlight: a rounded window cut out of the frosted scrim. clip-path paths with the same
+  // commands interpolate, so the window glides from one target to the next.
+  const spot = rect
+    ? (() => {
+        const x = rect.left - padding;
+        const y = rect.top - padding;
+        const w = rect.width + padding * 2;
+        const h = rect.height + padding * 2;
+        const r = Math.min(36, h / 2, w / 2);
+        const hole =
+          `M${x + r} ${y}H${x + w - r}A${r} ${r} 0 0 1 ${x + w} ${y + r}V${y + h - r}A${r} ${r} 0 0 1 ${x + w - r} ${y + h}` +
+          `H${x + r}A${r} ${r} 0 0 1 ${x} ${y + h - r}V${y + r}A${r} ${r} 0 0 1 ${x + r} ${y}Z`;
+        return { x, y, w, h, r, clip: `path(evenodd, "M0 0H${viewportWidth}V${viewportHeight}H0Z${hole}")` };
+      })()
+    : null;
+
   return (
     <div className="fixed inset-0 z-[60]">
-      {rect ? (
+      <div
+        className="tour-scrim fixed inset-0 transition-[clip-path] duration-300 ease-out"
+        style={spot ? { clipPath: spot.clip, WebkitClipPath: spot.clip } : undefined}
+      />
+
+      {spot && (
         <div
-          className="fixed rounded-[2.25rem] transition-all duration-300"
-          style={{
-            top: rect.top - padding,
-            left: rect.left - padding,
-            width: rect.width + padding * 2,
-            height: rect.height + padding * 2,
-            boxShadow: "0 0 0 9999px rgba(11, 18, 32, 0.78)",
-            pointerEvents: "none",
-          }}
+          className="tour-ring pointer-events-none fixed transition-all duration-300 ease-out"
+          style={{ top: spot.y, left: spot.x, width: spot.w, height: spot.h, borderRadius: spot.r }}
         />
-      ) : (
-        <div className="fixed inset-0 bg-[#0b1220]/78" />
       )}
 
       {rect && (
         <div
-          className="ios-menu fixed z-[61] w-[calc(100%-40px)] max-w-[21rem] p-5 transition-all duration-300"
+          className="tour-card fixed z-[61] w-[calc(100%-40px)] max-w-[21rem] p-5 transition-all duration-300"
           style={{
             left: tooltipLeft,
             top: placeBelow ? rect.bottom + 14 : undefined,
             bottom: placeBelow ? undefined : viewportHeight - rect.top + 14,
           }}
         >
-          <p className="text-sm font-bold text-primary">
-            {stepIndex + 1} / {TOUR_STEPS.length}
-          </p>
-          <h3 className="mt-1 break-keep text-xl font-extrabold text-foreground text-balance">{t(step.titleKey)}</h3>
+          <div aria-label={`${stepIndex + 1} / ${TOUR_STEPS.length}`} className="flex items-center gap-1.5" role="img">
+            {TOUR_STEPS.map((tourStep, index) => (
+              <span className="tour-dot" data-active={index === stepIndex} key={tourStep.target} />
+            ))}
+          </div>
+          <h3 className="mt-3 break-keep text-xl font-extrabold text-foreground text-balance">{t(step.titleKey)}</h3>
           <p className="mt-2 break-keep text-[0.9375rem] leading-6 text-muted-strong text-pretty">{t(step.descriptionKey)}</p>
           <div className="mt-4 flex items-center justify-between">
             <button
@@ -186,7 +202,7 @@ export function OnboardingTour({ onActivateTab, onFinish, onSkip, onStart, phase
                 </button>
               )}
               <button
-                className="rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-white transition hover:bg-primary-strong active:scale-95"
+                className="tour-primary rounded-full px-5 py-2.5 text-sm font-bold"
                 onClick={goNext}
                 type="button"
               >

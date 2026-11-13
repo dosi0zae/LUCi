@@ -184,17 +184,20 @@ export function TripDetailSheet({
     if (to.width === 0 || photoFrom.width === 0) {
       return;
     }
-    const scale = photoFrom.width / to.width;
+    // One uniform scale that makes the cover at least as big as the card's photo, then a clip that crops
+    // it to the card photo's own shape (a square thumbnail out of a wide cover).
+    const scale = Math.max(photoFrom.width / to.width, photoFrom.height / to.height);
     const dx = photoFrom.left + photoFrom.width / 2 - (to.left + to.width / 2);
     const dy = photoFrom.top + photoFrom.height / 2 - (to.top + to.height / 2);
-    const crop = Math.max(0, (to.height - photoFrom.height / scale) / 2);
+    const cropX = Math.max(0, (to.width - photoFrom.width / scale) / 2);
+    const cropY = Math.max(0, (to.height - photoFrom.height / scale) / 2);
     cover.animate(
       [
         {
           transform: `translate(${dx}px, ${dy}px) scale(${scale})`,
-          clipPath: `inset(${crop}px 0px ${crop}px 0px round ${16 / scale}px)`,
+          clipPath: `inset(${cropY}px ${cropX}px ${cropY}px ${cropX}px round ${16 / scale}px)`,
         },
-        { transform: "translate(0px, 0px) scale(1)", clipPath: "inset(0px 0px 0px 0px round 28px)" },
+        { transform: "translate(0px, 0px) scale(1)", clipPath: "inset(0px 0px 0px 0px round 0px 0px 24px 24px)" },
       ],
       { duration: 540, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "backwards" },
     );
@@ -573,9 +576,20 @@ export function TripDetailSheet({
         }}
       >
         {coverSrc && !coverFailed && (
-          <div className="mb-4 overflow-hidden rounded-[1.75rem] will-change-transform" ref={coverRef}>
+          // Edge to edge and up under the status bar (the negative margins cancel the page's own padding);
+          // the back button floats over it, with a faint shade behind so the white button never vanishes.
+          <div
+            className="relative -mx-5 mb-5 overflow-hidden rounded-b-3xl will-change-transform [margin-top:calc(-4rem-env(safe-area-inset-top))]"
+            ref={coverRef}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img alt="" className="block h-52 w-full object-cover" onError={() => setCoverFailed(true)} src={coverSrc} />
+            <img
+              alt=""
+              className="block w-full object-cover [height:calc(17rem+env(safe-area-inset-top))]"
+              onError={() => setCoverFailed(true)}
+              src={coverSrc}
+            />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/35 to-transparent" />
           </div>
         )}
         <Badge tone="neutral">{localizedPlaces[0]?.area ?? t("seoulWide")}</Badge>

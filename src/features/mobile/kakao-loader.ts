@@ -8,6 +8,7 @@ export type KakaoMap = {
   getLevel(): number;
   setBounds(bounds: KakaoLatLngBounds, padding?: number): void;
   setCenter(latlng: KakaoLatLng): void;
+  setDraggable(draggable: boolean): void;
   setLevel(level: number): void;
   setZoomable(zoomable: boolean): void;
 };

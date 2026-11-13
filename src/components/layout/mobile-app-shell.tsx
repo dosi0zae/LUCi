@@ -53,6 +53,7 @@ import {
   type TripVisibility,
 } from "@/features/mobile/mobile-data";
 import { useCategoryLabel, useLocale, usePromptExamples, useT } from "@/features/mobile/i18n/i18n-context";
+import { buildPromptSuggestions, fetchSeoulWeather } from "@/features/mobile/prompt-suggestions";
 import { CategorySheet, type PlaceBadgeKind } from "@/features/mobile/category-sheet";
 import { LanguageMenuButton } from "@/features/mobile/language-menu-button";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
@@ -69,7 +70,6 @@ import { CreatorProfileSheet } from "@/features/mobile/creator-profile-sheet";
 import { loadKakaoMaps } from "@/features/mobile/kakao-loader";
 import {
   GOOGLE_CLIENT_ID,
-  disableGoogleAutoSelect,
   isGoogleAccount,
   type GoogleAccount,
 } from "@/features/mobile/google-auth";
@@ -102,7 +102,8 @@ import { ProfileTab } from "@/features/mobile/profile-tab";
 // explore as a sort option rather than its own screen.
 type TabId = "home" | "explore" | "profile";
 type ExploreSort = "all" | "weekly" | "live";
-const EXPLORE_SORT_ORDER: ExploreSort[] = ["all", "live", "weekly"];
+// Left to right in the tab bar: live, all (the default, in the middle), weekly. Swiping follows the same order.
+const EXPLORE_SORT_ORDER: ExploreSort[] = ["live", "all", "weekly"];
 // Where (px below the scroll area's top) the pinned sort tabs sit: centered on the back button.
 const EXPLORE_TABS_PIN_TOP = 9;
 
@@ -166,7 +167,15 @@ export function MobileAppShell() {
   const t = useT();
   const categoryLabel = useCategoryLabel();
   const { locale } = useLocale();
-  const promptExamples = usePromptExamples();
+  const staticPromptExamples = usePromptExamples();
+  // Three phrases put together from the weather, the time and what is popular right now. The first paint
+  // (server and client alike) uses the fixed list, then they are swapped in once, while the hero is still
+  // rising in; the weather is asked for at most ~2.5 s, and without it the phrases use the time of day.
+  const [dynamicPromptExamples, setDynamicPromptExamples] = useState<{ locale: string; list: string[] } | null>(null);
+  const promptExamples =
+    dynamicPromptExamples && dynamicPromptExamples.locale === locale
+      ? dynamicPromptExamples.list
+      : staticPromptExamples.slice(0, 3);
 
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const [tourPhase, setTourPhase] = useState<"hidden" | "intro" | "steps">("hidden");
@@ -279,6 +288,26 @@ export function MobileAppShell() {
   }, [hasResult, promptExamples.length]);
 
   useEffect(() => {
+    // A fresh set of phrases each time the first screen comes up (and in the chosen language).
+    if (hasResult) {
+      return;
+    }
+    let cancelled = false;
+    // Set once, so the visible phrase does not change twice: wait briefly for the weather (it is cached
+    // after the first answer, so later visits are instant), then go without it.
+    void Promise.race([fetchSeoulWeather(), new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 1200))]).then(
+      (weather) => {
+        if (!cancelled) {
+          setDynamicPromptExamples({ locale, list: buildPromptSuggestions(locale, weather) });
+        }
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [hasResult, locale]);
+
+  useEffect(() => {
     if (!hasResult) {
       return;
     }
@@ -331,6 +360,11 @@ export function MobileAppShell() {
       const root = document.documentElement.style;
       root.setProperty("--app-vh", `${stableHeight}px`);
       root.setProperty("--kb-h", `${covered}px`);
+      // On the first screen the layout is built so the search box is already above the keyboard, so
+      // iOS's habit of panning the page up (which pushes the title off the top) is undone.
+      if (editing && (viewport?.offsetTop ?? 0) > 0 && document.activeElement?.closest(".hero-search")) {
+        window.scrollTo(0, 0);
+      }
     }
 
     syncAppHeight();
@@ -452,13 +486,13 @@ export function MobileAppShell() {
 
   // The Google button returns an ID token; the server confirms it with Google (and that it was issued
   // for this app) before the account is trusted. Only the public profile is kept, never the token.
-  async function handleGoogleCredential(credential: string) {
+  async function handleGoogleToken(accessToken: string) {
     setSignInError(null);
     try {
       const response = await fetch("/api/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential }),
+        body: JSON.stringify({ accessToken }),
       });
       const data = await response.json();
       if (!response.ok || !isGoogleAccount(data?.account)) {
@@ -476,7 +510,6 @@ export function MobileAppShell() {
       setIsSignedIn(false);
       setAccount(null);
       setSignInError(null);
-      disableGoogleAutoSelect();
       return;
     }
     setIsSignedIn(true);
@@ -859,9 +892,10 @@ export function MobileAppShell() {
   const exploreTabs = (
     <SlidingTabs
       onChange={selectExploreSort}
+      fullWidth
       options={[
-        { value: "all", label: t("exploreSortAll") },
         { value: "live", label: t("rankingLive") },
+        { value: "all", label: t("exploreSortAll") },
         { value: "weekly", label: t("rankingWeekly") },
       ]}
       value={exploreSort}
@@ -1846,10 +1880,27 @@ export function MobileAppShell() {
                   />
                 </div>
 
-                <div className="relative z-10 px-5 pt-[3.75rem] text-center">
-                  <div className="hero-rise [--rise:0ms]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img alt="Trip Chain" className="hero-logo-float mx-auto block h-[5.3125rem] w-auto" src="/tripchain-logo.svg" />
+                <div
+                  className={cn(
+                    "relative z-10 px-5 text-center transition-[padding] duration-300 ease-out",
+                    isHeroSearchFocused ? "pt-[2.75rem]" : "pt-[3.75rem]",
+                  )}
+                >
+                  {/* While the keyboard is up only the logo makes way (it folds to nothing), so the title
+                      and the search box stay in view at the top. */}
+                  <div
+                    aria-hidden={isHeroSearchFocused}
+                    className={cn(
+                      "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
+                      isHeroSearchFocused ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100",
+                    )}
+                  >
+                    <div className="min-h-0 overflow-hidden">
+                      <div className="hero-rise py-1 [--rise:0ms]">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img alt="Trip Chain" className="hero-logo-float mx-auto block h-[5.3125rem] w-auto" src="/tripchain-logo.svg" />
+                      </div>
+                    </div>
                   </div>
                   <h1 className="hero-rise mt-3 break-keep text-[2rem] font-extrabold leading-[2.5rem] tracking-tight text-balance [--rise:110ms]">
                     {t("heroTitle")}
@@ -1900,7 +1951,7 @@ export function MobileAppShell() {
                         aria-hidden={!isHeroSearchFocused}
                         className={cn("absolute inset-x-0 top-5 grid gap-0.5", !isHeroSearchFocused && "pointer-events-none")}
                       >
-                        {promptExamples.slice(0, 3).map((example, index) => (
+                        {promptExamples.map((example, index) => (
                           <li key={example}>
                             <button
                               className="hero-example-item block w-full py-2 text-center text-[0.9375rem] font-medium text-muted-strong"
@@ -1923,7 +1974,7 @@ export function MobileAppShell() {
                 </div>
 
                 <button
-                  className="ios-glass hero-rise absolute inset-x-0 z-10 mx-auto flex h-12 w-fit items-center gap-2.5 rounded-full pl-6 pr-2 text-base font-bold [--rise:480ms] [bottom:calc(1rem+max(env(safe-area-inset-bottom),var(--kb-h,0px)))]"
+                  className="ios-glass hero-rise absolute inset-x-0 z-10 mx-auto flex h-12 w-fit items-center gap-2.5 rounded-full pl-6 pr-2 text-base font-bold [--rise:480ms] [bottom:calc(1rem+env(safe-area-inset-bottom))]"
                   data-tour="quick-browse"
                   onClick={() => setActiveTab("explore")}
                   style={{ color: "var(--success)" }}
@@ -1936,7 +1987,7 @@ export function MobileAppShell() {
                   </span>
                 </button>
 
-                <LanguageMenuButton className="hero-rise absolute left-5 z-20 [--rise:540ms] [bottom:calc(1rem+max(env(safe-area-inset-bottom),var(--kb-h,0px)))]" />
+                <LanguageMenuButton className="hero-rise absolute left-5 z-20 [--rise:540ms] [bottom:calc(1rem+env(safe-area-inset-bottom))]" />
               </div>
             ) : (
               <div className={cn(tabSlideClass, "relative flex min-h-full flex-col px-5 pb-24 pt-5")}>
@@ -2469,16 +2520,9 @@ export function MobileAppShell() {
               <div className="flex h-11 shrink-0 items-center pl-14">
                 <h1 className="scroll-title text-2xl font-extrabold tracking-tight">{t("exploreHeading")}</h1>
               </div>
-              <p className="mt-3 text-center text-[0.9375rem] text-muted text-balance">
-                {exploreSort === "weekly"
-                  ? t("rankingWeeklySubtitle")
-                  : exploreSort === "live"
-                    ? t("rankingLiveSubtitle")
-                    : t("exploreSubtitle")}
-              </p>
-
+              {/* Three equal thirds, so the default tab ("all") sits exactly in the middle. */}
               <div
-                className={cn("mt-4 flex justify-center", isExploreTabsPinned && "invisible")}
+                className={cn("mx-auto mt-4 w-full max-w-[20rem]", isExploreTabsPinned && "invisible")}
                 ref={exploreTabsRef}
               >
                 {exploreTabs}
@@ -2519,7 +2563,8 @@ export function MobileAppShell() {
                 onSelectPlace={setSelectedPlaceId}
                 onToggleLike={toggleLike}
                 onToggleSave={toggleSave}
-                onGoogleCredential={(credential) => void handleGoogleCredential(credential)}
+                onGoogleError={() => setSignInError(t("googleSignInFailed"))}
+                onGoogleToken={handleGoogleToken}
                 onToggleSignIn={toggleSignIn}
                 recentlyViewedTrips={recentlyViewedTrips}
                 savedIds={savedIds}
@@ -2578,7 +2623,7 @@ export function MobileAppShell() {
             )}
             {activeTab === "explore" && isExploreTabsPinned && (
               <div className="pointer-events-none absolute inset-x-0 z-20 flex justify-center [top:calc(9px+env(safe-area-inset-top))]">
-                <div className="pointer-events-auto">{exploreTabs}</div>
+                <div className="pointer-events-auto w-[calc(100%-2.5rem)] max-w-[20rem]">{exploreTabs}</div>
               </div>
             )}
             {activeTab === "explore" && (
