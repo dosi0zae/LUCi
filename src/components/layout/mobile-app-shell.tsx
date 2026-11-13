@@ -1919,7 +1919,14 @@ export function MobileAppShell() {
                         setIsHeroSearchFocused(false);
                       }
                     }}
-                    onFocusCapture={() => setIsHeroSearchFocused(true)}
+                    // Only a text field counts. The example under the box is a button inside this wrapper:
+                    // its own focus (the first thing a tap does) must not start the "box in use" motion,
+                    // or the example would fly away before the tap could land.
+                    onFocusCapture={(event) => {
+                      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+                        setIsHeroSearchFocused(true);
+                      }
+                    }}
                   >
                     {searchForm}
 
