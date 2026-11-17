@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { LegalHeader } from "@/features/mobile/legal-header";
 
 export const metadata: Metadata = {
   title: "개인정보처리방침 | Trip Chain",
@@ -11,11 +11,9 @@ const UPDATED = "2026-11-17";
 
 export default function PrivacyPage() {
   return (
-    <main className="mx-auto max-w-[40rem] px-5 py-10 text-[0.9375rem] leading-7 text-foreground">
-      <p className="text-sm text-muted">
-        <Link href="/mobile">← Trip Chain</Link> · <Link href="/terms">이용약관</Link>
-      </p>
-      <h1 className="mt-4 text-3xl font-extrabold leading-tight">개인정보처리방침</h1>
+    <main className="mx-auto max-w-[40rem] px-5 pb-10 text-[0.9375rem] leading-7 text-foreground">
+      <LegalHeader title="개인정보처리방침" />
+      <h1 className="mt-6 text-3xl font-extrabold leading-tight" data-legal-title>개인정보처리방침</h1>
       <p className="mt-2 text-sm text-muted">시행일 {UPDATED} · Privacy Policy (English below)</p>
 
       <section className="mt-8">
