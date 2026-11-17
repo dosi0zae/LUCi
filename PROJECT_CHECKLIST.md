@@ -51,7 +51,7 @@ Status: In progress (works end to end for 성동구; nearby popup, auto meal slo
 ### Mobile Phase CG: Dining Data for 강서구, 양천구, 구로구
 
 - [x] Three more districts exported: `gangseo.json` 592 (식당 409, 카페 144, 술집 39), `yangcheon.json` 309 (205 / 79 / 25), `guro.json` 349 (257 / 60 / 32); 20 of 25 districts in total. Bboxes and dong aliases for the three are in `build-food-pool.mjs`. Naver used 22,415 calls that day (guard 24,750). Gemini spend total about $8.34 of the $12 guard (today's three districts cost about $1.34, far less than the $1-1.5 per district first estimated).
-- [ ] 5 districts left (강북, 금천, 노원, 도봉, 중랑): each needs a bbox and dong aliases first; at about $0.45 each they fit in the $12 guard (about $10.6 after all five), so the budget does not need raising. Naver allows 2-3 districts a day.
+- [x] The last five districts exported: `gangbuk.json` 335, `geumcheon.json` 312, `nowon.json` 415, `dobong.json` 278 (bboxes and dong aliases added to `build-food-pool.mjs`), and `jungnang.json` 378 (식당 286, 카페 69, 술집 23; finished on the Naver quota reset). All 25 districts are done: 14,129 places in total (식당 9,411, 카페 3,424, 술집 1,294). Gemini spend about $9.98 of the $12 guard. The Naver search-trend API returned a 500 once during 중랑구; the stage was re-run after the queue and score, tags and export were redone, so 중랑구 has trend data like the others.
 
 ### Mobile Phase CF: Motion Pass (loading card, press and like feedback, first screen, screen transitions)
 
