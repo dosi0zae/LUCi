@@ -258,10 +258,11 @@ function dayRank(place: MobilePlace): number {
   return 1;
 }
 
-// Extra "kilometres" charged for every pair of stops that run against the shape of a day, so a
-// shortest walk may be a bit longer when that puts the morning place first and the night view
-// last, but never wanders far for it.
-const DAY_ORDER_PENALTY_KM = 0.6;
+// Extra "kilometres" charged for every pair of stops that run against the shape of a day. It only decides
+// between routes that are (almost) equally short — palace in the morning, night view last — and must never
+// make a visibly longer walk win: at 0.6 km a pair, it did (up to 30 % longer than the shortest), while the
+// app told people it was the shortest route.
+const DAY_ORDER_PENALTY_KM = 0.005;
 function dayOrderPenalty(route: MobilePlace[]): number {
   let penalty = 0;
   for (let i = 0; i < route.length; i++) {
@@ -298,7 +299,7 @@ function permutations<T>(items: T[]): T[][] {
 // nearest-neighbor approximation. Only safe up to a handful of stops — factorial growth
 // makes this unusable well before EXACT_ROUTE_MAX (see optimizeRoute, which callers with
 // a possibly-larger or user-edited chain should use instead of calling this directly).
-function orderByRoute(places: MobilePlace[]): MobilePlace[] {
+function orderByRoute(places: MobilePlace[], dayAware = true): MobilePlace[] {
   if (places.length <= 2) {
     return places;
   }
@@ -307,7 +308,7 @@ function orderByRoute(places: MobilePlace[]): MobilePlace[] {
   let bestDistance = Infinity;
 
   for (const candidate of permutations(places)) {
-    const distance = routeDistance(candidate) + dayOrderPenalty(candidate);
+    const distance = routeDistance(candidate) + (dayAware ? dayOrderPenalty(candidate) : 0);
     if (distance < bestDistance) {
       bestDistance = distance;
       best = candidate;
@@ -356,8 +357,8 @@ function nearestNeighborOrder(places: MobilePlace[]): MobilePlace[] {
 // beyond it, nearestNeighborOrder trades optimality for staying fast.
 export const EXACT_ROUTE_MAX = 7;
 
-export function optimizeRoute(places: MobilePlace[]): MobilePlace[] {
-  return places.length <= EXACT_ROUTE_MAX ? orderByRoute(places) : nearestNeighborOrder(places);
+export function optimizeRoute(places: MobilePlace[], dayAware = true): MobilePlace[] {
+  return places.length <= EXACT_ROUTE_MAX ? orderByRoute(places, dayAware) : nearestNeighborOrder(places);
 }
 
 // Same as optimizeRoute, but a pinned stop keeps its exact position in the list — only
@@ -365,15 +366,15 @@ export function optimizeRoute(places: MobilePlace[]): MobilePlace[] {
 // the whole walk (pinned stops included as fixed waypoints) is as short as possible.
 // Brute-forces the unpinned ordering when there are few enough of them, otherwise falls
 // back to optimizing them on their own and filling the free slots in that order.
-export function optimizeRoutePreservingPins(places: MobilePlace[], pinnedIds: Set<string>): MobilePlace[] {
+export function optimizeRoutePreservingPins(places: MobilePlace[], pinnedIds: Set<string>, dayAware = true): MobilePlace[] {
   const meals = places.filter((place) => isDiningCategory(place.category));
   if (meals.length === 0 || meals.length === places.length) {
-    return optimizeRoutePinsOnly(places, pinnedIds);
+    return optimizeRoutePinsOnly(places, pinnedIds, dayAware);
   }
 
   // A course with a meal or café keeps its shape: "sight, sight, lunch, sight, café" must not
-  // turn into "café first". Only the sights are reordered for the shortest walk; every
-  // restaurant/café/bar stays after the same number of sights it followed before.
+  // turn into "café first". Only the sights change places; every restaurant/café/bar stays after
+  // the same number of sights it followed before.
   const sights = places.filter((place) => !isDiningCategory(place.category));
   const afterCount = new Map<string, number>();
   let sightsSoFar = 0;
@@ -384,27 +385,48 @@ export function optimizeRoutePreservingPins(places: MobilePlace[], pinnedIds: Se
       sightsSoFar += 1;
     }
   }
-  const orderedSights = optimizeRoutePinsOnly(sights, pinnedIds);
-  const result: MobilePlace[] = [];
-  const placeMealsAfter = (count: number) => {
-    for (const meal of meals) {
-      if (afterCount.get(meal.id) === count) {
-        result.push(meal);
+  const assemble = (orderedSights: MobilePlace[]): MobilePlace[] => {
+    const result: MobilePlace[] = [];
+    const placeMealsAfter = (count: number) => {
+      for (const meal of meals) {
+        if (afterCount.get(meal.id) === count) {
+          result.push(meal);
+        }
       }
-    }
+    };
+    placeMealsAfter(0);
+    orderedSights.forEach((sight, index) => {
+      result.push(sight);
+      placeMealsAfter(index + 1);
+    });
+    return result;
   };
-  placeMealsAfter(0);
-  orderedSights.forEach((sight, index) => {
-    result.push(sight);
-    placeMealsAfter(index + 1);
-  });
-  return result;
+
+  // The walk includes the meal stops, so the order of the sights is chosen by the length of the WHOLE
+  // route (meals in their places) — ordering the sights alone left detours to and from the meals.
+  const free = sights.filter((sight) => !pinnedIds.has(sight.id));
+  if (free.length < 2 || free.length > EXACT_ROUTE_MAX) {
+    return assemble(optimizeRoutePinsOnly(sights, pinnedIds, dayAware));
+  }
+  let best = places;
+  let bestCost = Infinity;
+  for (const candidate of permutations(free)) {
+    let cursor = 0;
+    const filled = sights.map((sight) => (pinnedIds.has(sight.id) ? sight : candidate[cursor++]));
+    const route = assemble(filled);
+    const cost = routeDistance(route) + (dayAware ? dayOrderPenalty(route) : 0);
+    if (cost < bestCost) {
+      bestCost = cost;
+      best = route;
+    }
+  }
+  return best;
 }
 
-function optimizeRoutePinsOnly(places: MobilePlace[], pinnedIds: Set<string>): MobilePlace[] {
+function optimizeRoutePinsOnly(places: MobilePlace[], pinnedIds: Set<string>, dayAware = true): MobilePlace[] {
   const pinnedSlots = places.flatMap((place, index) => (pinnedIds.has(place.id) ? [index] : []));
   if (pinnedSlots.length === 0) {
-    return optimizeRoute(places);
+    return optimizeRoute(places, dayAware);
   }
 
   const free = places.filter((place) => !pinnedIds.has(place.id));
@@ -424,7 +446,7 @@ function optimizeRoutePinsOnly(places: MobilePlace[], pinnedIds: Set<string>): M
   }
 
   if (free.length > EXACT_ROUTE_MAX) {
-    return fill(optimizeRoute(free));
+    return fill(optimizeRoute(free, dayAware));
   }
 
   let best = places;
@@ -818,13 +840,14 @@ export function fallbackIntent(): RecommendIntent {
 
 // Within this much extra walking (km) a route counts as already optimal — it keeps
 // near-ties (e.g. the same path walked in reverse) from nagging the user.
-const ROUTE_OPTIMAL_TOLERANCE_KM = 0.01;
+const ROUTE_OPTIMAL_TOLERANCE_KM = 0.03;
 
 // Whether the current order is already (effectively) the shortest walk the pins allow.
 export function isRouteOptimized(places: MobilePlace[], pinnedIds: Set<string>): boolean {
   if (places.length < 3) {
     return true;
   }
-  const best = optimizeRoutePreservingPins(places, pinnedIds);
+  // Against the plain shortest walk (day order ignored), so "already the shortest" is true.
+  const best = optimizeRoutePreservingPins(places, pinnedIds, false);
   return routeDistance(places) <= routeDistance(best) + ROUTE_OPTIMAL_TOLERANCE_KM;
 }

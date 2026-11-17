@@ -8,7 +8,7 @@
 //
 //   node scripts/resolve-unmatched-sights.mjs
 
-import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 

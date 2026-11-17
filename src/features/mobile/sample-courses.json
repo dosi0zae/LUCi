@@ -1,0 +1,504 @@
+[
+ {
+  "title": "고궁과 박물관을 잇는 하루",
+  "description": "경복궁에서 시작해 근처 박물관과 한옥 골목까지 걷는 정통 코스.",
+  "translations": {
+   "en": {
+    "title": "Palaces and Museums in a Day",
+    "description": "Start at Gyeongbokgung, then walk on to nearby museums and a hanok lane."
+   },
+   "ja": {
+    "title": "古宮と博物館をつなぐ一日",
+    "description": "景福宮から始まり、近くの博物館や韓屋の路地まで歩く定番コース。"
+   },
+   "zh": {
+    "title": "串联古宫与博物馆的一天",
+    "description": "从景福宫出发，步行前往附近的博物馆与韩屋巷的经典路线。"
+   }
+  },
+  "placeIds": [
+   "heritage-13-0001170000000",
+   "tour-1934593",
+   "dining-jongno-13284345",
+   "sight-jongno-8191467",
+   "kakao-26563934",
+   "dining-jongno-205855651"
+  ]
+ },
+ {
+  "title": "조선 왕실을 따라 걷는 하루",
+  "description": "창덕궁에서 창경궁, 종묘까지 왕실의 길을 이어 걷는 코스.",
+  "translations": {
+   "en": {
+    "title": "Walking the Joseon Royal Path",
+    "description": "From Changdeokgung through Changgyeonggung to Jongmyo, following the royal grounds."
+   },
+   "ja": {
+    "title": "朝鮮王室をたどる一日",
+    "description": "昌徳宮から昌慶宮、宗廟まで王室の道をつないで歩くコース。"
+   },
+   "zh": {
+    "title": "沿着朝鲜王室漫步的一天",
+    "description": "从昌德宫经昌庆宫到宗庙，沿王室之路一路走下去。"
+   }
+  },
+  "placeIds": [
+   "heritage-13-0001230000000",
+   "heritage-13-0001220000000",
+   "dining-jongno-332294225",
+   "heritage-13-0001250000000",
+   "dining-jongno-492735630"
+  ]
+ },
+ {
+  "title": "서울 도심 대표 명소 도장깨기",
+  "description": "덕수궁부터 서울로, 남산까지 처음 서울에 온 날 꼭 가볼 곳.",
+  "translations": {
+   "en": {
+    "title": "Seoul's Must-See Highlights",
+    "description": "Deoksugung, Seoullo and Namsan: the essentials for a first day in Seoul."
+   },
+   "ja": {
+    "title": "ソウル都心の代表スポット制覇",
+    "description": "徳寿宮からソウルロ、南山まで初めてのソウルで外せない場所。"
+   },
+   "zh": {
+    "title": "首尔市中心必游地标打卡",
+    "description": "从德寿宫、首尔路到南山，初到首尔不容错过的地方。"
+   }
+  },
+  "placeIds": [
+   "heritage-13-0001240000000",
+   "sight-jung-1892446523",
+   "dining-jung-8670706",
+   "tour-126485",
+   "sight-yongsan-1629378951",
+   "dining-yongsan-1995791949"
+  ]
+ },
+ {
+  "title": "남산 한옥마을과 야경 산책",
+  "description": "한옥마을에서 시작해 해질녘 남산 전망까지 이어지는 저녁 코스.",
+  "translations": {
+   "en": {
+    "title": "Namsan Hanok and Night Views",
+    "description": "From the hanok village to the Namsan view at dusk."
+   },
+   "ja": {
+    "title": "南山韓屋村と夜景さんぽ",
+    "description": "韓屋村から始まり、夕暮れの南山の眺めまで続く夕方コース。"
+   },
+   "zh": {
+    "title": "南山韩屋村与夜景漫步",
+    "description": "从韩屋村出发，在黄昏时分欣赏南山景色的傍晚路线。"
+   }
+  },
+  "placeIds": [
+   "tour-126747",
+   "tour-128776",
+   "dining-jung-10511200",
+   "sight-yongsan-1629378951",
+   "dining-yongsan-1995791949"
+  ]
+ },
+ {
+  "title": "한강 노을 보러 가는 하루",
+  "description": "여의도 물빛광장에서 한강공원까지, 강변을 따라 노을을 기다리는 코스.",
+  "translations": {
+   "en": {
+    "title": "Han River Sunset Day",
+    "description": "From Yeouido Water Plaza to Hangang Park, waiting for the sunset along the river."
+   },
+   "ja": {
+    "title": "漢江の夕焼けを見に行く一日",
+    "description": "汝矣島の水辺広場から漢江公園まで、川沿いで夕焼けを待つコース。"
+   },
+   "zh": {
+    "title": "去汉江看日落的一天",
+    "description": "从汝矣岛水光广场到汉江公园，沿江等待日落的路线。"
+   }
+  },
+  "placeIds": [
+   "sight-yeongdeungpo-26406915",
+   "kakao-10952963",
+   "dining-yeongdeungpo-1774555947",
+   "kakao-26974731",
+   "dining-yeongdeungpo-315801190"
+  ]
+ },
+ {
+  "title": "홍대·연남 감성 산책",
+  "description": "경의선숲길을 따라 책거리와 골목을 걷는 마포의 하루.",
+  "translations": {
+   "en": {
+    "title": "Hongdae and Yeonnam Stroll",
+    "description": "A Mapo day along the Gyeongui Line Forest Park, past the book street and back lanes."
+   },
+   "ja": {
+    "title": "弘大・延南の感性さんぽ",
+    "description": "京義線の森道に沿って本通りや路地を歩く麻浦の一日。"
+   },
+   "zh": {
+    "title": "弘大·延南文艺漫步",
+    "description": "沿京义线森林路走过书街与小巷的麻浦一日。"
+   }
+  },
+  "placeIds": [
+   "tour-2500229",
+   "sight-mapo-1158487374",
+   "dining-mapo-1048769827",
+   "kakao-8177904",
+   "dining-mapo-497287177"
+  ]
+ },
+ {
+  "title": "망원시장과 한강 나들이",
+  "description": "시장에서 간식을 사 들고 한강공원까지 이어지는 가벼운 코스.",
+  "translations": {
+   "en": {
+    "title": "Mangwon Market and the River",
+    "description": "Grab snacks at the market and carry them down to the riverside park."
+   },
+   "ja": {
+    "title": "望遠市場と漢江さんぽ",
+    "description": "市場でおやつを買って漢江公園まで歩く気軽なコース。"
+   },
+   "zh": {
+    "title": "望远市场与汉江之行",
+    "description": "在市场买点小吃，一路走到汉江公园的轻松路线。"
+   }
+  },
+  "placeIds": [
+   "sight-mapo-18526234",
+   "sight-mapo-1852962598",
+   "dining-mapo-54314344",
+   "kakao-8126939",
+   "dining-mapo-1251590315"
+  ]
+ },
+ {
+  "title": "서울숲과 성수 나들이",
+  "description": "서울숲 산책길과 은행나무길을 걷고 성수의 전시 공간까지 들르는 코스.",
+  "translations": {
+   "en": {
+    "title": "Seoul Forest and Seongsu",
+    "description": "Forest paths and the ginkgo avenue, then an exhibition space in Seongsu."
+   },
+   "ja": {
+    "title": "ソウルの森と聖水さんぽ",
+    "description": "ソウルの森の遊歩道とイチョウ並木を歩き、聖水の展示空間に立ち寄るコース。"
+   },
+   "zh": {
+    "title": "首尔林与圣水之行",
+    "description": "漫步首尔林步道与银杏路，再前往圣水展览空间的路线。"
+   }
+  },
+  "placeIds": [
+   "kakao-26563608",
+   "tour-2704340",
+   "dining-seongdong-541978160",
+   "kakao-946487614",
+   "dining-seongdong-1530215201"
+  ]
+ },
+ {
+  "title": "주말 가족 나들이: 잠실",
+  "description": "롯데월드와 석촌호수, 아쿠아리움까지 아이와 함께 걷는 하루.",
+  "translations": {
+   "en": {
+    "title": "Weekend Family Outing: Jamsil",
+    "description": "Lotte World, Seokchon Lake and the aquarium: a day for walking with kids."
+   },
+   "ja": {
+    "title": "週末家族お出かけ：蚕室",
+    "description": "ロッテワールドと石村湖、水族館まで子どもと歩く一日。"
+   },
+   "zh": {
+    "title": "周末家庭出游：蚕室",
+    "description": "乐天世界、石村湖和水族馆，适合带孩子漫步的一天。"
+   }
+  },
+  "placeIds": [
+   "kakao-27560699",
+   "kakao-7947003",
+   "dining-songpa-518699361",
+   "sight-songpa-25974806",
+   "dining-songpa-1416428207"
+  ]
+ },
+ {
+  "title": "올림픽공원 산책 코스",
+  "description": "넓은 잔디밭과 장미광장을 걷고 한성백제박물관까지 들르는 코스.",
+  "translations": {
+   "en": {
+    "title": "Olympic Park Walk",
+    "description": "Wide lawns and the rose plaza, ending at the Hanseong Baekje Museum."
+   },
+   "ja": {
+    "title": "オリンピック公園さんぽ",
+    "description": "広い芝生とバラ広場を歩き、漢城百済博物館まで立ち寄るコース。"
+   },
+   "zh": {
+    "title": "奥林匹克公园漫步",
+    "description": "走过大片草坪与玫瑰广场，再到汉城百济博物馆的路线。"
+   }
+  },
+  "placeIds": [
+   "sight-songpa-8023565",
+   "sight-songpa-20560529",
+   "dining-songpa-7883620",
+   "sight-songpa-14590972",
+   "dining-songpa-1336623745"
+  ]
+ },
+ {
+  "title": "용산 박물관 데이",
+  "description": "국립중앙박물관과 전쟁기념관, 리움미술관을 잇는 실내 코스.",
+  "translations": {
+   "en": {
+    "title": "Yongsan Museum Day",
+    "description": "An indoor course linking the National Museum, the War Memorial and Leeum."
+   },
+   "ja": {
+    "title": "龍山ミュージアムデー",
+    "description": "国立中央博物館、戦争記念館、リウム美術館をつなぐ屋内コース。"
+   },
+   "zh": {
+    "title": "龙山博物馆日",
+    "description": "串联国立中央博物馆、战争纪念馆与Leeum美术馆的室内路线。"
+   }
+  },
+  "placeIds": [
+   "sight-yongsan-8830150",
+   "sight-yongsan-8077761",
+   "dining-yongsan-24188406",
+   "sight-yongsan-10427225",
+   "dining-yongsan-541563112"
+  ]
+ },
+ {
+  "title": "북촌·익선 전통 산책",
+  "description": "한옥 골목과 인사동 거리를 걸으며 옛 서울을 만나는 코스.",
+  "translations": {
+   "en": {
+    "title": "Bukchon and Ikseon Walk",
+    "description": "Hanok lanes and the Insadong street: meeting old Seoul on foot."
+   },
+   "ja": {
+    "title": "北村・益善の伝統さんぽ",
+    "description": "韓屋の路地と仁寺洞の通りを歩いて昔のソウルに出会うコース。"
+   },
+   "zh": {
+    "title": "北村·益善传统漫步",
+    "description": "走过韩屋小巷与仁寺洞街，邂逅老首尔的路线。"
+   }
+  },
+  "placeIds": [
+   "kakao-21273056",
+   "kakao-467710256",
+   "dining-jongno-332294225",
+   "kakao-26563934",
+   "dining-jongno-205855651"
+  ]
+ },
+ {
+  "title": "서촌과 인왕산 조용한 산책",
+  "description": "윤동주문학관에서 인왕산 둘레길로 이어지는 차분한 코스.",
+  "translations": {
+   "en": {
+    "title": "Seochon and Inwangsan Walk",
+    "description": "A calm route from the Yun Dong-ju Museum to the Inwangsan trail."
+   },
+   "ja": {
+    "title": "西村と仁王山の静かな散歩",
+    "description": "尹東柱文学館から仁王山の周遊路へ続く落ち着いたコース。"
+   },
+   "zh": {
+    "title": "西村与仁王山静谧漫步",
+    "description": "从尹东柱文学馆到仁王山环山路的宁静路线。"
+   }
+  },
+  "placeIds": [
+   "sight-jongno-18936894",
+   "sight-jongno-12765701",
+   "dining-jongno-8505372",
+   "sight-jongno-1847315467",
+   "dining-jongno-14095755"
+  ]
+ },
+ {
+  "title": "동대문 DDP와 한양도성",
+  "description": "디자인 플라자에서 낙산공원 성곽길까지 새것과 옛것을 오가는 코스.",
+  "translations": {
+   "en": {
+    "title": "Dongdaemun DDP and City Wall",
+    "description": "From the design plaza to the Naksan fortress path: new and old side by side."
+   },
+   "ja": {
+    "title": "東大門DDPと漢陽都城",
+    "description": "デザインプラザから駱山公園の城郭道まで新旧を行き来するコース。"
+   },
+   "zh": {
+    "title": "东大门DDP与汉阳都城",
+    "description": "从设计广场到骆山公园城墙路，新旧交错的路线。"
+   }
+  },
+  "placeIds": [
+   "sight-jung-25022134",
+   "sight-jongno-8253524",
+   "dining-jongno-9027240",
+   "heritage-13-0000100000000",
+   "dining-jongno-320882660"
+  ]
+ },
+ {
+  "title": "이태원·한남 이색 문화 코스",
+  "description": "앤틱 거리와 이태원 거리, 리움미술관까지 이어지는 이국적인 하루.",
+  "translations": {
+   "en": {
+    "title": "Itaewon and Hannam Culture",
+    "description": "Antique street, Itaewon's main street and Leeum: an international kind of day."
+   },
+   "ja": {
+    "title": "梨泰院・漢南の異色カルチャー",
+    "description": "アンティーク通りと梨泰院通り、リウム美術館へ続くエキゾチックな一日。"
+   },
+   "zh": {
+    "title": "梨泰院·汉南异域文化路线",
+    "description": "古董街、梨泰院街到Leeum美术馆，充满异国风情的一天。"
+   }
+  },
+  "placeIds": [
+   "kakao-10753713",
+   "sight-yongsan-12711097",
+   "dining-yongsan-124338573",
+   "sight-yongsan-10427225",
+   "dining-yongsan-541563112"
+  ]
+ },
+ {
+  "title": "서대문 독립의 길",
+  "description": "독립문에서 서대문형무소까지 근현대 역사를 짚어 보는 코스.",
+  "translations": {
+   "en": {
+    "title": "Seodaemun Independence Path",
+    "description": "From Independence Gate to the Seodaemun Prison: modern history on foot."
+   },
+   "ja": {
+    "title": "西大門・独立への道",
+    "description": "独立門から西大門刑務所まで近現代史をたどるコース。"
+   },
+   "zh": {
+    "title": "西大门独立之路",
+    "description": "从独立门到西大门刑务所，回顾近现代历史的路线。"
+   }
+  },
+  "placeIds": [
+   "heritage-13-0003240000000",
+   "heritage-13-0000320000000",
+   "dining-jongno-8992389",
+   "sight-seodaemun-740621790",
+   "dining-jongno-767240312"
+  ]
+ },
+ {
+  "title": "북서울꿈의숲 숲길 산책",
+  "description": "넓은 숲 공원을 걷고 동네 공원과 재래시장까지 이어지는 가벼운 코스.",
+  "translations": {
+   "en": {
+    "title": "North Seoul Dream Forest Walk",
+    "description": "A wide forest park, a neighbourhood park and a traditional market, all easy walking."
+   },
+   "ja": {
+    "title": "北ソウルの夢の森さんぽ",
+    "description": "広い森の公園から近所の公園、在来市場まで続く気軽なコース。"
+   },
+   "zh": {
+    "title": "北首尔梦想森林漫步",
+    "description": "走过大片森林公园、社区公园与传统市场的轻松路线。"
+   }
+  },
+  "placeIds": [
+   "sight-gangbuk-11321061",
+   "sight-gangbuk-8014188",
+   "dining-gangbuk-19513979",
+   "sight-gangbuk-27367375",
+   "dining-gangbuk-17063711"
+  ]
+ },
+ {
+  "title": "강남 도심 속 쉼표",
+  "description": "봉은사와 코엑스, 별마당도서관을 잇는 도심 속 쉬어가기 코스.",
+  "translations": {
+   "en": {
+    "title": "A Pause in Gangnam",
+    "description": "Bongeunsa Temple, COEX and the Starfield Library: a breather in the city."
+   },
+   "ja": {
+    "title": "江南・都心の休息",
+    "description": "奉恩寺とCOEX、ピョルマダン図書館をつなぐ都心の休憩コース。"
+   },
+   "zh": {
+    "title": "江南都市中的小憩",
+    "description": "串联奉恩寺、COEX与星空图书馆的都市休憩路线。"
+   }
+  },
+  "placeIds": [
+   "sight-gangnam-2104663194",
+   "sight-gangnam-17573702",
+   "dining-gangnam-2179756",
+   "sight-gangnam-8373155",
+   "dining-gangnam-1157646860"
+  ]
+ },
+ {
+  "title": "서울식물원과 옛 양천 마을",
+  "description": "식물원 온실을 보고 겸재 미술관과 양천향교까지 이어지는 마곡의 하루.",
+  "translations": {
+   "en": {
+    "title": "Botanic Park and Old Yangcheon",
+    "description": "The glasshouse, then the Gyeomjae art museum and the old Yangcheon school."
+   },
+   "ja": {
+    "title": "ソウル植物園と古い陽川の町",
+    "description": "植物園の温室を見て、謙斎美術館と陽川郷校へ続く麻谷の一日。"
+   },
+   "zh": {
+    "title": "首尔植物园与古阳川村",
+    "description": "参观植物园温室，再到谦斋美术馆与阳川乡校的麻谷一日。"
+   }
+  },
+  "placeIds": [
+   "sight-gangseo-11100510",
+   "sight-gangseo-8651724",
+   "dining-gangseo-382702391",
+   "sight-gangseo-1164966384",
+   "dining-gangseo-2025031703"
+  ]
+ },
+ {
+  "title": "성북동 문화예술 산책",
+  "description": "길상사와 간송미술관, 성북동 고택까지 조용히 걷는 코스.",
+  "translations": {
+   "en": {
+    "title": "Seongbuk-dong Arts Walk",
+    "description": "A quiet walk from Gilsangsa Temple to the Kansong Museum and old mansions."
+   },
+   "ja": {
+    "title": "城北洞アートさんぽ",
+    "description": "吉祥寺から澗松美術館、城北洞の古い邸宅まで静かに歩くコース。"
+   },
+   "zh": {
+    "title": "城北洞艺术漫步",
+    "description": "从吉祥寺到涧松美术馆和城北洞古宅的安静路线。"
+   }
+  },
+  "placeIds": [
+   "tour-128866",
+   "tour-130511",
+   "dining-seongbuk-23300753",
+   "sight-seongbuk-8439733",
+   "dining-seongbuk-879915397"
+  ]
+ }
+]

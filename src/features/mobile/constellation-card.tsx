@@ -9,7 +9,7 @@ import {
   type KakaoMapsApi,
   type KakaoPolyline,
 } from "@/features/mobile/kakao-loader";
-import { haversineKm, type MobilePlace } from "@/features/mobile/mobile-data";
+import { haversineKm, isDiningCategory, type MobilePlace } from "@/features/mobile/mobile-data";
 import { useT } from "@/features/mobile/i18n/i18n-context";
 import { cn } from "@/lib/utils";
 
@@ -241,6 +241,8 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
   const [viewMode, setViewMode] = useState<"map" | "abstract">("map");
   const [optimizeNote, setOptimizeNote] = useState<"done" | "already" | null>(null);
   const optimizeNoteTimerRef = useRef<number | undefined>(undefined);
+  // With meals the walk keeps them where they are (lunch after the same sights), so say so.
+  const hasMeals = places.some((place) => isDiningCategory(place.category));
 
   useEffect(() => () => window.clearTimeout(optimizeNoteTimerRef.current), []);
 
@@ -478,7 +480,9 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
               className="optimize-note pointer-events-none absolute bottom-[3.25rem] right-12 z-10 rounded-full bg-foreground/85 px-2.5 py-1 text-[0.6875rem] font-bold text-white"
               role="status"
             >
-              {optimizeNote === "done" ? t("optimizeDone") : t("optimizeAlready")}
+              {optimizeNote === "done"
+                ? t(hasMeals ? "optimizeDoneMeals" : "optimizeDone")
+                : t(hasMeals ? "optimizeAlreadyMeals" : "optimizeAlready")}
             </p>
           )}
         </>

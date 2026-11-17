@@ -1,7 +1,9 @@
 import seoulPlacesData from "./seoul-places.json";
 import enrichmentData from "./place-enrichment.json";
+import sampleCourses from "./sample-courses.json";
 import { getLoadedDiningPlace } from "./dining-store";
 import { diningTagLabel, localizeMinutes } from "./dining-tags";
+import { attributeLabel, localizeFee, localizeHours } from "./attribute-labels";
 import type { Locale } from "@/features/mobile/i18n/translations";
 
 // 문화재/관광지/문화시설/축제행사 are destinations. 식당/카페/술집 are dining stops: they can sit in a
@@ -55,7 +57,7 @@ export type MobilePlace = {
   lat: number;
   lng: number;
   image?: string;
-  translations?: Partial<Record<"en" | "ja" | "zh", LocalizedPlaceFields>>;
+  translations?: Partial<Record<"en" | "ja" | "zh", Partial<LocalizedPlaceFields>>>;
   // Which pipeline this place came from — absent for the original TourAPI/문화재청 sync
   // (sync-seoul-places.mjs; their id prefix, tour-/heritage-, already tells them apart).
   // "kakao" marks places dug up from the Kakao Local API (scripts/dig-kakao-places.mjs)
@@ -97,8 +99,18 @@ export function localizePlace(place: MobilePlace, locale: Locale): MobilePlace {
   }
 
   const translated = place.translations?.[locale];
-  if (!translated) {
-    return place;
+  // No full translation set (the sights found with the evidence pipeline carry at most a translated name and
+  // line): district, length, tags, fee and hours come from the shared tables, the rest from `translated`.
+  if (!translated?.area) {
+    const shared = {
+      ...place,
+      area: localizedDistrictName(place.area, locale),
+      duration: localizeMinutes(place.duration, locale),
+      tags: place.tags.map((tag) => attributeLabel(tag, locale)),
+      fee: localizeFee(place.fee, locale),
+      hours: localizeHours(place.hours, locale),
+    };
+    return translated ? { ...shared, ...translated } : shared;
   }
 
   const localized = { ...place, ...translated };
@@ -371,97 +383,15 @@ export function getSeedComments(tripId: string): TripComment[] {
   }));
 }
 
-type TripTheme = {
+// The sample courses in 탐색 are curated, not generated: scripts/build-sample-courses.mjs picks named sights
+// with a meal and a café near them, in the order that makes the walk shortest, and writes
+// sample-courses.json (re-run it after the place data changes). Dining ids load lazily like any other.
+type SampleCourse = {
   title: string;
   description: string;
-  categories: PlaceCategory[];
   translations: Partial<Record<Locale, LocalizedTripFields>>;
+  placeIds: string[];
 };
-
-const TRIP_THEMES: TripTheme[] = [
-  {
-    title: "고궁과 박물관을 잇는 하루",
-    description: "대표 고궁과 근처 박물관을 묶어 걷는 정통 코스.",
-    categories: ["문화재", "문화시설", "문화재", "문화시설"],
-    translations: {
-      en: { title: "A Day Linking Palaces and Museums", description: "A classic route connecting a landmark palace with nearby museums." },
-      ja: { title: "古宮と博物館をつなぐ一日", description: "代表的な古宮と近くの博物館を巡る定番コース。" },
-      zh: { title: "串联古宫与博物馆的一天", description: "串联代表性古宫与附近博物馆的经典路线。" },
-    },
-  },
-  {
-    title: "역사 유적 탐방 코스",
-    description: "국보와 사적 위주로 서울의 역사를 짚어보는 코스.",
-    categories: ["문화재", "문화재", "관광지", "문화재"],
-    translations: {
-      en: { title: "Historic Landmarks Tour", description: "A course tracing Seoul's history through National Treasures and historic sites." },
-      ja: { title: "史跡巡りコース", description: "国宝と史跡を中心にソウルの歴史をたどるコース。" },
-      zh: { title: "历史古迹探访路线", description: "以国宝和史迹为主，回顾首尔历史的路线。" },
-    },
-  },
-  {
-    title: "지금 열리는 축제 나들이",
-    description: "요즘 열리는 축제와 근처 명소를 함께 즐기는 코스.",
-    categories: ["축제행사", "관광지", "축제행사", "문화시설"],
-    translations: {
-      en: { title: "Festivals Happening Now", description: "Enjoy a current festival alongside nearby attractions." },
-      ja: { title: "今開催中の祭りめぐり", description: "今開催中の祭りと近くの名所を一緒に楽しむコース。" },
-      zh: { title: "正在举行的节庆之旅", description: "一起享受近期节庆活动与附近景点的路线。" },
-    },
-  },
-  {
-    title: "전통과 현대가 만나는 코스",
-    description: "옛 유산과 요즘 전시 공간을 번갈아 즐기는 코스.",
-    categories: ["문화재", "문화시설", "관광지", "문화시설"],
-    translations: {
-      en: { title: "Where Tradition Meets Today", description: "Alternate between old heritage and contemporary exhibition spaces." },
-      ja: { title: "伝統と現代が出会うコース", description: "昔ながらの遺産と最近の展示空間を交互に楽しむコース。" },
-      zh: { title: "传统与现代交融的路线", description: "在传统遗产与现代展览空间之间穿梭的路线。" },
-    },
-  },
-  {
-    title: "서울 대표 명소 도장깨기",
-    description: "처음 서울에 왔다면 놓치기 아쉬운 핵심 코스.",
-    categories: ["관광지", "문화재", "관광지", "문화시설"],
-    translations: {
-      en: { title: "Seoul's Must-See Highlights", description: "The essential route for first-time visitors to Seoul." },
-      ja: { title: "ソウル代表スポット制覇", description: "初めてソウルに来たなら見逃せない定番コース。" },
-      zh: { title: "首尔必游地标打卡", description: "首次来首尔不容错过的核心路线。" },
-    },
-  },
-  {
-    title: "조용한 박물관 투어",
-    description: "사람 적은 시간에 천천히 둘러보기 좋은 실내 코스.",
-    categories: ["문화시설", "문화시설", "문화재", "문화시설"],
-    translations: {
-      en: { title: "Quiet Museum Tour", description: "An indoor course best enjoyed slowly during off-peak hours." },
-      ja: { title: "静かな博物館ツアー", description: "人が少ない時間帯にゆっくり回りたい屋内コース。" },
-      zh: { title: "安静的博物馆之旅", description: "适合在人少时段慢慢参观的室内路线。" },
-    },
-  },
-  {
-    title: "주말 가족 나들이 코스",
-    description: "아이와 함께 걷고 체험하기 좋은 코스.",
-    categories: ["관광지", "축제행사", "문화시설", "관광지"],
-    translations: {
-      en: { title: "Weekend Family Outing", description: "A course great for walking and hands-on experiences with kids." },
-      ja: { title: "週末家族お出かけコース", description: "子どもと一緒に歩いて体験できるコース。" },
-      zh: { title: "周末家庭出游路线", description: "适合带孩子一起散步体验的路线。" },
-    },
-  },
-  {
-    title: "야경과 함께하는 저녁 코스",
-    description: "해질녘부터 야경까지 이어보는 저녁 코스.",
-    categories: ["문화재", "관광지", "문화시설", "문화재"],
-    translations: {
-      en: { title: "Evening Course With Night Views", description: "An evening route from sunset through the night skyline." },
-      ja: { title: "夜景まで楽しむ夕方コース", description: "夕暮れから夜景まで続く夕方のコース。" },
-      zh: { title: "夜景相伴的傍晚路线", description: "从日落到夜景相连的傍晚路线。" },
-    },
-  },
-];
-
-const VARIANTS_PER_THEME = 3;
 
 function dateDaysBefore(anchor: string, days: number): string {
   const date = new Date(`${anchor}T00:00:00Z`);
@@ -469,94 +399,40 @@ function dateDaysBefore(anchor: string, days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-function nearestUnused(
-  anchor: MobilePlace,
-  category: PlaceCategory,
-  used: Set<string>,
-): MobilePlace | undefined {
-  let best: MobilePlace | undefined;
-  let bestDistance = Infinity;
-
-  for (const place of places) {
-    if (used.has(place.id) || place.category !== category) {
-      continue;
-    }
-    const distance = haversineKm(anchor, place);
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      best = place;
-    }
-  }
-
-  return best;
-}
-
-// Every sample course starts at one of the most genuinely well-known places (by
-// fameScore — see enrich-place-fame.mjs) rather than an arbitrary index into the full
-// pool, so these showcase chains actually lead with a recognizable landmark (a palace, a
-// real 한강공원 branch, 이태원, ...) instead of whatever happened to land at a modulo'd
-// index. Only the anchor is fame-biased; the rest of each route is still picked by
-// nearestUnused below, which optimizes for walkability, not fame.
-const FAMOUS_ANCHOR_POOL = [...places].sort((a, b) => (b.fameScore ?? 0) - (a.fameScore ?? 0)).slice(0, 60);
-
-// Seed trips are generated (not hand-written) by anchoring each theme at a spread of
-// places across the flat Seoul pool, then greedily picking the nearest unused place per
-// category — this keeps each generated "course" geographically walkable even without
-// the old per-neighborhood buckets.
 function generateSeedTrips(): FeedTrip[] {
-  const trips: FeedTrip[] = [];
-
-  TRIP_THEMES.forEach((theme, themeIndex) => {
-    for (let variant = 0; variant < VARIANTS_PER_THEME; variant++) {
-      const anchorIndex = (themeIndex * 37 + variant * 53) % FAMOUS_ANCHOR_POOL.length;
-      const anchor = FAMOUS_ANCHOR_POOL[anchorIndex];
-      const used = new Set<string>();
-      const picked: MobilePlace[] = [];
-
-      for (const category of theme.categories) {
-        const next =
-          nearestUnused(anchor, category, used) ??
-          places.find((place) => place.category === category && !used.has(place.id));
-        if (next) {
-          used.add(next.id);
-          picked.push(next);
-        }
+  return (sampleCourses as SampleCourse[])
+    .map((course, index): FeedTrip | null => {
+      // Only the sights are in `places` at start-up (dining loads on demand); they carry the fame score.
+      const sights = course.placeIds.map((id) => placeLookup.get(id)).filter((place): place is MobilePlace => Boolean(place));
+      if (course.placeIds.length < 2 || sights.length === 0) {
+        return null;
       }
 
-      if (picked.length < 2) {
-        continue;
-      }
+      const seed = (index * 31 + 11) % 97;
+      const author = TRIP_AUTHORS[index % TRIP_AUTHORS.length];
 
-      const seed = (themeIndex * 31 + variant * 17 + 11) % 97;
-      const author = TRIP_AUTHORS[(themeIndex * 3 + variant) % TRIP_AUTHORS.length];
+      // Engagement/rank numbers follow the sights' real fameScore (0-100 average) so a course of
+      // well-known places plausibly ranks higher; `seed` adds a small jitter so similar courses differ.
+      const avgFame = sights.reduce((sum, place) => sum + (place.fameScore ?? 50), 0) / sights.length;
 
-      // Engagement/rank numbers are driven by the picked places' real fameScore (0-100
-      // average) rather than being pure seeded noise — a course built from well-known
-      // places now plausibly ranks higher, instead of ranking being disconnected from
-      // what's actually in the course. `seed` still contributes a smaller jitter so two
-      // similarly-famous courses don't look identical.
-      const avgFame = picked.reduce((sum, place) => sum + (place.fameScore ?? 50), 0) / picked.length;
-
-      trips.push({
-        id: `seed-${themeIndex}-${variant}`,
-        title: theme.title,
-        description: theme.description,
-        translations: theme.translations,
+      return {
+        id: `seed-${index}`,
+        title: course.title,
+        description: course.description,
+        translations: course.translations,
         authorHandle: author.handle,
         authorName: author.name,
         visibility: "public",
-        placeIds: picked.map((place) => place.id),
+        placeIds: course.placeIds,
         likes: Math.round(80 + avgFame * 8 + (seed % 60)),
         comments: Math.round(3 + avgFame / 4 + (seed % 12)),
         saved: Math.round(30 + avgFame * 1.5 + (seed % 100)),
         rankScore: Math.round(avgFame + (seed % 15)),
         isMine: false,
-        publishedAt: dateDaysBefore("2026-08-13", themeIndex * 3 + variant),
-      });
-    }
-  });
-
-  return trips;
+        publishedAt: dateDaysBefore("2026-08-13", index),
+      };
+    })
+    .filter((trip): trip is FeedTrip => trip !== null);
 }
 
 export const seedFeedTrips: FeedTrip[] = generateSeedTrips();

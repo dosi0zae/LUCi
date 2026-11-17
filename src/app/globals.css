@@ -1404,6 +1404,18 @@ button.ios-card:not(:disabled):active {
   --out-delay: 50ms;
 }
 
+/* The terms / privacy row under "바로 탐색하기" stays where it is (no layout change, so nothing rides up with the
+   keyboard) and just fades out while the search box is in use. The wrapper carries the opacity: the
+   element itself is busy with the hero-rise animation. */
+.hero-legal {
+  transition: opacity 200ms ease-out;
+}
+
+.hero-root[data-focus="true"] .hero-legal {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .like-pop,
   .count-roll,

@@ -76,6 +76,7 @@ import {
 import { buildGoogleMapsWalkingRouteUrl, buildKakaoWalkingRouteUrl } from "@/features/mobile/route-links";
 import { OnboardingTour } from "@/features/mobile/onboarding-tour";
 import { useHistoryLayers } from "@/features/mobile/use-history-layers";
+import { LegalLinks } from "@/features/mobile/legal-links";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import { PlaceScroller } from "@/features/mobile/place-scroller";
 import { SlidingTabs } from "@/features/mobile/sliding-tabs";
@@ -606,13 +607,16 @@ export function MobileAppShell() {
   const [diningVersion, setDiningVersion] = useState(0);
   useEffect(() => subscribeDining(() => setDiningVersion((version) => version + 1)), []);
   useEffect(() => {
+    // A sample course in 탐색 has a meal and a café too: they load when its detail is opened.
+    const openTripPlaceIds = openTripId ? [...publishedTrips, ...seedFeedTrips].find((trip) => trip.id === openTripId)?.placeIds ?? [] : [];
     void ensureDiningLoadedForIds([
       ...chainIds,
       ...swapCandidateIds,
       ...bookmarkedPlaceIds,
       ...publishedTrips.flatMap((trip) => trip.placeIds),
+      ...openTripPlaceIds,
     ]);
-  }, [chainIds, swapCandidateIds, bookmarkedPlaceIds, publishedTrips]);
+  }, [chainIds, swapCandidateIds, bookmarkedPlaceIds, publishedTrips, openTripId]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds, diningVersion]);
@@ -1168,7 +1172,7 @@ export function MobileAppShell() {
     if (ids.length > EXACT_ROUTE_MAX) {
       return ids;
     }
-    return optimizeRoutePreservingPins(getPlacesByIds(ids), pinnedIds).map((place) => place.id);
+    return optimizeRoutePreservingPins(getPlacesByIds(ids), pinnedIds, false).map((place) => place.id);
   }
 
   // Every wholesale chain replacement (new search, refresh, radius step, loaded trip, ...)
@@ -1278,7 +1282,7 @@ export function MobileAppShell() {
     if (isOptimized) {
       return false;
     }
-    setChainIds(optimizeRoutePreservingPins(chainPlaces, pinnedIds).map((place) => place.id));
+    setChainIds(optimizeRoutePreservingPins(chainPlaces, pinnedIds, false).map((place) => place.id));
     return true;
   }
 
@@ -1979,7 +1983,7 @@ export function MobileAppShell() {
                 </div>
 
                 <button
-                  className="ios-glass hero-rise absolute inset-x-0 z-10 mx-auto flex h-12 w-fit items-center gap-2.5 rounded-full pl-6 pr-2 text-base font-bold [--rise:480ms] [bottom:calc(1rem+env(safe-area-inset-bottom))]"
+                  className="ios-glass hero-rise absolute inset-x-0 z-10 mx-auto flex h-12 w-fit items-center gap-2.5 rounded-full pl-6 pr-2 text-base font-bold [--rise:480ms] [bottom:calc(2.5rem+env(safe-area-inset-bottom))]"
                   data-tour="quick-browse"
                   onClick={() => setActiveTab("explore")}
                   style={{ color: "var(--success)" }}
@@ -1992,7 +1996,10 @@ export function MobileAppShell() {
                   </span>
                 </button>
 
-                <LanguageMenuButton className="hero-rise absolute left-5 z-20 [--rise:540ms] [bottom:calc(1rem+env(safe-area-inset-bottom))]" />
+                <LanguageMenuButton className="hero-rise absolute left-5 z-20 [--rise:540ms] [bottom:calc(2.5rem+env(safe-area-inset-bottom))]" />
+
+                {/* Terms and privacy policy under the explore button (Google asks for them on the home page). They stay put and fade out while the keyboard is up. */}
+                <LegalLinks className="hero-rise hero-legal absolute inset-x-0 z-10 [--rise:600ms] [bottom:calc(0.75rem+env(safe-area-inset-bottom))]" />
               </div>
             ) : (
               <div className={cn(tabSlideClass, "relative flex min-h-full flex-col px-5 pb-24 pt-5")}>

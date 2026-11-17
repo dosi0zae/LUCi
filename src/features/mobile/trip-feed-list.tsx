@@ -91,7 +91,7 @@ export function TripFeedList({
                       <span className="text-sm font-semibold text-muted-strong">{coverPlace.area}</span>
                     )}
                   </div>
-                  <h3 className="mt-1.5 line-clamp-2 break-keep text-[1.1875rem] font-extrabold leading-snug">{localizedTrip.title}</h3>
+                  <h3 className="mt-1.5 line-clamp-2 break-keep text-[1.1875rem] font-extrabold leading-snug text-balance">{localizedTrip.title}</h3>
                   <p className="mt-1 truncate text-sm text-muted">
                     {trip.authorName} · {t("placesCount", { count: trip.placeIds.length })}
                   </p>

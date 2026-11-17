@@ -47,6 +47,10 @@ function sharesName(a, b) {
 
 const fameOf = (mentions) => Math.max(10, Math.min(95, Math.round(15 * Math.log10(1 + mentions))));
 
+// English / Japanese / Chinese name and one-line description of the new places (scripts/translate-sights.mjs).
+const translationsFile = path.join(CACHE_DIR, "sights-translations.json");
+const sightTranslations = existsSync(translationsFile) ? readJson(translationsFile) : {};
+
 const fresh = [];
 for (const file of readdirSync(CACHE_DIR).filter((f) => /^sights-.*-verify\.json$/.test(f) && !f.includes("-old-verify"))) {
   const district = file.replace(/^sights-|-verify\.json$/g, "");
@@ -73,6 +77,7 @@ for (const file of readdirSync(CACHE_DIR).filter((f) => /^sights-.*-verify\.json
       lat: place.lat,
       lng: place.lng,
       source: "sights",
+      ...(sightTranslations[`sight-${codes[district]}-${place.id}`] ? { translations: sightTranslations[`sight-${codes[district]}-${place.id}`] } : {}),
       moods,
       energy: v.energy,
       bestTime: v.nightOnly ? ["night"] : v.bestTime,
@@ -227,7 +232,8 @@ if (Object.keys(oldVerdict).length > 0) {
 
 const out = [];
 const enrichment = {};
-const strip = ({ _kind, _mentions, _url, ...place }) => place;
+// drops the working fields (_kind, _mentions, _url) before a place is written
+const strip = (place) => Object.fromEntries(Object.entries(place).filter(([key]) => !key.startsWith("_")));
 
 for (const o of old) {
   const m = matchedOld.get(o.id);

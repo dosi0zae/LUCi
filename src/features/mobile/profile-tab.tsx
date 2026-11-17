@@ -10,6 +10,7 @@ import { TripFeedList } from "@/features/mobile/trip-feed-list";
 import { localizePlace, type FeedTrip, type MobilePlace } from "@/features/mobile/mobile-data";
 import { PlacePhoto } from "@/features/mobile/place-photo";
 import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
+import { LegalLinks } from "@/features/mobile/legal-links";
 import { SUPPORTED_LOCALES, localeLabel } from "@/features/mobile/i18n/translations";
 import { cn } from "@/lib/utils";
 
@@ -202,7 +203,7 @@ export function ProfileTab({
 
   if (!isSignedIn) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 px-5 py-16 text-center">
+      <div className="relative flex min-h-[calc(var(--app-vh,100svh)-3.5rem)] flex-col items-center justify-start gap-3 px-5 py-16 text-center">
         <span className="ios-glass grid h-16 w-16 place-items-center rounded-full text-muted">
           <UserIcon className="h-8 w-8" />
         </span>
@@ -220,6 +221,8 @@ export function ProfileTab({
           </Button>
         )}
         {signInError && <p className="text-sm font-semibold text-danger">{signInError}</p>}
+        {/* Same place as on the first screen: the very bottom, centred. */}
+        <LegalLinks className="absolute inset-x-0 [bottom:calc(0.75rem+env(safe-area-inset-bottom))]" />
       </div>
     );
   }

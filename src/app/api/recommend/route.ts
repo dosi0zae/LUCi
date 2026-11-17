@@ -7,11 +7,12 @@ import {
   getScoredPool,
   localizeDistrictName,
   optimizeRoute,
+  optimizeRoutePreservingPins,
   isSameSpot,
   SEOUL_DISTRICTS,
   type RecommendIntent,
 } from "@/features/mobile/recommend-engine";
-import type { MobilePlace, PlaceCategory } from "@/features/mobile/mobile-data";
+import { getPlacesByIds, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
 import {
   buildDiningCourse,
   DINING_UNAVAILABLE_NOTE,
@@ -195,7 +196,7 @@ function buildSelectionSystemPrompt(locale: string, count: number): string {
 - 인지도가 낮아도 요청과 잘 맞는 곳이 있으면 한 곳쯤은 "숨은 발견"으로 넣어. 단 요청에 어긋나면 넣지 마.
 - 운영시간이나 bestTime이 있으면 시간대가 안 맞는 곳(예: 야경 장소를 오전 첫 코스)은 피해.
 반드시 주어진 id 목록에 있는 값만 쓰고, 중복 없이 정확히 ${count}개를 골라야 해.
-title: 코스 이름. ${languageName}로 12자~20자 안팎, 장소 이름을 나열하지 말고 이 코스만의 분위기나 흐름을 한 구절로. 고른 장소의 특징에서 새로 지어내고, 다른 코스와 겹칠 법한 흔한 문구는 피해. 따옴표나 마침표는 쓰지 마.
+title: 코스 이름. ${languageName}로 12자~20자 안팎, 장소 이름을 나열하지 말고 이 코스만의 분위기나 흐름을 한 구절로. 고른 장소의 특징에서 새로 지어내고, 다른 코스와 겹칠 법한 흔한 문구는 피해. 따옴표나 마침표는 쓰지 마.${locale === "ko" ? "" : ` 제목에 한글을 한 글자도 섞지 마: 지명이나 장소 이름을 쓰게 되면 ${languageName}로 옮겨 써.`}
 reason: 왜 이 조합인지 ${languageName}로 자연스러운 한 문장, 실제로 고른 장소들을 반영해서.
 다른 말 없이 주어진 스키마로만 답해.`;
 }
@@ -303,7 +304,9 @@ async function selectChainWithGemini(
     }
 
     const title = typeof parsed.title === "string" ? parsed.title.trim().replace(/^["'“”]+|["'“”.]+$/g, "") : "";
-    return { placeIds, reason: parsed.reason, title: title && title.length <= 40 ? title : null };
+    // A title with Hangul left in it (a place name half-translated: "麻포漫游日") is dropped; the course then shows the request instead.
+    const mixedScript = locale !== "ko" && /[가-힣]/.test(title);
+    return { placeIds, reason: parsed.reason, title: title && title.length <= 40 && !mixedScript ? title : null };
   } catch {
     return null;
   }
@@ -642,7 +645,7 @@ export async function POST(request: NextRequest) {
   if (focus === "mixed") {
     const refined = await refineCourseCore({ instruction: prompt.slice(0, 200), stopIds: finalPlaceIds, pinnedIds: [], locale });
     if (refined.ok) {
-      finalPlaceIds = refined.ids;
+      finalPlaceIds = optimizeRoutePreservingPins(getPlacesByIds(refined.ids), new Set(), false).map((place) => place.id);
       mixedReason = refined.reason || null;
     }
   }
@@ -653,7 +656,9 @@ export async function POST(request: NextRequest) {
   if (focus === "sights" && !NO_DINING_PATTERN.test(prompt)) {
     const woven = await weaveDefaultDining(finalPlaceIds);
     if (woven) {
-      finalPlaceIds = woven;
+      // The meal and café went in by their own rules (near the stop they follow); put the sights back in the
+      // shortest order around them, meals keeping their place in the day.
+      finalPlaceIds = optimizeRoutePreservingPins(getPlacesByIds(woven), new Set(), false).map((place) => place.id);
       wovenNote = DINING_WOVEN_NOTE[locale] ?? DINING_WOVEN_NOTE.en;
     }
   }
