@@ -75,6 +75,7 @@ import {
 } from "@/features/mobile/google-auth";
 import { buildGoogleMapsWalkingRouteUrl, buildKakaoWalkingRouteUrl } from "@/features/mobile/route-links";
 import { OnboardingTour } from "@/features/mobile/onboarding-tour";
+import { useHistoryLayers } from "@/features/mobile/use-history-layers";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import { PlaceScroller } from "@/features/mobile/place-scroller";
 import { SlidingTabs } from "@/features/mobile/sliding-tabs";
@@ -514,6 +515,7 @@ export function MobileAppShell() {
   // True while an AI course is being made: the loading card shows and the first screen gives way to
   // the course layout right away instead of sitting still for several seconds.
   const [isGenerating, setIsGenerating] = useState(false);
+  const courseRunRef = useRef(0);
   const [isHeroSearchFocused, setIsHeroSearchFocused] = useState(false);
   const frameRef = useRef<HTMLElement>(null);
   const addSourceRef = useRef<DOMRect | null>(null);
@@ -996,6 +998,9 @@ export function MobileAppShell() {
 
   async function startCourseFromPrompt(nextPrompt: string, radiusOverride?: number) {
     radiusChainCacheRef.current.clear();
+    // Browser Back during generation bumps this counter; the run then drops its result.
+    const run = ++courseRunRef.current;
+    const isCancelled = () => run !== courseRunRef.current;
     setIsRecommending(true);
     setIsGenerating(true);
     setIsHeroSearchFocused(false);
@@ -1032,6 +1037,7 @@ export function MobileAppShell() {
       }
 
       await ensureDiningLoadedForIds(data.placeIds);
+      if (isCancelled()) return;
       replaceChain(data.placeIds);
       setRecommendReason(typeof data.reason === "string" ? data.reason : null);
       setCourseTitle(typeof data.title === "string" && data.title ? { title: data.title, prompt: nextPrompt } : null);
@@ -1044,6 +1050,7 @@ export function MobileAppShell() {
       );
       setCourseAreaFilter(typeof data.areaFilter === "string" ? data.areaFilter : null);
     } catch {
+      if (isCancelled()) return;
       const result = buildChain({
         categories: [],
         attributes: [],
@@ -1056,10 +1063,12 @@ export function MobileAppShell() {
       setCourseAnchor(result.anchor);
       setCourseAreaFilter(null);
     } finally {
-      setIsRecommending(false);
-      setIsGenerating(false);
-      setRadiusMessage(null);
-      haptic([12, 50, 12]);
+      if (!isCancelled()) {
+        setIsRecommending(false);
+        setIsGenerating(false);
+        setRadiusMessage(null);
+        haptic([12, 50, 12]);
+      }
     }
   }
 
@@ -1734,6 +1743,28 @@ export function MobileAppShell() {
     setOpenTripId(null);
     setActiveTab("home");
   }
+
+  // The browser's Back button steps out of the topmost open screen (topmost first) instead of
+  // leaving the site: explore/profile → the first screen, a trip or place sheet → what was under it.
+  useHistoryLayers([
+    { open: viewingAuthorHandle !== null, close: () => setViewingAuthorHandle(null) },
+    { open: openTripId !== null, close: () => setOpenTripId(null) },
+    { open: showPublish, close: () => setShowPublish(false) },
+    { open: isOptimizePromptOpen, close: () => setIsOptimizePromptOpen(false) },
+    { open: photoPlaceId !== null, close: () => setPhotoPlaceId(null) },
+    { open: selectedPlaceId !== null, close: () => setSelectedPlaceId(null) },
+    { open: viewingCategory !== null, close: () => setViewingCategory(null) },
+    { open: activeTab !== "home", close: () => setActiveTab("home") },
+    {
+      open: hasResult || isGenerating,
+      close: () => {
+        courseRunRef.current += 1; // cancels a generation still in flight
+        setIsGenerating(false);
+        setIsRecommending(false);
+        setSubmittedPrompt("");
+      },
+    },
+  ]);
 
   const searchForm = (
     <form

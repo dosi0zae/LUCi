@@ -97,6 +97,19 @@ Status: In progress (works end to end for 성동구; nearby popup, auto meal slo
 - [x] Tried and dropped: swapping the stacked logo for the horizontal one (`tripchain-logo-horizontal.svg`) with a crossfade. The two are different drawings, so it could only crossfade, never morph; the half-size stacked logo stays. The gap between the small logo and the box is 1.25 rem (23 px measured).
 - [x] The rotator cycles through the same three. Checked in the pane: logo folds, title at the top, buttons stay at the bottom, phrases differ per reload, a rain override gives the rain phrase. Not verified: the real iOS keyboard (this pane has none), so check once on the iPhone that the title is not pushed off the top. Most festivals in the data are dated 2025, so the festival phrase rarely appears until the festival data is refreshed.
 
+### Mobile Phase CL: Browser Back Button
+
+- [x] The app is one page whose screens are React state, so the browser's Back (also Android's back key and iOS's edge swipe) left the site. `useHistoryLayers` (`src/features/mobile/use-history-layers.ts`) mirrors the open screens onto the history: each open layer pushes one entry, Back closes the topmost open layer. Layers, topmost first: creator profile, trip detail, publish sheet, optimize prompt, photo viewer, place sheet, category sheet, explore/profile tab, course result. So explore → Back = first screen; explore → trip → Back = explore → Back = first screen.
+- [x] A layer closed by its own back/✕ button pops its history entry again (`history.go`), so the stack and the screen stay in step; switching explore ↔ profile replaces rather than stacks; Forward into a closed screen steps back to match.
+- [x] Back while a course is still being generated cancels that run (`courseRunRef`) and returns to the first screen; the late response is dropped instead of reopening the result.
+- [x] The URL stays `/mobile` (history entries carry `{ tcDepth }` only). Checked in the pane: home → explore → Back, explore → trip → Back → Back, result → explore → Back → Back, the sheet's own back button, Forward, Back during generation. Not checked: on a real iPhone/Android (edge swipe, hardware back key).
+
+### Mobile Phase CM: Tab and Bookmark Icon
+
+- [x] `src/app/favicon.ico` was still the default black Vercel triangle, so browser tabs and bookmarks showed it. It is now rebuilt from the "Trip" home-screen icon (`apple-icon.png`) at 16/32/48/64/256 px, plus a matching `src/app/icon.png` (256 px). The home-screen icon itself (`apple-icon.png`) is unchanged. Checked on the dev server: all three `<link rel="icon">` tags resolve to the new files. Browsers cache favicons hard, so an old tab or bookmark can keep the triangle for a while (a hard reload or re-bookmarking refreshes it).
+
+- [x] The route map's zoom (+ / −) and re-centre buttons moved from the top-right to the top-left corner of the map (same height, `left-2 top-2` in `constellation-card.tsx`); the route-optimise and constellation-view buttons at the bottom right are unchanged.
+
 ### Mobile Phase CK: Glassier Tutorial
 
 - [x] Intro: the black overlay is gone. The app shows through a frosted scrim (`.tour-scrim`, 16 px blur, light blue tint) behind one big glass card (`.tour-card`: 32 px corners, lit top edge, a lime and a blue wash, 32 px blur) holding the logo, title, subtitle, the app's usual flat blue "튜토리얼 시작하기" with its soft blue glow (`.tour-primary`, no gloss gradient) and the skip link. The card rises in with `hero-rise`.
