@@ -31,6 +31,20 @@ function detectDeviceLocale(): Locale {
   return "en";
 }
 
+// The language the app will show on this device: the saved choice, else the device's. For code that runs on mount
+// before LocaleProvider has applied it (the provider's own effect runs after its children's).
+export function readInitialLocale(): Locale {
+  try {
+    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+    if (stored && (SUPPORTED_LOCALES as string[]).includes(stored)) {
+      return stored as Locale;
+    }
+  } catch {
+    // Storage unavailable — fall through to device detection.
+  }
+  return detectDeviceLocale();
+}
+
 type LocaleContextValue = {
   locale: Locale;
   setLocale: (locale: Locale) => void;

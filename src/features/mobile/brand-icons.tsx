@@ -4,6 +4,8 @@
 // logos. Each is a plain silhouette (`fill="currentColor"`); color comes from whatever
 // wraps it (a badge's text-color class), matching how this app's other icons work.
 
+import type { ReactElement } from "react";
+
 type BrandIconProps = {
   className?: string;
 };
@@ -53,5 +55,91 @@ export function NaverIcon({ className }: BrandIconProps) {
     <svg aria-hidden="true" className={className} fill="currentColor" role="img" viewBox="0 0 24 24">
       <path d="M16.273 12.845 7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845Z" />
     </svg>
+  );
+}
+
+export function LineIcon({ className }: BrandIconProps) {
+  return (
+    <svg aria-hidden="true" className={className} fill="currentColor" role="img" viewBox="0 0 24 24">
+      <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+    </svg>
+  );
+}
+
+// The marks above are bare silhouettes. In a share sheet or a map-app menu each one sits on its own app-icon
+// tile (rounded square, the brand's own colors, the mark unchanged), the way the apps themselves look on a
+// phone. Brand colors live only on these tiles, never on the buttons around them.
+export type BrandTileName =
+  | "kakaotalk"
+  | "instagram"
+  | "x"
+  | "facebook"
+  | "whatsapp"
+  | "line"
+  | "naver"
+  | "navermap"
+  | "kakaomap"
+  | "googlemaps";
+
+const TILE_BACKGROUND: Partial<Record<BrandTileName, string>> = {
+  kakaotalk: "#3C1E1E",
+  instagram: "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)",
+  x: "#000000",
+  facebook: "#0866FF",
+  whatsapp: "#25D366",
+  line: "#06C755",
+  googlemaps: "#ffffff",
+  navermap: "#ffffff",
+};
+
+// How much of the tile the mark fills (KakaoTalk's mark is the whole tile: its own square with the speech bubble cut out).
+const TILE_GLYPH_SIZE: Partial<Record<BrandTileName, string>> = {
+  kakaotalk: "100%",
+  instagram: "58%",
+  x: "50%",
+  facebook: "64%",
+  whatsapp: "60%",
+  line: "62%",
+  naver: "40%",
+};
+
+const TILE_GLYPH: Partial<Record<BrandTileName, (props: BrandIconProps) => ReactElement>> = {
+  kakaotalk: KakaoTalkIcon,
+  instagram: InstagramIcon,
+  x: XIcon,
+  facebook: FacebookIcon,
+  whatsapp: WhatsAppIcon,
+  line: LineIcon,
+  naver: NaverIcon,
+};
+
+export function BrandTile({ brand, className }: { brand: BrandTileName; className?: string }) {
+  const Glyph = TILE_GLYPH[brand];
+  const glyphSize = TILE_GLYPH_SIZE[brand];
+
+  return (
+    <span
+      aria-hidden="true"
+      className={`grid shrink-0 place-items-center overflow-hidden rounded-[22%] ${brand === "googlemaps" || brand === "navermap" ? "border border-border-strong " : ""}${className ?? "h-12 w-12"}`}
+      style={{ background: TILE_BACKGROUND[brand] }}
+    >
+      {Glyph && (
+        <span className="block" style={{ width: glyphSize, height: glyphSize }}>
+          <Glyph className={`block h-full w-full ${brand === "kakaotalk" ? "text-[#FEE500]" : "text-white"}`} />
+        </span>
+      )}
+      {brand === "kakaomap" && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img alt="" className="h-full w-full object-cover" src="/map-icons/kakao-map-pin.png" />
+      )}
+      {brand === "navermap" && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img alt="" className="h-full w-full object-contain" src="/map-icons/naver-map.png" />
+      )}
+      {brand === "googlemaps" && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img alt="" className="h-full w-full scale-[0.8] object-contain" src="/map-icons/google-maps-pin.jpg" />
+      )}
+    </span>
   );
 }

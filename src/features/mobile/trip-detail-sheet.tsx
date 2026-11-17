@@ -5,20 +5,22 @@ import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeftIcon,
   BookmarkIcon,
+  CloseIcon,
   DownloadIcon,
   HeartIcon,
+  LinkIcon,
   MapPlusIcon,
   MoreIcon,
   ShareIcon,
   TrashIcon,
   ImageIcon,
 } from "@/components/layout/app-icons";
-import { FacebookIcon, InstagramIcon, KakaoTalkIcon, WhatsAppIcon, XIcon } from "@/features/mobile/brand-icons";
+import { BrandTile, type BrandTileName } from "@/features/mobile/brand-icons";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
-import { buildCourseShareUrl } from "@/features/mobile/course-share";
+import { buildCoursePreviewImageUrl, buildCourseShareUrl } from "@/features/mobile/course-share";
 import { placeSubtitle } from "@/features/mobile/dining-tags";
 import { shareToKakaoTalk } from "@/features/mobile/kakao-share";
-import { buildFacebookShareUrl, buildTwitterShareUrl, buildWhatsAppShareUrl } from "@/features/mobile/sns-share";
+import { buildFacebookShareUrl, buildLineShareUrl, buildTwitterShareUrl, buildWhatsAppShareUrl } from "@/features/mobile/sns-share";
 import { PopOnActive, updateScrollSheen } from "@/features/mobile/motion";
 import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
@@ -282,7 +284,7 @@ export function TripDetailSheet({
   // sheet) — plain functions, not values computed at render time, since window.location
   // isn't available during server rendering and these must only run from a click handler.
   function getShareUrl() {
-    return buildCourseShareUrl(window.location.origin, trip.placeIds, localizedTrip.title);
+    return buildCourseShareUrl(window.location.origin, trip.placeIds, localizedTrip.title, locale);
   }
   function getShareText() {
     return `${localizedTrip.title} · ${t("placesCount", { count: places.length })} · ${t("minutesCount", { count: totalMinutes })}`;
@@ -301,6 +303,9 @@ export function TripDetailSheet({
     const pathPoints = points.map((point) => `${point.x},${point.y}`).join(" ");
     const title = escapeXml(localizedTrip.title);
     const meta = escapeXml(`${localizedPlaces[0]?.area ?? t("seoulWide")} · ${trip.authorName}`);
+    // The first six stops by name (two columns of three); a longer course just stops there. Names are cut short
+    // so the second column ends before the logo in the box's corner.
+    const stopNames = localizedPlaces.slice(0, 6).map((place) => escapeXml(place.name.length > 12 ? `${place.name.slice(0, 11)}…` : place.name));
     const summary = escapeXml(`${t("placesCount", { count: places.length })} · ${t("minutesCount", { count: totalMinutes })}`);
     // Shown as a watermark so a viewer who sees the card on Instagram/X/Threads (where
     // the image itself can't carry a real tappable link) still knows where to find it.
@@ -345,8 +350,17 @@ export function TripDetailSheet({
             `,
           )
           .join("")}
-        <rect x="70" y="900" width="940" height="120" rx="24" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.22)"/>
-        <text x="105" y="962" fill="#ffffff" font-family="Arial, sans-serif" font-size="32" font-weight="900">${summary}</text>
+        <text x="90" y="332" fill="#b7e86b" font-family="Arial, sans-serif" font-size="30" font-weight="800">${summary}</text>
+        <rect x="70" y="880" width="940" height="140" rx="24" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.22)"/>
+        ${stopNames
+          .map(
+            (name, index) => `
+              <circle cx="${105 + Math.floor(index / 3) * 470}" cy="${928 + (index % 3) * 40}" r="13" fill="#b7e86b"/>
+              <text x="${105 + Math.floor(index / 3) * 470}" y="${935 + (index % 3) * 40}" text-anchor="middle" fill="#0b1220" font-family="Arial, sans-serif" font-size="16" font-weight="900">${index + 1}</text>
+              <text x="${131 + Math.floor(index / 3) * 470}" y="${937 + (index % 3) * 40}" fill="#ffffff" font-family="Arial, sans-serif" font-size="25" font-weight="700">${name}</text>
+            `,
+          )
+          .join("")}
       </svg>`;
 
     const cardImage = new Image();
@@ -468,7 +482,7 @@ export function TripDetailSheet({
         appKey,
         title: localizedTrip.title,
         description: localizedTrip.description || `${t("placesCount", { count: places.length })} · ${t("minutesCount", { count: totalMinutes })}`,
-        imageUrl: `${window.location.origin}/apple-icon.png`,
+        imageUrl: buildCoursePreviewImageUrl(window.location.origin, trip.placeIds, localizedTrip.title, locale),
         link: getShareUrl(),
         buttonLabel: t("loadToChainButton"),
       });
@@ -488,6 +502,18 @@ export function TripDetailSheet({
   function shareToWhatsApp() {
     window.open(buildWhatsAppShareUrl(getShareText(), getShareUrl()), "_blank", "noopener,noreferrer");
   }
+  function shareToLine() {
+    window.open(buildLineShareUrl(getShareText(), getShareUrl()), "_blank", "noopener,noreferrer");
+  }
+
+  async function copyShareLink() {
+    try {
+      await navigator.clipboard.writeText(getShareUrl());
+      setShareMessage(t("shareLinkCopied"));
+    } catch {
+      setShareMessage(t("shareLinkFailed"));
+    }
+  }
 
   async function downloadShareCard() {
     const canvas = await renderShareCardCanvas();
@@ -501,6 +527,30 @@ export function TripDetailSheet({
     link.click();
     setShareMessage(t("shareImageSaved"));
   }
+
+  // Share targets in the order that suits the viewer's language (KakaoTalk first in Korean, LINE first in
+  // Japanese). Instagram has no web share link, so its tile opens the phone's own share sheet with the card
+  // image (the only way a website can hand something to Instagram).
+  const SHARE_APP_RUNNERS: Record<Exclude<BrandTileName, "naver" | "navermap" | "kakaomap" | "googlemaps">, { label: string; run: () => void }> = {
+    kakaotalk: { label: t("shareKakaoShort"), run: () => void shareToKakao() },
+    instagram: { label: "Instagram", run: () => void shareTrip() },
+    x: { label: "X", run: shareToTwitter },
+    facebook: { label: "Facebook", run: shareToFacebook },
+    whatsapp: { label: "WhatsApp", run: shareToWhatsApp },
+    line: { label: "LINE", run: shareToLine },
+  };
+  const SHARE_APP_ORDER: Record<string, (keyof typeof SHARE_APP_RUNNERS)[]> = {
+    ko: ["kakaotalk", "instagram", "x", "facebook", "whatsapp", "line"],
+    en: ["instagram", "whatsapp", "x", "facebook", "line", "kakaotalk"],
+    ja: ["line", "instagram", "x", "whatsapp", "facebook", "kakaotalk"],
+    zh: ["instagram", "whatsapp", "line", "x", "facebook", "kakaotalk"],
+  };
+  const shareApps = (SHARE_APP_ORDER[locale] ?? SHARE_APP_ORDER.en).map((brand) => ({ brand, ...SHARE_APP_RUNNERS[brand] }));
+  const shareActions = [
+    { key: "copy", label: t("shareCopyLink"), icon: <LinkIcon className="h-5 w-5" />, run: () => void copyShareLink() },
+    { key: "image", label: t("shareSaveImageShort"), icon: <DownloadIcon className="h-5 w-5" />, run: () => void downloadShareCard() },
+    { key: "more", label: t("shareMoreApps"), icon: <MoreIcon className="h-5 w-5" />, run: () => void shareTrip() },
+  ];
 
   return (
     <div
@@ -652,13 +702,17 @@ export function TripDetailSheet({
           )}
         </div>
         <p className="mt-1.5 text-sm font-semibold text-muted">
-          <button
-            className="font-bold text-foreground hover:underline"
-            onClick={() => onOpenAuthor(trip.authorHandle)}
-            type="button"
-          >
-            {trip.authorName}
-          </button>{" "}
+          {trip.authorHandle === "shared-link" ? (
+            <span className="font-bold text-foreground">{trip.authorName}</span>
+          ) : (
+            <button
+              className="font-bold text-foreground hover:underline"
+              onClick={() => onOpenAuthor(trip.authorHandle)}
+              type="button"
+            >
+              {trip.authorName}
+            </button>
+          )}{" "}
           · {t(visibilityLabelKey[trip.visibility])}
         </p>
         {localizedTrip.description && (
@@ -815,107 +869,91 @@ export function TripDetailSheet({
               <BookmarkIcon className="h-[1.375rem] w-[1.375rem]" />
             </PopOnActive>
           </button>
-          <div className="relative">
-            <button
-              aria-label={t("shareButton")}
-              className={cn(FLOAT_BUTTON, FLOAT_BUTTON_IDLE)}
-              onClick={() => setIsShareMenuOpen((open) => !open)}
-              type="button"
-            >
-              <ShareIcon className="h-[1.375rem] w-[1.375rem]" />
-            </button>
-            {isShareMenuOpen && (
-              <>
-                <button
-                  aria-hidden="true"
-                  className="fixed inset-0 z-10 cursor-default"
-                  onClick={() => setIsShareMenuOpen(false)}
-                  tabIndex={-1}
-                />
-                <div className="ios-menu absolute bottom-full right-0 z-20 mb-2 flex items-center gap-2 p-2">
-                  {/* Instagram has no public share-intent URL (unlike X/Facebook/WhatsApp/
-                      Kakao below) — the OS share sheet, triggered by shareTrip(), is the
-                      only way this app can reach it (or TikTok), so this badge and the
-                      catch-all one at the end both open that same sheet. */}
-                  <button
-                    aria-label={t("shareOtherButton")}
-                    className="grid h-9 w-9 place-items-center rounded-full text-white transition hover:opacity-80"
-                    onClick={() => {
-                      setIsShareMenuOpen(false);
-                      void shareTrip();
-                    }}
-                    style={{ background: "linear-gradient(45deg, #f9ce34, #ee2a7b 45%, #6228d7)" }}
-                    title={t("shareOtherButton")}
-                    type="button"
-                  >
-                    <InstagramIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    aria-label={t("kakaoShareButton")}
-                    className="grid h-9 w-9 place-items-center rounded-full bg-[#FEE500] text-[#391B1B] transition hover:opacity-80"
-                    onClick={() => {
-                      setIsShareMenuOpen(false);
-                      void shareToKakao();
-                    }}
-                    title={t("kakaoShareButton")}
-                    type="button"
-                  >
-                    <KakaoTalkIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    aria-label="X"
-                    className="grid h-9 w-9 place-items-center rounded-full bg-black text-white transition hover:opacity-80"
-                    onClick={() => {
-                      setIsShareMenuOpen(false);
-                      shareToTwitter();
-                    }}
-                    title="X"
-                    type="button"
-                  >
-                    <XIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    aria-label="Facebook"
-                    className="grid h-9 w-9 place-items-center rounded-full bg-[#0866FF] text-white transition hover:opacity-80"
-                    onClick={() => {
-                      setIsShareMenuOpen(false);
-                      shareToFacebook();
-                    }}
-                    title="Facebook"
-                    type="button"
-                  >
-                    <FacebookIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    aria-label="WhatsApp"
-                    className="grid h-9 w-9 place-items-center rounded-full bg-[#25D366] text-white transition hover:opacity-80"
-                    onClick={() => {
-                      setIsShareMenuOpen(false);
-                      shareToWhatsApp();
-                    }}
-                    title="WhatsApp"
-                    type="button"
-                  >
-                    <WhatsAppIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    aria-label={t("saveImageButton")}
-                    className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface text-foreground transition hover:bg-surface-muted"
-                    onClick={() => {
-                      setIsShareMenuOpen(false);
-                      void downloadShareCard();
-                    }}
-                    title={t("saveImageButton")}
-                    type="button"
-                  >
-                    <DownloadIcon className="h-4 w-4" />
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+          <button
+            aria-label={t("shareButton")}
+            className={cn(FLOAT_BUTTON, FLOAT_BUTTON_IDLE)}
+            onClick={() => setIsShareMenuOpen(true)}
+            type="button"
+          >
+            <ShareIcon className="h-[1.375rem] w-[1.375rem]" />
+          </button>
         </div>
       </footer>
+
+      {isShareMenuOpen && (
+        <div
+          className="sheet-backdrop absolute inset-0 z-50 flex items-end bg-black/40"
+          onClick={() => setIsShareMenuOpen(false)}
+          role="presentation"
+        >
+          <div
+            aria-label={t("shareSheetTitle")}
+            aria-modal="true"
+            className="sheet-panel w-full rounded-t-3xl bg-background px-5 pt-3 shadow-panel [padding-bottom:calc(1.25rem+env(safe-area-inset-bottom))]"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+          >
+            <div className="mx-auto h-1 w-9 rounded-full bg-border-strong" />
+            <div className="mt-3 flex items-center justify-between">
+              <h3 className="text-lg font-extrabold">{t("shareSheetTitle")}</h3>
+              <button
+                aria-label={t("cancel")}
+                className="ios-btn grid h-9 w-9 place-items-center rounded-full"
+                onClick={() => setIsShareMenuOpen(false)}
+                type="button"
+              >
+                <CloseIcon className="h-[1.125rem] w-[1.125rem]" />
+              </button>
+            </div>
+
+            {/* What a chat app will show under the link: the same picture the link's preview uses. */}
+            <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-surface-muted">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                alt=""
+                className="block aspect-[1200/630] w-full object-cover"
+                src={buildCoursePreviewImageUrl("", trip.placeIds, localizedTrip.title, locale)}
+              />
+            </div>
+
+            {/* The apps sit in one sideways-scrolling row (the viewer's language decides who comes first); the
+                plain actions are a list under it, the way the phone's own share sheet is laid out. */}
+            <div className="app-scroll-area -mx-5 mt-5 flex gap-4 overflow-x-auto px-5">
+              {shareApps.map((app) => (
+                <button
+                  className="flex w-[4.25rem] shrink-0 flex-col items-center gap-1.5 active:opacity-70"
+                  key={app.brand}
+                  onClick={() => {
+                    setIsShareMenuOpen(false);
+                    app.run();
+                  }}
+                  type="button"
+                >
+                  <BrandTile brand={app.brand} className="h-[3.5rem] w-[3.5rem]" />
+                  <span className="max-w-full truncate text-xs font-semibold text-muted-strong">{app.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-4 divide-y divide-border overflow-hidden rounded-2xl bg-surface-muted">
+              {shareActions.map((action) => (
+                <button
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-[0.9375rem] font-bold active:bg-black/5"
+                  key={action.key}
+                  onClick={() => {
+                    setIsShareMenuOpen(false);
+                    action.run();
+                  }}
+                  type="button"
+                >
+                  <span className="grid h-7 w-7 shrink-0 place-items-center text-muted-strong">{action.icon}</span>
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {photoPlaceId && (
         <PhotoLightbox

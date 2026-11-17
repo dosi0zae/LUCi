@@ -14,6 +14,12 @@ export function buildFacebookShareUrl(url: string): string {
   return `https://www.facebook.com/sharer/sharer.php?${params.toString()}`;
 }
 
+// LINE (the main chat app in Japan) has a public share link too.
+export function buildLineShareUrl(text: string, url: string): string {
+  const params = new URLSearchParams({ url, text });
+  return `https://social-plugins.line.me/lineit/share?${params.toString()}`;
+}
+
 export function buildWhatsAppShareUrl(text: string, url: string): string {
   const params = new URLSearchParams({ text: `${text} ${url}` });
   return `https://wa.me/?${params.toString()}`;

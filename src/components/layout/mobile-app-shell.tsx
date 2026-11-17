@@ -52,8 +52,10 @@ import {
   type TripComment,
   type TripVisibility,
 } from "@/features/mobile/mobile-data";
-import { useCategoryLabel, useLocale, usePromptExamples, useT } from "@/features/mobile/i18n/i18n-context";
+import { readInitialLocale, useCategoryLabel, useLocale, usePromptExamples, useT } from "@/features/mobile/i18n/i18n-context";
+import { dictionaries } from "@/features/mobile/i18n/translations";
 import { buildPromptSuggestions, fetchSeoulWeather } from "@/features/mobile/prompt-suggestions";
+import { BrandTile } from "@/features/mobile/brand-icons";
 import { CategorySheet, type PlaceBadgeKind } from "@/features/mobile/category-sheet";
 import { LanguageMenuButton } from "@/features/mobile/language-menu-button";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
@@ -144,6 +146,11 @@ function diningRank(place: MobilePlace, chain: MobilePlace[]): number {
 let heroIntroPlayed = false;
 const PROFILE_STORAGE_KEY = "tripchain:profile";
 const RECENTLY_VIEWED_LIMIT = 10;
+// Courses opened from a share link are kept on the device (newest first) up to this many.
+const IMPORTED_TRIPS_LIMIT = 30;
+// Stands in for the author of a course that came through a link: the link carries no author, and there is
+// no profile behind it to open.
+const SHARED_AUTHOR_HANDLE = "shared-link";
 const TUTORIAL_STORAGE_KEY = "tripchain:tutorialSeen";
 // A place this close to any current stop is "실제로 걸어서 들를 수 있는" close, not just
 // closer-than-average — used to decide the "주변" badge in the category sheet.
@@ -256,6 +263,9 @@ export function MobileAppShell() {
   const [openTripId, setOpenTripId] = useState<string | null>(null);
 
   const [publishedTrips, setPublishedTrips] = useState<FeedTrip[]>([]);
+  // Courses that arrived through a share link: kept on this device so the one that was opened (and anything
+  // the user then liked or saved) is still there next time, but never mixed into "my" courses.
+  const [importedTrips, setImportedTrips] = useState<FeedTrip[]>([]);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [bookmarkedPlaceIds, setBookmarkedPlaceIds] = useState<Set<string>>(new Set());
@@ -426,6 +436,7 @@ export function MobileAppShell() {
           isSignedIn?: boolean;
           account?: unknown;
           publishedTrips?: FeedTrip[];
+          importedTrips?: FeedTrip[];
           likedIds?: string[];
           savedIds?: string[];
           bookmarkedPlaceIds?: string[];
@@ -438,6 +449,7 @@ export function MobileAppShell() {
         if (parsed.isSignedIn) setIsSignedIn(true);
         if (isGoogleAccount(parsed.account)) setAccount(parsed.account);
         if (Array.isArray(parsed.publishedTrips)) setPublishedTrips(parsed.publishedTrips);
+        if (Array.isArray(parsed.importedTrips)) setImportedTrips(parsed.importedTrips);
         if (Array.isArray(parsed.likedIds)) setLikedIds(new Set(parsed.likedIds));
         if (Array.isArray(parsed.savedIds)) setSavedIds(new Set(parsed.savedIds));
         if (Array.isArray(parsed.bookmarkedPlaceIds)) {
@@ -469,6 +481,7 @@ export function MobileAppShell() {
           isSignedIn,
           account,
           publishedTrips,
+          importedTrips,
           likedIds: [...likedIds],
           savedIds: [...savedIds],
           bookmarkedPlaceIds: [...bookmarkedPlaceIds],
@@ -479,7 +492,7 @@ export function MobileAppShell() {
     } catch {
       // Storage may be unavailable (private mode, quota) — persistence is best-effort.
     }
-  }, [isSignedIn, account, publishedTrips, likedIds, savedIds, bookmarkedPlaceIds, userComments, recentlyViewedTripIds]);
+  }, [isSignedIn, account, publishedTrips, importedTrips, likedIds, savedIds, bookmarkedPlaceIds, userComments, recentlyViewedTripIds]);
 
   // The Google button returns an ID token; the server confirms it with Google (and that it was issued
   // for this app) before the account is trusted. Only the public profile is kept, never the token.
@@ -608,15 +621,16 @@ export function MobileAppShell() {
   useEffect(() => subscribeDining(() => setDiningVersion((version) => version + 1)), []);
   useEffect(() => {
     // A sample course in 탐색 has a meal and a café too: they load when its detail is opened.
-    const openTripPlaceIds = openTripId ? [...publishedTrips, ...seedFeedTrips].find((trip) => trip.id === openTripId)?.placeIds ?? [] : [];
+    const openTripPlaceIds = openTripId ? [...publishedTrips, ...importedTrips, ...seedFeedTrips].find((trip) => trip.id === openTripId)?.placeIds ?? [] : [];
     void ensureDiningLoadedForIds([
       ...chainIds,
       ...swapCandidateIds,
       ...bookmarkedPlaceIds,
       ...publishedTrips.flatMap((trip) => trip.placeIds),
+      ...importedTrips.flatMap((trip) => trip.placeIds),
       ...openTripPlaceIds,
     ]);
-  }, [chainIds, swapCandidateIds, bookmarkedPlaceIds, publishedTrips, openTripId]);
+  }, [chainIds, swapCandidateIds, bookmarkedPlaceIds, publishedTrips, importedTrips, openTripId]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds, diningVersion]);
@@ -665,21 +679,45 @@ export function MobileAppShell() {
   useEffect(() => {
     // A link built by buildCourseShareUrl encodes the course's place ids directly, so it
     // resolves the same way for anyone (no server-side trip storage needed — see
-    // course-share.ts). Consumed once on mount, then stripped from the URL so a later
-    // refresh or radius/refresh action doesn't keep reloading this same shared course.
+    // course-share.ts). It opens as the course's own detail screen (what the sharer was looking at), from
+    // where "load into my courses" makes it editable. Consumed once on mount, then stripped from the URL so a
+    // later refresh doesn't open it again.
     const decoded = decodeCourseFromLocation(window.location.search);
     if (!decoded) {
       return;
     }
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setChainIds(decoded.placeIds);
-    setSubmittedPrompt(decoded.title || t("sharedCourseFallbackTitle"));
-    setRecommendReason(null);
-    setIsAiCourse(false);
-    setActiveTab("home");
+    // t() still holds the default language here (the saved one is applied after this effect), so the texts come
+    // straight from the language this device will show.
+    const startLocale = dictionaries[readInitialLocale()];
+
+    // The same stops always give the same id, so opening one link twice keeps a single entry.
+    const key = decoded.placeIds.join(",");
+    let hash = 0;
+    for (let index = 0; index < key.length; index += 1) {
+      hash = (hash * 31 + key.charCodeAt(index)) >>> 0;
+    }
+    const sharedTrip: FeedTrip = {
+      id: `shared-${hash.toString(36)}`,
+      title: decoded.title || startLocale.sharedCourseFallbackTitle,
+      description: "",
+      authorHandle: SHARED_AUTHOR_HANDLE,
+      authorName: startLocale.sharedCourseAuthor,
+      visibility: "link",
+      placeIds: decoded.placeIds,
+      likes: 0,
+      comments: 0,
+      saved: 0,
+      rankScore: 0,
+      isMine: false,
+      publishedAt: new Date().toISOString(),
+    };
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setImportedTrips((current) => [sharedTrip, ...current.filter((trip) => trip.id !== sharedTrip.id)].slice(0, IMPORTED_TRIPS_LIMIT));
+    setRecentlyViewedTripIds((current) => [sharedTrip.id, ...current.filter((id) => id !== sharedTrip.id)].slice(0, RECENTLY_VIEWED_LIMIT));
+    setOpenTripId(sharedTrip.id);
+    /* eslint-enable react-hooks/set-state-in-effect */
     window.history.replaceState(null, "", window.location.pathname);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   // Restaurants/cafés/bars around the course also load on their own: a sights course has no
   // dining stop to pull a district in, yet "다른 장소" should still offer them.
@@ -779,11 +817,11 @@ export function MobileAppShell() {
 
   const allTrips = useMemo(
     () =>
-      [...publishedTrips, ...seedFeedTrips].map((trip) => {
+      [...publishedTrips, ...importedTrips, ...seedFeedTrips].map((trip) => {
         const extraComments = userComments[trip.id]?.length ?? 0;
         return extraComments > 0 ? { ...trip, comments: trip.comments + extraComments } : trip;
       }),
-    [publishedTrips, userComments],
+    [publishedTrips, importedTrips, userComments],
   );
   const savedTrips = useMemo(
     () => allTrips.filter((trip) => savedIds.has(trip.id)),
@@ -2097,7 +2135,7 @@ export function MobileAppShell() {
                                 <div className="ios-menu absolute right-0 top-full z-20 mt-2 flex items-center gap-2 p-2">
                                   <button
                                     aria-label={t("mapKakao")}
-                                    className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full transition hover:opacity-80"
+                                    className="shrink-0 transition hover:opacity-80"
                                     onClick={() => {
                                       setIsNavigateMenuOpen(false);
                                       window.open(buildKakaoWalkingRouteUrl(chainPlaces), "_blank", "noopener,noreferrer");
@@ -2105,12 +2143,11 @@ export function MobileAppShell() {
                                     title={t("mapKakao")}
                                     type="button"
                                   >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img alt="" className="h-full w-full object-cover" src="/map-icons/kakao-map-pin.png" />
+                                    <BrandTile brand="kakaomap" className="h-11 w-11" />
                                   </button>
                                   <button
                                     aria-label={t("mapGoogle")}
-                                    className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full border border-border-strong bg-surface-muted transition hover:opacity-80"
+                                    className="shrink-0 transition hover:opacity-80"
                                     onClick={() => {
                                       setIsNavigateMenuOpen(false);
                                       window.open(
@@ -2122,15 +2159,7 @@ export function MobileAppShell() {
                                     title={t("mapGoogle")}
                                     type="button"
                                   >
-                                    {/* Sized down so the rainbow pin itself roughly matches the size of
-                                        the blue pin inside the Kakao badge (not the badge/frame size) —
-                                        the extra room this reveals is the white background beneath it. */}
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      alt=""
-                                      className="h-full w-full scale-75 object-cover"
-                                      src="/map-icons/google-maps-pin.jpg"
-                                    />
+                                    <BrandTile brand="googlemaps" className="h-11 w-11" />
                                   </button>
                                 </div>
                               </>

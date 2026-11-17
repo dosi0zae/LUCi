@@ -13,7 +13,7 @@ import {
   UtensilsIcon,
   AiSparklesIcon,
 } from "@/components/layout/app-icons";
-import { NaverIcon } from "@/features/mobile/brand-icons";
+import { BrandTile } from "@/features/mobile/brand-icons";
 import { PopOnActive } from "@/features/mobile/motion";
 import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
 import { isDiningCategory, localizePlace, type MobilePlace, type TripComment } from "@/features/mobile/mobile-data";
@@ -406,38 +406,36 @@ export function PlaceSheet({
                     <div className="ios-menu absolute right-0 top-full z-20 mt-2 flex items-center gap-2 p-2">
                       <a
                         aria-label={t("mapKakao")}
-                        className="grid h-9 w-9 place-items-center overflow-hidden rounded-full transition hover:opacity-80"
+                        className="shrink-0 transition hover:opacity-80"
                         href={getKakaoMapUrl(place)}
                         onClick={() => setIsMapMenuOpen(false)}
                         rel="noopener noreferrer"
                         target="_blank"
                         title={t("mapKakao")}
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img alt="" className="h-full w-full object-cover" src="/map-icons/kakao-map-pin.png" />
+                        <BrandTile brand="kakaomap" className="h-9 w-9" />
                       </a>
                       <a
                         aria-label={t("mapNaver")}
-                        className="grid h-9 w-9 place-items-center rounded-full bg-[#03C75A] text-white transition hover:opacity-80"
+                        className="shrink-0 transition hover:opacity-80"
                         href={getNaverMapUrl(place)}
                         onClick={() => setIsMapMenuOpen(false)}
                         rel="noopener noreferrer"
                         target="_blank"
                         title={t("mapNaver")}
                       >
-                        <NaverIcon className="h-3.5 w-3.5" />
+                        <BrandTile brand="navermap" className="h-9 w-9" />
                       </a>
                       <a
                         aria-label={t("mapGoogle")}
-                        className="grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-border-strong bg-surface-muted transition hover:opacity-80"
+                        className="shrink-0 transition hover:opacity-80"
                         href={getGoogleMapsUrl(place)}
                         onClick={() => setIsMapMenuOpen(false)}
                         rel="noopener noreferrer"
                         target="_blank"
                         title={t("mapGoogle")}
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img alt="" className="h-full w-full scale-75 object-cover" src="/map-icons/google-maps-pin.jpg" />
+                        <BrandTile brand="googlemaps" className="h-9 w-9" />
                       </a>
                     </div>
                   )}

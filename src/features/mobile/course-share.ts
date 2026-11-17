@@ -8,11 +8,21 @@ import { getPlaceById } from "@/features/mobile/mobile-data";
 const COURSE_PARAM = "course";
 const TITLE_PARAM = "title";
 
-export function buildCourseShareUrl(origin: string, placeIds: string[], title: string): string {
+// `lang` is only for the preview a chat app builds from the link (its text and picture follow the sharer's language).
+export function buildCourseShareUrl(origin: string, placeIds: string[], title: string, lang?: string): string {
   const params = new URLSearchParams();
   params.set(COURSE_PARAM, placeIds.join(","));
   params.set(TITLE_PARAM, title);
+  if (lang) {
+    params.set("lang", lang);
+  }
   return `${origin}/mobile?${params.toString()}`;
+}
+
+// The picture shown under a shared link (drawn by src/app/og/route.tsx from the same values).
+export function buildCoursePreviewImageUrl(origin: string, placeIds: string[], title: string, lang: string): string {
+  const params = new URLSearchParams({ course: placeIds.join(","), title, lang });
+  return `${origin}/og?${params.toString()}`;
 }
 
 export function decodeCourseFromLocation(search: string): { placeIds: string[]; title: string | null } | null {

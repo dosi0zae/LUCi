@@ -8,6 +8,8 @@ type KakaoShareApi = {
       title: string;
       description: string;
       imageUrl: string;
+      imageWidth?: number;
+      imageHeight?: number;
       link: { mobileWebUrl: string; webUrl: string };
     };
     buttons: { title: string; link: { mobileWebUrl: string; webUrl: string } }[];
@@ -107,6 +109,8 @@ export async function shareToKakaoTalk(input: {
       title: input.title,
       description: input.description,
       imageUrl: input.imageUrl,
+      imageWidth: 1200,
+      imageHeight: 630,
       link: { mobileWebUrl: input.link, webUrl: input.link },
     },
     buttons: [
