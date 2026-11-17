@@ -195,7 +195,8 @@ Write each name in its common official form, without branch words, adjectives or
 async function geminiExtract(batch) {
   if (stopGemini || overBudget()) return null;
   const body = batch.map((post, i) => `[${i}] ${post.t} | ${post.d}`).join("\n");
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  const MAX_ATTEMPTS = 5;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${env.GEMINI_API_KEY}`,
       {
@@ -231,15 +232,20 @@ async function geminiExtract(batch) {
         process.exitCode = 2;
         return null;
       }
-      await sleep(2000 * attempt);
+      console.log(`  Gemini ${response.status} (attempt ${attempt}/${MAX_ATTEMPTS}); waiting.`);
+      await sleep(5000 * attempt);
       continue;
     }
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.log(`  Gemini ${response.status}: ${(await response.text().catch(() => "")).slice(0, 160)}`);
+      return null;
+    }
     try {
       const data = await response.json();
       countUsage(data);
       return JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text ?? "[]");
-    } catch {
+    } catch (error) {
+      console.log(`  Gemini reply could not be read: ${error instanceof Error ? error.message : error}`);
       return null;
     }
   }
