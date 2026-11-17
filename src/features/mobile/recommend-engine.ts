@@ -669,16 +669,19 @@ export function getScoredPool(intent: RecommendIntent): {
   scored: { place: MobilePlace; score: number }[];
   anchor: { lat: number; lng: number } | null;
 } {
-  const scoredAll = places
+  // Night-only places (clubs) are for people who ask for the night; every other course leaves them out.
+  const wantsNight = intent.startTime === "night" || intent.attributes.includes("야경");
+  const usable = places.filter((place) => wantsNight || !place.nightOnly);
+  const scoredAll = usable
     .map((place) => ({ place, score: scorePlace(place, intent) }))
     .sort((a, b) => b.score - a.score);
 
-  const areaPlaces = intent.areaFilter ? places.filter((place) => place.area === intent.areaFilter) : null;
+  const areaPlaces = intent.areaFilter ? usable.filter((place) => place.area === intent.areaFilter) : null;
   const hangangPlaces = intent.hangangOnly
-    ? places.filter((place) => SEOUL_HANGANG_PLACE_IDS.has(place.id))
+    ? usable.filter((place) => SEOUL_HANGANG_PLACE_IDS.has(place.id))
     : null;
   const landmarkPlaces = intent.landmarkOnly
-    ? places.filter((place) => SEOUL_LANDMARK_PLACE_IDS.has(place.id))
+    ? usable.filter((place) => SEOUL_LANDMARK_PLACE_IDS.has(place.id))
     : null;
 
   let anchor: { lat: number; lng: number } | null;
@@ -709,7 +712,7 @@ export function getScoredPool(intent: RecommendIntent): {
   } else {
     anchor = intent.anchor ?? scoredAll[0]?.place ?? null;
     const radiusKm = intent.radiusKm ?? DEFAULT_RADIUS_KM;
-    pool = anchor ? poolNear(places, anchor, radiusKm, intent.strictRadius ?? false) : places;
+    pool = anchor ? poolNear(usable, anchor, radiusKm, intent.strictRadius ?? false) : usable;
   }
 
   const poolIds = new Set(pool.map((place) => place.id));

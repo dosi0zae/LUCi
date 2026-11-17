@@ -61,7 +61,10 @@ export type MobilePlace = {
   // "kakao" marks places dug up from the Kakao Local API (scripts/dig-kakao-places.mjs)
   // to fill gaps that sync left (실제 한강공원 지점들, 이태원/북촌 같은 동네 등) — Kakao
   // gives no description/fee/hours, so those fields are Gemini-written or "정보 없음".
-  source?: "kakao" | "dining";
+  source?: "kakao" | "dining" | "sights";
+  // A place only worth a visit at night (a club, a live house): left out of every course unless
+  // the request asks for the night (see getScoredPool).
+  nightOnly?: boolean;
   // Only dining stops (scripts/build-food-pool.mjs --stage export): tag ids from our closed
   // vocabulary, our own popularity band, the "hot" label from search trends, and the Kakao
   // place page. No ratings or post text are stored.

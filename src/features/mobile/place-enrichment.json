@@ -2,8 +2,158 @@
  "heritage-11-0000010000000": {
   "moods": [
    "실외",
-   "도보코스",
+   "무료",
    "역사탐방",
+   "도보코스",
+   "포토존"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "대한민국의 국보 제1호이자 조선 시대 서울의 4대 문 중 남대문."
+ },
+ "heritage-13-0000320000000": {
+  "moods": [
+   "실외",
+   "무료",
+   "역사탐방",
+   "가족동반"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "독립문과 역사적 의미를 되새기는 도심 속 휴식처."
+ },
+ "heritage-13-0000830000000": {
+  "moods": [
+   "실외",
+   "무료",
+   "역사탐방",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "누에의 신에게 제사를 지내던 조선시대의 제단."
+ },
+ "heritage-13-0001170000000": {
+  "moods": [
+   "실내",
+   "실외",
+   "커플",
+   "가족동반",
+   "역사탐방",
+   "전통문화",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 120,
+  "story": "조선왕조의 으뜸 궁궐로 웅장한 건축미를 자랑하는 대표 명소."
+ },
+ "heritage-13-0001220000000": {
+  "moods": [
+   "실내",
+   "실외",
+   "커플",
+   "가족동반",
+   "역사탐방",
+   "전통문화",
+   "포토존",
+   "자연"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "자연과 궁궐 건축이 조화를 이뤄 유네스코 세계유산에 등록된 곳."
+ },
+ "heritage-13-0001230000000": {
+  "moods": [
+   "실내",
+   "실외",
+   "역사탐방",
+   "자연",
+   "포토존",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "조선 시대 왕실의 애틋한 사연과 아름다운 자연이 조화로운 궁궐."
+ },
+ "heritage-13-0001240000000": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "혼자",
+   "커플",
+   "역사탐방",
+   "전통문화",
+   "포토존"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "고풍스러운 궁궐과 석조전이 어우러진 대한제국의 흔적"
+ },
+ "heritage-13-0001430000000": {
+  "moods": [
+   "실외",
+   "역사탐방",
+   "도보코스",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "조선 시대 최고 교육기관의 고즈넉한 풍경과 은행나무"
+ },
+ "heritage-13-0001570000000": {
+  "moods": [
+   "실외",
+   "무료",
+   "역사탐방",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 20,
+  "story": "고종황제가 하늘에 제사를 올리던 환구단 터에 남은 황궁우."
+ },
+ "heritage-13-0001600000000": {
+  "moods": [
+   "실외",
+   "무료",
+   "역사탐방",
+   "도보코스",
    "포토존"
   ],
   "energy": 2,
@@ -12,13 +162,744 @@
    "evening"
   ],
   "durationMin": 30,
-  "story": "조선시대 한양도성의 정문이자 오래된 목조 건축물을 만납니다."
+  "story": "조선 시대에 세워진 역사 깊은 서울의 대표 돌다리."
  },
- "heritage-11-0000020000000": {
+ "heritage-13-0001940000000": {
+  "moods": [
+   "실외",
+   "역사탐방",
+   "전통문화",
+   "자연",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "조선 시대 왕과 왕비의 묘역으로 고즈넉한 산책과 역사를 즐기는 곳."
+ },
+ "heritage-13-0001990000000": {
+  "moods": [
+   "실외",
+   "역사탐방",
+   "자연",
+   "도보코스",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "조선시대 왕릉이 보존된 도심 속 울창한 숲 산책로."
+ },
+ "heritage-13-0002040000000": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "역사탐방",
+   "자연",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "조선 왕릉의 고요한 숲길을 걸으며 역사를 돌아보는 곳."
+ },
+ "heritage-13-0002080000000": {
+  "moods": [
+   "실외",
+   "역사탐방",
+   "자연",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "조선 조선왕조의 능으로 숲이 우거져 산책하기 좋은 세계문화유산."
+ },
+ "heritage-13-0002130000000": {
+  "moods": [
+   "실내",
+   "실외",
+   "무료",
+   "역사탐방",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "우리나라 최초의 우체국인 갑신정변의 역사적 현장"
+ },
+ "heritage-13-0002340000000": {
+  "moods": [
+   "실외",
+   "역사탐방",
+   "자연",
+   "도보코스",
+   "무료"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "삼국시대의 전략적 요충지였던 역사 깊은 산성 유적."
+ },
+ "heritage-13-0002430000000": {
+  "moods": [
+   "실외",
+   "무료",
+   "역사탐방",
+   "조용함",
+   "자연"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "백제 귀족들의 무덤이 남아 있는 도심 속 고분군"
+ },
+ "heritage-13-0002470000000": {
+  "moods": [
+   "실외",
+   "무료",
+   "역사탐방",
+   "도보코스"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "서울 지역의 옛 가마터 흔적을 만날 수 있는 유적지."
+ },
+ "heritage-13-0002520000000": {
+  "moods": [
+   "실내",
+   "실외",
+   "역사탐방",
+   "포토존",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "우리나라 최초의 서양식 벽돌조 성당으로 아름다운 건축미를 자랑합니다."
+ },
+ "heritage-13-0002530000000": {
+  "moods": [
+   "실외",
+   "무료",
+   "역사탐방",
+   "조용함",
+   "도보코스"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "정동 길에 남아 있는 구한말 아픈 역사가 서린 고풍스러운 건축물."
+ },
+ "heritage-13-0002570000000": {
+  "moods": [
+   "실내",
+   "실외",
+   "무료",
+   "역사탐방",
+   "전통문화",
+   "포토존"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "조선 시대 흥선대원군의 사거이자 고종의 등극 전 유년기 거처."
+ },
+ "heritage-13-0002670000000": {
+  "moods": [
+   "실내",
+   "실외",
+   "역사탐방",
+   "가족동반",
+   "도보코스"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 120,
+  "story": "신석기 시대의 역사를 생생하게 만나볼 수 있는 대규모 유적지."
+ },
+ "heritage-13-0002700000000": {
+  "moods": [
+   "실외",
+   "무료",
+   "역사탐방",
+   "조용함",
+   "자연"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "주택가 속 고요하게 보존된 백제 시대 고분군"
+ },
+ "heritage-13-0002710000000": {
+  "moods": [
+   "실외",
+   "무료",
+   "혼자",
+   "친구모임",
+   "커플",
+   "역사탐방",
+   "자연",
+   "포토존",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "조선 시대의 아픔과 역사가 담긴 고요한 서궐 경희궁 산책."
+ },
+ "heritage-13-0002800000000": {
+  "moods": [
+   "실내",
+   "무료",
+   "가족동반",
+   "역사탐방",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "화폐의 역사와 경제를 배울 수 있는 박물관."
+ },
+ "heritage-13-0003240000000": {
+  "moods": [
+   "실내",
+   "실외",
+   "역사탐방",
+   "혼자",
+   "친구모임",
+   "가족동반"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "일제강점기 아픈 역사를 기억하고 추모하는 대표적인 역사 교육 장소"
+ },
+ "heritage-13-0003300000000": {
+  "moods": [
+   "실외",
+   "무료",
+   "역사탐방",
+   "가족동반",
+   "자연",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "독립운동가들의 영정이 모셔져 있으며 역사적 의미가 깊은 근린공원."
+ },
+ "heritage-13-0003430000000": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "역사탐방",
+   "자연"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "통일신라 시대의 역사가 담긴 호암산의 산성 유적."
+ },
+ "heritage-13-0003540000000": {
+  "moods": [
+   "실외",
+   "역사탐방",
+   "무료",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "3.1운동의 발상지이자 역사의 흔적이 남은 도심 속 공원."
+ },
+ "heritage-13-0003610000000": {
+  "moods": [
+   "실외",
+   "역사탐방",
+   "조용함",
+   "자연",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "영휘원과 나란히 위치해 산책과 역사 탐방을 겸할 수 있는 공간"
+ },
+ "heritage-13-0003620000000": {
+  "moods": [
+   "실외",
+   "역사탐방",
+   "조용함",
+   "무료"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "조선 시대 연산군의 묘와 역사의 흔적이 남은 장소."
+ },
+ "tour-1116925": {
+  "moods": [
+   "실외",
+   "무료",
+   "자연",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "가볍게 오르기 좋은 아담한 도심 속 야산."
+ },
+ "tour-809490": {
+  "moods": [
+   "실외",
+   "자연",
+   "조용함",
+   "도보코스"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "한강의 자연 생태를 가까이서 관찰할 수 있는 생태공원."
+ },
+ "tour-2591792": {
+  "moods": [
+   "실외",
+   "자연",
+   "휴식",
+   "포토존",
+   "무료"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 50,
+  "story": "꽃밭과 억새원이 어우러진 생태 휴식 공간."
+ },
+ "tour-2733966": {
+  "moods": [
+   "실외",
+   "자연",
+   "휴식",
+   "도보코스",
+   "무료"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "주민들의 편안한 휴식처가 되어주는 도심 속 공원."
+ },
+ "tour-2930839": {
+  "moods": [
+   "실외",
+   "커플",
+   "포토존",
+   "활기참"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 90,
+  "story": "개성 있는 상점과 카페가 모여 있는 이국적인 거리."
+ },
+ "tour-2591797": {
+  "moods": [
+   "실외",
+   "자연",
+   "휴식",
+   "가족동반",
+   "무료"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "산책로와 운동시설이 잘 갖추어진 넓은 근린공원."
+ },
+ "tour-126480": {
   "moods": [
    "실외",
    "도보코스",
+   "자연",
+   "휴식"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "계곡 물소리를 들으며 걷기 좋은 힐링 산책로."
+ },
+ "tour-1605990": {
+  "moods": [
+   "실내",
+   "실외",
    "역사탐방",
+   "전통문화",
+   "포토존",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "남산골한옥마을 내에 이전 복원된 조선시대 전통 가옥입니다."
+ },
+ "tour-130938": {
+  "moods": [
+   "실내",
+   "가족동반",
+   "체험형"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "다양한 재난 상황을 직접 체험하고 안전을 배우는 시설입니다."
+ },
+ "tour-3065938": {
+  "moods": [
+   "실외",
+   "자연",
+   "휴식",
+   "도보코스"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 90,
+  "story": "탁 트인 한강 뷰를 감상하며 산책과 피크닉을 즐기기 좋은 곳."
+ },
+ "tour-1366921": {
+  "moods": [
+   "실내",
+   "무료",
+   "커플",
+   "포토존",
+   "야경",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 40,
+  "story": "한강 위에서 아름다운 뷰와 휴식을 즐기는 무료 전망대"
+ },
+ "tour-2553960": {
+  "moods": [
+   "실내",
+   "역사탐방",
+   "가족동반",
+   "무료"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "구로공단 노동자들의 삶과 애환을 엿볼 수 있는 전시관."
+ },
+ "tour-2591829": {
+  "moods": [
+   "실외",
+   "무료",
+   "자연",
+   "휴식",
+   "포토존"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "도심 속 여유를 즐길 수 있는 쾌적한 근린공원."
+ },
+ "tour-2357761": {
+  "moods": [
+   "실외",
+   "무료",
+   "자연",
+   "역사탐방"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "morning"
+  ],
+  "durationMin": 120,
+  "story": "탁 트인 서울 전망을 감상할 수 있는 등산 코스입니다."
+ },
+ "tour-126524": {
+  "moods": [
+   "실외",
+   "무료",
+   "역사탐방",
+   "조용함",
+   "자연"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "민주주의의 의미를 되새기며 차분히 산책하기 좋은 묘역."
+ },
+ "tour-1604580": {
+  "moods": [
+   "실내",
+   "역사탐방",
+   "무료",
+   "가족동반"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "한글의 역사와 가치를 다양한 전시로 배울 수 있는 국립 박물관."
+ },
+ "tour-2591805": {
+  "moods": [
+   "실외",
+   "친구모임",
+   "활기참"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 40,
+  "story": "다양한 세계 요리를 즐길 수 있는 국제음식문화거리"
+ },
+ "tour-126827": {
+  "moods": [
+   "실내",
+   "실외",
+   "역사탐방",
+   "포토존",
+   "무료"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "대한민국의 입법부가 위치한 상징적인 장소로 주변 산책과 관람이 가능합니다."
+ },
+ "tour-3082221": {
+  "moods": [
+   "실외",
+   "무료",
+   "역사탐방",
+   "자연",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "정조의 발자취가 서린 역사적 의미와 단풍이 아름다운 공원."
+ },
+ "tour-128866": {
+  "moods": [
+   "실내",
+   "실외",
+   "자연",
+   "조용함",
+   "휴식",
+   "전통문화"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "도심 속 도심 사찰로, 아름다운 정원과 산책로가 유명하다."
+ },
+ "tour-699222": {
+  "moods": [
+   "실외",
+   "친구모임",
+   "전통문화"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 60,
+  "story": "오랜 역사와 전통을 자랑하는 서울의 대표 아귀찜 전문 거리."
+ },
+ "tour-2784060": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "자연",
+   "휴식"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 50,
+  "story": "난지천을 따라 조성된 산책로와 생태가 살아있는 휴식 공간."
+ },
+ "tour-748018": {
+  "moods": [
+   "실내",
+   "실외",
+   "친구모임",
+   "가족동반",
+   "이색",
+   "활기참"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 60,
+  "story": "남대문시장의 명물인 매콤하고 맛있는 갈치조림 골목"
+ },
+ "tour-126747": {
+  "moods": [
+   "실내",
+   "실외",
+   "역사탐방",
+   "전통문화",
+   "자연",
+   "조용함",
+   "포토존"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "서울 도심 속에서 전통 한옥과 고즈넉한 정취를 느끼는 산책 코스입니다."
+ },
+ "tour-126485": {
+  "moods": [
+   "실외",
+   "무료",
+   "자연",
+   "도보코스",
+   "커플",
+   "휴식",
+   "야경",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 90,
+  "story": "서울 도심에서 자연과 산책을 즐기며 성곽길을 거닐 수 있는 대표 공원."
+ },
+ "tour-2783557": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "자연",
+   "휴식",
    "조용함"
   ],
   "energy": 2,
@@ -26,13 +907,147 @@
    "morning",
    "afternoon"
   ],
+  "durationMin": 60,
+  "story": "남산의 자연을 느끼며 편안하게 걸을 수 있는 순환 산책로"
+ },
+ "tour-128776": {
+  "moods": [
+   "실내",
+   "커플",
+   "포토존",
+   "야경",
+   "로맨틱"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening",
+   "night"
+  ],
+  "durationMin": 40,
+  "story": "남산 정상까지 편안하게 오르며 서울 시내 조망을 즐기는 케이블카."
+ },
+ "tour-2763685": {
+  "moods": [
+   "실외",
+   "자연",
+   "휴식",
+   "무료"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "한강 나루터의 역사와 푸른 잔디가 어우러진 휴식 공간"
+ },
+ "tour-3067187": {
+  "moods": [
+   "실외",
+   "무료",
+   "친구모임",
+   "활기참"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 40,
+  "story": "다양한 가성비 먹거리가 가득한 활기찬 거리입니다."
+ },
+ "tour-2774274": {
+  "moods": [
+   "실외",
+   "포토존",
+   "야경",
+   "가족동반",
+   "커플"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "evening",
+   "night"
+  ],
+  "durationMin": 60,
+  "story": "화려한 불빛 조형물이 가득한 화랑대 철도공원"
+ },
+ "tour-130446": {
+  "moods": [
+   "실내",
+   "전통문화",
+   "역사탐방",
+   "체험형"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "우리나라 전통 민화의 아름다움을 만나는 아담한 박물관"
+ },
+ "tour-130511": {
+  "moods": [
+   "실내",
+   "역사탐방",
+   "예술",
+   "전통문화"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "우리 문화유산을 지켜낸 민간 최초의 미술관."
+ },
+ "tour-1750737": {
+  "moods": [
+   "실내",
+   "가족동반",
+   "예술"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 90,
+  "story": "다양한 공연과 전시가 열리는 강동구의 대표 복합문화예술공간."
+ },
+ "tour-2591878": {
+  "moods": [
+   "실내",
+   "예술",
+   "혼자",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
   "durationMin": 30,
-  "story": "탑골공원에서 유일한 조선시대 대리석 십층석탑을 감상하세요."
+  "story": "다양한 시각 예술 전시를 감상할 수 있는 구청 내 미술관"
  },
- "heritage-11-0001420000000": {
+ "tour-130577": {
   "moods": [
-   "실외",
-   "역사탐방",
+   "실내",
+   "예술",
+   "혼자",
+   "커플"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 45,
+  "story": "인사동에서 대관 및 기획 전시를 폭넓게 관람할 수 있는 미술관"
+ },
+ "tour-130581": {
+  "moods": [
+   "실내",
+   "예술",
+   "커플",
    "조용함"
   ],
   "energy": 1,
@@ -40,20 +1055,1700 @@
    "afternoon"
   ],
   "durationMin": 45,
-  "story": "우리나라 최초의 표준음을 정하려 편찬한 동국정운을 살펴봅니다."
+  "story": "세계적인 작가들의 작품을 만날 수 있는 압구정 갤러리요."
  },
- "heritage-11-0001480000100": {
+ "tour-130568": {
   "moods": [
-   "실외",
-   "역사탐방",
+   "실내",
+   "예술",
+   "혼자",
+   "커플"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "다양한 회화와 조각 기획전이 상시 열리는 인사동 대형 갤러리"
+ },
+ "tour-130613": {
+  "moods": [
+   "실내",
+   "예술",
+   "포토존",
+   "커플"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "삼청동 길가에 위치해 수준 높은 현대 미술을 감상할 수 있는 갤러리"
+ },
+ "tour-130587": {
+  "moods": [
+   "실내",
+   "예술",
+   "커플",
    "조용함"
   ],
   "energy": 1,
   "bestTime": [
    "afternoon"
   ],
-  "durationMin": 45,
-  "story": "중국 역사의 중요한 사실들을 담은 옛 문헌을 만나는 역사 탐방입니다."
+  "durationMin": 60,
+  "story": "세계적인 현대미술 작가들의 작품을 만나는 삼청동 화랑"
+ },
+ "tour-2552251": {
+  "moods": [
+   "실내",
+   "역사탐방",
+   "전통문화",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "우리나라 전통 복식과 규방문화를 엿볼 수 있는 박물관입니다."
+ },
+ "tour-2739448": {
+  "moods": [
+   "실내",
+   "예술",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "국내외 작가들의 개성 있는 사진 및 회화 전시를 볼 수 있는 곳"
+ },
+ "tour-2606224": {
+  "moods": [
+   "실내",
+   "역사탐방",
+   "무료"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 50,
+  "story": "조선 시대부터 근현대까지의 도시 유적을 도심 속에서 발굴된 그대로 만나는 전시관입니다."
+ },
+ "tour-130125": {
+  "moods": [
+   "실내",
+   "실외",
+   "전통문화",
+   "예술",
+   "가족동반"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 120,
+  "story": "우리 고유의 전통 음악을 즐길 수 있는 대표 공연장입니다."
+ },
+ "tour-130231": {
+  "moods": [
+   "실내",
+   "실외",
+   "예술",
+   "로맨틱",
+   "가족동반"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 120,
+  "story": "한국 대표 공연예술의 중심인 국립극장."
+ },
+ "tour-3038260": {
+  "moods": [
+   "실내",
+   "가족동반",
+   "체험형",
+   "무료"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "기상 과학의 역사와 자료를 전시하고 체험할 수 있는 국립박물관."
+ },
+ "tour-2545920": {
+  "moods": [
+   "실내",
+   "가족동반",
+   "체험형"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 120,
+  "story": "아이들과 함께 과학을 직접 체험하고 즐기는 공간입니다."
+ },
+ "tour-3441464": {
+  "moods": [
+   "실내",
+   "가족동반",
+   "체험형",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "항공의 역사와 다양한 체험을 즐길 수 있는 국립 박물관입니다."
+ },
+ "tour-1934593": {
+  "moods": [
+   "실내",
+   "실외",
+   "예술",
+   "휴식",
+   "커플",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "다채로운 현대 미술 전시와 산책하기 좋은 야외 마당이 있는 미술관"
+ },
+ "tour-2535347": {
+  "moods": [
+   "실내",
+   "실외",
+   "역사탐방",
+   "무료",
+   "가족동반"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "한국 근현대사의 흐름과 독립운동의 발자취를 살펴보는 기념관."
+ },
+ "tour-1105871": {
+  "moods": [
+   "실내",
+   "무료",
+   "혼자",
+   "가족동반",
+   "예술"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 50,
+  "story": "도서관과 함께 소규모 전시를 즐길 수 있는 문화 공간."
+ },
+ "tour-2553377": {
+  "moods": [
+   "실내",
+   "예술",
+   "역사탐방",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "한국 근현대 미술 자료를 수립하고 연구하는 전문 미술자료박물관."
+ },
+ "tour-3080721": {
+  "moods": [
+   "실내",
+   "예술",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "효창원 근처 조용하고 아담한 분위기의 현대 미술 전시관."
+ },
+ "tour-3442973": {
+  "moods": [
+   "실내",
+   "조용함",
+   "휴식",
+   "무료"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 50,
+  "story": "쾌적하고 현대적인 시설을 갖춘 지역 대표 복합문화 도서관"
+ },
+ "tour-130699": {
+  "moods": [
+   "실내",
+   "예술",
+   "친구모임"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 90,
+  "story": "다양한 공연과 전시가 열리는 광진구 문화예술회관"
+ },
+ "tour-3451241": {
+  "moods": [
+   "실내",
+   "무료",
+   "조용함",
+   "예술",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 50,
+  "story": "윤동주 시인의 감성을 품고 독서와 문화생활을 즐기는 도서관."
+ },
+ "tour-2745731": {
+  "moods": [
+   "실내",
+   "가족동반",
+   "체험형",
+   "예술"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "우주와 천문 과학을 직접 체험하고 관람하는 과학관."
+ },
+ "tour-3012777": {
+  "moods": [
+   "실내",
+   "친구모임",
+   "커플",
+   "예술"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 120,
+  "story": "대학로에서 인지도 높은 대표적인 대중 연극 공연장입니다."
+ },
+ "tour-1849416": {
+  "moods": [
+   "실내",
+   "무료",
+   "역사탐방",
+   "가족동반",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "근현대 한국의 역사를 체험하고 옥상 조망을 즐기는 곳"
+ },
+ "tour-2753089": {
+  "moods": [
+   "실내",
+   "예술",
+   "커플",
+   "포토존",
+   "이색"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "다채로운 몰입형 미디어아트 전시를 만날 수 있는 공간"
+ },
+ "tour-130155": {
+  "moods": [
+   "실내",
+   "예술",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "안국동 인근에서 다양한 회화 및 조각 기획전을 감상할 수 있는 친숙한 갤러리입니다."
+ },
+ "tour-2704340": {
+  "moods": [
+   "실내",
+   "예술",
+   "커플",
+   "혼자",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "일상을 예술로 만드는 트렌디하고 감각적인 미술관"
+ },
+ "tour-2707460": {
+  "moods": [
+   "실내",
+   "실외",
+   "역사탐방",
+   "도보코스",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "서촌 골목에 숨겨진 서양식 가옥과 역사의 흔적"
+ },
+ "tour-130365": {
+  "moods": [
+   "실내",
+   "전통문화",
+   "가족동반",
+   "체험형"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "우리 떡의 역사와 문화를 보고 배울 수 있는 곳."
+ },
+ "tour-1845434": {
+  "moods": [
+   "실내",
+   "무료",
+   "가족동반",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "다채로운 무료 전시와 체험 프로그램이 있는 문화 공간."
+ },
+ "tour-3085149": {
+  "moods": [
+   "실내",
+   "예술",
+   "로맨틱",
+   "친구모임"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "evening"
+  ],
+  "durationMin": 120,
+  "story": "세계 수준의 클래식 공연을 감상할 수 있는 콘서트홀."
+ },
+ "tour-753972": {
+  "moods": [
+   "실내",
+   "실외",
+   "역사탐방",
+   "가족동반",
+   "무료"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "매헌 윤봉길 의사의 애국정신을 기리는 의미 있는 기념관."
+ },
+ "tour-231976": {
+  "moods": [
+   "실내",
+   "실외",
+   "자연",
+   "예술",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "인왕산의 자연 속에서 아름다운 목인(木人) 조각들을 감상하는 박물관."
+ },
+ "tour-2553929": {
+  "moods": [
+   "실내",
+   "실외",
+   "무료",
+   "예술",
+   "이색",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "산업유산 석유비축탱크를 재생하여 만든 복합문화공간."
+ },
+ "tour-2785797": {
+  "moods": [
+   "실외",
+   "도보코스",
+   "휴식",
+   "로맨틱"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 60,
+  "story": "도심 속에서 물길을 따라 여유롭게 걷기 좋은 하천."
+ },
+ "tour-2862358": {
+  "moods": [
+   "실외",
+   "포토존",
+   "야경",
+   "로맨틱"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "evening",
+   "night"
+  ],
+  "durationMin": 90,
+  "story": "가을밤 하천을 따라 아름다운 조형물과 빛을 감상하는 대표 축제."
+ },
+ "tour-3035607": {
+  "moods": [
+   "실외",
+   "무료",
+   "역사탐방",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "조선 시대의 정궁인 경복궁의 정문이자 상징적인 장소입니다."
+ },
+ "tour-3384023": {
+  "moods": [
+   "실외",
+   "무료",
+   "친구모임",
+   "가족동반",
+   "활기참"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 120,
+  "story": "다양한 공연과 체험 프로그램이 펼쳐지는 대규모 거리 축제."
+ },
+ "heritage-13-0002540000000": {
+  "moods": [
+   "실외",
+   "무료",
+   "역사탐방",
+   "포토존"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "대한제국기 외교 흔적이 남아 있는 근대 건축 유적."
+ },
+ "kakao-8252248": {
+  "moods": [
+   "실외",
+   "자연",
+   "포토존",
+   "커플",
+   "휴식"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 60,
+  "story": "한강의 아름다운 뷰와 복합문화공간을 즐길 수 있는 섬."
+ },
+ "kakao-10753713": {
+  "moods": [
+   "실외",
+   "이색",
+   "친구모임",
+   "활기참"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 90,
+  "story": "다양한 문화와 음식을 경험할 수 있는 대표 거리."
+ },
+ "kakao-7997234": {
+  "moods": [
+   "실외",
+   "자연",
+   "휴식",
+   "무료",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "다양한 우리꽃과 나무를 만날 수 있는 도심 속 식물원."
+ },
+ "kakao-26563613": {
+  "moods": [
+   "실외",
+   "자연",
+   "도보코스",
+   "조용함"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 50,
+  "story": "울창한 숲속을 거닐며 힐링할 수 있는 산책로."
+ },
+ "kakao-26563934": {
+  "moods": [
+   "실외",
+   "전통문화",
+   "포토존",
+   "도보코스",
+   "커플"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "고즈넉한 한옥 풍경을 감상하며 걷기 좋은 거리."
+ },
+ "kakao-8177904": {
+  "moods": [
+   "실외",
+   "활기참",
+   "포토존",
+   "무료",
+   "도보코스"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 60,
+  "story": "젊음과 예술의 열기가 넘치는 홍대 중심의 걷기 좋은 거리"
+ },
+ "kakao-23120302": {
+  "moods": [
+   "실외",
+   "활기참",
+   "친구모임"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "night"
+  ],
+  "durationMin": 90,
+  "story": "홍대의 밤 문화를 대표하는 클럽들이 밀집한 거리"
+ },
+ "kakao-7876521": {
+  "moods": [
+   "실외",
+   "친구모임",
+   "커플",
+   "활기참",
+   "이색"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 90,
+  "story": "쇼핑과 길거리 음식을 즐길 수 있는 서울 대표 번화가"
+ },
+ "kakao-1771512259": {
+  "moods": [
+   "실내",
+   "무료",
+   "혼자",
+   "커플",
+   "가족동반",
+   "포토존"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon",
+   "evening",
+   "night"
+  ],
+  "durationMin": 30,
+  "story": "서울시청 청사 내에서 무료로 서울 전경을 즐기는 전망대"
+ },
+ "kakao-7990409": {
+  "moods": [
+   "실외",
+   "친구모임",
+   "커플",
+   "포토존",
+   "활기참"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 60,
+  "story": "유행을 선도하는 상점과 패션의 중심 거리."
+ },
+ "kakao-13127878": {
+  "moods": [
+   "실내",
+   "무료",
+   "가족동반",
+   "자연",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "서울숲 안에서 다양한 곤충과 식물을 관찰할 수 있는 곳"
+ },
+ "kakao-21766257": {
+  "moods": [
+   "실외",
+   "친구모임",
+   "활기참"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 60,
+  "story": "맛있는 갈비 향이 가득한 성수동의 유명한 먹거리 골목"
+ },
+ "kakao-946487614": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "커플",
+   "포토존",
+   "자연"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "가을철 노란 은행나무가 장관을 이루는 아름다운 거리"
+ },
+ "kakao-26563608": {
+  "moods": [
+   "실외",
+   "자연",
+   "휴식",
+   "가족동반"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "넓은 잔디밭에서 피크닉을 즐기기 좋은 서울숲 광장"
+ },
+ "kakao-27481535": {
+  "moods": [
+   "실외",
+   "커플",
+   "포토존",
+   "이색",
+   "예술"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "개성 있는 공방과 감각적인 상점이 모여 있는 거리"
+ },
+ "kakao-13121007": {
+  "moods": [
+   "실외",
+   "무료",
+   "자연",
+   "휴식",
+   "도보코스"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 120,
+  "story": "시원한 강바람을 맞으며 산책과 휴식을 즐기는 공원."
+ },
+ "kakao-1330370659": {
+  "moods": [
+   "실내",
+   "야경",
+   "로맨틱",
+   "포토존",
+   "커플"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "evening",
+   "night"
+  ],
+  "durationMin": 60,
+  "story": "서울의 전경과 아름다운 야경을 조망할 수 있는 전망대."
+ },
+ "kakao-7947003": {
+  "moods": [
+   "실외",
+   "도보코스",
+   "자연",
+   "커플",
+   "포토존",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 60,
+  "story": "호수 주변을 따라 산책하며 풍경을 즐기는 명소."
+ },
+ "kakao-27560699": {
+  "moods": [
+   "실내",
+   "실외",
+   "친구모임",
+   "커플",
+   "가족동반",
+   "활기참",
+   "로맨틱"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "afternoon",
+   "evening",
+   "night"
+  ],
+  "durationMin": 240,
+  "story": "다양한 어트랙션과 실내 놀이공원이 있는 대표 테마파크."
+ },
+ "kakao-17384522": {
+  "moods": [
+   "실외",
+   "커플",
+   "포토존",
+   "활기참"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 120,
+  "story": "석촌호수 위에 떠 있는 롯데월드의 야외 어드벤처."
+ },
+ "kakao-1851128581": {
+  "moods": [
+   "실외",
+   "도보코스",
+   "자연",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "맨발로 걷기 좋은 잠실의 건강 산책로."
+ },
+ "kakao-8383806": {
+  "moods": [
+   "실외",
+   "도보코스",
+   "친구모임",
+   "커플",
+   "포토존",
+   "활기참"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 90,
+  "story": "아기자기한 화랑과 카페, 갤러리가 모여 있는 걷기 좋은 거리."
+ },
+ "kakao-12699510": {
+  "moods": [
+   "실외",
+   "도보코스",
+   "커플",
+   "자연",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "아름다운 은행나무 가로수길과 고즈넉한 풍경이 유명한 산책로."
+ },
+ "kakao-18741274": {
+  "moods": [
+   "실외",
+   "도보코스",
+   "역사탐방",
+   "자연",
+   "조용함"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 120,
+  "story": "서울의 성곽을 따라 걷는 역사와 자연이 어우러진 산책로."
+ },
+ "kakao-8342732": {
+  "moods": [
+   "실외",
+   "도보코스",
+   "역사탐방",
+   "자연"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 150,
+  "story": "서울 성곽길과 함께 역사와 자연을 탐방하는 명산."
+ },
+ "kakao-133864079": {
+  "moods": [
+   "실외",
+   "도보코스",
+   "포토존",
+   "자연",
+   "야경"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 30,
+  "story": "북악산 자락에서 서울 시내와 북악산을 한눈에 조망하는 전망대."
+ },
+ "kakao-21273056": {
+  "moods": [
+   "실외",
+   "친구모임",
+   "커플",
+   "전통문화",
+   "포토존",
+   "활기참"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "한국의 전통 공예품과 갤러리, 찻집이 모여 있는 문화 거리."
+ },
+ "kakao-27215154": {
+  "moods": [
+   "실내",
+   "친구모임",
+   "커플",
+   "체험형",
+   "이색"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "방송 속 미션을 직접 체험하며 즐기는 실내 놀이 공간."
+ },
+ "kakao-1772440780": {
+  "moods": [
+   "실내",
+   "친구모임",
+   "예술"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 120,
+  "story": "서울숲 인근에서 연극과 뮤지컬을 관람할 수 있는 소극장."
+ },
+ "kakao-25968113": {
+  "moods": [
+   "실내",
+   "실외",
+   "도보코스",
+   "이색",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "오래된 책들의 향기가 가득한 추억의 헌책방 거리"
+ },
+ "kakao-8109515": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "자연",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 60,
+  "story": "도심 속을 흐르는 맑은 물길을 따라 걷기 좋은 하천 산책로"
+ },
+ "kakao-895471848": {
+  "moods": [
+   "실외",
+   "자연",
+   "도보코스",
+   "휴식",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "남산의 자연을 가볍게 즐길 수 있는 신규 산책로."
+ },
+ "kakao-21920612": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "자연",
+   "휴식",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "남산의 아름다운 숲을 따라 걷기 좋은 대표 둘레길"
+ },
+ "kakao-895258181": {
+  "moods": [
+   "실외",
+   "자연",
+   "도보코스",
+   "휴식",
+   "무료"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 120,
+  "story": "서울 도심 속에서 자연을 느끼며 걷기 좋은 명산."
+ },
+ "kakao-12544589": {
+  "moods": [
+   "실외",
+   "도보코스",
+   "자연",
+   "휴식"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "소나무 향 가득한 숲길을 걸으며 힐링하는 북한산둘레길 1구간."
+ },
+ "kakao-18580959": {
+  "moods": [
+   "실외",
+   "도보코스",
+   "자연",
+   "휴식",
+   "무료"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "편안하게 마을과 자연을 잇는 북한산 둘레길 산책로"
+ },
+ "kakao-12544577": {
+  "moods": [
+   "실외",
+   "도보코스",
+   "자연",
+   "혼자"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 120,
+  "story": "하얀 구름을 보며 걷는 듯한 상쾌한 북한산둘레길 산책 코스."
+ },
+ "kakao-443387508": {
+  "moods": [
+   "실외",
+   "도보코스",
+   "자연",
+   "휴식",
+   "포토존"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "오랜 역사와 다양한 수종이 보존된 도심 속 아름다운 숲"
+ },
+ "kakao-26563606": {
+  "moods": [
+   "실외",
+   "도보코스",
+   "자연",
+   "휴식",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "도심 속에서 울창한 숲과 자연을 느끼며 걷는 산책로"
+ },
+ "kakao-25247515": {
+  "moods": [
+   "실외",
+   "자연",
+   "도보코스",
+   "휴식",
+   "가족동반"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "탁 트인 전망과 자연을 즐길 수 있는 도심 속 산"
+ },
+ "kakao-26530579": {
+  "moods": [
+   "실외",
+   "친구모임",
+   "활기참"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "evening",
+   "night"
+  ],
+  "durationMin": 60,
+  "story": "푸짐하고 다양한 파전을 맛볼 수 있는 대학가 골목"
+ },
+ "kakao-25042032": {
+  "moods": [
+   "실외",
+   "친구모임",
+   "활기참"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "evening",
+   "night"
+  ],
+  "durationMin": 60,
+  "story": "매콤한 쭈꾸미를 즐길 수 있는 유명한 먹자골목"
+ },
+ "kakao-27529219": {
+  "moods": [
+   "실외",
+   "친구모임",
+   "활기참"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "evening",
+   "night"
+  ],
+  "durationMin": 60,
+  "story": "바삭한 통닭과 고소한 닭똥집을 맛보는 전통시장 골목"
+ },
+ "kakao-467710256": {
+  "moods": [
+   "실외",
+   "친구모임",
+   "커플",
+   "전통문화",
+   "포토존",
+   "이색"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 90,
+  "story": "전통 한옥과 트렌디한 가게가 어우러진 서울의 핫플레이스."
+ },
+ "kakao-10952963": {
+  "moods": [
+   "실외",
+   "자연",
+   "야경",
+   "활기참",
+   "커플",
+   "무료"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "afternoon",
+   "evening",
+   "night"
+  ],
+  "durationMin": 120,
+  "story": "탁 트인 한강 뷰를 감상하며 피크닉과 산책을 즐길 수 있는 최고의 명소입니다."
+ },
+ "kakao-8142957": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "혼자",
+   "친구모임",
+   "가족동반",
+   "커플",
+   "포토존",
+   "야경",
+   "휴식"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening",
+   "night"
+  ],
+  "durationMin": 90,
+  "story": "한강의 아름다운 야경과 달빛무지개분수를 즐기는 대표 명소."
+ },
+ "kakao-8136085": {
+  "moods": [
+   "실외",
+   "자연",
+   "휴식",
+   "도보코스",
+   "무료"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 90,
+  "story": "시원한 한강 조망과 함께 산책을 즐기기 좋은 대표 수변 공원."
+ },
+ "kakao-8625698": {
+  "moods": [
+   "실외",
+   "무료",
+   "휴식",
+   "자연",
+   "가족동반",
+   "도보코스"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 90,
+  "story": "탁 트인 한강 조망과 함께 산책을 즐기기 좋은 한강공원."
+ },
+ "kakao-8126939": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "가족동반",
+   "커플",
+   "자연",
+   "휴식"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening",
+   "night"
+  ],
+  "durationMin": 60,
+  "story": "한강의 탁 트인 전망을 즐기며 산책하기 좋은 시민 공원."
+ },
+ "kakao-10952965": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "자연",
+   "휴식",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 90,
+  "story": "탁 트인 한강 조망과 함께 산책을 즐기기 좋은 대표 시민 공원"
+ },
+ "kakao-17384905": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "자연",
+   "휴식",
+   "야경"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "evening"
+  ],
+  "durationMin": 60,
+  "story": "한강을 따라 산책과 휴식을 즐기기 좋은 수변 공원"
+ },
+ "kakao-8143124": {
+  "moods": [
+   "실외",
+   "무료",
+   "자연",
+   "휴식",
+   "도보코스",
+   "가족동반"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 60,
+  "story": "탁 트인 한강 조망과 산책을 즐기기 좋은 공원."
+ },
+ "kakao-8631818": {
+  "moods": [
+   "실외",
+   "자연",
+   "휴식",
+   "도보코스",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 90,
+  "story": "탁 트인 한강 조망과 함께 산책하기 좋은 한강공원."
+ },
+ "kakao-957601360": {
+  "moods": [
+   "실외",
+   "포토존",
+   "야경"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "evening",
+   "night"
+  ],
+  "durationMin": 20,
+  "story": "남산서울타워와 이태원 일대의 야경을 조망하기 좋은 육교."
+ },
+ "kakao-27481748": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "친구모임",
+   "포토존",
+   "활기참"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 30,
+  "story": "청계천의 시작점이자 도심 속 휴식과 문화 행사가 열리는 광장."
+ },
+ "kakao-25037441": {
+  "moods": [
+   "실외",
+   "자연",
+   "휴식",
+   "무료"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "청계천 산책 중 잠시 쉬어가기 좋은 도심 속 아담한 휴식 공간입니다."
+ },
+ "kakao-27151599": {
+  "moods": [
+   "실내",
+   "실외",
+   "커플",
+   "가족동반",
+   "포토존",
+   "로맨틱",
+   "야경"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening",
+   "night"
+  ],
+  "durationMin": 90,
+  "story": "한강을 유람하며 서울의 풍경을 즐기는 크루즈."
+ },
+ "kakao-26974731": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "포토존",
+   "자연",
+   "가족동반"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "여의도 한강공원의 아름다운 물빛광장과 산책로."
+ },
+ "kakao-17556383": {
+  "moods": [
+   "실외",
+   "자연",
+   "휴식",
+   "도보코스",
+   "무료"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "여의도 중심부에 위치한 거대한 잔디 광장과 산책로가 있는 대표 공원입니다."
+ },
+ "kakao-7932325": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "야경",
+   "포토존",
+   "로맨틱"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon",
+   "evening",
+   "night"
+  ],
+  "durationMin": 60,
+  "story": "호수 주변을 따라 산책하기 좋은 잠실의 대표 호수공원"
+ },
+ "kakao-8109415": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "자연",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "도심 속 생태가 살아 있는 산책과 자전거 타기 좋은 하천"
+ },
+ "kakao-926610061": {
+  "moods": [
+   "실내",
+   "가족동반",
+   "역사탐방",
+   "체험형"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "역사 모형과 전통문화를 체험할 수 있는 실내 박물관."
+ },
+ "kakao-17583818": {
+  "moods": [
+   "실내",
+   "실외",
+   "포토존",
+   "로맨틱",
+   "야경"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "afternoon",
+   "evening",
+   "night"
+  ],
+  "durationMin": 90,
+  "story": "서울의 전경을 한눈에 조망하는 초고층 랜드마크"
+ },
+ "kakao-1356925875": {
+  "moods": [
+   "실외",
+   "무료",
+   "자연",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 30,
+  "story": "도심 속 드넓은 잔디밭에서 휴식을 취할 수 있는 열린 공간입니다."
+ },
+ "kakao-1589118627": {
+  "moods": [
+   "실내",
+   "실외",
+   "무료",
+   "혼자",
+   "친구모임",
+   "가족동반",
+   "커플",
+   "예술",
+   "휴식"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "한국 공예 문화를 총망라한 아름다운 도심 속 박물관."
+ },
+ "kakao-26600286": {
+  "moods": [
+   "실외",
+   "활기참",
+   "포토존"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "인사동 문화의 거리 초입에 위치해 다양한 행사가 열리는 야외 마당입니다."
+ },
+ "kakao-21025383": {
+  "moods": [
+   "실외",
+   "자연",
+   "역사탐방",
+   "도보코스"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 120,
+  "story": "역사의 흔적과 웅장한 북한산 자연을 만나는 국립공원 지구"
+ },
+ "kakao-8638884": {
+  "moods": [
+   "실외",
+   "역사탐방",
+   "포토존",
+   "도보코스"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "조선 시대 서울의 성곽 문 중 하나인 보물 제1호입니다."
+ },
+ "kakao-18167109": {
+  "moods": [
+   "실외",
+   "역사탐방",
+   "조용함",
+   "자연",
+   "휴식"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "조선 시대의 슬픈 역사가 잠들어 있는 고즈넉한 왕실 묘역"
+ },
+ "kakao-1142553995": {
+  "moods": [
+   "실외",
+   "자연",
+   "포토존",
+   "무료",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "시즌별로 아름다운 꽃을 감상하며 산책하기 좋은 도심 속 꽃밭이다."
+ },
+ "kakao-19444125": {
+  "moods": [
+   "실외",
+   "무료",
+   "도보코스",
+   "자연",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "주민들이 즐겨 찾는 아기자기하고 걷기 좋은 도심 하천"
+ },
+ "heritage-11-0000020000000": {
+  "moods": [
+   "역사탐방",
+   "전통문화",
+   "포토존"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 20,
+  "story": "탑골공원 내 위치한 조선시대의 국보 십층석탑"
  },
  "heritage-13-0000100000000": {
   "moods": [
@@ -85,20 +2780,6 @@
   "durationMin": 90,
   "story": "한강변에 흙으로 쌓아 올린 백제시대 초기 풍납토성을 거닙니다."
  },
- "heritage-13-0000320000000": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "역사탐방"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "자주독립의 의지가 담긴 역사적인 독립문입니다."
- },
  "heritage-13-0000330000000": {
   "moods": [
    "실외",
@@ -113,34 +2794,6 @@
   "durationMin": 20,
   "story": "조선시대 영은문의 흔적인 주초를 만날 수 있습니다."
  },
- "heritage-13-0000830000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "누에치기를 장려하던 역사적 공간인 선잠단지입니다."
- },
- "heritage-13-0001010000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 20,
-  "story": "병자호란의 아픈 역사를 담은 삼전도비입니다."
- },
  "heritage-13-0001100000000": {
   "moods": [
    "실외",
@@ -154,21 +2807,6 @@
   ],
   "durationMin": 20,
   "story": "사적으로 지정된 문화유산인 성저오리정계석표입니다."
- },
- "heritage-13-0001170000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "전통문화",
-   "포토존"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "조선 왕조의 으뜸 법궁인 경복궁을 산책해보세요."
  },
  "heritage-13-0001210000000": {
   "moods": [
@@ -186,52 +2824,6 @@
   "durationMin": 45,
   "story": "조선 시대 토지와 곡식의 신에게 제사를 지내던 사직단에서 역사의 흔적을 느껴보세요."
  },
- "heritage-13-0001220000000": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "커플",
-   "역사탐방",
-   "포토존"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "조선왕조의 실질적인 법궁이었던 창덕궁을 거닐며 아름다운 궁궐 건축을 감상해 보세요."
- },
- "heritage-13-0001230000000": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "가족동반",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning"
-  ],
-  "durationMin": 90,
-  "story": "대비를 위해 확장 지어진 역사가 담긴 창경궁에서 고요한 산책을 즐겨보세요."
- },
- "heritage-13-0001240000000": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "커플",
-   "역사탐방",
-   "포토존"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "대한제국의 아픔과 역사가 깃든 덕수궁에서 고풍스러운 건축물을 만나보세요."
- },
  "heritage-13-0001250000000": {
   "moods": [
    "실외",
@@ -246,21 +2838,6 @@
   ],
   "durationMin": 60,
   "story": "조선 왕과 왕비의 신위를 모신 엄숙하고 깊이 있는 공간인 종묘를 방문해 보세요."
- },
- "heritage-13-0001430000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "혼자",
-   "역사탐방",
-   "전통문화"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "조선시대 최고 교육기관이었던 성균관에서 유교 문화와 전통의 자취를 느껴보세요."
  },
  "heritage-13-0001490000000": {
   "moods": [
@@ -277,34 +2854,6 @@
   "durationMin": 45,
   "story": "조선 왕실의 후궁들과 영조의 생모를 모신 사당을 둘러보는 역사 탐방지입니다."
  },
- "heritage-13-0001570000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "포토존"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "하늘에 제사를 지내던 환구단의 역사적 자취를 만날 수 있습니다."
- },
- "heritage-13-0001600000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 40,
-  "story": "조선시대 한양과 동남지방을 잇던 역사 깊은 다리를 건너며 산책하기 좋습니다."
- },
  "heritage-13-0001710000000": {
   "moods": [
    "실외",
@@ -319,36 +2868,6 @@
   ],
   "durationMin": 20,
   "story": "고종의 즉위 40주년과 대한제국 선포를 기념하는 비석을 관람할 수 있습니다."
- },
- "heritage-13-0001940000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "자연",
-   "가족동반"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "조선 3대 태종과 원경왕후의 능을 거닐며 역사를 되새기는 산책 코스입니다."
- },
- "heritage-13-0001990000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "자연",
-   "조용함"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "조선 9대 성종과 정현왕후의 능역을 둘러보며 도심 속 자연을 느낄 수 있습니다."
  },
  "heritage-13-0002010000000": {
   "moods": [
@@ -365,52 +2884,6 @@
   "durationMin": 60,
   "story": "조선 왕실의 역사와 자연을 함께 느낄 수 있는 태릉과 강릉이다."
  },
- "heritage-13-0002040000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "조용함",
-   "자연",
-   "혼자"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "독특한 형태의 조선 왕릉 구조를 살펴볼 수 있는 의릉이다."
- },
- "heritage-13-0002080000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "조용함",
-   "자연",
-   "가족동반"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "조선 초기 역사의 아픔과 흔적이 담긴 정릉을 거닐어 보자."
- },
- "heritage-13-0002130000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "도보코스",
-   "혼자"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "근대 우편 제도의 시작점이었던 우정총국에서 역사를 만나보자."
- },
  "heritage-13-0002280000000": {
   "moods": [
    "실외",
@@ -424,21 +2897,6 @@
   ],
   "durationMin": 90,
   "story": "신라 진흥왕의 순수비가 있던 유서 깊은 자리에서 등산과 역사를 즐긴다."
- },
- "heritage-13-0002340000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "자연",
-   "도보코스"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "삼국시대의 치열한 역사가 서려 있는 아차산성을 탐방할 수 있다."
  },
  "heritage-13-0002370000000": {
   "moods": [
@@ -455,86 +2913,6 @@
   ],
   "durationMin": 30,
   "story": "조선시대 정원과 경모궁의 역사를 만나는 장소입니다."
- },
- "heritage-13-0002430000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "혼자",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "백제 초기의 고구려 양식 돌무지무덤을 살펴볼 수 있습니다."
- },
- "heritage-13-0002470000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "혼자",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "서울 지역의 희귀한 백제 및 통일신라 시대 요지입니다."
- },
- "heritage-13-0002480000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "혼자",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "대한제국 시대 세워진 대한의원 본관 건물을 관람합니다."
- },
- "heritage-13-0002520000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "혼자",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "우리나라 최초의 근대식 서양식 교회 건축물입니다."
- },
- "heritage-13-0002530000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "혼자",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "고종이 피신하여 머물렀던 역사적 아픔이 깃든 장소입니다."
  },
  "heritage-13-0002550000000": {
   "moods": [
@@ -566,21 +2944,6 @@
   "durationMin": 30,
   "story": "우리나라 최초의 본격적인 개신교 교회 건물의 건축미를 감상할 수 있어요."
  },
- "heritage-13-0002570000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "가족동반"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "흥선대원군이 살았고 고종이 자란 역사적 장소인 운현궁을 둘러보세요."
- },
  "heritage-13-0002580000000": {
   "moods": [
    "실외",
@@ -595,117 +2958,6 @@
   ],
   "durationMin": 40,
   "story": "순수 고딕 양식으로 지어진 우리나라 최초의 벽돌 교회 건물을 방문해 보세요."
- },
- "heritage-13-0002670000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "자연",
-   "가족동반"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "한강변에 위치한 신석기시대의 집터와 유적을 직접 살펴보는 시간이에요."
- },
- "heritage-13-0002700000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "백제 전기의 고분들이 남아 있는 역사적인 장소를 가볍게 산책해 보세요."
- },
- "heritage-13-0002710000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "혼자",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "조선 후기 이G의 역사가 담긴 경희궁 터입니다."
- },
- "heritage-13-0002750000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "연세대학교 최초의 역사적인 건물입니다."
- },
- "heritage-13-0002760000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "고딕풍의 아름다운 옛 연희전문학교 건물입니다."
- },
- "heritage-13-0002770000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "아펜젤러를 기념하는 고딕풍의 단아한 건물입니다."
- },
- "heritage-13-0002780000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "경성제국대학 본관으로 사용되던 역사적 건축물입니다."
  },
  "heritage-13-0002790000000": {
   "moods": [
@@ -723,63 +2975,6 @@
   "durationMin": 30,
   "story": "대한제국 시기의 유일하게 남은 목조 본관 건물입니다."
  },
- "heritage-13-0002800000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "혼자",
-   "포토존"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "금융 침탈의 역사가 담긴 한국은행 본관 건물을 둘러볼 수 있습니다."
- },
- "heritage-13-0002810000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "민족교육의 산실인 중앙고등학교 본관의 건축과 역사를 살펴볼 수 있습니다."
- },
- "heritage-13-0002820000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "포토존"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "고딕식 지붕과 붉은 벽돌이 인상적인 20세기 전기 건축양식을 만날 수 있습니다."
- },
- "heritage-13-0002830000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "1920년대 민간 사립학교 건물의 원형을 간직한 동관을 방문해 보세요."
- },
  "heritage-13-0002840000000": {
   "moods": [
    "실외",
@@ -794,35 +2989,6 @@
   ],
   "durationMin": 30,
   "story": "일제강점기 침탈의 역사를 증언하는 옛 서울역사 건물을 볼 수 있습니다."
- },
- "heritage-13-0002850000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "포토존"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "웅장한 고딕양식과 호랑이 상이 조각된 고려대학교 본관을 감상해 보세요."
- },
- "heritage-13-0002860000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "도보코스",
-   "포토존",
-   "혼자"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "화강암으로 지은 웅장한 고딕식 대학 도서관 건물을 감상할 수 있다."
  },
  "heritage-13-0002960000000": {
   "moods": [
@@ -840,570 +3006,135 @@
   "durationMin": 30,
   "story": "조선시대 천문 관측의 역사가 담긴 관천대를 직접 살펴볼 수 있다."
  },
- "heritage-13-0002970000000": {
-  "moods": [
-   "실외",
-   "자연",
-   "도보코스",
-   "휴식",
-   "역사탐방"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "자연 지형을 이용해 쌓은 백제 전기의 몽촌토성을 산책할 수 있다."
- },
- "heritage-13-0003240000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "조용함",
-   "혼자"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "일제강점기 독립운동가들의 아픔이 서린 근대 감옥의 역사를 배운다."
- },
- "heritage-13-0003300000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "무료",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "조국의 독립을 위해 몸바친 애국지사들의 무덤이 모여 있는 곳이다."
- },
- "heritage-13-0003430000000": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "자연",
-   "도보코스",
-   "조용함"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "통일신라시대의 산성과 옛 우물의 흔적을 찾아 산행할 수 있다."
- },
- "heritage-13-0003540000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "역사적인 독립운동의 흔적과 국보 문화재를 만날 수 있는 곳입니다."
- },
- "heritage-13-0003610000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "조용함",
-   "자연"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "대한제국 황실의 역사가 담긴 고요한 능원을 둘러볼 수 있습니다."
- },
- "heritage-13-0003620000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "조선 10대 왕인 연산군의 역사를 차분하게 되짚어보는 장소입니다."
- },
- "tour-1116925": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "휴식",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "탁 트인 전망대와 산책로가 있어 가볍게 산책하기 좋습니다."
- },
- "tour-264570": {
-  "moods": [
-   "실외",
-   "무료",
-   "활기참",
-   "친구모임"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "서울 교통과 약속의 중심지에서 활기찬 분위기를 느낄 수 있습니다."
- },
  "tour-2456536": {
   "moods": [
-   "실외",
-   "무료",
    "활기참",
-   "이색"
+   "포토존"
   ],
   "energy": 3,
   "bestTime": [
    "afternoon",
    "evening"
   ],
-  "durationMin": 120,
-  "story": "최첨단 비즈니스와 한류 문화를 동시에 경험할 수 있는 곳입니다."
- },
- "tour-128961": {
-  "moods": [
-   "실내",
-   "휴식",
-   "가족동반",
-   "혼자"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 120,
-  "story": "대규모 사우나와 찜질방에서 편안하게 피로를 풀 수 있는 곳이다."
- },
- "tour-809490": {
-  "moods": [
-   "실외",
-   "자연",
-   "도보코스",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
   "durationMin": 60,
-  "story": "한강변의 습지 생태계를 관찰하며 여유롭게 산책하기 좋은 공원이다."
+  "story": "코엑스와 도심 속 다양한 즐거움이 가득한 관광특구"
  },
  "tour-3043735": {
   "moods": [
-   "실외",
-   "역사탐방",
+   "무료",
    "도보코스",
-   "혼자"
+   "역사탐방",
+   "휴식"
   ],
-  "energy": 2,
+  "energy": 1,
   "bestTime": [
    "morning",
    "afternoon"
   ],
   "durationMin": 60,
-  "story": "조선시대 양천현아의 역사와 문화 유적을 둘러볼 수 있는 거리다."
- },
- "tour-2591792": {
-  "moods": [
-   "실외",
-   "자연",
-   "가족동반",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "생태습지와 잔디광장이 있어 아이들과 함께 자연을 즐기기 좋다."
- },
- "tour-2733966": {
-  "moods": [
-   "실외",
-   "자연",
-   "가족동반",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "다양한 나무와 산책로가 조성되어 지역 주민들이 휴식하기 좋은 공원이다."
+  "story": "강서구의 역사와 문화를 느끼며 가볍게 걷기 좋은 거리."
  },
  "tour-1604652": {
   "moods": [
-   "실외",
    "역사탐방",
    "전통문화",
-   "포토존"
+   "조용함"
   ],
-  "energy": 2,
+  "energy": 1,
   "bestTime": [
    "morning",
    "afternoon"
   ],
-  "durationMin": 60,
-  "story": "고종과 명성황후의 생활공간이었던 역사 깊은 궁궐을 탐방할 수 있다."
- },
- "tour-2648460": {
-  "moods": [
-   "실외",
-   "체험형",
-   "야경",
-   "커플",
-   "포토존"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "night"
-  ],
-  "durationMin": 120,
-  "story": "밤의 경복궁에서 별빛과 함께 비밀스런 이야기를 만나는 특별한 축제행사입니다."
+  "durationMin": 30,
+  "story": "경복궁 내 고종의 침전으로 지어진 역사적 건축물"
  },
  "tour-294505": {
   "moods": [
-   "실외",
    "역사탐방",
    "전통문화",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "1325년 창건되어 깊은 역사를 간직한 삼각산의 고즈넉한 사찰입니다."
- },
- "tour-2930839": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "친구모임",
-   "이색",
-   "활기참"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "개성 있는 먹거리와 이국적인 분위기를 동시에 즐길 수 있는 거리입니다."
- },
- "tour-2373204": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "혼자",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "일제강점기 친일파 대회를 방해하기 위해 폭탄을 의거했던 역사적 장소입니다."
- },
- "tour-2500229": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "휴식",
-   "포토존",
-   "가족동반"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "경의선 폐선부지에 조성된 책 테마거리에서 여유로운 산책을 즐겨보세요."
- },
- "tour-1826438": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "조용함",
-   "혼자"
+   "자연",
+   "조용함"
   ],
   "energy": 1,
   "bestTime": [
    "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "6·25전쟁 전후 순직한 경찰들의 영령을 추모하고 희생정신을 기리는 곳입니다."
- },
- "tour-1604784": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "도보코스",
-   "혼자"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "역사적인 경희궁의 정문인 흥화문을 가까이서 살펴볼 수 있습니다."
- },
- "tour-1604824": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "자연",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "고풍스러운 경희궁터에서 자연을 즐기며 산책하기 좋은 공원입니다."
- },
- "tour-2611568": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "휴식",
-   "도보코스"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "무장애 숲길과 둘레길을 걸으며 자연 속에서 심신을 재충전할 수 있습니다."
- },
- "tour-2591797": {
-  "moods": [
-   "실외",
-   "무료",
-   "가족동반",
-   "자연",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "도심 속에서 잔디밭과 산책로를 즐기며 편안한 휴식을 취할 수 있습니다."
- },
- "tour-2591799": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "혼자",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "청동기시대 무덤인 고척동 고인돌을 직접 관람하며 역사를 느낄 수 있습니다."
- },
- "tour-2453179": {
-  "moods": [
-   "실내",
-   "무료",
-   "역사탐방",
-   "체험형",
-   "혼자"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "창업자의 철학과 국내외 의약사를 관람하고 체험할 수 있는 기념관입니다."
- },
- "tour-1827189": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "도보코스",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "어린이대공원 내에서 독립운동가 고하 송진우 선생을 기리며 산책하기 좋은 곳입니다."
- },
- "tour-749192": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "활기참",
-   "이색"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 60,
-  "story": "오랜 전통을 지닌 족발골목에서 활기찬 분위기와 함께 맛있는 음식을 즐겨보세요."
- },
- "tour-3428259": {
-  "moods": [
-   "실외",
-   "무료",
-   "체험형",
-   "가족동반",
-   "자연",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "도심 속에서 농업 활동을 직접 체험하며 자연과 교감할 수 있는 힐링 공간입니다."
- },
- "tour-126480": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "도보코스",
-   "휴식"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 180,
-  "story": "도심 가까이에서 험준한 산세와 아름다운 자연을 느끼며 등산하기 좋은 명소입니다."
- },
- "tour-3081140": {
-  "moods": [
-   "실외",
-   "무료",
-   "가족동반",
-   "자연",
-   "휴식",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "호수공원과 숲속 도서관 등 휴식처가 가득해 여유롭게 산책하기 좋은 공원입니다."
- },
- "tour-2779550": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "도보코스",
-   "역사탐방"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "관음사를 거쳐 국기봉으로 오르며 관악산의 웅장한 매력을 짧고 굵게 즐길 수 있습니다."
- },
- "tour-1605990": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
    "afternoon"
   ],
   "durationMin": 45,
-  "story": "조선 말기 민씨 가옥의 남은 건축물을 둘러보는 역사 탐방지입니다."
+  "story": "성북구 북한산 기슭에 자리 잡은 고즈넉한 전통 사찰."
  },
- "tour-130938": {
+ "tour-2373204": {
   "moods": [
-   "실내",
-   "체험형",
-   "가족동반"
+   "역사탐방",
+   "도보코스",
+   "혼자"
   ],
-  "energy": 3,
+  "energy": 1,
   "bestTime": [
    "morning",
    "afternoon"
   ],
-  "durationMin": 120,
-  "story": "다양한 재난 상황을 직접 체험하며 대처 능력을 기를 수 있는 곳입니다."
+  "durationMin": 20,
+  "story": "일제강점기 의거의 역사가 깃든 의미 있는 장소입니다."
  },
- "tour-3065938": {
+ "tour-2500229": {
   "moods": [
-   "실외",
-   "무료",
    "도보코스",
-   "휴식",
+   "포토존",
    "자연",
-   "야경"
+   "친구모임",
+   "커플"
   ],
-  "energy": 3,
+  "energy": 2,
   "bestTime": [
-   "afternoon",
-   "evening"
+   "morning",
+   "afternoon"
   ],
-  "durationMin": 90,
-  "story": "탁 트인 한강을 배경으로 자전거를 타며 여유를 즐길 수 있습니다."
+  "durationMin": 60,
+  "story": "책을 테마로 꾸며진 아기자기한 산책로"
+ },
+ "tour-2611568": {
+  "moods": [
+   "자연",
+   "휴식",
+   "도보코스",
+   "무료"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "도심 속에서 푸른 자연을 느끼며 가볍게 산책하기 좋은 공원입니다."
+ },
+ "tour-2591799": {
+  "moods": [
+   "역사탐방",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 20,
+  "story": "구로구 고척동에 위치한 선사시대 고인돌 유적지."
+ },
+ "tour-3428259": {
+  "moods": [
+   "자연",
+   "휴식",
+   "가족동반",
+   "무료"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "도심 속에서 자연을 느끼며 산책하기 좋은 농업공원"
  },
  "tour-250252": {
   "moods": [
@@ -1421,348 +3152,24 @@
   "durationMin": 60,
   "story": "자연 그대로의 갈대밭과 모래톱을 보며 산책하기 좋은 한강공원입니다."
  },
- "tour-1366921": {
-  "moods": [
-   "실내",
-   "무료",
-   "예술",
-   "포토존",
-   "야경",
-   "로맨틱"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 60,
-  "story": "교각 하부에서 한강 전망과 함께 문화 예술을 감상할 수 있습니다."
- },
  "tour-2500218": {
   "moods": [
-   "실외",
-   "무료",
+   "역사탐방",
    "전통문화",
-   "체험형",
    "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "와우산 자락에서 다양한 전통문화 프로그램과 행사를 경험할 수 있습니다."
- },
- "tour-2761661": {
-  "moods": [
-   "실외",
-   "조용함",
-   "역사탐방",
-   "전통문화"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "천호동에 위치한 대한불교천태종 사찰로 고즈넉한 분위기를 즐길 수 있습니다."
- },
- "tour-3447964": {
-  "moods": [
-   "실외",
-   "자연",
-   "휴식",
-   "가족동반"
   ],
   "energy": 1,
   "bestTime": [
    "afternoon"
   ],
   "durationMin": 30,
-  "story": "도심 속에서 여유롭게 휴식과 지역 문화 행사를 즐길 수 있는 공원입니다."
- },
- "tour-2553960": {
-  "moods": [
-   "실내",
-   "역사탐방",
-   "체험형",
-   "혼자",
-   "가족동반"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "구로공단의 근현대사와 노동자들의 삶을 생생하게 체험할 수 있는 공간입니다."
- },
- "tour-2591829": {
-  "moods": [
-   "실외",
-   "자연",
-   "휴식",
-   "가족동반"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 40,
-  "story": "다양한 문화 예술 공간과 조화되어 온 가족이 나들이하기 좋은 공원입니다."
- },
- "tour-2591803": {
-  "moods": [
-   "실외",
-   "이색"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "다양한 산업용품과 기계공구가 밀집된 국내 최초의 집단 유통 상가 단지입니다."
- },
- "tour-2733981": {
-  "moods": [
-   "실외",
-   "가족동반",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "어린이들의 창의력을 키워줄 수 있도록 새롭게 단장된 전용 공원입니다."
- },
- "tour-2357761": {
-  "moods": [
-   "실외",
-   "자연",
-   "혼자",
-   "도보코스",
-   "휴식"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "높거나 험하지 않아 부담 없이 등산하며 자연을 즐기기 좋은 산입니다."
- },
- "tour-126524": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "조용함",
-   "혼자",
-   "가족동반"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "4·19 혁명의 역사적 의미를 기리고 차분하게 참배할 수 있는 공간입니다."
- },
- "tour-1604580": {
-  "moods": [
-   "실외",
-   "자연",
-   "휴식",
-   "도보코스",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "전통 염료 식물을 관찰하며 국립중앙박물관 후원에서 여유롭게 산책하기 좋습니다."
- },
- "tour-2591805": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "활기참",
-   "이색"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "다양한 국가의 음식을 즐기고 활기찬 분위기를 느낄 수 있는 거리입니다."
- },
- "tour-126827": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "포토존",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "현대식 건축에 전통미를 가미한 동양 최대 규모의 의사당 건물을 볼 수 있습니다."
+  "story": "조선 시대 한옥의 멋을 느낄 수 있는 공간"
  },
  "tour-2591809": {
   "moods": [
-   "실외",
    "자연",
    "휴식",
-   "가족동반",
    "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "생태연못과 산책로가 조성되어 있어 도심 속에서 편안하게 휴식하기 좋은 공원입니다."
- },
- "tour-1606052": {
-  "moods": [
-   "실외",
-   "무료",
-   "혼자",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "조선 시대에 창건된 유서 깊은 사찰에서 고요하게 마음의 평화를 찾을 수 있는 곳입니다."
- },
- "tour-298109": {
-  "moods": [
-   "실외",
-   "무료",
-   "혼자",
-   "자연",
-   "휴식"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "아름다운 자연환경과 200년이 넘은 소나무가 있는 사찰에서 힐링할 수 있습니다."
- },
- "tour-3082221": {
-  "moods": [
-   "실외",
-   "무료",
-   "가족동반",
-   "역사탐방",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "조선시대 파발꾼이 머물던 역사적 장소이자 금암기적비가 있는 문화공원입니다."
- },
- "tour-2553946": {
-  "moods": [
-   "실내",
-   "무료",
-   "혼자",
-   "예술",
-   "이색"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "인쇄공장을 리모델링하여 만든 시각예술 전문 창작 레지던시 공간입니다."
- },
- "tour-2655928": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 40,
-  "story": "일본군 위안부 피해자 할머니들을 기리고 인권과 평화의 의미를 되새기는 추모공간입니다."
- },
- "tour-2756575": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "자연",
-   "휴식"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "아차산 인근에서 벽화를 감상하며 산책을 즐기기 좋은 근린공원입니다."
- },
- "tour-2946113": {
-  "moods": [
-   "실내",
-   "혼자",
-   "친구모임",
-   "커플",
-   "체험형"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "소수정예 클래스로 나만의 도자기를 직접 만들어 볼 수 있는 곳입니다."
- },
- "tour-128866": {
-  "moods": [
-   "실외",
-   "혼자",
-   "가족동반",
-   "조용함",
-   "휴식",
-   "역사탐방"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "법정스님의 무소유 정신이 깃든 삼각산 자락의 고요한 사찰입니다."
- },
- "tour-3451976": {
-  "moods": [
-   "실내",
-   "친구모임",
-   "가족동반",
-   "휴식"
   ],
   "energy": 1,
   "bestTime": [
@@ -1770,52 +3177,50 @@
    "evening"
   ],
   "durationMin": 60,
-  "story": "다양한 상점과 대형 수족관을 편리하게 즐길 수 있는 실내 상가입니다."
+  "story": "저수지를 따라 산책하며 자연을 즐기는 생태공원."
  },
- "tour-1827190": {
+ "tour-298109": {
   "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "역사탐방"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 15,
-  "story": "조국을 위해 목숨을 바친 나석주 의사의 숭고한 희생정신을 기리는 곳입니다."
- },
- "tour-699222": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "활기참"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "서울에서 처음으로 아구찜이 시작된 역사 깊은 먹거리 거리입니다."
- },
- "tour-2784060": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "가족동반",
+   "역사탐방",
    "자연",
+   "조용함",
    "휴식"
   ],
-  "energy": 2,
+  "energy": 1,
   "bestTime": [
    "morning",
    "afternoon"
   ],
-  "durationMin": 90,
-  "story": "아름다운 자연과 수생식물이 어우러진 도심 속 가족 나들이 공원입니다."
+  "durationMin": 40,
+  "story": "북한산 비봉 아래 자리한 고즈넉한 전통 사찰"
+ },
+ "tour-2655928": {
+  "moods": [
+   "역사탐방",
+   "조용함",
+   "도보코스"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "일본군 위안부 피해자의 아픔을 기리고 기억하는 공간입니다."
+ },
+ "tour-2756575": {
+  "moods": [
+   "자연",
+   "휴식",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "도심 속에서 가볍게 산책하며 휴식하기 좋은 소박한 근린공원."
  },
  "tour-127859": {
   "moods": [
@@ -1833,220 +3238,34 @@
   "durationMin": 90,
   "story": "한강의 아름다운 풍경과 거울분수를 즐기며 산책하기 좋은 공원입니다."
  },
- "tour-748018": {
-  "moods": [
-   "친구모임",
-   "이색",
-   "실내",
-   "활기참"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 60,
-  "story": "얼큰하고 매콤한 전통 갈치조림을 맛볼 수 있는 유명한 먹거리 골목입니다."
- },
  "tour-1603336": {
   "moods": [
-   "실외",
-   "야경",
    "포토존",
-   "도보코스",
-   "로맨틱"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 60,
-  "story": "서울 시내가 한눈에 내려다보이는 남산 정상의 대표적인 명소입니다."
- },
- "tour-126747": {
-  "moods": [
-   "실외",
-   "전통문화",
-   "역사탐방",
-   "체험형",
-   "조용함"
+   "야경",
+   "자연"
   ],
   "energy": 2,
   "bestTime": [
-   "morning",
-   "afternoon"
+   "afternoon",
+   "evening",
+   "night"
   ],
-  "durationMin": 90,
-  "story": "도심 속에서 전통 한옥과 아름다운 정원을 감상하며 휴식할 수 있습니다."
- },
- "tour-229910": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "서울 정도 600년을 기념하는 타임캡슐이 묻혀 있는 역사적인 장소입니다."
- },
- "tour-126485": {
-  "moods": [
-   "실외",
-   "자연",
-   "도보코스",
-   "휴식",
-   "포토존"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "서울 중심에서 맑은 공기를 마시며 산책과 여가를 즐길 수 있는 공간입니다."
- },
- "tour-2783557": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "자연",
-   "휴식"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 150,
-  "story": "남산의 아름다운 자연과 둘레길을 따라 걸으며 산책하기 좋습니다."
+  "durationMin": 40,
+  "story": "남산 정상에서 서울 전경을 조망할 수 있는 전통 팔각정입니다."
  },
  "tour-3067314": {
   "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
    "휴식",
-   "가족동반"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "역사적 의미가 담긴 장소에서 여유로운 산책과 휴식을 즐길 수 있습니다."
- },
- "tour-3447859": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "민주주의의 역사적 의미를 되새기며 조용히 둘러보기 좋은 숲입니다."
- },
- "tour-128776": {
-  "moods": [
-   "실외",
-   "포토존",
-   "커플",
-   "야경"
+   "자연",
+   "도보코스"
   ],
   "energy": 1,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 30,
-  "story": "케이블카를 타고 서울의 멋진 풍경을 편안하게 조망할 수 있습니다."
- },
- "tour-2946242": {
-  "moods": [
-   "실내",
-   "체험형",
-   "친구모임",
-   "커플",
-   "이색"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 60,
-  "story": "나만의 개성 있는 폰케이스와 소품을 직접 만들어 볼 수 있는 체험 공간입니다."
- },
- "tour-298341": {
-  "moods": [
-   "실외",
-   "무료",
-   "전통문화",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
   "bestTime": [
    "morning",
    "afternoon"
   ],
-  "durationMin": 45,
-  "story": "삼각산 자락의 고즈넉한 사찰에서 전통문화를 느끼며 사색할 수 있습니다."
- },
- "tour-2763685": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "휴식",
-   "포토존"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "한강을 조망하며 잔디밭과 산책로를 따라 여유롭게 휴식하기 좋은 공원입니다."
- },
- "tour-3067187": {
-  "moods": [
-   "실외",
-   "무료",
-   "이색",
-   "친구모임",
-   "혼자"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "주머니 사정이 가벼운 수험생들과 방문객들이 저렴하게 다양한 컵밥을 맛볼 수 있는 거리입니다."
- },
- "tour-2774274": {
-  "moods": [
-   "실외",
-   "무료",
-   "포토존",
-   "야경",
-   "로맨틱"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "night"
-  ],
-  "durationMin": 60,
-  "story": "철도공원에 다채로운 빛의 조명이 어우러져 환상적인 야경을 선사하는 불빛정원입니다."
+  "durationMin": 40,
+  "story": "도심 속에서 여유롭게 산책을 즐기기 좋은 쾌적한 공원입니다."
  },
  "tour-3520705": {
   "moods": [
@@ -2063,351 +3282,11 @@
   "durationMin": 120,
   "story": "다양한 수제맥주와 푸드트럭, 풍성한 볼거리가 가득한 맥주 애호가들을 위한 축제입니다."
  },
- "tour-130446": {
-  "moods": [
-   "실내",
-   "전통문화",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "선조들의 삶과 지혜가 담긴 민화와 부적을 깊이 있게 만나볼 수 있는 박물관입니다."
- },
- "tour-130511": {
-  "moods": [
-   "실내",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "우리나라 문화유산을 지켜낸 최초의 사립미술관에서 소중한 국보와 보물을 감상할 수 있습니다."
- },
- "tour-130376": {
-  "moods": [
-   "실내",
-   "혼자",
-   "친구모임",
-   "가족동반"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "지역 문화 프로그램과 전시를 즐길 수 있는 문화 공간입니다."
- },
- "tour-1750737": {
-  "moods": [
-   "실내",
-   "친구모임",
-   "가족동반",
-   "커플",
-   "예술"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "자연공원 속에 위치한 전문 공연장에서 다양한 문화생활을 즐겨보세요."
- },
- "tour-2591878": {
-  "moods": [
-   "실내",
-   "무료",
-   "혼자",
-   "친구모임",
-   "예술"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "주민들의 문화 향유를 위해 다양한 기획 전시가 열리는 갤러리입니다."
- },
- "tour-130577": {
-  "moods": [
-   "실내",
-   "혼자",
-   "친구모임",
-   "예술"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "다양한 장르의 현대 미술과 다채로운 기획전을 감상할 수 있습니다."
- },
- "tour-130581": {
-  "moods": [
-   "실내",
-   "혼자",
-   "친구모임",
-   "예술"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "독창적인 역량을 가진 현대 미술 작가들의 전시를 만날 수 있습니다."
- },
- "tour-130568": {
-  "moods": [
-   "실내",
-   "혼자",
-   "친구모임",
-   "예술"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "한국의 현대미술을 세계에 알리고 참신한 작가를 발굴하는 갤러리입니다."
- },
- "tour-129927": {
-  "moods": [
-   "실내",
-   "예술",
-   "조용함",
-   "혼자",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "강남 청담동에서 다양한 현대 미술 작가의 작품을 감상할 수 있는 화랑이다."
- },
- "tour-2642151": {
-  "moods": [
-   "실내",
-   "예술",
-   "조용함",
-   "커플",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "동시대 미술의 변화를 조망하는 기획 전시를 만날 수 있는 문화공간이다."
- },
- "tour-130613": {
-  "moods": [
-   "실내",
-   "예술",
-   "조용함",
-   "혼자",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "신진 작가와 중진 작가의 다채로운 기획전을 통해 한국 미술계의 흐름을 본다."
- },
- "tour-130573": {
-  "moods": [
-   "실내",
-   "예술",
-   "조용함",
-   "혼자",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "회화, 조각, 판화 등 다양한 장르의 현대 미술품을 감상할 수 있는 화랑이다."
- },
- "tour-130587": {
-  "moods": [
-   "실내",
-   "예술",
-   "조용함",
-   "혼자",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "한국 미술계에서 중요한 흐름을 만드는 작가들의 예술 세계를 만날 수 있다."
- },
- "tour-130232": {
-  "moods": [
-   "실내",
-   "조용함",
-   "혼자",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "다양한 학술 자원과 독서 공간을 갖춘 건국대학교의 주요 도서관이다."
- },
- "tour-2552251": {
-  "moods": [
-   "실내",
-   "무료",
-   "혼자",
-   "가족동반",
-   "역사탐방",
-   "전통문화"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "근세 왕실복식과 우리 문화의 가치를 만나는 박물관입니다."
- },
  "tour-130920": {
   "moods": [
-   "실내",
    "가족동반",
-   "조용함",
-   "자연",
-   "혼자"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "다양한 자연사 표본을 통해 생태 변화를 쉽게 이해할 수 있습니다."
- },
- "tour-129831": {
-  "moods": [
-   "실내",
    "역사탐방",
-   "전통문화",
-   "혼자",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "우리나라 최초의 대학 박물관에서 다양한 민속 유물을 만납니다."
- },
- "tour-2739448": {
-  "moods": [
-   "실내",
-   "예술",
-   "혼자",
-   "커플",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "현대 미술과 세계적인 사진 작품들을 감상할 수 있는 화랑입니다."
- },
- "tour-2606224": {
-  "moods": [
-   "실내",
-   "무료",
-   "역사탐방",
-   "도보코스",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "조선시대 한양의 골목길과 유적을 원위치에서 만나는 전시관입니다."
- },
- "tour-130212": {
-  "moods": [
-   "실내",
-   "체험형",
-   "조용함",
-   "휴식",
-   "혼자"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "지역 주민의 문화 욕구 충족을 위해 다양한 강좌가 열리는 문화원입니다."
- },
- "tour-130223": {
-  "moods": [
-   "실내",
-   "혼자",
-   "친구모임",
-   "예술"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "지역문화와 예술강좌를 접할 수 있는 광진문화원입니다."
- },
- "tour-130285": {
-  "moods": [
-   "실내",
-   "혼자",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "다양한 도서를 여유롭게 둘러볼 수 있는 대형 서점입니다."
- },
- "tour-2591885": {
-  "moods": [
-   "실내",
-   "가족동반",
-   "체험형"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "아이들과 함께 다양한 장난감과 놀이를 즐기는 공간입니다."
- },
- "tour-3455122": {
-  "moods": [
-   "실내",
-   "혼자",
-   "조용함",
-   "휴식"
+   "무료"
   ],
   "energy": 1,
   "bestTime": [
@@ -2415,173 +3294,21 @@
    "afternoon"
   ],
   "durationMin": 60,
-  "story": "지식 탐구와 문화 향유를 위한 미래지향적 도서관입니다."
+  "story": "다양한 자연사 자료를 관람할 수 있는 대학 박물관"
  },
  "tour-130198": {
   "moods": [
-   "실내",
    "전통문화",
    "역사탐방",
-   "체험형"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "우리의 아름다운 국가무형유산을 직접 경험하는 전수관입니다."
- },
- "tour-596511": {
-  "moods": [
-   "실내",
-   "전통문화",
-   "이색"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "태권도의 정신과 기술을 만나는 세계태권도본부입니다."
- },
- "tour-130125": {
-  "moods": [
-   "실내",
-   "혼자",
-   "전통문화",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "국내 유일의 국악 전문 박물관에서 다양한 국악 유물과 소리를 감상할 수 있습니다."
- },
- "tour-130124": {
-  "moods": [
-   "실내",
-   "친구모임",
-   "전통문화"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "한국 전통 공연 예술을 계승하는 대표 예술 기관에서 공연을 즐길 수 있습니다."
- },
- "tour-130231": {
-  "moods": [
-   "실내",
-   "친구모임",
-   "커플"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "아시아 최초의 국립극장에서 전통예술을 바탕으로 한 다양한 공연을 관람해보세요."
- },
- "tour-3038260": {
-  "moods": [
-   "실내",
-   "혼자",
-   "가족동반",
-   "역사탐방"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "대한민국의 기상과 날씨에 관련된 역사적 자료와 전시를 만날 수 있는 박물관입니다."
- },
- "tour-2545920": {
-  "moods": [
-   "실내",
-   "가족동반",
-   "체험형"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "놀이와 배움을 동시에 즐길 수 있는 국내 최초의 어린이 전용 국립과학관입니다."
- },
- "tour-3441464": {
-  "moods": [
-   "실내",
-   "혼자",
    "조용함"
   ],
   "energy": 1,
   "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "항공역사와 산업에 관한 전문 도서와 자료를 자유롭게 이용할 수 있는 도서관입니다."
- },
- "tour-1934593": {
-  "moods": [
-   "실내",
-   "예술",
-   "휴식",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "다양한 현대미술 작품과 도심 속 여유를 즐길 수 있습니다."
- },
- "tour-129918": {
-  "moods": [
-   "실내",
-   "예술",
-   "조용함",
-   "혼자"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "국내외 유수의 현대미술 작가들의 작품을 감상할 수 있습니다."
- },
- "tour-2535347": {
-  "moods": [
-   "실내",
-   "역사탐방",
-   "조용함",
-   "가족동반"
-  ],
-  "energy": 2,
-  "bestTime": [
    "morning",
    "afternoon"
   ],
-  "durationMin": 90,
-  "story": "우리나라의 근현대 역사와 독립정신을 되새겨보는 공간입니다."
- },
- "tour-1105871": {
-  "moods": [
-   "실내",
-   "예술",
-   "가족동반"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "다양한 장르의 공연과 전시를 쾌적하게 관람할 수 있습니다."
+  "durationMin": 60,
+  "story": "우리나라 전통 문화예술을 보고 배우는 전수교육관"
  },
  "tour-3370146": {
   "moods": [
@@ -2613,466 +3340,15 @@
  },
  "tour-3085035": {
   "moods": [
-   "실내",
-   "혼자",
-   "예술",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "평창동에 위치한 미술관에서 다양한 작가들의 작품을 감상해보세요."
- },
- "tour-130377": {
-  "moods": [
-   "실내",
-   "무료",
-   "가족동반",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "지역 주민을 위한 다양한 문화 활동과 프로그램을 만날 수 있는 공간입니다."
- },
- "tour-1019327": {
-  "moods": [
-   "실내",
-   "친구모임",
-   "활기참",
-   "이색"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 120,
-  "story": "홍대 거리에서 인디밴드의 수준급 라이브 공연을 즐길 수 있는 라이브클럽입니다."
- },
- "tour-2553377": {
-  "moods": [
-   "실내",
-   "혼자",
-   "예술",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "국내 최초의 미술 자료 전문 박물관에서 다양한 예술 기록물을 관람하세요."
- },
- "tour-699241": {
-  "moods": [
-   "실내",
-   "역사탐방",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "아시아 최초의 대통령도서관에서 민주주의와 평화의 정신을 느껴보세요."
- },
- "tour-3080721": {
-  "moods": [
-   "실내",
-   "예술",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "한국 현대조각을 개척한 작가의 예술혼이 담긴 미술관에서 작품을 감상하세요."
- },
- "tour-3442973": {
-  "moods": [
-   "실내",
-   "무료",
-   "혼자",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "김영삼 전 대통령의 업적과 민주화 역사를 살펴볼 수 있는 도서관이다."
- },
- "tour-130699": {
-  "moods": [
-   "실내",
-   "친구모임",
-   "커플",
-   "예술"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "다양한 공연과 전시를 관람할 수 있는 복합문화예술 공간이다."
- },
- "tour-3451241": {
-  "moods": [
-   "실내",
-   "무료",
-   "혼자",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning"
-  ],
-  "durationMin": 60,
-  "story": "윤동주 시인의 시에서 영감을 받아 조성된 아늑한 공공 도서관이다."
- },
- "tour-130371": {
-  "moods": [
-   "실내",
-   "무료",
-   "혼자",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning"
-  ],
-  "durationMin": 45,
-  "story": "지역 주민을 위한 문화예술 활동과 향토사 조사가 이루어지는 곳이다."
- },
- "tour-2745731": {
-  "moods": [
-   "실내",
-   "가족동반",
-   "체험형"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "night"
-  ],
-  "durationMin": 90,
-  "story": "우주와 천문을 직접 체험하고 관측할 수 있는 과학문화 공간이다."
- },
- "tour-3432213": {
-  "moods": [
-   "실내",
-   "무료",
-   "혼자",
-   "예술",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "책과 예술을 함께 즐길 수 있는 전국 최초의 예술 특화 도서관이다."
- },
- "tour-130624": {
-  "moods": [
-   "실내",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "우리 문화유산을 지켜온 소중한 고미술품을 만날 수 있어요."
- },
- "tour-130348": {
-  "moods": [
-   "실내",
    "예술",
    "조용함"
   ],
   "energy": 1,
   "bestTime": [
    "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "유망한 작가들의 동시대 현대 미술 흐름을 공유하는 공간입니다."
- },
- "tour-3012777": {
-  "moods": [
-   "실내",
-   "예술",
-   "친구모임"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "생생한 창작 뮤지컬 공연을 가까이서 즐길 수 있는 극장입니다."
- },
- "tour-1849416": {
-  "moods": [
-   "실내",
-   "역사탐방",
-   "무료"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "대한민국의 근현대사 역사를 시대별로 살펴볼 수 있습니다."
- },
- "tour-2753089": {
-  "moods": [
-   "실내",
-   "예술",
-   "포토존"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "세계적인 디자이너가 참여한 랜드마크에서 미디어아트를 즐겨보세요."
- },
- "tour-736766": {
-  "moods": [
-   "실내",
-   "예술",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "한국 현대미술의 독창적인 작품들을 깊이 있게 감상할 수 있습니다."
- },
- "tour-130375": {
-  "moods": [
-   "실내",
-   "역사탐방",
-   "전통문화",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "동대문구의 오랜 역사와 전통을 살펴볼 수 있는 문화시설입니다."
- },
- "tour-130155": {
-  "moods": [
-   "실내",
-   "예술",
-   "혼자",
-   "친구모임"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "다양한 현대 미술 전시와 국제 교류전을 감상할 수 있는 갤러리입니다."
- },
- "tour-1628531": {
-  "moods": [
-   "실내",
-   "역사탐방",
-   "전통문화",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "조선 후기 여성 장신구와 생활상 및 학교 역사를 관람할 수 있습니다."
- },
- "tour-129903": {
-  "moods": [
-   "실내",
-   "예술",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "전통 회화부터 현대미술까지 다양한 미술 작품을 만날 수 있는 화랑입니다."
- },
- "tour-2704340": {
-  "moods": [
-   "실내",
-   "예술",
-   "커플",
-   "포토존",
-   "활기참"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "성수동에서 수준 높은 현대 미술과 다채로운 전시를 즐길 수 있습니다."
- },
- "tour-2707460": {
-  "moods": [
-   "실내",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "테일러 부부가 살았던 역사적 의미가 담긴 가택을 둘러볼 수 있습니다."
- },
- "tour-130365": {
-  "moods": [
-   "실내",
-   "체험형",
-   "전통문화",
-   "가족동반"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "우리 조상들의 삶과 떡에 대한 이야기를 체험할 수 있습니다."
- },
- "tour-1845434": {
-  "moods": [
-   "실내",
-   "무료",
-   "포토존",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "전통과 현대가 조화를 이루는 독특한 건축을 감상해보세요."
- },
- "tour-3085149": {
-  "moods": [
-   "실내",
-   "예술",
-   "로맨틱"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "세계 최고 수준의 음향 시설에서 환상적인 공연을 즐길 수 있습니다."
- },
- "tour-130369": {
-  "moods": [
-   "실내",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning"
   ],
   "durationMin": 30,
-  "story": "마포구민을 위한 다양한 문화와 평생교육이 이루어지는 공간입니다."
- },
- "tour-753972": {
-  "moods": [
-   "실내",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "윤봉길 의사의 독립정신과 숭고한 삶을 기릴 수 있는 곳입니다."
- },
- "tour-130279": {
-  "moods": [
-   "실내",
-   "예술",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "인사동에서 다양한 작가들의 개성 있는 미술 작품을 만납니다."
- },
- "tour-130503": {
-  "moods": [
-   "실내",
-   "친구모임",
-   "예술",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "소규모 챔버뮤직과 피아노 연주를 감상하기 좋은 클래식 공연장입니다."
- },
- "tour-231976": {
-  "moods": [
-   "실내",
-   "전통문화",
-   "역사탐방",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "조선시대부터 이어진 다양한 민속 목조각상을 만날 수 있는 박물관입니다."
- },
- "tour-2553929": {
-  "moods": [
-   "실외",
-   "자연",
-   "포토존",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "산업화 유산이 친환경 문화공간으로 재탄생한 매봉산의 공원입니다."
+  "story": "평창동에 위치한 현대 미술 전시 공간"
  },
  "tour-3379778": {
   "moods": [
@@ -3163,38 +3439,6 @@
   "durationMin": 120,
   "story": "전 세대가 소통하고 화합하는 청소년 중심의 축제입니다."
  },
- "tour-2785797": {
-  "moods": [
-   "실외",
-   "체험형",
-   "포토존",
-   "야경",
-   "로맨틱"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 60,
-  "story": "황금빛 조형물과 미디어아트가 어우러지는 겨울 청계천의 빛 축제입니다."
- },
- "tour-2862358": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "포토존",
-   "야경",
-   "자연"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 90,
-  "story": "당현천을 따라 아름다운 빛조각과 미디어아트를 감상할 수 있습니다."
- },
  "tour-2778088": {
   "moods": [
    "실외",
@@ -3210,37 +3454,6 @@
   ],
   "durationMin": 60,
   "story": "별빛내린천 산책로를 따라 펼쳐지는 아름다운 빛예술 축제입니다."
- },
- "tour-3035607": {
-  "moods": [
-   "실외",
-   "체험형",
-   "포토존",
-   "야경",
-   "활기참"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 90,
-  "story": "겨울 동화 속 산타 마을에서 크리스마스 소품과 야경을 즐길 수 있어요."
- },
- "tour-3073454": {
-  "moods": [
-   "실외",
-   "포토존",
-   "야경",
-   "활기참",
-   "예술"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "night"
-  ],
-  "durationMin": 60,
-  "story": "빛의 시작점인 광화문에서 환상적인 미디어아트 빛 축제를 감상하세요."
  },
  "tour-2039869": {
   "moods": [
@@ -3381,20 +3594,6 @@
   "durationMin": 120,
   "story": "다양한 장르의 춤을 통해 모두가 하나 되는 흥겨운 도심형 댄스 축제입니다."
  },
- "tour-3563444": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "체험형",
-   "활기참"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "방배카페골목의 활기찬 상권 분위기와 다채로운 콘텐츠를 경험해 보세요."
- },
  "tour-2753551": {
   "moods": [
    "실외",
@@ -3409,22 +3608,6 @@
   ],
   "durationMin": 120,
   "story": "백 년 전통 북촌한옥마을에서 열리는 지역문화축제입니다."
- },
- "tour-2733405": {
-  "moods": [
-   "실외",
-   "체험형",
-   "역사탐방",
-   "가족동반",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 90,
-  "story": "서대문 독립공원 일대에서 역사와 문학을 함께 체험합니다."
  },
  "tour-2759788": {
   "moods": [
@@ -3611,42 +3794,23 @@
   "durationMin": 120,
   "story": "세계유산 조선왕릉에서 다채로운 공연과 체험을 즐길 수 있는 문화행사입니다."
  },
- "tour-3384023": {
+ "kakao-25039523": {
   "moods": [
-   "실외",
-   "가족동반",
-   "친구모임",
-   "체험형",
-   "활기참"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "전 세대가 문화를 체험하며 화합을 다지는 거리 축제입니다."
- },
- "heritage-11-0000780000000": {
-  "moods": [
-   "실내",
-   "혼자",
-   "역사탐방",
-   "조용함",
-   "포토존"
+   "자연",
+   "포토존",
+   "조용함"
   ],
   "energy": 1,
   "bestTime": [
-   "morning",
-   "afternoon"
+   "afternoon",
+   "evening"
   ],
-  "durationMin": 45,
-  "story": "국보 금동미륵보살반가사유상의 신비로운 미소를 감상할 수 있습니다."
+  "durationMin": 30,
+  "story": "서울 시내가 한눈에 내려다보이는 아름다운 남산의 포토존"
  },
- "heritage-11-0000700000000": {
+ "kakao-1636194851": {
   "moods": [
-   "실내",
    "역사탐방",
-   "조용함",
    "혼자"
   ],
   "energy": 1,
@@ -3654,258 +3818,11 @@
    "morning",
    "afternoon"
   ],
-  "durationMin": 30,
-  "story": "우리말 글자의 창제 원리를 담은 소중한 문화재를 만날 수 있습니다."
+  "durationMin": 20,
+  "story": "아픈 역사를 기억하고 평화를 기원하는 의미 깊은 장소"
  },
- "heritage-11-0000850000000": {
+ "kakao-26184214": {
   "moods": [
-   "실내",
-   "역사탐방",
-   "조용함",
-   "혼자"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "현존하는 같은 형식의 불상 중 가장 큰 금동신묘명삼존불입상입니다."
- },
- "heritage-11-0001410000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "초기철기시대의 정교한 청동기 유물을 만나는 곳"
- },
- "heritage-13-0002540000000": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "대한제국시기 벨기에영사관의 역사를 살펴보는 곳"
- },
- "kakao-8252248": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "포토존",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "한강의 아름다운 노을과 자연을 즐기는 복합문화공간"
- },
- "kakao-164775369": {
-  "moods": [
-   "실내",
-   "예술",
-   "친구모임",
-   "커플"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "생생한 현장감 속에서 다양한 대중음악 공연을 즐기는 곳"
- },
- "kakao-10753713": {
-  "moods": [
-   "실외",
-   "무료",
-   "친구모임",
-   "커플",
-   "이색",
-   "활기참"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "이국적인 문화를 느끼며 세계 각국의 음식을 경험하는 거리"
- },
- "kakao-7997234": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "도심 속에서 다양한 나무와 야생화를 보며 산책하는 공간"
- },
- "kakao-26563613": {
-  "moods": [
-   "실외",
-   "자연",
-   "조용함",
-   "휴식",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "푸른 자연 속에서 맑은 공기를 마시며 사색하기 좋은 산책길입니다."
- },
- "kakao-27302721": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "커플",
-   "활기참",
-   "이색"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "세계 각국의 다양한 요리를 즐기며 미식 문화를 경험할 수 있습니다."
- },
- "kakao-2089365219": {
-  "moods": [
-   "실외",
-   "자연",
-   "도보코스",
-   "휴식",
-   "포토존"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "울창한 나무 그늘을 걸으며 서울의 풍경을 편안하게 조망할 수 있습니다."
- },
- "kakao-1514439085": {
-  "moods": [
-   "실외",
-   "포토존",
-   "커플",
-   "친구모임",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "예쁜 벽화와 카페가 있는 특색 있는 거리에서 사진을 남기기 좋습니다."
- },
- "kakao-1460258432": {
-  "moods": [
-   "실외",
-   "조용함",
-   "도보코스",
-   "혼자"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "일상 속에서 안전과 평화의 의미를 조용히 생각해 볼 수 있는 공간입니다."
- },
- "kakao-8424960": {
-  "moods": [
-   "실외",
-   "자연",
-   "조용함",
-   "휴식",
-   "가족동반"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "다양한 수생식물을 관찰하며 차분하게 산책하기 좋은 생태 공간입니다."
- },
- "kakao-19182749": {
-  "moods": [
-   "실외",
-   "자연",
-   "도보코스",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "도심 속에서 울창한 소나무를 감상하며 산책하기 좋은 곳입니다."
- },
- "kakao-26563934": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "전통문화",
-   "포토존",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "전통 한옥이 보존된 고즈넉한 골목을 걸으며 전통 미를 감상합니다."
- },
- "kakao-25540042": {
-  "moods": [
-   "실내",
-   "친구모임",
-   "커플",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "홍대입구역 근처에서 최신 영화와 문화생활을 편리하게 즐깁니다."
- },
- "kakao-8177904": {
-  "moods": [
-   "실외",
    "활기참",
    "친구모임",
    "도보코스"
@@ -3916,1324 +3833,137 @@
    "evening"
   ],
   "durationMin": 60,
-  "story": "버스킹 공연과 길거리 문화를 만날 수 있는 활기찬 거리입니다."
+  "story": "쇼핑과 먹거리가 가득한 명동의 활기찬 보행자 전용 거리입니다."
  },
- "kakao-7856282": {
+ "kakao-838786546": {
   "moods": [
-   "실내",
-   "친구모임",
-   "커플",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "교통이 편리한 홍대 중심가에서 편안하게 영화를 관람합니다."
- },
- "kakao-1365253252": {
-  "moods": [
-   "실내",
-   "친구모임",
-   "커플",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "홍대입구 인근에서 깔끔한 시설과 함께 영화를 관람합니다."
- },
- "kakao-23120302": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "활기참",
-   "포토존"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "night"
-  ],
-  "durationMin": 120,
-  "story": "밤마다 뜨거운 젊음과 신나는 음악을 만끽할 수 있는 곳이다."
- },
- "kakao-7876521": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "활기참",
-   "포토존"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "쇼핑과 다양한 길거리 음식을 동시에 즐길 수 있는 번화가이다."
- },
- "kakao-1771512259": {
-  "moods": [
-   "실외",
-   "포토존",
-   "로맨틱",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 45,
-  "story": "탁 트인 시야로 서울의 아름다운 도시 전경을 조망할 수 있다."
- },
- "kakao-1384042237": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "가족동반"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 60,
-  "story": "남산 관광 전후에 든든한 추억의 왕돈가스를 맛볼 수 있는 곳이다."
- },
- "kakao-27454509": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "포토존",
-   "이색"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "만화와 애니메이션 캐릭터 조형물과 벽화를 보며 걸을 수 있다."
- },
- "kakao-1999732378": {
-  "moods": [
-   "실외",
-   "활기참",
-   "친구모임",
-   "가족동반"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 60,
-  "story": "남산 아래에서 활기찬 일상의 분위기와 먹거리를 경험할 수 있다."
- },
- "kakao-25738162": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
    "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "도심 속에서 여유롭게 산책하며 역사를 느낄 수 있는 거리입니다."
- },
- "kakao-7990409": {
-  "moods": [
-   "실외",
-   "무료",
-   "친구모임",
-   "커플",
-   "활기참"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "트렌디한 패션과 숍들이 즐비한 활기찬 거리입니다."
- },
- "kakao-1780698606": {
-  "moods": [
-   "실외",
-   "무료",
-   "친구모임",
-   "커플",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "개성 있는 카페와 공방에서 여유로운 시간을 보낼 수 있습니다."
- },
- "kakao-1889582026": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "포토존",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 30,
-  "story": "한강과 주변 자연경관을 조망하며 휴식을 취할 수 있습니다."
- },
- "kakao-13127878": {
-  "moods": [
-   "실내",
-   "무료",
-   "가족동반",
-   "자연",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "다양한 식물과 곤충을 관찰할 수 있는 도심 속 생태 공간입니다."
- },
- "kakao-21766257": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "활기참"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening"
-  ],
-  "durationMin": 60,
-  "story": "오랜 전통의 갈비 집들이 모여 든든한 식사를 즐길 수 있습니다."
- },
- "kakao-17563475": {
-  "moods": [
-   "실외",
-   "자연",
-   "포토존",
-   "휴식",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "노란 은행나무 잎이 쌓인 아름다운 풍경 속에서 산책하기 좋은 곳입니다."
- },
- "kakao-946487614": {
-  "moods": [
-   "실외",
-   "자연",
-   "포토존",
-   "로맨틱",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "황금빛 풍경 속 곧게 뻗은 길을 걸으며 낭만적인 분위기를 즐길 수 있습니다."
- },
- "kakao-26563608": {
-  "moods": [
-   "실외",
-   "자연",
-   "휴식",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "울창한 나무와 아기자기한 정원이 어우러진 도심 속 산책로입니다."
- },
- "kakao-27481535": {
-  "moods": [
-   "실외",
    "도보코스",
-   "활기참",
-   "이색"
+   "무료"
   ],
-  "energy": 2,
+  "energy": 1,
   "bestTime": [
+   "morning",
    "afternoon"
   ],
-  "durationMin": 60,
-  "story": "감각적인 공방과 개성 있는 카페가 모여 있는 트렌디한 거리입니다."
+  "durationMin": 20,
+  "story": "청계천 복원과 함께 재현된 역사 깊은 돌다리입니다."
  },
- "kakao-13121007": {
+ "kakao-990535361": {
   "moods": [
-   "실외",
-   "자연",
    "휴식",
    "도보코스",
    "무료"
   ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "탁 트인 전망을 바라보며 여유로운 시간을 보낼 수 있는 거대한 휴식처입니다."
- },
- "kakao-8003939": {
-  "moods": [
-   "실외",
-   "자연",
-   "포토존",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "한강을 배경으로 아름다운 벚꽃 터널을 이루는 벚꽃 명소입니다."
- },
- "kakao-1330370659": {
-  "moods": [
-   "실내",
-   "포토존",
-   "야경",
-   "로맨틱",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "night"
-  ],
-  "durationMin": 60,
-  "story": "높은 곳에서 서울의 야경과 한강 조망을 즐기기 좋습니다."
- },
- "kakao-1328491849": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "휴식",
-   "혼자"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 15,
-  "story": "자전거 라이딩 중 잠시 쉬어가며 재충전하는 거점입니다."
- },
- "kakao-8319957": {
-  "moods": [
-   "실외",
-   "자연",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "도심 속에서 자연 생태와 철새 도래지를 만날 수 있습니다."
- },
- "kakao-20557175": {
-  "moods": [
-   "실외",
-   "포토존",
-   "야경",
-   "로맨틱",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 45,
-  "story": "한강변에서 아름다운 노을과 붉게 물드는 석양을 감상합니다."
- },
- "kakao-7947003": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "자연",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "잔잔한 호수를 따라 여유롭게 산책하며 풍경을 즐길 수 있습니다."
- },
- "kakao-27560699": {
-  "moods": [
-   "실내",
-   "실외",
-   "친구모임",
-   "가족동반",
-   "커플",
-   "활기참"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 240,
-  "story": "다양한 놀이기구와 퍼레이드가 가득한 대형 테마파크입니다."
- },
- "kakao-17384522": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "커플",
-   "포토존",
-   "활기참"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "석촌호수 위 테마파크에서 스릴 넘치는 놀이기구와 풍경을 즐겨보세요."
- },
- "kakao-1851128581": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "자연",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "맨발로 도심 속 황톳길을 걸으며 편안한 휴식을 취할 수 있습니다."
- },
- "kakao-8383806": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "친구모임",
-   "커플",
-   "포토존"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "전통과 현대가 어우러진 거리에서 여유로운 산책과 데이트를 즐겨보세요."
- },
- "kakao-12699510": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "커플",
-   "예술",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "아름다운 은행나무 길과 미술관이 있는 고즈넉한 거리를 산책하세요."
- },
- "kakao-18741274": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "역사탐방",
-   "자연",
-   "포토존"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "조선시대 성곽길을 따라 걸으며 서울 전경과 역사를 함께 느껴보세요."
- },
- "kakao-8342732": {
-  "moods": [
-   "실외",
-   "자연",
-   "조용함",
-   "역사탐방",
-   "도보코스"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning"
-  ],
-  "durationMin": 150,
-  "story": "맑은 공기를 마시며 북악산의 뛰어난 조망과 산행을 즐겨보세요."
- },
- "kakao-133864079": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "포토존",
-   "자연",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 45,
-  "story": "북악산 자락에서 서울 시내를 한눈에 조망할 수 있습니다."
- },
- "kakao-90988882": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "예술",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "정감 있는 돌담길과 공방을 여유롭게 산책하기 좋습니다."
- },
- "kakao-21273056": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "전통문화",
-   "친구모임",
-   "가족동반"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "한국의 전통 공예품과 멋을 느끼며 걷기 좋은 거리입니다."
- },
- "kakao-27215154": {
-  "moods": [
-   "실내",
-   "체험형",
-   "이색",
-   "친구모임",
-   "커플",
-   "활기참"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "신체 활동과 미션을 해결하며 스릴을 만끽할 수 있습니다."
- },
- "kakao-649534068": {
-  "moods": [
-   "실내",
-   "체험형",
-   "이색",
-   "친구모임",
-   "가족동반",
-   "활기참"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "예능 프로그램의 미션을 직접 수행하며 즐기는 시설입니다."
- },
- "kakao-26558551": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "역사탐방",
-   "혼자",
-   "휴식"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "서울의 오랜 역사와 서민들의 삶이 녹아 있는 도보 여행길입니다."
- },
- "kakao-1772440780": {
-  "moods": [
-   "실내",
-   "친구모임",
-   "커플",
-   "예술"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "아늑한 공간에서 다양한 공연을 즐길 수 있는 문화 예술 공간입니다."
- },
- "kakao-25968113": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "혼자",
-   "이색"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "옛 추억과 아날로그 감성이 가득한 독특한 거리에서 책을 찾아볼 수 있습니다."
- },
- "kakao-8109515": {
-  "moods": [
-   "실내",
-   "역사탐방",
-   "가족동반"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "청계천의 역사와 복원 과정을 깊이 있게 이해할 수 있는 전시 공간입니다."
- },
- "kakao-895471848": {
-  "moods": [
-   "실외",
-   "자연",
-   "조용함",
-   "휴식",
-   "포토존"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "도심 속에서 초록빛 휴식을 취하며 조용히 사색을 즐기기 좋은 정원입니다."
- },
- "kakao-21920612": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "자연",
-   "포토존"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "숲과 도심의 전경을 동시에 즐기며 산책할 수 있는 대표적인 산책로입니다."
- },
- "kakao-895258181": {
-  "moods": [
-   "실외",
-   "자연",
-   "휴식",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "맑은 공기를 마시며 일상의 피로를 풀고 휴식할 수 있는 자연 친화적 공간입니다."
- },
- "kakao-12544589": {
-  "moods": [
-   "실외",
-   "자연",
-   "도보코스",
-   "휴식",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "상쾌한 솔향기를 맡으며 완만한 소나무숲길을 걸을 수 있습니다."
- },
- "kakao-18580959": {
-  "moods": [
-   "실외",
-   "자연",
-   "도보코스",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "한옥마을과 자연경관이 어우러진 고즈넉한 마실길을 산책할 수 있습니다."
- },
- "kakao-12544584": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "도보코스",
-   "자연",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "근현대 역사와 자연이 함께하는 순례길을 걸어볼 수 있습니다."
- },
- "kakao-12544577": {
-  "moods": [
-   "실외",
-   "자연",
-   "도보코스",
-   "포토존",
-   "휴식"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "전망대에 올라 서울 시내의 탁 트인 풍경을 감상할 수 있습니다."
- },
- "kakao-443387508": {
-  "moods": [
-   "실외",
-   "자연",
-   "조용함",
-   "휴식",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "도심 속 울창한 숲에서 사계절의 숲 변화를 관찰하기 좋습니다."
- },
- "kakao-26563606": {
-  "moods": [
-   "실외",
-   "자연",
-   "조용함",
-   "휴식",
-   "도보코스"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "도심 한복판에서 싱그러운 풀내음을 맡으며 여유를 즐길 수 있습니다."
- },
- "kakao-25247515": {
-  "moods": [
-   "실외",
-   "자연",
-   "휴식",
-   "도보코스",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "완만한 경사를 오르며 도심 속 자연을 즐길 수 있는 산입니다."
- },
- "kakao-26530579": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "활기참",
-   "이색"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 90,
-  "story": "전통 있는 파전과 막걸리를 즐길 수 있는 활기찬 골목입니다."
- },
- "kakao-25042032": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "활기참",
-   "이색"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "매콤한 쭈꾸미볶음 전문점들이 모여 있는 미식 골목입니다."
- },
- "kakao-27529219": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "활기참",
-   "이색"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 90,
-  "story": "레트로한 감성 속에서 바삭한 옛날 통닭을 맛볼 수 있습니다."
- },
- "kakao-1546412735": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "활기참"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "다양한 음식점과 카페가 모여 있어 식도락을 즐기기 좋습니다."
- },
- "kakao-248287326": {
-  "moods": [
-   "실외",
-   "자연",
-   "휴식",
-   "조용함",
-   "포토존"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "세계 각국의 다양한 수목과 이국적인 자연 경관을 감상합니다."
- },
- "kakao-467710256": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "커플",
-   "포토존",
-   "이색"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "전통과 현대가 어우러진 골목에서 데이트와 산책을 즐겨보세요."
- },
- "kakao-26572390": {
-  "moods": [
-   "실내",
-   "실외",
-   "혼자",
-   "커플",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "도심 속 아담한 공간에서 특별한 추억을 만들어보세요."
- },
- "kakao-10952963": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "가족동반",
-   "자연",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "탁 트인 한강 조망과 넓은 잔디밭에서 여유를 만끽할 수 있습니다."
- },
- "kakao-8142957": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "커플",
-   "포토존",
-   "야경"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 90,
-  "story": "화려한 야경과 분수를 감상하며 피크닉을 즐기기 좋습니다."
- },
- "kakao-8136085": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "가족동반",
-   "체험형",
-   "활기참"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "시원한 강바람을 맞으며 활기찬 레저 스포츠를 즐겨보세요."
- },
- "kakao-8625698": {
-  "moods": [
-   "실외",
-   "혼자",
-   "자연",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "조용하고 여유로운 분위기 속에서 한강을 바라보며 산책하세요."
- },
- "kakao-8126939": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "가족동반",
-   "커플",
-   "자연",
-   "로맨틱"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 90,
-  "story": "탁 트인 강변에서 노을을 감상하며 여유를 즐길 수 있습니다."
- },
- "kakao-10952965": {
-  "moods": [
-   "실외",
-   "가족동반",
-   "커플",
-   "자연",
-   "포토존",
-   "야경"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "night"
-  ],
-  "durationMin": 90,
-  "story": "도심 속 야경과 함께 한강의 정취를 동시에 만끽할 수 있습니다."
- },
- "kakao-17384905": {
-  "moods": [
-   "실외",
-   "혼자",
-   "커플",
-   "자연",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "조용하게 산책을 즐기며 여유로운 시간을 보낼 수 있습니다."
- },
- "kakao-8143124": {
-  "moods": [
-   "실외",
-   "혼자",
-   "가족동반",
-   "자연",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "자연 그대로의 풍경을 보며 산책하기 좋은 곳입니다."
- },
- "kakao-8631818": {
-  "moods": [
-   "실외",
-   "혼자",
-   "가족동반",
-   "자연",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "도심 속에서 자연을 가까이 느끼며 휴식을 취할 수 있습니다."
- },
- "kakao-1237343102": {
-  "moods": [
-   "실외",
-   "친구모임",
-   "커플",
-   "자연",
-   "포토존",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "잔디밭에 앉아 여유롭게 한강을 바라보며 피크닉을 즐길 수 있습니다."
- },
- "kakao-957601360": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "친구모임",
-   "커플",
-   "활기참"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 30,
-  "story": "이태원 산책을 시작하기 좋은 만남의 장소입니다."
- },
- "kakao-25039523": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "커플",
-   "포토존",
-   "자연"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 30,
-  "story": "서울 도심 풍경과 한강을 조망하며 사진을 남길 수 있습니다."
- },
- "kakao-9326633": {
-  "moods": [
-   "실외",
-   "혼자",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 15,
-  "story": "이태원 여행 정보와 길 안내를 편리하게 받을 수 있습니다."
- },
- "kakao-1636194851": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "조용함",
-   "혼자"
-  ],
   "energy": 1,
   "bestTime": [
    "morning",
    "afternoon"
   ],
   "durationMin": 20,
-  "story": "역사적 아픔을 기억하고 평화를 기원하는 의미 있는 장소입니다."
+  "story": "도심 빌딩 숲속에서 잠시 쉬어갈 수 있는 열린 도심 광장입니다."
  },
- "kakao-1442278139": {
+ "kakao-18059744": {
   "moods": [
-   "실외",
-   "역사탐방",
-   "조용함",
-   "혼자"
+   "자연",
+   "포토존",
+   "휴식",
+   "조용함"
   ],
   "energy": 1,
   "bestTime": [
    "morning",
-   "afternoon"
-  ],
-  "durationMin": 20,
-  "story": "유관순 열사의 숭고한 애국정신을 기릴 수 있는 공간입니다."
- },
- "kakao-781129546": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "역사탐방",
-   "전통문화",
-   "포토존"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 120,
-  "story": "전통 한옥의 아름다운 건축미와 옛 정취를 느낄 수 있습니다."
- },
- "kakao-638613893": {
-  "moods": [
-   "실외",
-   "전통문화",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
    "afternoon"
   ],
   "durationMin": 30,
-  "story": "북촌의 고즈넉한 한옥 골목에서 평화로운 휴식을 즐겨보세요."
+  "story": "서울숲 내 아름다운 반영을 볼 수 있는 거울연못."
  },
- "kakao-902286491": {
+ "kakao-1653556996": {
   "moods": [
-   "실내",
-   "전통문화",
-   "로맨틱",
-   "휴식"
+   "자연",
+   "휴식",
+   "도보코스"
   ],
   "energy": 1,
   "bestTime": [
+   "morning",
    "afternoon"
   ],
-  "durationMin": 60,
-  "story": "전통과 현대가 어우러진 정원에서 차 한잔의 여유를 만끽할 수 있습니다."
+  "durationMin": 40,
+  "story": "서울숲 안에서 여유롭게 산책하기 좋은 정원."
  },
- "kakao-27469157": {
+ "kakao-27562728": {
   "moods": [
-   "실외",
-   "이색",
-   "커플",
+   "자연",
+   "휴식",
+   "가족동반",
    "친구모임"
   ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 60,
+  "story": "여의도한강공원의 푸른 녹음과 휴식을 즐기는 넓은 광장"
+ },
+ "kakao-27571699": {
+  "moods": [
+   "자연",
+   "활기참",
+   "가족동반"
+  ],
   "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 60,
+  "story": "다양한 행사와 산책을 즐기기 좋은 여의도의 대표적 광장"
+ },
+ "kakao-1355303798": {
+  "moods": [
+   "역사탐방",
+   "조용함"
+  ],
+  "energy": 1,
   "bestTime": [
    "morning",
    "afternoon"
   ],
-  "durationMin": 90,
-  "story": "인력거를 타고 북촌의 숨은 명소들을 편안하고 색다르게 둘러보세요."
- },
- "kakao-106952975": {
-  "moods": [
-   "실내",
-   "활기참",
-   "친구모임",
-   "커플"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 60,
-  "story": "홍대 중심가에서 트렌디한 나이트라이프와 문화를 편리하게 즐기세요."
- },
- "kakao-43179481": {
-  "moods": [
-   "실내",
-   "활기참",
-   "친구모임",
-   "커플"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 60,
-  "story": "홍대의 젊고 활기찬 분위기 속에서 트렌디한 라이프스타일을 누려보세요."
- },
- "kakao-27481748": {
-  "moods": [
-   "실외",
-   "야경",
-   "포토존",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
   "durationMin": 30,
-  "story": "청계천의 상징적인 랜드마크와 함께 아름다운 도심 야경을 산책해보세요."
+  "story": "한국 천주교 순교의 역사가 깃든 의미 있는 장소"
  },
- "kakao-26184214": {
+ "kakao-27571702": {
   "moods": [
-   "실외",
-   "도보코스",
-   "친구모임",
-   "커플",
-   "활기참"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "쇼핑과 다양한 길거리 음식을 자유롭게 즐기기 좋은 거리입니다."
- },
- "kakao-838786546": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "역사탐방",
+   "자연",
+   "포토존",
    "휴식"
   ],
-  "energy": 2,
+  "energy": 1,
   "bestTime": [
-   "morning",
-   "afternoon"
+   "afternoon",
+   "evening"
   ],
-  "durationMin": 30,
-  "story": "조선시대의 흔적을 느끼며 청계천 산책 중 쉬어가기 좋은 다리입니다."
+  "durationMin": 40,
+  "story": "탁 트인 한강 조망을 감상하며 산책하기 좋은 수변 공간"
  },
- "kakao-25037441": {
+ "kakao-458307459": {
   "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "역사탐방",
+   "로맨틱",
+   "포토존",
    "이색"
   ],
   "energy": 2,
   "bestTime": [
-   "morning",
-   "afternoon"
+   "evening",
+   "night"
   ],
-  "durationMin": 30,
-  "story": "베를린 장벽 실물이 있어 이국적인 풍경과 역사적 의미를 전합니다."
+  "durationMin": 40,
+  "story": "요트와 한강 야경을 함께 즐길 수 있는 이색 야외 공간"
  },
- "kakao-22675978": {
+ "kakao-12736016": {
   "moods": [
-   "실내",
-   "무료",
-   "혼자"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 15,
-  "story": "서울 여행에 필요한 다양한 정보와 가이드북을 얻을 수 있습니다."
- },
- "kakao-990535361": {
-  "moods": [
-   "실외",
-   "무료",
-   "가족동반",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "도심 속에서 편안하게 휴식을 취하며 문화 행사를 만날 수 있습니다."
- },
- "kakao-855155417": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
    "역사탐방"
   ],
   "energy": 1,
@@ -5241,857 +3971,190 @@
    "morning",
    "afternoon"
   ],
-  "durationMin": 15,
-  "story": "청계천 복원 과정과 역사가 담긴 동판을 보며 산책을 시작합니다."
- },
- "kakao-1634685936": {
-  "moods": [
-   "실외",
-   "무료",
-   "혼자",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 15,
-  "story": "남산공원 방문 시 등산로와 이용 정보를 편리하게 얻을 수 있는 곳입니다."
- },
- "kakao-18059737": {
-  "moods": [
-   "실외",
-   "무료",
-   "가족동반",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
   "durationMin": 20,
-  "story": "서울숲의 생태 정보와 프로그램 안내를 받아 알차게 공원을 즐길 수 있습니다."
- },
- "kakao-430154266": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "도심 속에서 다양한 나무와 풀을 보며 편안한 휴식과 산책을 즐길 수 있습니다."
- },
- "kakao-17560306": {
-  "moods": [
-   "실외",
-   "무료",
-   "가족동반",
-   "자연",
-   "포토존"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "야생 동식물이 살아 숨 쉬는 생태숲에서 꽃사슴을 가까이 만날 수 있습니다."
- },
- "kakao-18059744": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "포토존",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "넓은 수면에 비치는 주변 풍경을 감상하며 멋진 사진을 남길 수 있습니다."
- },
- "kakao-1713892467": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "팬들의 참여로 조성된 아늑한 산책로를 걸으며 자연을 감상하기 좋습니다."
- },
- "kakao-23394952": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "성수대교 참사의 아픔을 기억하고 안전을 되새기는 추모 공간입니다."
- },
- "kakao-1653556996": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "자연",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "도심 속에서 한적하게 사색을 즐기며 자연을 감상할 수 있는 정원입니다."
- },
- "kakao-27151599": {
-  "moods": [
-   "실외",
-   "커플",
-   "포토존",
-   "야경",
-   "로맨틱"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 90,
-  "story": "한강 위에서 서울의 아름다운 야경과 랜드마크를 감상하는 유람선입니다."
- },
- "kakao-26974731": {
-  "moods": [
-   "실외",
-   "무료",
-   "가족동반",
-   "활기참",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 45,
-  "story": "시원한 물길과 바닥분수에서 더위를 식히며 휴식하는 광장입니다."
- },
- "kakao-27562728": {
-  "moods": [
-   "실외",
-   "무료",
-   "가족동반",
-   "커플",
-   "자연",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "푸른 나무 그늘 아래서 여유롭게 피크닉과 휴식을 즐기는 넓은 공간입니다."
- },
- "kakao-27571699": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "자연",
-   "활기참"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 60,
-  "story": "탁 트인 한강 조망을 즐기며 산책과 야외 활동을 할 수 있는 넓은 광장입니다."
- },
- "kakao-1355303798": {
-  "moods": [
-   "실외",
-   "무료",
-   "혼자",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "엄숙한 분위기 속에서 한국 천주교의 역사를 되새기는 장소입니다."
- },
- "kakao-27571702": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "휴식",
-   "자연"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 60,
-  "story": "탁 트인 한강 조망을 보며 여유로운 산책과 휴식을 즐길 수 있습니다."
- },
- "kakao-125598842": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "휴식",
-   "자연"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "도심 속 넓은 잔디밭에서 탁 트인 개방감을 느끼며 걷기 좋습니다."
- },
- "kakao-458307459": {
-  "moods": [
-   "실외",
-   "무료",
-   "이색",
-   "포토존",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 45,
-  "story": "이국적인 한강 풍경 속에서 시원한 강바람을 맞으며 휴식합니다."
- },
- "kakao-17556383": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "포토존",
-   "가족동반"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "세종대왕의 업적을 기리며 역사적 의미를 되새기는 명소입니다."
- },
- "kakao-7932325": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "도보코스",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "병자호란의 아픈 역사를 담은 유적지를 둘러볼 수 있습니다."
- },
- "kakao-527888296": {
-  "moods": [
-   "실외",
-   "무료",
-   "포토존",
-   "자연",
-   "이색"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "잠실의 독특한 랜드마크 조형물과 자연경관을 배경으로 기념사진을 남기기 좋습니다."
- },
- "kakao-1322878356": {
-  "moods": [
-   "실외",
-   "무료",
-   "친구모임",
-   "활기참",
-   "휴식",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 60,
-  "story": "탁 트인 한강변에서 젊은 활기를 느끼며 가벼운 휴식을 취할 수 있습니다."
- },
- "kakao-17582054": {
-  "moods": [
-   "실외",
-   "커플",
-   "포토존",
-   "야경",
-   "로맨틱"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 30,
-  "story": "동화 속 성을 재현한 화려한 야경 속에서 로맨틱한 추억을 만들 수 있습니다."
- },
- "kakao-1934331103": {
-  "moods": [
-   "실외",
-   "무료",
-   "혼자",
-   "조용함",
-   "휴식",
-   "자연"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "도심 속 녹지 공간에서 싱그러운 자연을 느끼며 조용히 산책하기 좋습니다."
- },
- "kakao-8109415": {
-  "moods": [
-   "실외",
-   "무료",
-   "혼자",
-   "도보코스",
-   "자연",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "잘 조성된 산책로를 따라 걷거나 자전거를 타며 여유로운 시간을 보낼 수 있습니다."
- },
- "kakao-926610061": {
-  "moods": [
-   "실외",
-   "무료",
-   "친구모임",
-   "활기참",
-   "포토존"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "귀여운 마스코트 조형물과 함께 밝고 활기찬 분위기 속에서 기념사진을 남길 수 있습니다."
- },
- "kakao-1553619675": {
-  "moods": [
-   "실내",
-   "휴식",
-   "이색",
-   "가족동반",
-   "커플"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 45,
-  "story": "스케이트 이용 후 피로를 풀고 휴식을 취하기 좋습니다."
- },
- "kakao-17575261": {
-  "moods": [
-   "실내",
-   "친구모임",
-   "커플",
-   "활기참"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 30,
-  "story": "어두운 공간에서 별자리 여행 테마의 스릴을 즐길 수 있습니다."
- },
- "kakao-1425738327": {
-  "moods": [
-   "실외",
-   "커플",
-   "로맨틱",
-   "야경",
-   "이색"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "evening",
-   "night"
-  ],
-  "durationMin": 30,
-  "story": "석촌호수에서 아름다운 야경과 로맨틱한 분위기를 즐길 수 있습니다."
- },
- "kakao-17583818": {
-  "moods": [
-   "실외",
-   "포토존",
-   "커플",
-   "친구모임"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 15,
-  "story": "방문 기념 인증 사진을 남기기 좋은 대표적인 포토존입니다."
- },
- "kakao-7958336": {
-  "moods": [
-   "실외",
-   "역사탐방",
-   "도보코스",
-   "조용함",
-   "자연"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "북악산 산책로에서 고즈넉한 성곽 풍경을 감상할 수 있습니다."
- },
- "kakao-1356925875": {
-  "moods": [
-   "실외",
-   "자연",
-   "도보코스",
-   "휴식",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "도심 속 탁 트인 잔디밭에서 여유롭게 산책할 수 있습니다."
- },
- "kakao-19175180": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "자연"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "북악산 탐방로를 안전하게 시작하고 주변 산세를 조망할 수 있습니다."
- },
- "kakao-8032163": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "전통 한옥과 근대 건축 양식이 조화를 이룬 고즈넉한 고택입니다."
- },
- "kakao-103527547": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 15,
-  "story": "북촌한옥마을 산책을 시작하기 전에 유용한 정보와 지도를 얻을 수 있습니다."
- },
- "kakao-1589118627": {
-  "moods": [
-   "실외",
-   "무료",
-   "예술",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "도심 속 야외 마당에서 여유롭게 휴식과 야외 조형물을 감상할 수 있습니다."
- },
- "kakao-1062287768": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 15,
-  "story": "삼청동 산책의 출발점에서 주변 명소와 여행 팁을 얻기 좋습니다."
- },
- "kakao-12736016": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 20,
-  "story": "구한말 근대 건축물에서 서울의 근대사를 살펴볼 수 있습니다."
+  "story": "대한제국기 무기를 제조하던 구한말 군사 시설"
  },
  "kakao-1331477460": {
   "moods": [
-   "실외",
-   "도보코스",
    "역사탐방",
-   "전통문화"
+   "도보코스"
   ],
-  "energy": 2,
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 10,
+  "story": "삼청동 골목에 위치한 조선시대 전통 우물 터"
+ },
+ "kakao-25028659": {
+  "moods": [
+   "역사탐방",
+   "도보코스"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 15,
+  "story": "3.1운동 당시 독립선언서가 배포되었던 태화관 터"
+ },
+ "kakao-222214311": {
+  "moods": [
+   "역사탐방",
+   "도보코스"
+  ],
+  "energy": 1,
   "bestTime": [
    "morning",
    "afternoon"
   ],
   "durationMin": 20,
-  "story": "삼청동 골목길에서 옛 서울 시민의 생활 흔적인 전통 우물을 만날 수 있습니다."
+  "story": "3.1운동의 역사적 의미를 기리기 위해 조성된 광장"
  },
- "kakao-7888449": {
+ "kakao-11300694": {
   "moods": [
-   "실외",
+   "역사탐방",
+   "도보코스"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 15,
+  "story": "조선 중기 학자 율곡 이이가 유년 시절 살았던 집 터"
+ },
+ "kakao-10650679": {
+  "moods": [
+   "도보코스",
+   "자연",
+   "포토존",
+   "조용함"
+  ],
+  "energy": 3,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 120,
+  "story": "북한산의 아름다운 경관을 조망할 수 있는 명소"
+ },
+ "kakao-7958336": {
+  "moods": [
+   "역사탐방",
+   "자연",
+   "도보코스"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "서울의 성곽을 따라 걷는 북악산의 조선시대 성문"
+ },
+ "kakao-1442278139": {
+  "moods": [
+   "역사탐방",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 20,
+  "story": "유관순 열사의 숭고한 애국정신을 기리는 추모비"
+ },
+ "kakao-12544584": {
+  "moods": [
    "도보코스",
    "역사탐방",
+   "자연",
+   "휴식"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 90,
+  "story": "순국선열의 묘역을 지나며 걷는 북한산 둘레길"
+ },
+ "kakao-26558551": {
+  "moods": [
+   "도보코스",
    "전통문화"
   ],
   "energy": 2,
   "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "인사동 인근에서 도심 속 전통 한옥의 정취와 주거 문화를 엿볼 수 있습니다."
- },
- "kakao-25028659": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "역사탐방",
-   "혼자"
-  ],
-  "energy": 2,
-  "bestTime": [
    "morning",
    "afternoon"
   ],
-  "durationMin": 30,
-  "story": "3.1 독립선언서가 인쇄되고 독립의거가 모의되었던 역사적 현장입니다."
- },
- "kakao-222214311": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "역사탐방",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "3.1 운동의 정신을 기리는 도심 속 광장에서 잠시 휴식을 취할 수 있습니다."
- },
- "kakao-26600286": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "활기참"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 15,
-  "story": "활기찬 인사동 거리 입구에서 관광 안내와 주변 정보를 얻을 수 있습니다."
- },
- "kakao-1316351823": {
-  "moods": [
-   "실외",
-   "도보코스",
-   "이색"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 15,
-  "story": "인사동 골목길에서 서울의 지리적 중심을 기념하는 독특한 표지석을 발견합니다."
- },
- "kakao-11300694": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "조용함"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "도심 속에서 율곡 이이의 어린 시절 흔적을 조용히 만나는 역사 장소입니다."
- },
- "kakao-1330378467": {
-  "moods": [
-   "실내",
-   "휴식",
-   "가족동반",
-   "커플"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
   "durationMin": 60,
-  "story": "인사동에서 문화 예술 명소를 편리하게 즐기기 좋은 프리미엄 숙소입니다."
+  "story": "종로 일대의 역사와 문화를 탐방하는 골목길 산책 코스"
  },
- "kakao-11331488": {
+ "kakao-90988882": {
   "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "휴식",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 90,
-  "story": "넓은 잔디밭과 울창한 나무 사이로 여유로운 산책을 즐기는 대규모 공원입니다."
- },
- "kakao-17562637": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "가족동반",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "탁 트인 잔디 광장에서 자연을 만끽하며 피크닉을 즐기기 좋은 공간입니다."
- },
- "kakao-10849847": {
-  "moods": [
-   "실외",
-   "무료",
    "도보코스",
-   "야경",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "night"
-  ],
-  "durationMin": 60,
-  "story": "물길을 따라 도심 속 산책과 화려한 야경을 동시에 즐길 수 있습니다."
- },
- "kakao-24974768": {
-  "moods": [
-   "실외",
-   "무료",
-   "휴식",
-   "도보코스"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "청계천 산책 중 잠시 들러 쾌적하게 쉬어가기 좋은 도심 속 쉼터입니다."
- },
- "kakao-25730252": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "활기참",
-   "휴식"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 60,
-  "story": "도심 속 물길을 따라 산책하며 서울의 일상을 느낄 수 있습니다."
- },
- "kakao-25730256": {
-  "moods": [
-   "실외",
-   "무료",
-   "도보코스",
-   "활기참"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 45,
-  "story": "전통시장과 인접한 청계천 길을 가볍게 거닐기 좋습니다."
- },
- "kakao-8246129": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "포토존",
-   "휴식"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "afternoon",
-   "night"
-  ],
-  "durationMin": 90,
-  "story": "서울의 전경을 한눈에 내려다볼 수 있는 대규모 자연 공원입니다."
- },
- "kakao-15166547": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "혼자",
-   "도보코스"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning"
-  ],
-  "durationMin": 120,
-  "story": "백운대로 향하는 등산로 입구에서 안전한 산행을 시작할 수 있습니다."
- },
- "kakao-21025383": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "역사탐방",
-   "도보코스"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning"
-  ],
-  "durationMin": 120,
-  "story": "북한산성과 울창한 자연을 따라 트레킹을 즐기기 좋은 거점입니다."
- },
- "kakao-10650679": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "포토존",
-   "혼자"
-  ],
-  "energy": 3,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 150,
-  "story": "아름다운 자연경관과 탁 트인 전망을 조망하며 등산을 즐깁니다."
- },
- "kakao-8638884": {
-  "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
-   "전통문화",
    "포토존"
   ],
   "energy": 2,
   "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "덕성여고와 정독도서관 사이의 걷기 좋은 돌담길"
+ },
+ "kakao-20557175": {
+  "moods": [
+   "야경",
+   "포토존",
+   "로맨틱"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "evening",
+   "night"
+  ],
+  "durationMin": 30,
+  "story": "한강의 아름다운 낙조와 야경을 감상할 수 있는 전망대"
+ },
+ "kakao-8003939": {
+  "moods": [
+   "도보코스",
+   "포토존",
+   "커플"
+  ],
+  "energy": 2,
+  "bestTime": [
    "afternoon",
    "evening"
   ],
-  "durationMin": 30,
-  "story": "조선 시대 서울 성곽의 동쪽 대문인 흥인지문에서 역사와 전통을 느껴보세요."
+  "durationMin": 60,
+  "story": "봄날 벚꽃과 아름다운 한강 경치를 즐기는 걷기 좋은 거리"
  },
- "kakao-18617858": {
+ "kakao-1889582026": {
   "moods": [
-   "실외",
-   "무료",
+   "야경",
+   "포토존",
+   "자연"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "evening",
+   "night"
+  ],
+  "durationMin": 30,
+  "story": "서울숲에서 한강을 조망할 수 있는 전망대."
+ },
+ "kakao-1780698606": {
+  "moods": [
+   "친구모임",
+   "커플",
+   "포토존",
    "활기참"
   ],
   "energy": 2,
@@ -6099,31 +4162,64 @@
    "afternoon",
    "evening"
   ],
-  "durationMin": 20,
-  "story": "청량리역광장에서 활기찬 도심 속 만남의 장소를 경험할 수 있습니다."
+  "durationMin": 60,
+  "story": "개성 있는 카페와 숍이 모여 있는 성수의 명소."
  },
- "kakao-18167109": {
+ "kakao-25738162": {
   "moods": [
-   "실외",
-   "무료",
-   "역사탐방",
+   "도보코스",
    "조용함",
-   "휴식"
+   "무료"
   ],
-  "energy": 2,
+  "energy": 1,
   "bestTime": [
    "morning",
    "afternoon"
   ],
-  "durationMin": 45,
-  "story": "고요하고 아늑한 능원인 영휘원에서 조선 후기의 역사를 되새기며 산책해보세요."
+  "durationMin": 20,
+  "story": "도심 속 빌딩 사이를 차분히 걸으며 둘러볼 수 있는 산책길입니다."
  },
- "kakao-328108554": {
+ "kakao-1999732378": {
   "moods": [
-   "실외",
-   "무료",
+   "활기참",
+   "친구모임"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "남산 아래 상점들이 모여 활기를 띠는 골목형 상점가입니다."
+ },
+ "kakao-27454509": {
+  "moods": [
+   "이색",
+   "포토존",
+   "예술"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "만화와 애니메이션 캐릭터 벽화로 꾸며진 아기자기한 거리입니다."
+ },
+ "kakao-1384042237": {
+  "moods": [
+   "친구모임",
+   "가족동반"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 50,
+  "story": "추억의 맛을 즐길 수 있는 유명한 남산 돈가스 전문점 거리입니다."
+ },
+ "kakao-19182749": {
+  "moods": [
    "자연",
-   "조용함",
+   "도보코스",
    "휴식"
   ],
   "energy": 2,
@@ -6132,112 +4228,124 @@
    "afternoon"
   ],
   "durationMin": 40,
-  "story": "배봉산 숲속폭포의 청량한 풍경을 보며 산책로에서 여유를 즐겨보세요."
+  "story": "싱그러운 소나무 향을 맡으며 걷기 좋은 힐링 산책로"
  },
- "kakao-25731634": {
+ "kakao-8424960": {
   "moods": [
-   "실외",
-   "무료",
-   "이색",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "과거 영화 촬영지의 정취가 담긴 촬영소고개에서 골목길을 걸어보세요."
- },
- "kakao-1142553995": {
-  "moods": [
-   "실외",
-   "무료",
-   "자연",
-   "조용함",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 30,
-  "story": "지식의꽃밭에서 예쁜 꽃과 식물들을 보며 도심 속 힐링의 시간을 가져보세요."
- },
- "kakao-19444125": {
-  "moods": [
-   "실외",
    "자연",
    "휴식",
-   "조용함",
-   "도보코스"
-  ],
-  "energy": 2,
-  "bestTime": [
-   "morning",
-   "afternoon"
-  ],
-  "durationMin": 60,
-  "story": "도심 속 친환경 생태하천에서 여유로운 산책과 휴식을 즐겨보세요."
- },
- "kakao-21582653": {
-  "moods": [
-   "실내",
-   "전통문화",
-   "친구모임",
-   "커플"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 45,
-  "story": "인사동 중심가에 위치해 전통문화와 도심 관광을 편리하게 즐길 수 있습니다."
- },
- "kakao-7855876": {
-  "moods": [
-   "실내",
-   "휴식",
-   "커플",
-   "로맨틱"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 120,
-  "story": "을지로 중심에서 편안한 휴식과 도심 속 호캉스를 만끽할 수 있습니다."
- },
- "kakao-245940082": {
-  "moods": [
-   "실내",
-   "친구모임",
-   "커플",
-   "휴식"
-  ],
-  "energy": 1,
-  "bestTime": [
-   "afternoon",
-   "evening"
-  ],
-  "durationMin": 90,
-  "story": "동대문 인근에서 쇼핑과 트렌디한 편의시설을 함께 즐기기 좋은 곳입니다."
- },
- "kakao-1550004210": {
-  "moods": [
-   "실내",
-   "휴식",
-   "로맨틱",
    "조용함"
   ],
   "energy": 1,
   "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "남산 속에서 다양한 수생식물을 관찰하며 쉬어가는 곳"
+ },
+ "kakao-1460258432": {
+  "moods": [
+   "역사탐방",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 20,
+  "story": "아픈 기억을 추모하고 안전의 의미를 되새기는 골목길"
+ },
+ "kakao-1514439085": {
+  "moods": [
+   "도보코스",
+   "이색"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 30,
+  "story": "베트남 퀴논시와의 우호를 기념하며 조성된 아기자기한 거리"
+ },
+ "kakao-2089365219": {
+  "moods": [
+   "도보코스",
+   "자연",
+   "휴식"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "morning",
+   "afternoon"
+  ],
+  "durationMin": 50,
+  "story": "남산의 자연을 느끼며 가볍게 산책하기 좋은 순환도로"
+ },
+ "kakao-27302721": {
+  "moods": [
+   "활기참",
+   "이색",
+   "친구모임"
+  ],
+  "energy": 2,
+  "bestTime": [
    "afternoon",
    "evening"
   ],
-  "durationMin": 120,
-  "story": "을지로에서 세심한 서비스와 함께 품격 있는 투숙 경험을 누려보세요."
+  "durationMin": 60,
+  "story": "다국적 미식과 이국적인 분위기를 즐길 수 있는 거리"
+ },
+ "tour-130285": {
+  "moods": [
+   "혼자",
+   "휴식"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon",
+   "evening"
+  ],
+  "durationMin": 50,
+  "story": "서울 광화문의 대표적인 초대형 서점 겸 복합문화공간"
+ },
+ "tour-129831": {
+  "moods": [
+   "예술",
+   "역사탐방",
+   "무료"
+  ],
+  "energy": 2,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "다양한 유물과 예술품을 소장한 고려대학교의 대표 박물관."
+ },
+ "tour-130573": {
+  "moods": [
+   "예술",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 40,
+  "story": "현대 미술 작품을 감상할 수 있는 아담한 이태원의 갤러리"
+ },
+ "tour-2453179": {
+  "moods": [
+   "무료",
+   "예술",
+   "조용함"
+  ],
+  "energy": 1,
+  "bestTime": [
+   "afternoon"
+  ],
+  "durationMin": 60,
+  "story": "제약 역사와 예술 작품을 함께 만나는 기념관."
  }
 }
