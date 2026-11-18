@@ -58,7 +58,13 @@ export function SlidingTabs<T extends string>({ fullWidth = false, onChange, opt
       return;
     }
     // A resize (the control narrowing or widening) re-places the highlight at once: only a change of the choice glides.
+    // (An observer also reports once when it starts watching; that one is skipped, or it would cut the glide short.)
+    let lastWidth = container.offsetWidth;
     const observer = new ResizeObserver(() => {
+      if (container.offsetWidth === lastWidth) {
+        return;
+      }
+      lastWidth = container.offsetWidth;
       const indicator = indicatorRef.current;
       if (indicator) {
         indicator.style.transition = "none";

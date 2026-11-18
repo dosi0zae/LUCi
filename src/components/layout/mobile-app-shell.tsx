@@ -15,6 +15,7 @@ import {
   AiSparklesIcon,
   ArrowLeftIcon,
   ArrowRightIcon,
+  CloseIcon,
   CompassIcon,
   GripIcon,
   LocateIcon,
@@ -221,6 +222,7 @@ export function MobileAppShell() {
   // Explore: once its sort tabs have scrolled up to the back button's line they are pinned
   // there (a floating copy takes over from the in-flow one).
   const exploreTabsRef = useRef<HTMLDivElement>(null);
+  const exploreInputRef = useRef<HTMLInputElement>(null);
   const [isExploreTabsPinned, setIsExploreTabsPinned] = useState(false);
   // The one chain card whose alternatives panel is open (accordion — opening another
   // closes it).
@@ -1952,7 +1954,7 @@ export function MobileAppShell() {
             if (pinned !== isExploreTabsPinned) {
               setIsExploreTabsPinned(pinned);
               setIsExploreTabsSettling(true);
-              window.setTimeout(() => setIsExploreTabsSettling(false), 600);
+              window.setTimeout(() => setIsExploreTabsSettling(false), pinned ? 600 : 260);
             }
           }}
         >
@@ -2748,7 +2750,7 @@ export function MobileAppShell() {
                 className="pointer-events-none absolute inset-x-0 z-20 flex justify-center"
                 style={{
                   top: isExploreTabsPinned ? "calc(9px + env(safe-area-inset-top))" : "var(--tabs-y, 4.5rem)",
-                  transition: isExploreTabsPinned || isExploreTabsSettling ? `top 380ms cubic-bezier(0.22, 1, 0.36, 1) ${isExploreTabsPinned ? 90 : 0}ms` : "none",
+                  transition: isExploreTabsPinned ? "top 380ms cubic-bezier(0.22, 1, 0.36, 1) 90ms" : isExploreTabsSettling ? "top 200ms ease-out" : "none",
                 }}
               >
                 <div
@@ -2774,12 +2776,26 @@ export function MobileAppShell() {
                   )}
                   <input
                     aria-label={t("exploreSearchAria")}
-                    className="min-w-0 flex-1 text-ellipsis bg-transparent text-base font-semibold outline-none placeholder:text-muted"
+                    className="map-search-input min-w-0 flex-1 text-ellipsis bg-transparent text-base font-semibold outline-none placeholder:text-muted"
                     onChange={(event) => setExploreQuery(event.target.value)}
                     placeholder={t("exploreSearchPlaceholder")}
+                    ref={exploreInputRef}
                     type="search"
                     value={exploreQuery}
                   />
+                  {exploreQuery && (
+                    <button
+                      aria-label={t("cancel")}
+                      className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-muted"
+                      onClick={() => {
+                        setExploreQuery("");
+                        exploreInputRef.current?.focus();
+                      }}
+                      type="button"
+                    >
+                      <CloseIcon className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             )}
