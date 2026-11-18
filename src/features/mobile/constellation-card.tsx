@@ -253,8 +253,10 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
     optimizeNoteTimerRef.current = window.setTimeout(() => setOptimizeNote(null), 1800);
   }
 
+  const canDrawMap = places.length >= 2;
+
   useEffect(() => {
-    if (!appKey || !containerRef.current || places.length < 2) {
+    if (!appKey || !containerRef.current || !canDrawMap || mapRef.current) {
       return;
     }
 
@@ -291,7 +293,7 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appKey]);
+  }, [appKey, canDrawMap]);
 
   useEffect(() => {
     const maps = mapsRef.current;

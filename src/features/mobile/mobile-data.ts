@@ -2,6 +2,7 @@ import seoulPlacesData from "./seoul-places.json";
 import enrichmentData from "./place-enrichment.json";
 import sampleCourses from "./sample-courses.json";
 import { getLoadedDiningPlace } from "./dining-store";
+import { getCustomPlace } from "./custom-places";
 import { diningTagLabel, localizeMinutes } from "./dining-tags";
 import { attributeLabel, localizeFee, localizeHours } from "./attribute-labels";
 import type { Locale } from "@/features/mobile/i18n/translations";
@@ -63,7 +64,11 @@ export type MobilePlace = {
   // "kakao" marks places dug up from the Kakao Local API (scripts/dig-kakao-places.mjs)
   // to fill gaps that sync left (실제 한강공원 지점들, 이태원/북촌 같은 동네 등) — Kakao
   // gives no description/fee/hours, so those fields are Gemini-written or "정보 없음".
-  source?: "kakao" | "dining" | "sights";
+  // A place found on the map screen whose kind we cannot tell (a subway exit, an office): it is shown without one of
+  // our categories (category holds a stand-in only so the type is complete).
+  uncategorized?: boolean;
+  // "custom" = found on the map screen and not in our data (custom-places.ts).
+  source?: "kakao" | "dining" | "sights" | "custom";
   // A place only worth a visit at night (a club, a live house): left out of every course unless
   // the request asks for the night (see getScoredPool).
   nightOnly?: boolean;
@@ -264,7 +269,7 @@ export function getPlaceImageUrl(id: string): string | null {
 }
 
 export function getPlaceById(id: string): MobilePlace | undefined {
-  return placeLookup.get(id) ?? getLoadedDiningPlace(id);
+  return placeLookup.get(id) ?? getLoadedDiningPlace(id) ?? getCustomPlace(id);
 }
 
 // The place whose photo stands for a course: the one the author picked, otherwise the first

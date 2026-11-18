@@ -1,504 +1,836 @@
 [
- {
-  "title": "고궁과 박물관을 잇는 하루",
-  "description": "경복궁에서 시작해 근처 박물관과 한옥 골목까지 걷는 정통 코스.",
-  "translations": {
-   "en": {
-    "title": "Palaces and Museums in a Day",
-    "description": "Start at Gyeongbokgung, then walk on to nearby museums and a hanok lane."
-   },
-   "ja": {
-    "title": "古宮と博物館をつなぐ一日",
-    "description": "景福宮から始まり、近くの博物館や韓屋の路地まで歩く定番コース。"
-   },
-   "zh": {
-    "title": "串联古宫与博物馆的一天",
-    "description": "从景福宫出发，步行前往附近的博物馆与韩屋巷的经典路线。"
-   }
+  {
+    "title": "혼자 가만히 들여다보는 동네의 표정",
+    "description": "소란한 일상에서 벗어나 도봉의 호젓한 숲길과 아담한 시장 골목을 홀로 누비는 힐링 코스입니다. 나뭇잎 사이로 비치는 햇살과 정적인 문화 공간을 조용히 거닐며 지친 마음을 차분하게 매만집니다.",
+    "translations": {
+      "en": {
+        "title": "A quiet neighborhood landscape to admire alone",
+        "description": "A healing course to escape the noisy daily routine and wander alone along Dobong's secluded forest paths and cozy market alleys. Quietly stroll through the sunlight filtering through tree leaves and static cultural spaces to calmly soothe a tired mind."
+      },
+      "ja": {
+        "title": "一人でじっくり眺める下町の表情",
+        "description": "騒がしい日常から離れ、道峰（ドボン）の静かな森の小道やこぢんまりとした市場の路地を一人で巡るヒーリングコースです。木漏れ日の中、静寂な文化空間を静かに散策し、疲れた心を穏やかに癒やします。"
+      },
+      "zh": {
+        "title": "独自静静端详的小区面貌",
+        "description": "这是一个治愈路线，让你摆脱喧嚣的日常生活，独自漫步于道峰幽静的林间小路和温馨的市场小巷。在透过树叶的阳光和静谧的文化空间中静静漫步，平静地抚慰疲惫的心灵。"
+      }
+    },
+    "placeIds": [
+      "sight-dobong-25478302",
+      "sight-dobong-27583792",
+      "sight-dobong-7888168",
+      "sight-dobong-1061613834",
+      "dining-dobong-17551253"
+    ],
+    "persona": {
+      "age": 20,
+      "sex": "여자",
+      "occupation": "경리 사무원",
+      "residence": "경기-의정부시",
+      "family": "부모와 동거",
+      "marital": "미혼",
+      "party": "혼자",
+      "occasion": "한 주 동안 숫자를 다루며 쌓인 업무 피로를 풀고, 초록빛 풍경을 사진에 담으며 혼자만의 고요한 시간을 보내기 위해",
+      "traits": [
+        "정적인 산책",
+        "혼자만의 숲길",
+        "소박한 분식"
+      ],
+      "voice": "일주일 내내 복잡한 영수증과 숫자만 들여다보느라 눈과 머리가 뻐근해서 오롯이 초록색 풍경 속에 파묻히고 싶었어요. 사람 많은 번화가 대신 소박한 숲길과 제가 좋아하는 시장 떡볶이를 찾아 혼자만의 고요한 보폭으로 걷고 싶었습니다."
+    }
   },
-  "placeIds": [
-   "heritage-13-0001170000000",
-   "tour-1934593",
-   "dining-jongno-13284345",
-   "sight-jongno-8191467",
-   "kakao-26563934",
-   "dining-jongno-205855651"
-  ]
- },
- {
-  "title": "조선 왕실을 따라 걷는 하루",
-  "description": "창덕궁에서 창경궁, 종묘까지 왕실의 길을 이어 걷는 코스.",
-  "translations": {
-   "en": {
-    "title": "Walking the Joseon Royal Path",
-    "description": "From Changdeokgung through Changgyeonggung to Jongmyo, following the royal grounds."
-   },
-   "ja": {
-    "title": "朝鮮王室をたどる一日",
-    "description": "昌徳宮から昌慶宮、宗廟まで王室の道をつないで歩くコース。"
-   },
-   "zh": {
-    "title": "沿着朝鲜王室漫步的一天",
-    "description": "从昌德宫经昌庆宫到宗庙，沿王室之路一路走下去。"
-   }
+  {
+    "title": "오랜 친구와 나란히 거니는 붉은 골목",
+    "description": "복잡한 생각과 일상의 무게를 내려놓고 서울숲의 녹음과 성수동의 감각적인 골목을 여유롭게 거닐며 질 좋은 한우로 든든하게 채우는 하루.",
+    "translations": {
+      "en": {
+        "title": "Walking side by side with an old friend down red alleys",
+        "description": "A day to put down complex thoughts and the weight of daily life, leisurely stroll through the greenery of Seoul Forest and the sensory alleys of Seongsu-dong, and fill up with hearty, high-quality Korean beef."
+      },
+      "ja": {
+        "title": "古くからの友と並んで歩く赤い路地",
+        "description": "複雑な考えや日常の重荷を手放し、ソウル森の緑と聖水洞（ソンスドン）の感性あふれる路地をゆったりと散策し、質の高い韓牛でしっかりとお腹を満たす一日。"
+      },
+      "zh": {
+        "title": "与老友并肩漫步的红色小巷",
+        "description": "放下复杂的思绪和日常的负担，悠闲地漫步在首尔林郁郁葱葱的绿意和圣水洞充满设计感的小巷中，用优质韩牛充实饱腹感的一天。"
+      }
+    },
+    "placeIds": [
+      "dining-seongdong-198624435",
+      "kakao-27481535",
+      "dining-seongdong-1530215201",
+      "kakao-1653556996",
+      "sight-seongdong-27097131",
+      "dining-seongdong-1371778491"
+    ],
+    "persona": {
+      "age": 24,
+      "sex": "남자",
+      "occupation": "농약 및 비료 시험원",
+      "residence": "충청남-홍성군",
+      "family": "부모·조모와 동거",
+      "marital": "미혼",
+      "party": "동네 친구와 둘이서",
+      "occasion": "답답한 일상과 집안 분위기를 벗어나 트렌디한 동네에서 맛있는 것 먹고 푹 쉬러 온 주말 나들이",
+      "traits": [
+        "트렌디한휴식",
+        "즉흥적여유",
+        "육류미식"
+      ],
+      "voice": "시골 집안의 답답한 공기에서 벗어나 친구랑 딱 편하게 쉬고 싶었어. 줄 서느라 기운 빼지 않고, 숲 그늘에서 멍때리다가 성수동 숍들 슬슬 구경하고 저녁에 한우 제대로 구워 먹으니 살 것 같더라."
+    }
   },
-  "placeIds": [
-   "heritage-13-0001230000000",
-   "heritage-13-0001220000000",
-   "dining-jongno-332294225",
-   "heritage-13-0001250000000",
-   "dining-jongno-492735630"
-  ]
- },
- {
-  "title": "서울 도심 대표 명소 도장깨기",
-  "description": "덕수궁부터 서울로, 남산까지 처음 서울에 온 날 꼭 가볼 곳.",
-  "translations": {
-   "en": {
-    "title": "Seoul's Must-See Highlights",
-    "description": "Deoksugung, Seoullo and Namsan: the essentials for a first day in Seoul."
-   },
-   "ja": {
-    "title": "ソウル都心の代表スポット制覇",
-    "description": "徳寿宮からソウルロ、南山まで初めてのソウルで外せない場所。"
-   },
-   "zh": {
-    "title": "首尔市中心必游地标打卡",
-    "description": "从德寿宫、首尔路到南山，初到首尔不容错过的地方。"
-   }
+  {
+    "title": "연극이 끝난 무대 뒤로 번지는 웃음소리",
+    "description": "평소 체력 부담 없이 평지 골목을 따라 거닐며 아기자기한 한옥 카페와 독립 소극장 연극을 즐기고, 정갈한 음식과 편안한 대화로 하루를 마무리하는 일정입니다.",
+    "translations": {
+      "en": {
+        "title": "Laughter spreading behind the stage after the play ends",
+        "description": "A schedule where you can walk along flat alleys without physical burden, enjoy charming Hanok cafes and indie small theater plays, and wrap up the day with neat food and comfortable conversation."
+      },
+      "ja": {
+        "title": "演劇が終わった舞台裏に広がる笑い声",
+        "description": "体力の負担なく平坦な路地を沿って歩き、趣のある韓屋（ハノック）カフェや小劇場の演劇を楽しみ、上品な食事とリラックスした会話で一日を締めくくる日程です。"
+      },
+      "zh": {
+        "title": "演出结束后在后台蔓延的笑声",
+        "description": "无需承担体力负担，沿着平坦的小巷漫步，享受精致的韩屋咖啡厅和小剧场话剧，并以精致的美食和舒适的对话结束一天的行程。"
+      }
+    },
+    "placeIds": [
+      "dining-jongno-332294225",
+      "kakao-467710256",
+      "dining-jongno-1629363744",
+      "tour-3012777",
+      "dining-jongno-16036704"
+    ],
+    "persona": {
+      "age": 21,
+      "sex": "여자",
+      "occupation": "컴퓨터 설치 및 수리원",
+      "residence": "서울-동작구",
+      "family": "혼자 거주",
+      "marital": "미혼",
+      "party": "친구와",
+      "occasion": "쉬는 날 친구와 대학로 소극장 연극도 보고 아기자기한 골목을 걸으며 힐링하기로 한 날",
+      "traits": [
+        "소극장연극",
+        "감성골목투어",
+        "일식미식가"
+      ],
+      "voice": "컴퓨터 부품 만지느라 늘 굳어 있던 몸이라 언덕길 대신 아늑하고 평평한 골목을 친구랑 천천히 걷고 싶었어요. 제가 좋아하는 소극장 연극도 마음껏 보고, 예쁜 카페와 술잔을 사이에 두고 편하게 수다 떨며 온전히 충전한 하루예요."
+    }
   },
-  "placeIds": [
-   "heritage-13-0001240000000",
-   "sight-jung-1892446523",
-   "dining-jung-8670706",
-   "tour-126485",
-   "sight-yongsan-1629378951",
-   "dining-yongsan-1995791949"
-  ]
- },
- {
-  "title": "남산 한옥마을과 야경 산책",
-  "description": "한옥마을에서 시작해 해질녘 남산 전망까지 이어지는 저녁 코스.",
-  "translations": {
-   "en": {
-    "title": "Namsan Hanok and Night Views",
-    "description": "From the hanok village to the Namsan view at dusk."
-   },
-   "ja": {
-    "title": "南山韓屋村と夜景さんぽ",
-    "description": "韓屋村から始まり、夕暮れの南山の眺めまで続く夕方コース。"
-   },
-   "zh": {
-    "title": "南山韩屋村与夜景漫步",
-    "description": "从韩屋村出发，在黄昏时分欣赏南山景色的傍晚路线。"
-   }
+  {
+    "title": "책장을 넘기다 노을 지는 강가로 걷다",
+    "description": "늦잠 후 연남과 망원의 한적한 골목과 책거리를 거쳐 망원한강공원의 여유로운 강바람으로 지친 일상을 달래는 혼자만의 휴식 여정입니다. 동생들을 위한 정성 어린 간식까지 살뜰히 챙기며 번잡하지 않은 쉼을 완성합니다.",
+    "translations": {
+      "en": {
+        "title": "Turning pages of a book, walking toward the sunset riverbank",
+        "description": "A solo relaxation journey to soothe a tired daily routine with the refreshing river breeze of Mangwon Hangang Park, after sleeping in and strolling through the quiet alleys and book streets of Yeonnam and Mangwon. Complete a peaceful break while thoughtfully packing snacks for younger siblings."
+      },
+      "ja": {
+        "title": "本をめくりながら夕暮れの川辺へ歩く",
+        "description": "遅い朝を迎えた後、延南（ヨンナム）と望遠（マンウォン）の閑静な路地や本通りを通り抜け、望遠漢江（ハンジョン）公園の心地よい川風で疲れた日常を癒やす一人だけの休息の旅です。弟や妹たちのために真心を込めたおやつまでしっかり用意し、慌ただしくない休息を完成させます。"
+      },
+      "zh": {
+        "title": "翻过书页，走向日落江畔",
+        "description": "睡个懒觉后，穿过延南洞和望远洞幽静的小巷与书街，借由望远汉江公园惬意的江风抚慰疲惫日常的独处休息之旅。贴心地为弟弟妹妹们准备好零食，完成一段不被打扰的休憩。"
+      }
+    },
+    "placeIds": [
+      "dining-mapo-1087043762",
+      "tour-2500229",
+      "dining-mapo-1059570861",
+      "kakao-8126939",
+      "sight-mapo-18526234"
+    ],
+    "persona": {
+      "age": 21,
+      "sex": "남자",
+      "occupation": "바텐더",
+      "residence": "인천-계양구",
+      "family": "형제자매와 동거 (가구주)",
+      "marital": "미혼",
+      "party": "혼자",
+      "occasion": "바텐더 근무가 없는 휴일을 맞아 늦잠을 푹 자고 나와 조용히 만화책을 둘러보며 혼자 쉬기 위해",
+      "traits": [
+        "정적인 휴식",
+        "단정한 일식",
+        "소소한 혼자만의 시간"
+      ],
+      "voice": "밤늦게까지 이어지는 바텐더 일에 치이다 보면 쉬는 날만큼은 아무 소음 없는 곳에서 혼자 늘어져 있고 싶어요. 정갈하게 밥 챙겨 먹고 책 구경도 하면서 한강 벤치에 멍하니 앉아 있다가, 동생들 먹을 빵이랑 간식 사 들고 편하게 집으로 돌아가려고요."
+    }
   },
-  "placeIds": [
-   "tour-126747",
-   "tour-128776",
-   "dining-jung-10511200",
-   "sight-yongsan-1629378951",
-   "dining-yongsan-1995791949"
-  ]
- },
- {
-  "title": "한강 노을 보러 가는 하루",
-  "description": "여의도 물빛광장에서 한강공원까지, 강변을 따라 노을을 기다리는 코스.",
-  "translations": {
-   "en": {
-    "title": "Han River Sunset Day",
-    "description": "From Yeouido Water Plaza to Hangang Park, waiting for the sunset along the river."
-   },
-   "ja": {
-    "title": "漢江の夕焼けを見に行く一日",
-    "description": "汝矣島の水辺広場から漢江公園まで、川沿いで夕焼けを待つコース。"
-   },
-   "zh": {
-    "title": "去汉江看日落的一天",
-    "description": "从汝矣岛水光广场到汉江公园，沿江等待日落的路线。"
-   }
+  {
+    "title": "처마 끝에 머무는 담백한 오후의 대화",
+    "description": "통영에서 올라와 번잡한 도심 대신 성북동의 맑은 숲과 북촌의 고즈넉한 골목을 천천히 거닐며 오랜 친구와 온전한 휴식을 누리는 여정입니다.",
+    "translations": {
+      "en": {
+        "title": "A plain afternoon conversation lingering at the eaves",
+        "description": "A journey coming up from Tongyeong to enjoy complete relaxation with an old friend, slowly strolling through the clear forest of Seongbuk-dong and the quiet alleys of Bukchon instead of the busy downtown."
+      },
+      "ja": {
+        "title": "軒先に留まる飾らない午後の会話",
+        "description": "統営（トンヨン）から上京し、賑やかな都心の代わりに城北洞（ソンブクトン）の澄んだ森や北村（プクチョン）の趣のある路地をゆっくりと歩きながら、古くからの友人と心からの休息を楽しむ旅です。"
+      },
+      "zh": {
+        "title": "停留在屋檐下质朴的午后对话",
+        "description": "从统营来到首尔，避开喧嚣的市中心，在城北洞清澈的森林和北村古朴的小巷中慢慢散步，与老友享受完整放松的旅程。"
+      }
+    },
+    "placeIds": [
+      "tour-128866",
+      "dining-seongbuk-17569573",
+      "kakao-12699510",
+      "kakao-26563934",
+      "dining-jongno-205855651",
+      "tour-1934593"
+    ],
+    "persona": {
+      "age": 36,
+      "sex": "여자",
+      "occupation": "무직",
+      "residence": "경상남-통영시",
+      "family": "배우자·자녀와 거주",
+      "marital": "배우자있음",
+      "party": "친구와",
+      "occasion": "육아와 일상에서 잠시 벗어나 오랜 친구와 서울의 고즈넉한 자연과 골목을 여유롭게 만끽하는 하루",
+      "traits": [
+        "자연친화적",
+        "고즈넉한여유",
+        "빵지순례"
+      ],
+      "voice": "매일 아이들과 복작거리며 짜놓은 계획대로만 살다 보니 조용히 숲 공기를 마시며 걷는 시간이 너무 간절했어요. 오랜만에 만난 친구와 서두르지 않고 나물 반찬 정갈한 밥을 먹고 한옥 마당을 바라보며 깊은 이야기를 나누고 싶었습니다."
+    }
   },
-  "placeIds": [
-   "sight-yeongdeungpo-26406915",
-   "kakao-10952963",
-   "dining-yeongdeungpo-1774555947",
-   "kakao-26974731",
-   "dining-yeongdeungpo-315801190"
-  ]
- },
- {
-  "title": "홍대·연남 감성 산책",
-  "description": "경의선숲길을 따라 책거리와 골목을 걷는 마포의 하루.",
-  "translations": {
-   "en": {
-    "title": "Hongdae and Yeonnam Stroll",
-    "description": "A Mapo day along the Gyeongui Line Forest Park, past the book street and back lanes."
-   },
-   "ja": {
-    "title": "弘大・延南の感性さんぽ",
-    "description": "京義線の森道に沿って本通りや路地を歩く麻浦の一日。"
-   },
-   "zh": {
-    "title": "弘大·延南文艺漫步",
-    "description": "沿京义线森林路走过书街与小巷的麻浦一日。"
-   }
+  {
+    "title": "구도심의 정취 속으로 묵묵히 스미다",
+    "description": "KTX 서울역에서 시작해 남대문의 소박한 백반과 고즈넉한 한옥마을, 시원한 노포 생맥주로 이어지는 매끄럽고 안정적인 도심 쉼표 코스입니다.",
+    "translations": {
+      "en": {
+        "title": "Silently sinking into the sentiment of the old downtown",
+        "description": "A smooth and stable downtown comma course starting from KTX Seoul Station and leading to Namdaemun's simple home-style meals, a serene Hanok village, and refreshing old-shop draft beer."
+      },
+      "ja": {
+        "title": "旧市街の情緒に黙々と染み込む",
+        "description": "KTXソウル駅から始まり、南大門（ナムデムン）の素朴な定食と趣のある韓屋村、爽やかな老舗の生ビールへと続く、スムーズで安定した都心の息抜きコースです。"
+      },
+      "zh": {
+        "title": "默默融入老城区的情调中",
+        "description": "从KTX首尔站出发，以南大门朴素的韩国家常菜、古朴的韩屋村以及清爽的老字号生啤酒衔接而成的流畅且稳定的市中心休憩路线。"
+      }
+    },
+    "placeIds": [
+      "heritage-13-0002840000000",
+      "dining-jung-8670706",
+      "tour-126747",
+      "dining-jung-2102758985",
+      "heritage-13-0002580000000",
+      "dining-jung-1761397260"
+    ],
+    "persona": {
+      "age": 35,
+      "sex": "남자",
+      "occupation": "판금원",
+      "residence": "울산-북구",
+      "family": "아버지와 동거",
+      "marital": "미혼",
+      "party": "혼자",
+      "occasion": "울산에서 KTX를 타고 서울에 올라와, 잘 짜인 동선을 따라 차분하게 머리를 식히고 가기 위한 당일치기 나들이",
+      "traits": [
+        "계획적인 동선",
+        "정갈한 한식 선호",
+        "안정지향적"
+      ],
+      "voice": "판금 작업을 할 때처럼 1밀리미터의 오차도 없이 딱 맞아떨어지는 깔끔한 동선으로 하루를 채우고 싶었습니다. 낯선 서울 복판에서도 정해진 틀을 벗어나지 않는 정갈한 공간들을 걷고 나니 복잡했던 머릿속이 말끔히 정리됩니다."
+    }
   },
-  "placeIds": [
-   "tour-2500229",
-   "sight-mapo-1158487374",
-   "dining-mapo-1048769827",
-   "kakao-8177904",
-   "dining-mapo-497287177"
-  ]
- },
- {
-  "title": "망원시장과 한강 나들이",
-  "description": "시장에서 간식을 사 들고 한강공원까지 이어지는 가벼운 코스.",
-  "translations": {
-   "en": {
-    "title": "Mangwon Market and the River",
-    "description": "Grab snacks at the market and carry them down to the riverside park."
-   },
-   "ja": {
-    "title": "望遠市場と漢江さんぽ",
-    "description": "市場でおやつを買って漢江公園まで歩く気軽なコース。"
-   },
-   "zh": {
-    "title": "望远市场与汉江之行",
-    "description": "在市场买点小吃，一路走到汉江公园的轻松路线。"
-   }
+  {
+    "title": "취향을 나누며 도란도란 이어가는 발걸음",
+    "description": "복잡한 일상과 육아의 무게를 잠시 내려놓고 오랜 친구와 함께 서울숲의 울창한 숲길과 감각적인 골목을 걸으며 몸과 마음에 온전한 휴식을 선물하는 하루입니다.",
+    "translations": {
+      "en": {
+        "title": "Footsteps continuing warmly while sharing tastes",
+        "description": "A day to temporarily put down the weight of a complex daily life and parenting, walk with an old friend through the dense forest paths and sensory alleys of Seoul Forest, and gift complete relaxation to body and mind."
+      },
+      "ja": {
+        "title": "好みを分かち合いながら和やかに続く足取り",
+        "description": "複雑な日常と育児の重荷をしばらく下ろし、古くからの友人と一緒にソウル森の生い茂った森の小道や感性的な路地を歩きながら、心身に完全な休息をプレゼントする一日です。"
+      },
+      "zh": {
+        "title": "分享彼此喜好，轻声细语前行的脚步",
+        "description": "暂时放下繁杂的生活和育儿的重担，与老友一起漫步在首尔林郁郁葱葱的林间小路和充满设计感的小巷中，为身心带来彻底放松的一天。"
+      }
+    },
+    "placeIds": [
+      "kakao-26563608",
+      "dining-seongdong-610012827",
+      "kakao-27481535",
+      "dining-seongdong-1530215201",
+      "tour-2704340",
+      "dining-seongdong-198624435"
+    ],
+    "persona": {
+      "age": 30,
+      "sex": "여자",
+      "occupation": "회계 사무원",
+      "residence": "경상북-경주시",
+      "family": "자녀와 거주 (한부모)",
+      "marital": "이혼",
+      "party": "친한 친구와 둘이서",
+      "occasion": "육아와 회사 일에서 잠시 벗어나 KTX를 타고 올라와 친구와 여유로운 숲 산책과 미식을 즐기는 휴식의 날",
+      "traits": [
+        "한적한 숲길 산책",
+        "감성 인테리어 탐방",
+        "정갈한 파스타 미식"
+      ],
+      "voice": "매일 아이 챙기랴 회사 숫자 맞추랴 숨 돌릴 틈 없었는데 오늘만큼은 오롯이 나를 위해 쓰고 싶었어요. 줄 서느라 기운 빼지 않고 친구 손잡고 조용히 숲길 걷고 좋아하는 파스타와 소품 숍 구경하며 천천히 숨을 고르고 싶었습니다."
+    }
   },
-  "placeIds": [
-   "sight-mapo-18526234",
-   "sight-mapo-1852962598",
-   "dining-mapo-54314344",
-   "kakao-8126939",
-   "dining-mapo-1251590315"
-  ]
- },
- {
-  "title": "서울숲과 성수 나들이",
-  "description": "서울숲 산책길과 은행나무길을 걷고 성수의 전시 공간까지 들르는 코스.",
-  "translations": {
-   "en": {
-    "title": "Seoul Forest and Seongsu",
-    "description": "Forest paths and the ginkgo avenue, then an exhibition space in Seongsu."
-   },
-   "ja": {
-    "title": "ソウルの森と聖水さんぽ",
-    "description": "ソウルの森の遊歩道とイチョウ並木を歩き、聖水の展示空間に立ち寄るコース。"
-   },
-   "zh": {
-    "title": "首尔林与圣水之行",
-    "description": "漫步首尔林步道与银杏路，再前往圣水展览空间的路线。"
-   }
+  {
+    "title": "어머니 손을 잡고 천천히 누리는 고요",
+    "description": "어머니의 편안한 발걸음에 맞춰 성북동 맑은 숲길과 정갈한 한식을 즐기고, 고즈넉한 궁궐과 전통 찻집에서 다정하게 담소를 나누는 여정입니다.",
+    "translations": {
+      "en": {
+        "title": "Tranquility enjoyed slowly holding mother's hand",
+        "description": "A journey to match mother's comfortable pace, enjoy Seongbuk-dong's clear forest paths and neat Korean cuisine, and have affectionate chats at a serene palace and traditional tea house."
+      },
+      "ja": {
+        "title": "母の手を握りながらゆっくりと味わう静寂",
+        "description": "母親のゆったりとした足取りに合わせて城北洞の澄んだ森の小道や上品な韓国料理を楽しみ、趣のある宮殿や伝統茶店で優しく語らう旅です。"
+      },
+      "zh": {
+        "title": "握着母亲的手慢慢享受的宁静",
+        "description": "顺着母亲舒适的步伐，享受城北洞清幽的林间小路和精致的韩国料理，在古色古香的宫殿和传统茶馆里亲切交谈的旅程。"
+      }
+    },
+    "placeIds": [
+      "tour-128866",
+      "dining-seongbuk-17569573",
+      "kakao-12699510",
+      "heritage-13-0002570000000",
+      "dining-jongno-1089877455"
+    ],
+    "persona": {
+      "age": 35,
+      "sex": "남자",
+      "occupation": "법무 사무원",
+      "residence": "세종-세종시",
+      "family": "어머니와 동거",
+      "marital": "미혼",
+      "party": "어머니와 둘이서",
+      "occasion": "어머니를 모시고 도심의 소란을 벗어나 맑은 공기와 고즈넉한 사찰 풍경을 음미하러 서울 나들이",
+      "traits": [
+        "고즈넉한",
+        "효도여행",
+        "자연친화"
+      ],
+      "voice": "복잡한 도심을 피해 성북동의 맑은 공기와 조용한 길상사 숲길을 어머니와 나란히 걷고 싶었습니다. 자극 없이 정갈한 점심과 따뜻한 전통차 한 잔을 곁들이며 어머니 관절에 무리가 가지 않도록 완만하고 편안한 길로만 일정을 채웠습니다."
+    }
   },
-  "placeIds": [
-   "kakao-26563608",
-   "tour-2704340",
-   "dining-seongdong-541978160",
-   "kakao-946487614",
-   "dining-seongdong-1530215201"
-  ]
- },
- {
-  "title": "주말 가족 나들이: 잠실",
-  "description": "롯데월드와 석촌호수, 아쿠아리움까지 아이와 함께 걷는 하루.",
-  "translations": {
-   "en": {
-    "title": "Weekend Family Outing: Jamsil",
-    "description": "Lotte World, Seokchon Lake and the aquarium: a day for walking with kids."
-   },
-   "ja": {
-    "title": "週末家族お出かけ：蚕室",
-    "description": "ロッテワールドと石村湖、水族館まで子どもと歩く一日。"
-   },
-   "zh": {
-    "title": "周末家庭出游：蚕室",
-    "description": "乐天世界、石村湖和水族馆，适合带孩子漫步的一天。"
-   }
+  {
+    "title": "둘만의 보폭으로 맞추는 연못가 산책",
+    "description": "공장 현장의 소음과 일상의 무게를 벗어나 서울숲의 울창한 숲길과 성수동의 감각적인 골목 정취를 남편과 나란히 누리는 힐링 코스입니다.",
+    "translations": {
+      "en": {
+        "title": "Pond-side stroll matched to a couple's own pace",
+        "description": "A healing course to escape factory noise and daily weight, enjoying Seoul Forest's dense forest paths and Seongsu-dong's sensory alley sentiment side by side with a husband."
+      },
+      "ja": {
+        "title": "二人だけのペースに合わせる池のほとりの散歩",
+        "description": "工場の現場の騒音と日常の重荷を脱ぎ捨て、ソウル森の生い茂った森の小道と聖水洞の感性あふれる路地の情緒を夫と並んで満喫するヒーリングコースです。"
+      },
+      "zh": {
+        "title": "以二人的步伐契合的池塘边散步",
+        "description": "摆脱工厂车间的噪音和日常的负担，与丈夫并肩漫步在首尔林郁郁葱葱的林间小路和圣水洞充满设计感的小巷风情中的治愈路线。"
+      }
+    },
+    "placeIds": [
+      "kakao-26563608",
+      "kakao-18059744",
+      "kakao-21766257",
+      "dining-seongdong-1530215201",
+      "kakao-27481535",
+      "sight-seongdong-27097131"
+    ],
+    "persona": {
+      "age": 46,
+      "sex": "여자",
+      "occupation": "금형공학 기술자 및 연구원",
+      "residence": "대구-달성군",
+      "family": "배우자·자녀·부모와 거주",
+      "marital": "배우자있음",
+      "party": "남편과 둘이",
+      "occasion": "공장 기계 소음과 대가족 부양의 무게를 잠시 내려놓고 남편과 오붓하게 재충전하러 떠나온 서울 나들이",
+      "traits": [
+        "숲길산책",
+        "조형건축탐방",
+        "든든한고기식사"
+      ],
+      "voice": "쇳가루 날리는 공장 소음에서 벗어나 오랜만에 남편 손잡고 나무 냄새 가득한 평지 숲길을 느긋하게 걷고 싶었어요. 든든하게 숯불갈비로 배를 채우고, 붉은 벽돌 골목과 조용한 카페에서 따뜻한 커피를 마시며 온전히 둘만의 숨을 고르는 하루를 만들었습니다."
+    }
   },
-  "placeIds": [
-   "kakao-27560699",
-   "kakao-7947003",
-   "dining-songpa-518699361",
-   "sight-songpa-25974806",
-   "dining-songpa-1416428207"
-  ]
- },
- {
-  "title": "올림픽공원 산책 코스",
-  "description": "넓은 잔디밭과 장미광장을 걷고 한성백제박물관까지 들르는 코스.",
-  "translations": {
-   "en": {
-    "title": "Olympic Park Walk",
-    "description": "Wide lawns and the rose plaza, ending at the Hanseong Baekje Museum."
-   },
-   "ja": {
-    "title": "オリンピック公園さんぽ",
-    "description": "広い芝生とバラ広場を歩き、漢城百済博物館まで立ち寄るコース。"
-   },
-   "zh": {
-    "title": "奥林匹克公园漫步",
-    "description": "走过大片草坪与玫瑰广场，再到汉城百济博物馆的路线。"
-   }
+  {
+    "title": "삼대의 웃음이 깃드는 단아한 한옥 뜨락",
+    "description": "강원도 철원에서 출발해 부모님과 아이의 보폭에 맞추어 평온한 사찰 숲길과 정갈한 한식, 아늑한 문화 공간을 누리는 가족 힐링 코스입니다. 가파른 계단이나 소란스러운 인파를 피해 세 대가 도란도란 정을 나누며 편안한 쉼을 얻을 수 있습니다.",
+    "translations": {
+      "en": {
+        "title": "An elegant Hanok courtyard where three generations' laughter dwells",
+        "description": "A family healing course starting from Cheorwon, Gangwon-do, matching the pace of parents and children to enjoy peaceful temple forest paths, neat Korean food, and a cozy cultural space. Avoid steep stairs or noisy crowds so three generations can warmly share affection and get comfortable rest."
+      },
+      "ja": {
+        "title": "三世代の笑みが宿る品のある韓屋の中庭",
+        "description": "江原道・鉄原（チョルウォン）を出発し、両親と子供の歩みに合わせて平穏なお寺の森の小道や上品な韓国料理、居心地の良い文化空間を満喫する家族ヒーリングコースです。急な階段や騒がしい人混みを避け、三世代が和気あいあいと情を交わして快適な休息を得ることができます。"
+      },
+      "zh": {
+        "title": "三代人欢声笑语流淌的雅致韩屋庭院",
+        "description": "从江原道铁原出发，顺着父母和孩子的步伐，享受宁静的寺庙林间小路、精致的韩餐和温馨文化空间的家庭治愈路线。避开陡峭的台阶和喧闹的人群，三代人欢聚一堂传递温情，获得舒适的休息。"
+      }
+    },
+    "placeIds": [
+      "tour-128866",
+      "dining-seongbuk-17569573",
+      "tour-1934593",
+      "heritage-13-0002570000000",
+      "dining-jongno-1089877455"
+    ],
+    "persona": {
+      "age": 49,
+      "sex": "남자",
+      "occupation": "그 외 법률 관련 사무원",
+      "residence": "강원-철원군",
+      "family": "기타3세대",
+      "marital": "이혼",
+      "party": "부모님, 아이와 함께",
+      "occasion": "바쁜 일상을 벗어나 철원에서 세 대가 함께 차를 타고 고즈넉한 서울의 자연과 문화를 즐기러 나온 주말 나들이",
+      "traits": [
+        "자연친화적",
+        "가족중심적",
+        "느긋한보폭"
+      ],
+      "voice": "철원에서부터 모시고 온 부모님 무릎에 무리가 가지 않도록 계단이나 언덕이 없는 평탄하고 아늑한 길 위주로 골랐습니다. 아이 손을 잡고 맑은 숲 내음을 맡으며 미술 작품도 보고, 따뜻한 차 한잔과 함께 식구들 웃는 얼굴을 카메라에 담아 가고 싶었습니다."
+    }
   },
-  "placeIds": [
-   "sight-songpa-8023565",
-   "sight-songpa-20560529",
-   "dining-songpa-7883620",
-   "sight-songpa-14590972",
-   "dining-songpa-1336623745"
-  ]
- },
- {
-  "title": "용산 박물관 데이",
-  "description": "국립중앙박물관과 전쟁기념관, 리움미술관을 잇는 실내 코스.",
-  "translations": {
-   "en": {
-    "title": "Yongsan Museum Day",
-    "description": "An indoor course linking the National Museum, the War Memorial and Leeum."
-   },
-   "ja": {
-    "title": "龍山ミュージアムデー",
-    "description": "国立中央博物館、戦争記念館、リウム美術館をつなぐ屋内コース。"
-   },
-   "zh": {
-    "title": "龙山博物馆日",
-    "description": "串联国立中央博物馆、战争纪念馆与Leeum美术馆的室内路线。"
-   }
+  {
+    "title": "아이의 종종걸음을 따라 쉬어가는 초록",
+    "description": "평탄하고 울창한 서울숲을 거닐며 정갈한 한식과 차 한잔으로 아이들과 편안한 휴식을 누리는 힐링 코스입니다. 번잡한 도심을 피해 조용히 발걸음을 맞추고 달콤한 간식까지 챙겨 귀향길에 오릅니다.",
+    "translations": {
+      "en": {
+        "title": "Greenery to rest along a child's pitter-patter steps",
+        "description": "A healing course to enjoy a comfortable break with children through neat Korean food and a cup of tea while strolling through flat and dense Seoul Forest. Quietly match footsteps to avoid the busy downtown, pack sweet snacks, and head home."
+      },
+      "ja": {
+        "title": "子供のヨチヨチ歩きに合わせて一休みする緑",
+        "description": "平坦で生い茂ったソウル森を散策しながら、上品な韓国料理と一杯のお茶で子供たちと快適な休息を満喫するヒーリングコースです。慌ただしい都心を避けて静かに歩みを合わせ、甘いおやつまで用意して帰路につきます。"
+      },
+      "zh": {
+        "title": "跟随孩子细碎脚步小憩的满眼翠绿",
+        "description": "漫步在平坦且郁郁葱葱的首尔林，通过精致的韩餐和一杯清茶与孩子们享受舒适休息的治愈路线。避开繁华的市中心，静静放慢脚步，备好甜蜜的零食踏上归途。"
+      }
+    },
+    "placeIds": [
+      "kakao-26563608",
+      "dining-seongdong-198624435",
+      "kakao-18059744",
+      "kakao-1653556996",
+      "dining-seongdong-1530215201",
+      "dining-seongdong-14863041"
+    ],
+    "persona": {
+      "age": 45,
+      "sex": "여자",
+      "occupation": "소규모 상점 경영자",
+      "residence": "전라남-장성군",
+      "family": "자녀와 거주 (배우자 별거)",
+      "marital": "배우자있음",
+      "party": "자녀와",
+      "occasion": "가게 문을 잠시 닫고 아이들과 함께 복잡하지 않은 서울의 자연을 느끼며 정갈한 외식을 즐기기 위해",
+      "traits": [
+        "한적한 휴식",
+        "정갈한 일식",
+        "자녀 중심"
+      ],
+      "voice": "가게 문을 닫고 아이들과 큰마음 먹고 온 서울인 만큼 복잡한 곳보다는 평평하고 그늘진 숲에서 편히 쉬고 싶었습니다. 줄 서느라 다리 아프지 않게 정갈한 밥을 챙겨 먹고 아이들과 눈 맞추며 두런두런 이야기 나누는 것에 집중했습니다."
+    }
   },
-  "placeIds": [
-   "sight-yongsan-8830150",
-   "sight-yongsan-8077761",
-   "dining-yongsan-24188406",
-   "sight-yongsan-10427225",
-   "dining-yongsan-541563112"
-  ]
- },
- {
-  "title": "북촌·익선 전통 산책",
-  "description": "한옥 골목과 인사동 거리를 걸으며 옛 서울을 만나는 코스.",
-  "translations": {
-   "en": {
-    "title": "Bukchon and Ikseon Walk",
-    "description": "Hanok lanes and the Insadong street: meeting old Seoul on foot."
-   },
-   "ja": {
-    "title": "北村・益善の伝統さんぽ",
-    "description": "韓屋の路地と仁寺洞の通りを歩いて昔のソウルに出会うコース。"
-   },
-   "zh": {
-    "title": "北村·益善传统漫步",
-    "description": "走过韩屋小巷与仁寺洞街，邂逅老首尔的路线。"
-   }
+  {
+    "title": "강물 위로 물드는 노을과 정겨운 한잔",
+    "description": "제주에서 상경한 베테랑 경매사 남편이 아내를 위해 구성한 코스로, 한강의 시원한 풍광과 도심 속 생태 숲길을 거닐고 신선한 제철 회와 진한 노포 순대국으로 속을 채우는 힐링 여정입니다.",
+    "translations": {
+      "en": {
+        "title": "Sunset coloring over the river and a cozy drink",
+        "description": "A healing journey designed by a veteran auctioneer husband who came up from Jeju for his wife, strolling along the cool scenery of Hangang and urban ecological forest paths, and filling the stomach with fresh seasonal raw fish and rich old-shop sundae guk (blood sausage soup)."
+      },
+      "ja": {
+        "title": "川面に染まる夕日と心温まる一杯",
+        "description": "済州（チェジュ）から上京したベテラン競売人の夫が妻のために構成したコースで、漢江の爽やかな風景と都心の中の生態森の小道を散策し、新鮮な旬の刺身と濃厚な老舗のスンデクッで胃袋を満たすヒーリングの旅です。"
+      },
+      "zh": {
+        "title": "染红江面的落霞与温馨的小酌",
+        "description": "由从济州岛上京的资深拍卖师丈夫为妻子设计的路线，漫步于汉江凉爽的风光和都市生态林间小路，用新鲜的时令生鱼片和浓郁的老字号血肠汤充实肠胃的治愈之旅。"
+      }
+    },
+    "placeIds": [
+      "sight-dongjak-24040434",
+      "dining-dongjak-389239912",
+      "kakao-10952963",
+      "kakao-27151599",
+      "sight-yeongdeungpo-7998604",
+      "dining-yeongdeungpo-21423297"
+    ],
+    "persona": {
+      "age": 40,
+      "sex": "남자",
+      "occupation": "농수산물 중개인 및 경매사",
+      "residence": "제주-제주시",
+      "family": "배우자와 거주",
+      "marital": "배우자있음",
+      "party": "배우자",
+      "occasion": "아내와 함께 서울로 올라와 한강 유람선도 타고 시장 내공이 느껴지는 제철 노포 음식을 맛보며 힐링하는 날",
+      "traits": [
+        "식재료중시",
+        "노포선호",
+        "한적한산책"
+      ],
+      "voice": "경매장에서 매일 생선을 만지다 보니 겉만 번지르르한 식당보다 원재료 맛이 살아있는 노포가 먼저 떠올랐습니다. 아내 손잡고 시원한 유람선도 타고 사려니숲길처럼 호젓한 샛강길을 거닐며 오붓한 시간을 보내고 싶었습니다."
+    }
   },
-  "placeIds": [
-   "kakao-21273056",
-   "kakao-467710256",
-   "dining-jongno-332294225",
-   "kakao-26563934",
-   "dining-jongno-205855651"
-  ]
- },
- {
-  "title": "서촌과 인왕산 조용한 산책",
-  "description": "윤동주문학관에서 인왕산 둘레길로 이어지는 차분한 코스.",
-  "translations": {
-   "en": {
-    "title": "Seochon and Inwangsan Walk",
-    "description": "A calm route from the Yun Dong-ju Museum to the Inwangsan trail."
-   },
-   "ja": {
-    "title": "西村と仁王山の静かな散歩",
-    "description": "尹東柱文学館から仁王山の周遊路へ続く落ち着いたコース。"
-   },
-   "zh": {
-    "title": "西村与仁王山静谧漫步",
-    "description": "从尹东柱文学馆到仁王山环山路的宁静路线。"
-   }
+  {
+    "title": "기억을 짚으며 함께 걷는 유서 깊은 옛길",
+    "description": "연로하신 아버지의 걸음에 맞추어 평탄한 역사 유적지와 정갈한 한식, 아늑한 한옥 찻집을 둘러보는 3대 가족의 서울 나들이 코스입니다.",
+    "translations": {
+      "en": {
+        "title": "Walking together along historic old paths tracing memories",
+        "description": "A 3-generation family outing course visiting flat historical sites, neat Korean food, and a cozy Hanok tea house tailored to the pace of an elderly father."
+      },
+      "ja": {
+        "title": "記憶をたどりながら共に歩く歴史ある古道",
+        "description": "ご高齢の父親の歩みに合わせて、平坦な歴史遺跡地や上品な韓国料理、居心地の良い韓屋茶店を巡る三世代のソウルお出かけコースです。"
+      },
+      "zh": {
+        "title": "追溯记忆一同漫步的历史悠久古道",
+        "description": "顺着年迈父亲的步伐，游览平坦的历史遗迹、品尝精致韩餐并造访温馨韩屋茶馆的三代同堂首尔出游路线。"
+      }
+    },
+    "placeIds": [
+      "heritage-13-0000320000000",
+      "heritage-13-0003240000000",
+      "dining-jongno-332294225",
+      "kakao-21273056",
+      "dining-jongno-1089877455",
+      "heritage-13-0001170000000"
+    ],
+    "persona": {
+      "age": 55,
+      "sex": "여자",
+      "occupation": "분식 조리사",
+      "residence": "인천-서구",
+      "family": "배우자·자녀·아버지와 거주",
+      "marital": "배우자있음",
+      "party": "배우자, 자녀, 아버지",
+      "occasion": "가게 쉬는 날을 맞아 연로하신 아버지와 아이들을 데리고 역사 유적지를 둘러보며 가족 나들이를 하기 위해",
+      "traits": [
+        "역사문화탐방",
+        "가족맞춤배려",
+        "담백한한식파"
+      ],
+      "voice": "매일 기름 냄새 맡던 가게 불을 끄고 아버지와 애들 손잡고 역사 이야기를 나누러 서울로 나왔어요. 아버지 다리 아프지 않게 평지로만 고르고, 속 편한 밥 한 그릇과 새콤달콤한 차 한잔 챙겨 온 가족이 편안히 웃는 하루를 만들고 싶었답니다."
+    }
   },
-  "placeIds": [
-   "sight-jongno-18936894",
-   "sight-jongno-12765701",
-   "dining-jongno-8505372",
-   "sight-jongno-1847315467",
-   "dining-jongno-14095755"
-  ]
- },
- {
-  "title": "동대문 DDP와 한양도성",
-  "description": "디자인 플라자에서 낙산공원 성곽길까지 새것과 옛것을 오가는 코스.",
-  "translations": {
-   "en": {
-    "title": "Dongdaemun DDP and City Wall",
-    "description": "From the design plaza to the Naksan fortress path: new and old side by side."
-   },
-   "ja": {
-    "title": "東大門DDPと漢陽都城",
-    "description": "デザインプラザから駱山公園の城郭道まで新旧を行き来するコース。"
-   },
-   "zh": {
-    "title": "东大门DDP与汉阳都城",
-    "description": "从设计广场到骆山公园城墙路，新旧交错的路线。"
-   }
+  {
+    "title": "성곽길 능선 타고 내려앉은 호젓한 숨결",
+    "description": "성북동의 울창한 숲과 북악산 성곽길을 따라 아내와 호젓하게 거닐며 몸과 마음을 정화하는 힐링 코스입니다. 고즈넉한 한옥 찻집의 온기와 숯불 고기의 든든함으로 부부의 소박한 행복을 온전히 채워줍니다.",
+    "translations": {
+      "en": {
+        "title": "Secluded breath settling down along the fortress wall ridge",
+        "description": "A healing course to purify body and mind by quietly strolling with a wife along Seongbuk-dong's dense forest and the Bugaksan Fortress Wall trail. Fully fulfill the simple happiness of a married couple with the warmth of a cozy Hanok tea house and the hearty satisfaction of charcoal-grilled meat."
+      },
+      "ja": {
+        "title": "城郭の尾根に沿って降り積もる閑静な息吹",
+        "description": "城北洞の生い茂った森と北岳山（プガクサン）の城郭の道に沿って、妻と二人で静かに散策しながら心身を浄化するヒーリングコースです。趣のある韓屋茶店の温もりと、炭火焼き肉の満足感で夫婦の素朴な幸せをしっかりと満たしてくれます。"
+      },
+      "zh": {
+        "title": "沿着城墙山脊流淌的幽静气息",
+        "description": "沿着城北洞郁郁葱葱的森林和北岳山城墙路与妻子幽静漫步，净化身心的治愈路线。古色古香韩屋茶馆的温暖与炭火烤肉的扎实饱腹感，完美填满夫妻俩简朴的幸福。"
+      }
+    },
+    "placeIds": [
+      "tour-128866",
+      "dining-seongbuk-17569573",
+      "kakao-7958336",
+      "kakao-12699510",
+      "dining-jongno-1089877455",
+      "dining-jung-323172472"
+    ],
+    "persona": {
+      "age": 59,
+      "sex": "남자",
+      "occupation": "특허 사무원",
+      "residence": "광주-서구",
+      "family": "배우자·편부모와 거주",
+      "marital": "배우자있음",
+      "party": "배우자",
+      "occasion": "아내와 함께 서울의 호젓한 숲길과 옛 동네를 거닐며 여유롭게 힐링하는 날",
+      "traits": [
+        "자연 속 산책",
+        "소박한 힐링",
+        "느긋한 휴식"
+      ],
+      "voice": "평소 무등산을 오르며 땀 흘리던 습관이 있어 서울에서도 북적이는 도심보다는 숲 냄새 물씬 나는 성북동 길상사와 북악산 둘레길을 아내와 꼭 걷고 싶었습니다. 호젓한 길을 천천히 거닐며 정갈한 한식과 차 한잔으로 다리를 쉰 뒤, 저녁에 지글지글 익어가는 숯불 고기에 소주 한잔 털어 넣으니 한 주간 쌓인 피로가 말끔히 풀립니다."
+    }
   },
-  "placeIds": [
-   "sight-jung-25022134",
-   "sight-jongno-8253524",
-   "dining-jongno-9027240",
-   "heritage-13-0000100000000",
-   "dining-jongno-320882660"
-  ]
- },
- {
-  "title": "이태원·한남 이색 문화 코스",
-  "description": "앤틱 거리와 이태원 거리, 리움미술관까지 이어지는 이국적인 하루.",
-  "translations": {
-   "en": {
-    "title": "Itaewon and Hannam Culture",
-    "description": "Antique street, Itaewon's main street and Leeum: an international kind of day."
-   },
-   "ja": {
-    "title": "梨泰院・漢南の異色カルチャー",
-    "description": "アンティーク通りと梨泰院通り、リウム美術館へ続くエキゾチックな一日。"
-   },
-   "zh": {
-    "title": "梨泰院·汉南异域文化路线",
-    "description": "古董街、梨泰院街到Leeum美术馆，充满异国风情的一天。"
-   }
+  {
+    "title": "카메라 렌즈에 고요히 담아낸 계절의 틈",
+    "description": "교대근무의 피로를 털어내고 서울숲의 고요한 숲길과 수면을 카메라에 담은 뒤 성수동 옛 시장에서 조용히 반주로 마무리하는 쉼의 여정입니다.",
+    "translations": {
+      "en": {
+        "title": "A quiet gap of seasons captured through a camera lens",
+        "description": "A relaxation journey to shake off shift work fatigue, capture Seoul Forest's quiet forest paths and water surface on camera, and quietly wrap up with drinks at Seongsu-dong's old market."
+      },
+      "ja": {
+        "title": "カメラレンズに静かに収めた季節の隙間",
+        "description": "交代勤務の疲労を振り払い、ソウル森の静かな森の小道や水面をカメラに収めた後、聖水洞の古い市場で静かに軽く一杯飲んで締めくくる休息の旅です。"
+      },
+      "zh": {
+        "title": "静静收录在相机镜头里的季节缝隙",
+        "description": "拂去轮班疲惫，将首尔林宁静的林间小路和水面定格在相机镜头中，随后在圣水洞老市场安静地以伴酒收尾的休憩之旅。"
+      }
+    },
+    "placeIds": [
+      "kakao-26563608",
+      "kakao-18059744",
+      "dining-seongdong-198624435",
+      "kakao-1653556996",
+      "kakao-1889582026",
+      "sight-seongdong-8280190"
+    ],
+    "persona": {
+      "age": 54,
+      "sex": "남자",
+      "occupation": "시설 경비원",
+      "residence": "경기-용인시 기흥구",
+      "family": "배우자·자녀·어머니와 거주",
+      "marital": "배우자있음",
+      "party": "혼자",
+      "occasion": "경비 근무 비번 날 복잡한 마음을 비우고 카메라로 숲 풍경을 담으며 홀로 쉬어가기 위해",
+      "traits": [
+        "조용한 숲 산책",
+        "DSLR 풍경 출사",
+        "느긋한 혼자만의 쉼"
+      ],
+      "voice": "늘 긴장 속에 살다 보니 오늘은 사람 많은 번화가를 피해 풀잎 향 가득한 숲속만 걷고 싶었습니다. 무거운 카메라는 들었지만 발걸음과 마음만은 그 어느 때보다 가볍게 내려놓고 쉬다 갑니다."
+    }
   },
-  "placeIds": [
-   "kakao-10753713",
-   "sight-yongsan-12711097",
-   "dining-yongsan-124338573",
-   "sight-yongsan-10427225",
-   "dining-yongsan-541563112"
-  ]
- },
- {
-  "title": "서대문 독립의 길",
-  "description": "독립문에서 서대문형무소까지 근현대 역사를 짚어 보는 코스.",
-  "translations": {
-   "en": {
-    "title": "Seodaemun Independence Path",
-    "description": "From Independence Gate to the Seodaemun Prison: modern history on foot."
-   },
-   "ja": {
-    "title": "西大門・独立への道",
-    "description": "独立門から西大門刑務所まで近現代史をたどるコース。"
-   },
-   "zh": {
-    "title": "西大门独立之路",
-    "description": "从独立门到西大门刑务所，回顾近现代历史的路线。"
-   }
+  {
+    "title": "여고 시절 그 미소로 마주한 푸른 강바람",
+    "description": "거울연못의 맑은 풍광부터 탁 트인 한강 전망대까지, 동선의 낭비 없이 여유롭고 차분하게 도심 속 자연을 만끽하는 산책 코스입니다.",
+    "translations": {
+      "en": {
+        "title": "Blue river breeze met with that high school girl smile",
+        "description": "A walking course to fully enjoy urban nature leisurely and calmly without wasting movement, from the clear scenery of the mirror pond to the open Hangang observatory."
+      },
+      "ja": {
+        "title": "女子高生の頃のその笑顔で向き合った青い川風",
+        "description": "鏡池の澄んだ風景から開けた漢江展望台まで、動線の無駄なくゆったりと落ち着いて都心の中の自然を満喫する散策コースです。"
+      },
+      "zh": {
+        "title": "带着高中时代的微笑迎面的蔚蓝江风",
+        "description": "从镜池清澈的风光到视野开阔的汉江观景台，不浪费路线动线、悠闲沉稳地尽情享受都市中大自然的散步路线。"
+      }
+    },
+    "placeIds": [
+      "kakao-18059744",
+      "kakao-946487614",
+      "dining-seongdong-1227436337",
+      "dining-seongdong-14863041",
+      "kakao-1653556996",
+      "kakao-1889582026"
+    ],
+    "persona": {
+      "age": 62,
+      "sex": "여자",
+      "occupation": "대여 제품 방문 점검원",
+      "residence": "충청북-청주시 흥덕구",
+      "family": "기타1세대",
+      "marital": "사별",
+      "party": "고등학교 동창들과",
+      "occasion": "계절의 정취를 담은 수려한 자연 풍경 사진도 찍고 친구들과 정갈한 초밥을 먹으며 회포를 풀기 위해 잡은 서울 나들이",
+      "traits": [
+        "계획적인",
+        "풍경사진",
+        "정갈한식사"
+      ],
+      "voice": "모처럼 친구들과 서울에 온 만큼 길에서 헤매거나 시간 낭비하지 않도록 동선을 분 단위로 세심하게 짰어요. 사진 찍기 좋은 숲길을 여유롭게 거닐고 탁 트인 강바람을 쐬니 마음까지 시원하게 씻겨 내려가는 기분입니다."
+    }
   },
-  "placeIds": [
-   "heritage-13-0003240000000",
-   "heritage-13-0000320000000",
-   "dining-jongno-8992389",
-   "sight-seodaemun-740621790",
-   "dining-jongno-767240312"
-  ]
- },
- {
-  "title": "북서울꿈의숲 숲길 산책",
-  "description": "넓은 숲 공원을 걷고 동네 공원과 재래시장까지 이어지는 가벼운 코스.",
-  "translations": {
-   "en": {
-    "title": "North Seoul Dream Forest Walk",
-    "description": "A wide forest park, a neighbourhood park and a traditional market, all easy walking."
-   },
-   "ja": {
-    "title": "北ソウルの夢の森さんぽ",
-    "description": "広い森の公園から近所の公園、在来市場まで続く気軽なコース。"
-   },
-   "zh": {
-    "title": "北首尔梦想森林漫步",
-    "description": "走过大片森林公园、社区公园与传统市场的轻松路线。"
-   }
+  {
+    "title": "따스한 찻잔과 궁궐 담장에 깃든 여운",
+    "description": "대전에서 기차를 타고 올라온 노부부가 성북동의 울창한 사찰 숲길과 고즈넉한 고궁을 걸으며 정갈한 나물 밥상과 따뜻한 전통차를 즐기는 호젓한 하루 코스입니다.",
+    "translations": {
+      "en": {
+        "title": "Lingering warmth embedded in warm teacups and palace walls",
+        "description": "A quiet day course where an elderly couple who took the train up from Daejeon walk through Seongbuk-dong's dense temple forest paths and serene ancient palaces, enjoying neat wild vegetable meals and warm traditional tea."
+      },
+      "ja": {
+        "title": "温かい茶器と宮殿の塀に宿る余韻",
+        "description": "大田（テジョン）から列車に乗って上京した老夫婦が、城北洞の生い茂った寺院の森の小道や趣のある古宮を歩きながら、上品なナムル（山菜）定食と温かい伝統茶を楽しむ閑静な一日コースです。"
+      },
+      "zh": {
+        "title": "寄托在温暖茶杯与宫墙之中的余韵",
+        "description": "从大田坐火车上京的老夫妇漫步于城北洞郁郁葱葱的寺庙林间小路和古色古香的古代宫殿，享受精致山菜饭桌和温热传统茶的幽静一日路线。"
+      }
+    },
+    "placeIds": [
+      "tour-128866",
+      "tour-130511",
+      "dining-dongdaemun-2108354197",
+      "heritage-13-0001230000000",
+      "dining-jongno-1089877455",
+      "heritage-13-0002570000000"
+    ],
+    "persona": {
+      "age": 65,
+      "sex": "남자",
+      "occupation": "검표원",
+      "residence": "대전-서구",
+      "family": "배우자와 거주",
+      "marital": "배우자있음",
+      "party": "아내와 둘이서",
+      "occasion": "쉬는 날을 맞아 아내와 함께 기차를 타고 서울의 울창하고 호젓한 숲길을 걸으며 숨을 고르기 위해",
+      "traits": [
+        "자연 속 힐링",
+        "정갈한 한식",
+        "풍경 사진 촬영"
+      ],
+      "voice": "우리 집사람 무릎에 무리 가지 않게 오르막 대신 평탄하고 푸른 숲길만 골라 천천히 걸었습니다. 정갈한 나물 반찬으로 든든하게 배를 채우고 호젓한 찻집에서 차 한잔 나누니 기차 타고 올라온 보람이 가득합니다."
+    }
   },
-  "placeIds": [
-   "sight-gangbuk-11321061",
-   "sight-gangbuk-8014188",
-   "dining-gangbuk-19513979",
-   "sight-gangbuk-27367375",
-   "dining-gangbuk-17063711"
-  ]
- },
- {
-  "title": "강남 도심 속 쉼표",
-  "description": "봉은사와 코엑스, 별마당도서관을 잇는 도심 속 쉬어가기 코스.",
-  "translations": {
-   "en": {
-    "title": "A Pause in Gangnam",
-    "description": "Bongeunsa Temple, COEX and the Starfield Library: a breather in the city."
-   },
-   "ja": {
-    "title": "江南・都心の休息",
-    "description": "奉恩寺とCOEX、ピョルマダン図書館をつなぐ都心の休憩コース。"
-   },
-   "zh": {
-    "title": "江南都市中的小憩",
-    "description": "串联奉恩寺、COEX与星空图书馆的都市休憩路线。"
-   }
+  {
+    "title": "모녀가 다정하게 마주보는 고궁의 시간",
+    "description": "북악산 자락의 맑은 숲 내음과 고즈넉한 옛 마당을 거닐며, 정갈한 한식과 달콤한 디저트로 딸과 따뜻한 정을 나누는 오붓한 서울 여정입니다.",
+    "translations": {
+      "en": {
+        "title": "Palace time where a mother and daughter affectionately face each other",
+        "description": "A cozy Seoul journey sharing warm affection with a daughter through neat Korean food and sweet desserts, walking along the clear forest scent of the Bugaksan foothills and serene old courtyards."
+      },
+      "ja": {
+        "title": "母娘が愛情深く向き合う古宮の時間",
+        "description": "北岳山のふもとの澄んだ森の香りや趣のある古い中庭を歩きながら、上品な韓国料理と甘いデザートで娘と温かい情を分かち合うアットホームなソウルの旅です。"
+      },
+      "zh": {
+        "title": "母女俩深情相对的宫殿时光",
+        "description": "漫步于北岳山脚下清新的森林气息与古朴的老庭院，通过精致的韩餐和甜蜜的甜点与女儿分享温暖亲情温馨的首尔之旅。"
+      }
+    },
+    "placeIds": [
+      "tour-128866",
+      "dining-seongbuk-17569573",
+      "kakao-12699510",
+      "heritage-13-0002570000000",
+      "dining-jongno-1089877455",
+      "heritage-13-0001250000000"
+    ],
+    "persona": {
+      "age": 65,
+      "sex": "여자",
+      "occupation": "음식 서비스 종사원",
+      "residence": "전북-임실군",
+      "family": "혼자 거주",
+      "marital": "사별",
+      "party": "서울에 사는 딸과 둘이서",
+      "occasion": "보고 싶던 서울 딸아이 집에 올라와 함께 숲 냄새 맡으며 오붓하게 하루를 보내려고",
+      "traits": [
+        "숲길산책",
+        "달콤한디저트",
+        "오붓한가족동행"
+      ],
+      "voice": "서울 사는 딸아이 손을 꼭 쥐고 조용한 숲길을 걸으며 오래간만에 도란도란 옛이야기를 나눴습니다. 매일 식당에서 남들 밥만 짓다가 이렇게 정갈한 한상을 받아보고, 좋아하는 달콤한 케이크에 따뜻한 차 한 잔까지 곁들이니 더 바랄 것이 없는 하루였네요."
+    }
   },
-  "placeIds": [
-   "sight-gangnam-2104663194",
-   "sight-gangnam-17573702",
-   "dining-gangnam-2179756",
-   "sight-gangnam-8373155",
-   "dining-gangnam-1157646860"
-  ]
- },
- {
-  "title": "서울식물원과 옛 양천 마을",
-  "description": "식물원 온실을 보고 겸재 미술관과 양천향교까지 이어지는 마곡의 하루.",
-  "translations": {
-   "en": {
-    "title": "Botanic Park and Old Yangcheon",
-    "description": "The glasshouse, then the Gyeomjae art museum and the old Yangcheon school."
-   },
-   "ja": {
-    "title": "ソウル植物園と古い陽川の町",
-    "description": "植物園の温室を見て、謙斎美術館と陽川郷校へ続く麻谷の一日。"
-   },
-   "zh": {
-    "title": "首尔植物园与古阳川村",
-    "description": "参观植物园温室，再到谦斋美术馆与阳川乡校的麻谷一日。"
-   }
+  {
+    "title": "세월의 결을 어루만지듯 흐르는 옛 정원",
+    "description": "길상사의 호젓한 숲길에서 시작해 운현궁의 고즈넉한 뜨락까지, 번잡한 도심을 피해 아내와 함께 편안히 거니는 성북과 종로의 산책 여정입니다.",
+    "translations": {
+      "en": {
+        "title": "An old garden flowing as if caressing the texture of time",
+        "description": "A walking journey in Seongbuk and Jongno, comfortably strolling with a wife avoiding the busy downtown, starting from Gilsangsa's secluded forest path to Unhyeongung's serene courtyard."
+      },
+      "ja": {
+        "title": "時間の質感をなでるように流れる古い庭園",
+        "description": "吉祥寺（キルサンサ）の閑静な森の小道から雲峴宮（ウニョングン）の趣のある中庭まで、賑やかな都心を避けて妻と一緒にゆったりと散策する城北（ソンブク）と鍾路（チョンノ）の散策の旅です。"
+      },
+      "zh": {
+        "title": "如抚摸岁月纹理般流淌的老花园",
+        "description": "从吉祥寺幽静的林间小路开始，到云岘宫古朴的庭院，避开喧嚣的市中心，与妻子一同舒适漫步的城北与钟路散步之旅。"
+      }
+    },
+    "placeIds": [
+      "tour-128866",
+      "dining-seongbuk-17569573",
+      "tour-130511",
+      "kakao-12699510",
+      "dining-jongno-205855651",
+      "heritage-13-0002570000000"
+    ],
+    "persona": {
+      "age": 70,
+      "sex": "남자",
+      "occupation": "건물 경비원",
+      "residence": "대구-남구",
+      "family": "비친족 동거",
+      "marital": "배우자있음",
+      "party": "배우자와",
+      "occasion": "신문 문화면에서 눈여겨보던 고즈넉한 서울 풍경을 아내와 함께 천천히 눈에 담아보고 싶어서",
+      "traits": [
+        "느린산책",
+        "소박한자연",
+        "서정적시선"
+      ],
+      "voice": "신문 문화면에서 보며 언젠가 꼭 가보고 싶었던 길상사 숲길을 집사람과 함께 걸어보고 싶었습니다. 다리가 뻐근하지 않게 쉬엄쉬엄 거닐며 길가의 야생화도 사진에 담고, 오래된 처마와 돌담을 눈에 담는 정갈한 시간을 보냈습니다."
+    }
   },
-  "placeIds": [
-   "sight-gangseo-11100510",
-   "sight-gangseo-8651724",
-   "dining-gangseo-382702391",
-   "sight-gangseo-1164966384",
-   "dining-gangseo-2025031703"
-  ]
- },
- {
-  "title": "성북동 문화예술 산책",
-  "description": "길상사와 간송미술관, 성북동 고택까지 조용히 걷는 코스.",
-  "translations": {
-   "en": {
-    "title": "Seongbuk-dong Arts Walk",
-    "description": "A quiet walk from Gilsangsa Temple to the Kansong Museum and old mansions."
-   },
-   "ja": {
-    "title": "城北洞アートさんぽ",
-    "description": "吉祥寺から澗松美術館、城北洞の古い邸宅まで静かに歩くコース。"
-   },
-   "zh": {
-    "title": "城北洞艺术漫步",
-    "description": "从吉祥寺到涧松美术馆和城北洞古宅的安静路线。"
-   }
-  },
-  "placeIds": [
-   "tour-128866",
-   "tour-130511",
-   "dining-seongbuk-23300753",
-   "sight-seongbuk-8439733",
-   "dining-seongbuk-879915397"
-  ]
- }
+  {
+    "title": "빛바랜 추억처럼 그윽하게 번지는 차향",
+    "description": "오랜 벗들과 함께 울창한 사찰 숲그늘에서 쉬어가고 정갈한 한옥 마당과 전통찻집을 누비며 느긋하게 채우는 성북동 하루 나들이입니다.",
+    "translations": {
+      "en": {
+        "title": "Tea fragrance spreading as deeply as faded memories",
+        "description": "A leisurely Seongbuk-dong day outing filled with old friends by resting in the dense temple forest shade and enjoying neat Hanok courtyards and traditional tea houses."
+      },
+      "ja": {
+        "title": "色褪せた思い出のように趣深く広がるお茶の香り",
+        "description": "長年の友人たちと一緒に生い茂った寺院の森の木陰で休み、上品な韓屋の中庭や伝統茶店を満喫しながらのんびりと満たしていく城北洞の一日お出かけです。"
+      },
+      "zh": {
+        "title": "如褪色回忆般浓郁散开的茶香",
+        "description": "与老友们一起在郁郁葱葱的寺庙林荫中休憩，尽情享受精致的韩屋庭院和传统茶馆，悠闲充实的一日城北洞出游。"
+      }
+    },
+    "placeIds": [
+      "tour-128866",
+      "dining-seongbuk-27226419",
+      "dining-seongbuk-7940056",
+      "sight-seongbuk-10845382",
+      "dining-seongbuk-24064162"
+    ],
+    "persona": {
+      "age": 74,
+      "sex": "여자",
+      "occupation": "그 외 건축 마감 관련 기능 종사원",
+      "residence": "광주-남구",
+      "family": "자녀·어머니와 거주",
+      "marital": "사별",
+      "party": "고등학교 단짝 친구들과",
+      "occasion": "친구들과 기차 타고 서울로 마실 나와 푸른 나무 그늘 아래서 바람 쐬고 정담 나누는 하루",
+      "traits": [
+        "자연속휴식",
+        "느긋한보폭",
+        "소박한담소"
+      ],
+      "voice": "나이 들고 보니 번잡하고 가파른 덴 다리만 아프고 통 정이 안 가더라고요. 나무 그늘 좋은 데서 단짝 친구들이랑 바람 쐬고 따뜻한 찻잔 기울이며 사는 이야기 나누는 게 제일 큰 복이지 싶어 이렇게 걸음을 맞췄습니다."
+    }
+  }
 ]

@@ -1597,3 +1597,172 @@ button.ios-card:not(:disabled):active {
 .map-locked * {
   touch-action: pan-y !important;
 }
+
+/* The map section: the theme green spreads from the button that opened it (--rx / --ry, in px from the frame's
+   top-left) and the map card rises in once the green has mostly covered the screen; leaving runs it backwards. */
+@keyframes map-reveal {
+  from {
+    clip-path: circle(var(--r0, 16px) at var(--rx) var(--ry));
+    background-color: #8fbf45;
+  }
+
+  to {
+    clip-path: circle(1100px at var(--rx) var(--ry));
+    background-color: #b7e86b;
+  }
+}
+
+@keyframes map-reveal-out {
+  from {
+    clip-path: circle(1100px at var(--rx) var(--ry));
+    background-color: #b7e86b;
+  }
+
+  to {
+    clip-path: circle(var(--r0, 16px) at var(--rx) var(--ry));
+    background-color: #8fbf45;
+  }
+}
+
+/* The button's own icon sits on the circle at first and fades as it grows; on the way back it returns. */
+@keyframes map-glyph-out {
+  to {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+@keyframes map-glyph-in {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes map-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes map-content-out {
+  to {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+
+.map-reveal {
+  animation: map-reveal 760ms cubic-bezier(0.5, 0, 0.2, 1) both;
+}
+
+.map-reveal-out {
+  animation: map-reveal-out 400ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
+.map-content-in {
+  animation: map-content-in 460ms cubic-bezier(0.22, 1, 0.36, 1) 420ms both;
+}
+
+.map-content-out {
+  animation: map-content-out 220ms ease-in forwards;
+}
+
+.map-reveal-glyph {
+  animation: map-glyph-out 300ms ease-out forwards;
+}
+
+.map-reveal-out .map-reveal-glyph {
+  animation: map-glyph-in 240ms ease-out 180ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-reveal,
+  .map-reveal-out,
+  .map-content-in,
+  .map-content-out,
+  .map-reveal-glyph {
+    animation-duration: 0.01ms;
+    animation-delay: 0s;
+  }
+}
+
+/* Frosted white controls floating on the map: a light, tight shadow (the big soft one of .glass-panel looked like a
+   smear over map tiles). */
+.map-glass {
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+}
+
+/* The card of a tapped place on the map screen: fades up softly, fades down softly. */
+@keyframes map-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes map-card-out {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+}
+
+.map-card-in {
+  animation: map-card-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.map-card-out {
+  animation: map-card-out 200ms ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-card-in,
+  .map-card-out {
+    animation-duration: 0.01ms;
+  }
+}
+
+/* A map pin's name appears after the dot has popped in. */
+@keyframes map-label-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.map-label-in {
+  animation: map-label-in 320ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-label-in {
+    animation-duration: 0.01ms;
+  }
+}
+

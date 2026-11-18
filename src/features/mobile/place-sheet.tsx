@@ -14,6 +14,7 @@ import {
   AiSparklesIcon,
 } from "@/components/layout/app-icons";
 import { BrandTile } from "@/features/mobile/brand-icons";
+import { categoryText } from "@/features/mobile/custom-places";
 import { PopOnActive } from "@/features/mobile/motion";
 import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
 import { isDiningCategory, localizePlace, type MobilePlace, type TripComment } from "@/features/mobile/mobile-data";
@@ -383,7 +384,7 @@ export function PlaceSheet({
             />
             <div className="min-w-0">
               <p className="text-sm font-bold" style={{ color: "var(--primary)" }}>
-                {categoryLabel(place.category)}
+                {categoryText(place, categoryLabel)}
               </p>
               <div className="mt-0.5 flex items-start gap-2">
                 <h2 className="line-clamp-2 min-w-0 text-[1.375rem] font-extrabold leading-7 tracking-tight">{localizedPlace.name}</h2>

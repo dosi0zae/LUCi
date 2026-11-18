@@ -208,18 +208,27 @@ export async function weaveDefaultDining(stopIds: string[]): Promise<string[] | 
       break;
     }
     const anchorStop = slot.after === -1 ? chain[chain.length - 1] : stops[slot.after];
+    // The stop the meal sits before: a meal between two stops should cost little extra walking, not only be
+    // close to the one before it (that put a lunch across the river and sent the day back over it).
+    const nextStop = slot.after === -1 ? null : stops[slot.after + 1] ?? null;
     const usedCoords = new Set(chain.map((stop) => `${stop.lat.toFixed(4)},${stop.lng.toFixed(4)}`));
     const ranked = pool
       .filter((place) => place.category === slot.category && !usedCoords.has(`${place.lat.toFixed(4)},${place.lng.toFixed(4)}`))
-      .map((place) => ({ place, km: haversineKm(anchorStop, place) }))
+      .map((place) => ({
+        place,
+        km: haversineKm(anchorStop, place),
+        detour: nextStop
+          ? haversineKm(anchorStop, place) + haversineKm(place, nextStop) - haversineKm(anchorStop, nextStop)
+          : haversineKm(anchorStop, place),
+      }))
       .filter((entry) => entry.km <= WEAVE_RADIUS_KM)
-      .map(({ place, km }) => ({
+      .map(({ place, detour }) => ({
         place,
         score:
           (place.dining?.pop === "high" ? 1 : 0) +
           (place.dining?.hot === "surge" || place.dining?.hot === "rising" ? 0.3 : 0) +
           ((place.dining?.tagIds.length ?? 0) > 0 ? 0.3 : 0) -
-          km * 1.2,
+          detour * 1.2,
       }))
       .sort((a, b) => b.score - a.score)
       .slice(0, WEAVE_TOP_PICKS);

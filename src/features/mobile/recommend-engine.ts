@@ -107,7 +107,17 @@ export type RecommendIntent = {
   // the river crosses many districts). Routes the pool to SEOUL_HANGANG_PLACE_IDS instead
   // of anchoring on a single point: see that constant's comment for why.
   hangangOnly?: boolean;
+  // Which stretch of the river a 한강 course is built on. Set when the same course is worked on a second time
+  // (the AI selection, a wider/narrower radius) so it stays on the stretch the first pass chose.
+  hangangAnchor?: { lat: number; lng: number } | null;
 };
+
+// A 한강 course is ONE stretch of the river and what is around it, never the whole river (the river is 40 km
+// long, a day is not): everything within this distance of the chosen riverside place.
+export const HANGANG_STRETCH_KM = 2.5;
+export function isHangangPlace(place: { id: string }): boolean {
+  return SEOUL_HANGANG_PLACE_IDS.has(place.id);
+}
 
 // A small curated set of genuinely iconic, widely-recognized Seoul sites (the five grand
 // palaces, 종묘, 숭례문, 명동성당, 성균관, 운현궁, 구 서울역사, 남산골한옥마을/남산공원) —
@@ -201,6 +211,12 @@ function scorePlace(place: MobilePlace, intent: RecommendIntent): number {
     }
   }
 
+  // A river course is built around the river, so the riverside places lead the pool (the course then takes
+  // one of them; flowAdjustment keeps it from taking several).
+  if (intent.hangangOnly && SEOUL_HANGANG_PLACE_IDS.has(place.id)) {
+    score += 30;
+  }
+
   // Randomized per-request so identical prompts don't always return the identical chain.
   score += Math.random() * 14;
 
@@ -253,6 +269,7 @@ function dayRank(place: MobilePlace): number {
   if (place.bestTime?.length) {
     return Math.min(...place.bestTime.map((time) => order[time]));
   }
+  if (SEOUL_HANGANG_PLACE_IDS.has(place.id)) return 2;
   if (place.category === "문화재") return 0;
   if (place.category === "축제행사") return 2;
   return 1;
@@ -599,6 +616,11 @@ function flowAdjustment(
     adjustment -= picked.filter((stop) => stop.area === place.area).length * 5;
   }
 
+  // "Walking along the river all day": a second riverside park in one course is the same stop twice.
+  if (isHangangPlace(place) && picked.some(isHangangPlace)) {
+    adjustment -= 40;
+  }
+
   const asked = new Set(intent.attributes);
   const moods = (place.moods ?? []).filter((mood) => !asked.has(mood));
   if (!focused) {
@@ -718,13 +740,18 @@ export function getScoredPool(intent: RecommendIntent): {
     const radiusKm = intent.radiusKm ?? DEFAULT_RADIUS_KM;
     pool = poolNear(areaPlaces, anchor, radiusKm, intent.strictRadius ?? false);
   } else if (hangangPlaces && hangangPlaces.length > 0) {
-    // Same shape again, candidates is the curated Han River list. With only 3 entries
-    // (all below MIN_POOL_SIZE), poolNear's own fallback ladder always bottoms out at
-    // "return candidates" — so this reliably returns all 3, spanning real districts,
-    // regardless of radius — never the single-point-radius cluster this used to be.
-    anchor = centroid(hangangPlaces);
-    const radiusKm = intent.radiusKm ?? DEFAULT_RADIUS_KM;
-    pool = poolNear(hangangPlaces, anchor, radiusKm, intent.strictRadius ?? false);
+    // One stretch of the river: a riverside place picked among the best-scored ones (or the stretch an
+    // earlier pass already chose), then every kind of place around it. The pool is NOT the 13 river parks
+    // themselves, which made courses of nothing but river parks spread over 10 km.
+    const radiusKm = intent.radiusKm ?? HANGANG_STRETCH_KM;
+    const riverTop = scoredAll.filter((entry) => SEOUL_HANGANG_PLACE_IDS.has(entry.place.id)).slice(0, 4);
+    const stretch =
+      intent.hangangAnchor ??
+      (intent.strictRadius ? intent.anchor : null) ??
+      riverTop[Math.floor(Math.random() * riverTop.length)]?.place ??
+      hangangPlaces[0];
+    anchor = { lat: stretch.lat, lng: stretch.lng };
+    pool = poolNear(usable, anchor, radiusKm, intent.strictRadius ?? false);
   } else if (landmarkPlaces && landmarkPlaces.length > 0) {
     // Same shape as the areaPlaces branch above, but candidates is the curated landmark
     // list instead of a district — radius still narrows/widens within it.

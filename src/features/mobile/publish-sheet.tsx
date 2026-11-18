@@ -84,20 +84,22 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
 
         <div className="mt-4">
           <p className="text-sm font-bold text-muted-strong">{t("publishCoverLabel")}</p>
-          <div className="place-list-scroll mt-2 flex gap-2.5 overflow-x-auto pb-1">
+          <div className="place-list-scroll mt-2 flex gap-3 overflow-x-auto">
             {places.map((place) => (
               <button
                 aria-label={place.name}
                 aria-pressed={coverPlaceId === place.id}
-                className={cn(
-                  "relative shrink-0 rounded-[1.25rem] p-0.5 transition",
-                  coverPlaceId === place.id ? "ring-2 ring-primary" : "opacity-70 hover:opacity-100",
-                )}
+                className={cn("relative shrink-0 rounded-2xl transition", coverPlaceId !== place.id && "opacity-70 hover:opacity-100")}
                 key={place.id}
                 onClick={() => setCoverPlaceId(place.id)}
                 type="button"
               >
                 <PlacePhoto className="h-[4.5rem] w-[4.5rem] rounded-2xl" place={place} />
+                {/* The chosen one is outlined exactly on its own square, drawn inside it: no gap, and nothing sticks out
+                    for the scrolling row to cut off. */}
+                {coverPlaceId === place.id && (
+                  <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-2xl ring-[3px] ring-inset ring-primary" />
+                )}
               </button>
             ))}
           </div>

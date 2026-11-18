@@ -5,7 +5,9 @@ export type KakaoLatLng = {
 
 export type KakaoMap = {
   addControl(control: KakaoControl, position: number): void;
+  getCenter(): KakaoLatLng;
   getLevel(): number;
+  relayout(): void;
   setBounds(bounds: KakaoLatLngBounds, padding?: number): void;
   setCenter(latlng: KakaoLatLng): void;
   setDraggable(draggable: boolean): void;
@@ -52,6 +54,10 @@ export type KakaoMapsApi = {
     strokeWeight?: number;
   }) => KakaoPolyline;
   ZoomControl: new () => KakaoControl;
+  event: {
+    addListener(target: object, type: string, handler: (event: { latLng: KakaoLatLng }) => void): void;
+    removeListener(target: object, type: string, handler: (event: { latLng: KakaoLatLng }) => void): void;
+  };
   load(callback: () => void): void;
 };
 

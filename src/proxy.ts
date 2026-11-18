@@ -30,6 +30,11 @@ const LIMITS: Record<string, Rule[]> = {
     { windowMs: HOUR, max: 120 },
   ],
 };
+// The map search box answers while typing (after a short pause), so it gets a roomier budget than the default.
+LIMITS["/api/map-search"] = [
+  { windowMs: MINUTE, max: 40 },
+  { windowMs: HOUR, max: 400 },
+];
 const DEFAULT_LIMITS: Rule[] = [
   { windowMs: MINUTE, max: 20 },
   { windowMs: HOUR, max: 200 },

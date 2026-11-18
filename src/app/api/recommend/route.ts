@@ -5,6 +5,7 @@ import {
   derivePreference,
   fallbackIntent,
   getScoredPool,
+  isHangangPlace,
   localizeDistrictName,
   optimizeRoute,
   optimizeRoutePreservingPins,
@@ -12,7 +13,7 @@ import {
   SEOUL_DISTRICTS,
   type RecommendIntent,
 } from "@/features/mobile/recommend-engine";
-import { getPlacesByIds, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
+import { getPlacesByIds, haversineKm, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
 import {
   buildDiningCourse,
   DINING_UNAVAILABLE_NOTE,
@@ -171,6 +172,9 @@ async function getAiIntent(prompt: string, locale: string): Promise<GeminiAiInte
 // give it a real choice beyond the single best-scoring handful, small enough to keep the
 // request/response size and latency reasonable.
 const SELECTION_SHORTLIST_SIZE = 28;
+// How far apart the stops of one course may be (the two farthest stops), by how the day is paced.
+const MAX_COURSE_SPAN_KM = 4.5;
+const MAX_COURSE_SPAN_KM_AREA = 8;
 // Plus some lesser-known places from further down the ranking, so the pick is not only ever the
 // best-known sights (a course needs one "find" in it).
 const SELECTION_DISCOVERY_SIZE = 12;
@@ -195,6 +199,8 @@ function buildSelectionSystemPrompt(locale: string, count: number): string {
 - 요청의 분위기·상황(누구와, 어떤 기분, 시간대)을 최우선으로 반영해. 성격이 겉도는 조합(조용한 전통 공간과 시끌벅적한 핫플레이스)은 피해.
 - 인지도가 낮아도 요청과 잘 맞는 곳이 있으면 한 곳쯤은 "숨은 발견"으로 넣어. 단 요청에 어긋나면 넣지 마.
 - 운영시간이나 bestTime이 있으면 시간대가 안 맞는 곳(예: 야경 장소를 오전 첫 코스)은 피해.
+- 하루 코스는 한 동네 안에서 이어져야 해. 각 후보의 km는 코스 중심에서 떨어진 거리야. 고른 장소끼리 서로 3km 넘게 떨어지지 않게 하고, 가까운 곳끼리 한 방향으로 흘러가게 해(갔던 방향으로 되돌아오거나 강·길 건너를 오가지 않게).
+- 같은 종류의 장소(예: 한강공원 여러 곳, 같은 거리의 비슷한 가게)를 여러 개 고르지 마. 요청의 주제(예: 노을, 야경)를 보여주는 곳은 한 곳이면 충분하고, 나머지는 그 주변의 다른 성격의 곳(전시, 골목, 휴식)으로 채워서 그 주제로 향하는 하루가 되게 해. 해질녘·노을이 주제면 그 장소는 코스의 뒤쪽에 둬.
 반드시 주어진 id 목록에 있는 값만 쓰고, 중복 없이 정확히 ${count}개를 골라야 해.
 title: 코스 이름. ${languageName}로 12자~20자 안팎, 장소 이름을 나열하지 말고 이 코스만의 분위기나 흐름을 한 구절로. 고른 장소의 특징에서 새로 지어내고, 다른 코스와 겹칠 법한 흔한 문구는 피해. 따옴표나 마침표는 쓰지 마.${locale === "ko" ? "" : ` 제목에 한글을 한 글자도 섞지 마: 지명이나 장소 이름을 쓰게 되면 ${languageName}로 옮겨 써.`}
 reason: 왜 이 조합인지 ${languageName}로 자연스러운 한 문장, 실제로 고른 장소들을 반영해서.
@@ -203,6 +209,8 @@ reason: 왜 이 조합인지 ${languageName}로 자연스러운 한 문장, 실�
 
 type SelectionCandidate = {
   id: string;
+  // Distance from the middle of the course's area, so the model can keep the stops in one neighbourhood.
+  km?: number;
   name: string;
   category: string;
   area: string;
@@ -219,7 +227,7 @@ type SelectionCandidate = {
 
 // Only fields a place actually has are sent, so a sparse record costs nothing and a richly
 // enriched one (see scripts/enrich-places.mjs) gives the selection everything to reason with.
-function toSelectionCandidate(place: MobilePlace): SelectionCandidate {
+function toSelectionCandidate(place: MobilePlace, anchor: { lat: number; lng: number } | null): SelectionCandidate {
   const minutes = place.durationMin ?? Number.parseInt(place.duration, 10);
   const candidate: SelectionCandidate = {
     id: place.id,
@@ -230,6 +238,9 @@ function toSelectionCandidate(place: MobilePlace): SelectionCandidate {
     description: place.description.slice(0, place.story ? 80 : 120),
     fameScore: place.fameScore ?? 0,
   };
+  if (anchor) candidate.km = Math.round(haversineKm(anchor, place) * 10) / 10;
+  // The river parks carry no time-of-day data; they are an evening place (see dayRank).
+  if (isHangangPlace(place) && !place.bestTime?.length) candidate.bestTime = ["afternoon", "evening"];
   if (place.moods?.length) candidate.moods = place.moods;
   if (Number.isFinite(minutes) && place.durationMin) candidate.minutes = minutes;
   if (place.energy) candidate.energy = place.energy;
@@ -603,7 +614,8 @@ export async function POST(request: NextRequest) {
   let courseTitle: string | null = null;
 
   if (result.placeIds.length === result.requestedCount) {
-    const { scored } = getScoredPool(intent);
+    // The same stretch of the river as the first pass (a second random pick would move the course).
+    const { scored, anchor: poolAnchor } = getScoredPool({ ...intent, hangangAnchor: result.anchor });
     // `scored` is best-first, so keeping the first of each cluster keeps the best one.
     const kept: MobilePlace[] = [];
     const shortlist = scored.filter(({ place }) => {
@@ -619,7 +631,7 @@ export async function POST(request: NextRequest) {
         .slice(SELECTION_SHORTLIST_SIZE)
         .filter(({ place }) => (place.fameScore ?? 50) <= DISCOVERY_MAX_FAME)
         .slice(0, SELECTION_DISCOVERY_SIZE);
-      const candidates: SelectionCandidate[] = [...top, ...discoveries].map(({ place }) => toSelectionCandidate(place));
+      const candidates: SelectionCandidate[] = [...top, ...discoveries].map(({ place }) => toSelectionCandidate(place, poolAnchor));
 
       const selection = await selectChainWithGemini(prompt, locale, candidates, result.requestedCount, {
         variety: intent.variety,
@@ -630,7 +642,11 @@ export async function POST(request: NextRequest) {
         const selectedPlaces = selection.placeIds
           .map((id) => byId.get(id))
           .filter((place): place is MobilePlace => Boolean(place));
-        if (selectedPlaces.length === result.requestedCount) {
+        // A course is a day in one neighbourhood: a pick that spreads wider than a walk-and-short-ride (the model
+        // cannot see the map) is dropped and the engine's own pick stays.
+        const span = Math.max(...selectedPlaces.flatMap((a) => selectedPlaces.map((b) => haversineKm(a, b))));
+        const spanLimit = intent.areaFilter ? MAX_COURSE_SPAN_KM_AREA : intent.pace === "packed" ? 6 : intent.pace === "relaxed" ? 3.5 : MAX_COURSE_SPAN_KM;
+        if (selectedPlaces.length === result.requestedCount && span <= Math.max(spanLimit, (intent.radiusKm ?? 0) * 2)) {
           finalPlaceIds = optimizeRoute(selectedPlaces).map((place) => place.id);
           selectionReason = selection.reason;
           courseTitle = selection.title;

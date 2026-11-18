@@ -56,6 +56,8 @@ import { readInitialLocale, useCategoryLabel, useLocale, usePromptExamples, useT
 import { dictionaries } from "@/features/mobile/i18n/translations";
 import { buildPromptSuggestions, fetchSeoulWeather } from "@/features/mobile/prompt-suggestions";
 import { BrandTile } from "@/features/mobile/brand-icons";
+import { PlaceMapScreen } from "@/features/mobile/place-map-screen";
+import { categoryText, isCustomId, loadCustomPlaces, subscribeCustomPlaces } from "@/features/mobile/custom-places";
 import { CategorySheet, type PlaceBadgeKind } from "@/features/mobile/category-sheet";
 import { LanguageMenuButton } from "@/features/mobile/language-menu-button";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
@@ -261,6 +263,10 @@ export function MobileAppShell() {
   const [photoPlaceId, setPhotoPlaceId] = useState<string | null>(null);
   const [isOptimizePromptOpen, setIsOptimizePromptOpen] = useState(false);
   const [openTripId, setOpenTripId] = useState<string | null>(null);
+  // The map screen (search a place, see what is around it, add stops to the course).
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  // Where the button that opened it sits, so the green spreads from there.
+  const [mapReveal, setMapReveal] = useState<{ x: number; y: number; r: number } | null>(null);
 
   const [publishedTrips, setPublishedTrips] = useState<FeedTrip[]>([]);
   // Courses that arrived through a share link: kept on this device so the one that was opened (and anything
@@ -619,6 +625,12 @@ export function MobileAppShell() {
   // districts loaded here, and diningVersion bumps so the lookups below are read again.
   const [diningVersion, setDiningVersion] = useState(0);
   useEffect(() => subscribeDining(() => setDiningVersion((version) => version + 1)), []);
+  // Places found on the map screen (not in our own data) come back from this device's storage, and the screens
+  // that already read places while rendering look again once they are in.
+  useEffect(() => {
+    loadCustomPlaces();
+    return subscribeCustomPlaces(() => setDiningVersion((version) => version + 1));
+  }, []);
   useEffect(() => {
     // A sample course in 탐색 has a meal and a café too: they load when its detail is opened.
     const openTripPlaceIds = openTripId ? [...publishedTrips, ...importedTrips, ...seedFeedTrips].find((trip) => trip.id === openTripId)?.placeIds ?? [] : [];
@@ -1266,7 +1278,16 @@ export function MobileAppShell() {
       if (!response.ok || !data.ok || !Array.isArray(data.ids)) {
         throw new Error("refine failed");
       }
-      const ids = data.ids as string[];
+      let ids = data.ids as string[];
+      // The server only knows our own places, so a stop found on the map screen comes back missing: put it back
+      // where it fits best.
+      for (const customId of chainIds.filter((id) => isCustomId(id) && !ids.includes(id))) {
+        const place = getPlaceById(customId);
+        if (place) {
+          const at = findBestInsertionIndex(getPlacesByIds(ids), place);
+          ids = [...ids.slice(0, at), customId, ...ids.slice(at)];
+        }
+      }
       const changed = ids.join(",") !== chainIds.join(",");
       await ensureDiningLoadedForIds(ids);
       setChainIds(ids);
@@ -1573,6 +1594,16 @@ export function MobileAppShell() {
     }
   }, [addedId]);
 
+  function openMap(from: HTMLElement) {
+    const frame = frameRef.current?.getBoundingClientRect();
+    // The green circle inside the button (data-morph) is what grows into the screen; a plain button grows from itself.
+    const rect = (from.querySelector("[data-morph]") ?? from).getBoundingClientRect();
+    setMapReveal(
+      frame ? { x: rect.left + rect.width / 2 - frame.left, y: rect.top + rect.height / 2 - frame.top, r: rect.width / 2 } : null,
+    );
+    setIsMapOpen(true);
+  }
+
   function addToChain(place: MobilePlace) {
     haptic();
     if (!hasResult) {
@@ -1795,6 +1826,7 @@ export function MobileAppShell() {
     { open: isOptimizePromptOpen, close: () => setIsOptimizePromptOpen(false) },
     { open: photoPlaceId !== null, close: () => setPhotoPlaceId(null) },
     { open: selectedPlaceId !== null, close: () => setSelectedPlaceId(null) },
+    { open: isMapOpen, close: () => setIsMapOpen(false) },
     { open: viewingCategory !== null, close: () => setViewingCategory(null) },
     { open: activeTab !== "home", close: () => setActiveTab("home") },
     {
@@ -2023,14 +2055,14 @@ export function MobileAppShell() {
                 <button
                   className="ios-glass hero-rise absolute inset-x-0 z-10 mx-auto flex h-12 w-fit items-center gap-2.5 rounded-full pl-6 pr-2 text-base font-bold [--rise:480ms] [bottom:calc(2.5rem+env(safe-area-inset-bottom))]"
                   data-tour="quick-browse"
-                  onClick={() => setActiveTab("explore")}
+                  onClick={(event) => openMap(event.currentTarget)}
                   style={{ color: "var(--success)" }}
                   type="button"
                 >
                   {t("quickBrowse")}
                   {/* The same --success lime as the label, with a white arrow. */}
-                  <span className="grid h-8 w-8 place-items-center rounded-full bg-success text-white">
-                    <ArrowRightIcon className="h-4 w-4" />
+                  <span className="grid h-8 w-8 place-items-center rounded-full bg-success text-white" data-morph>
+                    <MapSearchIcon className="h-[1.125rem] w-[1.125rem]" />
                   </span>
                 </button>
 
@@ -2326,7 +2358,7 @@ export function MobileAppShell() {
                               <span className="block truncate text-[1.0625rem] font-bold leading-6">{localizedPlace.name}</span>
                             </button>
                             <span className="block truncate text-sm text-muted">
-                              {placeSubtitle(localizedPlace, categoryLabel(place.category), locale)}
+                              {placeSubtitle(localizedPlace, categoryText(place, categoryLabel), locale)}
                             </span>
                           </div>
                         </div>
@@ -2660,6 +2692,15 @@ export function MobileAppShell() {
             >
               <CompassIcon className="h-[1.375rem] w-[1.375rem]" />
             </button>
+            <button
+              aria-label={t("navMap")}
+              data-map-button
+              className="absolute right-[7.5rem] [top:calc(0.75rem+env(safe-area-inset-top))] z-20 ios-glass grid h-11 w-11 place-items-center rounded-full text-muted-strong"
+              onClick={(event) => openMap(event.currentTarget)}
+              type="button"
+            >
+              <MapSearchIcon className="h-[1.375rem] w-[1.375rem]" />
+            </button>
               </>
             )}
             {activeTab === "explore" && isExploreTabsPinned && (
@@ -2712,6 +2753,22 @@ export function MobileAppShell() {
               setSelectedPlaceId(id);
             }}
             places={viewingCategoryPlaces}
+          />
+        )}
+
+        {isMapOpen && (
+          <PlaceMapScreen
+            chainPlaces={chainPlaces}
+            diningVersion={diningVersion}
+            onAddPlace={addToChain}
+            onClose={() => setIsMapOpen(false)}
+            onOpenPlace={(id) => setSelectedPlaceId(id)}
+            onRemovePlace={removeStopNow}
+            onViewCourse={() => {
+              setActiveTab("home");
+              setIsMapOpen(false);
+            }}
+            revealFrom={mapReveal}
           />
         )}
 

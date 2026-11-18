@@ -16,6 +16,7 @@ import {
   ImageIcon,
 } from "@/components/layout/app-icons";
 import { BrandTile, type BrandTileName } from "@/features/mobile/brand-icons";
+import { categoryText } from "@/features/mobile/custom-places";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
 import { buildCoursePreviewImageUrl, buildCourseShareUrl } from "@/features/mobile/course-share";
 import { placeSubtitle } from "@/features/mobile/dining-tags";
@@ -765,7 +766,7 @@ export function TripDetailSheet({
                   <h3 className="truncate text-[1.0625rem] font-bold">{place.name}</h3>
                   <p className="mt-0.5 text-sm text-muted">
                     {place.source === "dining"
-                      ? placeSubtitle(place, categoryLabel(place.category), locale)
+                      ? placeSubtitle(place, categoryText(place, categoryLabel), locale)
                       : `${place.area} · ${place.duration} · ${place.fee}`}
                   </p>
                 </button>
