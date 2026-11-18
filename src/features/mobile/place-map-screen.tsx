@@ -635,9 +635,6 @@ export function PlaceMapScreen({ chainPlaces, diningVersion, onAddPlace, onRemov
             {showNearby && nearby.length === 0 && (
               <p className="map-glass rounded-2xl px-4 py-3 text-center text-sm font-semibold text-muted-strong">{t("mapNothingNearby")}</p>
             )}
-            {!hasFocus && (
-              <p className="map-glass rounded-2xl px-4 py-3.5 text-sm font-semibold leading-6 text-muted-strong text-pretty">{t("mapSearchHint")}</p>
-            )}
             {followCourse && !exploring && chainPlaces.length > 0 && (
               <button
                 className="map-glass pointer-events-auto flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-extrabold text-primary-strong"
