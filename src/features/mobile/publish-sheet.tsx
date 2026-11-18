@@ -94,7 +94,7 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
                 onClick={() => setCoverPlaceId(place.id)}
                 type="button"
               >
-                <PlacePhoto className="h-[4.5rem] w-[4.5rem] rounded-2xl" place={place} />
+                <PlacePhoto className="h-[4.5rem] w-[4.5rem] rounded-2xl" fallbackSize="fill" place={place} />
                 {/* The chosen one is outlined exactly on its own square, drawn inside it: no gap, and nothing sticks out
                     for the scrolling row to cut off. */}
                 {coverPlaceId === place.id && (

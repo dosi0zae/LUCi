@@ -123,7 +123,7 @@ export function PlacePhoto({
   place: MobilePlace;
   className: string;
   // Size of the category icon tile shown when there is no photo (or it fails to load).
-  fallbackSize?: "sm" | "md" | "row" | "lg";
+  fallbackSize?: "sm" | "md" | "row" | "lg" | "fill";
 }) {
   const src = getPlaceImageUrl(place.id);
   const [failed, setFailed] = useState(isDiningCategory(place.category) || !src);

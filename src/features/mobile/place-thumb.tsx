@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 type PlaceThumbProps = {
   category: PlaceCategory;
-  size?: "sm" | "md" | "row" | "lg";
+  size?: "sm" | "md" | "row" | "lg" | "fill";
   className?: string;
 };
 
@@ -13,6 +13,8 @@ const sizes = {
   md: { box: "h-12 w-12 rounded-md", icon: "h-5 w-5" },
   row: { box: "h-14 w-14 rounded-2xl", icon: "h-6 w-6" },
   lg: { box: "h-16 w-16 rounded-2xl", icon: "h-6 w-6" },
+  // Fills whatever box it is in (a photo slot of any size), so nothing shows around it.
+  fill: { box: "h-full w-full rounded-2xl", icon: "h-6 w-6" },
 };
 
 export function PlaceThumb({ category, className, size = "md" }: PlaceThumbProps) {
