@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { LocateIcon, RouteIcon, SparklesIcon } from "@/components/layout/app-icons";
+import { LocateIcon, MinusIcon, PlusIcon, RouteIcon, SparklesIcon } from "@/components/layout/app-icons";
 import {
   loadKakaoMaps,
   type KakaoCustomOverlay,
@@ -433,23 +433,23 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
                 "linear-gradient(180deg, rgba(11,18,32,0.28) 0%, rgba(11,18,32,0) 30%, rgba(11,18,32,0) 70%, rgba(11,18,32,0.32) 100%)",
             }}
           />
-          <div className="absolute left-2 top-2 z-10 flex flex-col overflow-hidden rounded-lg border border-white/30 bg-white/90 shadow-soft backdrop-blur-sm">
+          <div className="absolute left-2 top-2 z-10 flex flex-col overflow-hidden map-glass rounded-lg">
             <button
               aria-label={t("zoomInAria")}
-              className="grid h-8 w-8 place-items-center text-sm font-extrabold text-foreground transition hover:bg-surface-muted"
+              className="grid h-8 w-8 place-items-center text-foreground transition hover:bg-surface-muted"
               onClick={() => zoomBy(-1)}
               type="button"
             >
-              +
+              <PlusIcon className="h-3.5 w-3.5" />
             </button>
             <div className="h-px bg-border" />
             <button
               aria-label={t("zoomOutAria")}
-              className="grid h-8 w-8 place-items-center text-sm font-extrabold text-foreground transition hover:bg-surface-muted"
+              className="grid h-8 w-8 place-items-center text-foreground transition hover:bg-surface-muted"
               onClick={() => zoomBy(1)}
               type="button"
             >
-              −
+              <MinusIcon className="h-3.5 w-3.5" />
             </button>
             <div className="h-px bg-border" />
             <button
@@ -468,7 +468,7 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
           <button
             aria-label={t("optimizeRouteAria")}
             className={cn(
-              "absolute bottom-[3rem] right-2 z-10 grid h-8 w-8 place-items-center rounded-full border border-white/30 bg-white/90 text-foreground shadow-soft backdrop-blur-sm transition hover:bg-surface-muted",
+              "absolute bottom-[3rem] right-2 z-10 grid h-8 w-8 place-items-center map-glass rounded-full text-foreground",
               nudgeOptimize && "optimize-nudge",
             )}
             onClick={handleOptimize}
@@ -479,7 +479,7 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
           </button>
           {optimizeNote && (
             <p
-              className="optimize-note pointer-events-none absolute bottom-[3.25rem] right-12 z-10 rounded-full bg-foreground/85 px-2.5 py-1 text-[0.6875rem] font-bold text-white"
+              className="optimize-note pointer-events-none absolute bottom-[3.25rem] right-12 z-10 rounded-full bg-[#111827]/85 px-2.5 py-1 text-[0.6875rem] font-bold text-white"
               role="status"
             >
               {optimizeNote === "done"
@@ -492,7 +492,7 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
       {status === "ready" && (
         <button
           aria-label={viewMode === "map" ? t("viewAsConstellationAria") : t("viewAsMapAria")}
-          className="absolute bottom-2 right-2 z-10 grid h-8 w-8 place-items-center rounded-full border border-white/30 bg-white/90 text-foreground shadow-soft backdrop-blur-sm transition hover:bg-surface-muted"
+          className="absolute bottom-2 right-2 z-10 grid h-8 w-8 place-items-center map-glass rounded-full text-foreground"
           onClick={() => setViewMode((mode) => (mode === "map" ? "abstract" : "map"))}
           type="button"
         >

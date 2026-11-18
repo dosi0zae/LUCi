@@ -18,11 +18,12 @@ import {
 import { BrandTile, type BrandTileName } from "@/features/mobile/brand-icons";
 import { categoryText } from "@/features/mobile/custom-places";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
+import { MyBadge } from "@/features/mobile/my-badge";
 import { buildCoursePreviewImageUrl, buildCourseShareUrl } from "@/features/mobile/course-share";
 import { placeSubtitle } from "@/features/mobile/dining-tags";
 import { shareToKakaoTalk } from "@/features/mobile/kakao-share";
 import { buildFacebookShareUrl, buildLineShareUrl, buildTwitterShareUrl, buildWhatsAppShareUrl } from "@/features/mobile/sns-share";
-import { PopOnActive, updateScrollSheen } from "@/features/mobile/motion";
+import { PopOnActive } from "@/features/mobile/motion";
 import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import {
@@ -172,7 +173,7 @@ export function TripDetailSheet({
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const selectedPlace = selectedPlaceId ? getPlaceById(selectedPlaceId) : undefined;
   const coverPlaceId = getTripCoverPlace(trip)?.id;
-  const coverSrc = coverPlaceId ? getPlaceImageUrl(coverPlaceId) : null;
+  const coverSrc = trip.coverImage ?? (coverPlaceId ? getPlaceImageUrl(coverPlaceId) : null);
   const [coverFailed, setCoverFailed] = useState(false);
   const coverRef = useRef<HTMLDivElement>(null);
 
@@ -614,14 +615,13 @@ export function TripDetailSheet({
       </button>
       {trip.isMine && (
         <span className="pointer-events-none absolute right-4 [top:calc(0.75rem+env(safe-area-inset-top))] z-20 flex h-10 items-center">
-          <Badge tone="blue">{t("myCourseBadge")}</Badge>
+          <MyBadge />
         </span>
       )}
 
       <div
         className="app-scroll-area min-w-0 flex-1 overflow-y-auto px-5 [padding-bottom:calc(6.5rem+env(safe-area-inset-bottom))] [padding-top:calc(4rem+env(safe-area-inset-top))]"
         onScroll={(event) => {
-          updateScrollSheen(event.currentTarget);
           const scrolled = event.currentTarget.scrollTop > 8;
           setIsScrolled((current) => (current === scrolled ? current : scrolled));
         }}
@@ -772,7 +772,7 @@ export function TripDetailSheet({
                 </button>
                 {/* The author can pick which spot's photo represents the course in lists. */}
                 {trip.isMine &&
-                  (coverPlaceId === place.id ? (
+                  (!trip.coverImage && coverPlaceId === place.id ? (
                     <span className="shrink-0 rounded-full bg-primary-soft px-3 py-1.5 text-xs font-extrabold text-primary-strong">
                       {t("coverBadge")}
                     </span>
@@ -883,20 +883,19 @@ export function TripDetailSheet({
 
       {isShareMenuOpen && (
         <div
-          className="sheet-backdrop absolute inset-0 z-50 flex items-end bg-black/40"
+          className="sheet-backdrop absolute inset-0 z-50 flex items-end bg-black/35"
           onClick={() => setIsShareMenuOpen(false)}
           role="presentation"
         >
           <div
             aria-label={t("shareSheetTitle")}
             aria-modal="true"
-            className="sheet-panel w-full rounded-t-3xl bg-background px-5 pt-3 shadow-panel [padding-bottom:calc(1.25rem+env(safe-area-inset-bottom))]"
+            className="sheet-panel glass-panel w-full rounded-t-[2rem] px-5 pt-5 [padding-bottom:calc(1.5rem+env(safe-area-inset-bottom))]"
             onClick={(event) => event.stopPropagation()}
             role="dialog"
           >
-            <div className="mx-auto h-1 w-9 rounded-full bg-border-strong" />
-            <div className="mt-3 flex items-center justify-between">
-              <h3 className="text-lg font-extrabold">{t("shareSheetTitle")}</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-2xl font-extrabold tracking-tight">{t("shareSheetTitle")}</h3>
               <button
                 aria-label={t("cancel")}
                 className="ios-btn grid h-9 w-9 place-items-center rounded-full"
@@ -908,7 +907,7 @@ export function TripDetailSheet({
             </div>
 
             {/* What a chat app will show under the link: the same picture the link's preview uses. */}
-            <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-surface-muted">
+            <div className="mt-4 overflow-hidden rounded-2xl bg-surface-muted shadow-[0_6px_18px_-8px_rgba(15,23,42,0.3)] ring-1 ring-black/5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 alt=""
@@ -936,10 +935,10 @@ export function TripDetailSheet({
               ))}
             </div>
 
-            <div className="mt-4 divide-y divide-border overflow-hidden rounded-2xl bg-surface-muted">
+            <div className="ios-row mt-4 divide-y divide-border overflow-hidden">
               {shareActions.map((action) => (
                 <button
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-[0.9375rem] font-bold active:bg-black/5"
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[0.9375rem] font-bold active:bg-black/5"
                   key={action.key}
                   onClick={() => {
                     setIsShareMenuOpen(false);
@@ -947,7 +946,7 @@ export function TripDetailSheet({
                   }}
                   type="button"
                 >
-                  <span className="grid h-7 w-7 shrink-0 place-items-center text-muted-strong">{action.icon}</span>
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-strong">{action.icon}</span>
                   {action.label}
                 </button>
               ))}

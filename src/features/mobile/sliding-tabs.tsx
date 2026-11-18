@@ -32,7 +32,22 @@ export function SlidingTabs<T extends string>({ fullWidth = false, onChange, opt
 
   const labelsKey = options.map((option) => option.ariaLabel ?? String(option.value)).join("|");
 
+  // The first placement (the control appearing: opening Explore, or the pinned copy showing up on scroll) is instant:
+  // gliding it in from nothing made a blue pill grow out of the left edge each time. Later changes of the choice glide.
+  const hasPlacedRef = useRef(false);
   useLayoutEffect(() => {
+    const indicator = indicatorRef.current;
+    if (!hasPlacedRef.current && indicator) {
+      indicator.style.transition = "none";
+      place();
+      indicator.getBoundingClientRect();
+      hasPlacedRef.current = true;
+      // Back to the stylesheet's transition once the instant placement has been painted. (Not cancelled on cleanup:
+      // in development React runs this effect twice, and a cancelled reset would leave the glide switched off.)
+      window.requestAnimationFrame(() => {
+        indicator.style.transition = "";
+      });
+    }
     place();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, labelsKey]);
@@ -42,7 +57,20 @@ export function SlidingTabs<T extends string>({ fullWidth = false, onChange, opt
     if (!container) {
       return;
     }
-    const observer = new ResizeObserver(place);
+    // A resize (the control narrowing or widening) re-places the highlight at once: only a change of the choice glides.
+    const observer = new ResizeObserver(() => {
+      const indicator = indicatorRef.current;
+      if (indicator) {
+        indicator.style.transition = "none";
+        place();
+        indicator.getBoundingClientRect();
+        window.requestAnimationFrame(() => {
+          indicator.style.transition = "";
+        });
+      } else {
+        place();
+      }
+    });
     observer.observe(container);
     return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,7 +87,7 @@ export function SlidingTabs<T extends string>({ fullWidth = false, onChange, opt
     >
       <span
         aria-hidden="true"
-        className="absolute bottom-1 left-0 top-1 rounded-full bg-primary transition-[transform,width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+        className="absolute bottom-1 left-0 top-1 rounded-full bg-primary transition-[transform,width] duration-[220ms] ease-[cubic-bezier(0.3,0.7,0.3,1)] motion-reduce:transition-none"
         ref={indicatorRef}
       />
       {options.map((option) => (

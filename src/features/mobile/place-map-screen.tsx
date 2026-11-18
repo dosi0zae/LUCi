@@ -100,12 +100,12 @@ function Pin({ category, number, label, selected, isAnchor, uncategorized, delay
         <span
           className={cn(
             "grid place-items-center rounded-full border-2 border-white text-white shadow-[0_2px_5px_rgba(15,23,42,0.3)] transition-transform",
-            isAnchor ? "h-10 w-10 bg-primary" : inCourse ? "h-8 w-8 text-sm font-extrabold" : "h-8 w-8",
+            isAnchor ? "h-7 w-7 bg-primary" : inCourse ? "h-8 w-8 text-sm font-extrabold" : "h-8 w-8",
             selected ? "scale-125" : "",
           )}
           style={isAnchor || inCourse ? (inCourse ? { background: "#b7e86b", color: "#0b1220" } : undefined) : { background: categoryTone[category] }}
         >
-          {inCourse ? number : uncategorized ? <MapPinIcon className={isAnchor ? "h-5 w-5" : "h-4 w-4"} /> : <CategoryIcon category={category} className={isAnchor ? "h-5 w-5" : "h-4 w-4"} />}
+          {inCourse ? number : isAnchor ? <SearchIcon className="h-3.5 w-3.5" /> : uncategorized ? <MapPinIcon className="h-4 w-4" /> : <CategoryIcon category={category} className="h-4 w-4" />}
         </span>
       </span>
       {label && (
@@ -113,7 +113,7 @@ function Pin({ category, number, label, selected, isAnchor, uncategorized, delay
         // reads on any map tile. It sits lower when the pin is enlarged (a transform does not move the layout).
         // It is not part of the pop: it fades in once the dot has landed.
         <span
-          className={cn("max-w-[9rem] truncate text-xs font-extrabold text-foreground", selected ? "mt-3" : "mt-2", delayMs !== null && "map-label-in")}
+          className={cn("max-w-[9rem] truncate text-xs font-extrabold text-foreground", selected ? "mt-2.5" : "mt-1.5", delayMs !== null && "map-label-in")}
           style={{
             WebkitTextStroke: "3px #fff",
             paintOrder: "stroke fill",
@@ -329,7 +329,7 @@ export function PlaceMapScreen({ chainPlaces, diningVersion, onAddPlace, onRemov
       // React fills this element a moment after Kakao measures it, so Kakao's own anchoring (a fraction of the
       // measured width) would be off by half the pin's width. The pin centers itself on the point instead: half
       // its own width left, half its circle up (the name hangs below the circle).
-      element.style.transform = `translate(-50%, -${props.isAnchor ? 20 : 16}px)`;
+      element.style.transform = `translate(-50%, -${props.isAnchor ? 14 : 16}px)`;
       const root = createRoot(element);
       const isNew = !seenRef.current.has(place.id) && !reduceMotion;
       root.render(
@@ -437,9 +437,15 @@ export function PlaceMapScreen({ chainPlaces, diningVersion, onAddPlace, onRemov
     };
   }, [query]);
 
+  // What counts as already on the map when the pins around are redrawn (another filter): the stops of the course and the
+  // searched spot stay as they are, and only what is around pops in.
+  function keepCourseStill() {
+    seenRef.current = new Set([...chainPlaces.map((place) => place.id), ...(anchor ? [anchor.id] : [])]);
+  }
+
   async function goTo(point: { lat: number; lng: number }, spot: MobilePlace | null) {
     await ensureDiningNear([point], 1.3);
-    seenRef.current = new Set();
+    keepCourseStill();
     setFollowCourse(false);
     setAnchor(spot);
     setOrigin(point);
@@ -530,7 +536,7 @@ export function PlaceMapScreen({ chainPlaces, diningVersion, onAddPlace, onRemov
       <div className={cn("absolute inset-0", isClosing ? "map-content-out" : "map-content-in")}>
         {/* The map: a big rounded card in the middle of the screen, not the whole screen. */}
         <div className="absolute inset-x-2.5 overflow-hidden rounded-[2rem] bg-background shadow-[0_14px_30px_-14px_rgba(50,80,10,0.55)] [bottom:calc(0.625rem+env(safe-area-inset-bottom))] [top:calc(0.625rem+env(safe-area-inset-top))]">
-          <div className="absolute inset-0" ref={containerRef} />
+          <div className="place-map absolute inset-0" ref={containerRef} />
 
           <div className="absolute inset-x-3 top-3 z-30">
             <div className="flex items-center gap-2">
@@ -546,7 +552,7 @@ export function PlaceMapScreen({ chainPlaces, diningVersion, onAddPlace, onRemov
                 <SearchIcon className="h-[1.125rem] w-[1.125rem] shrink-0 text-muted" />
                 <input
                   aria-label={t("mapSearchPlaceholder")}
-                  className="min-w-0 flex-1 text-ellipsis bg-transparent text-base font-semibold outline-none placeholder:text-muted"
+                  className="min-w-0 flex-1 text-ellipsis bg-transparent text-base font-semibold outline-none placeholder:text-muted map-search-input"
                   onChange={(event) => setQuery(event.target.value)}
                   onFocus={() => results.length > 0 && setShowResults(true)}
                   onKeyDown={(event) => {
@@ -616,13 +622,13 @@ export function PlaceMapScreen({ chainPlaces, diningVersion, onAddPlace, onRemov
 
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col items-center gap-2 px-3 pt-[4.25rem]">
             {showNearby && (
-              <div className="app-scroll-area pointer-events-auto -mx-3 -my-2 flex w-[calc(100%+1.5rem)] gap-2 overflow-x-auto px-3 py-2">
+              <div className="app-scroll-area pointer-events-auto -mx-3 -my-2 flex w-[calc(100%+1.5rem)] gap-2 overflow-x-auto px-3 py-2 [&>:first-child]:ml-auto [&>:last-child]:mr-auto">
                 {FILTERS.map((item) => (
                   <button
                     className={cn("h-9 shrink-0 rounded-full px-3.5 text-sm font-bold", filter === item ? "bg-primary text-white shadow-[0_2px_8px_rgba(47,111,228,0.4)]" : "map-glass text-muted-strong")}
                     key={item}
                     onClick={() => {
-                      seenRef.current = new Set();
+                      keepCourseStill();
                       setFilter(item);
                     }}
                     type="button"
@@ -668,7 +674,7 @@ export function PlaceMapScreen({ chainPlaces, diningVersion, onAddPlace, onRemov
               <LocateIcon className="h-[1.25rem] w-[1.25rem]" />
             </button>
             {detail && cardPlace && (
-              <div key={cardPlace.id} className={cn("pointer-events-auto rounded-3xl bg-white/95 p-4 shadow-[0_4px_16px_-4px_rgba(15,23,42,0.25)] ring-1 ring-black/5", isCardLeaving ? "map-card-out" : "map-card-in")}>
+              <div key={cardPlace.id} className={cn("pointer-events-auto read-surface rounded-3xl p-4", isCardLeaving ? "map-card-out" : "map-card-in")}>
                 <div className="flex items-start gap-3">
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-white" style={{ background: cardPlace.uncategorized ? "var(--muted)" : categoryTone[cardPlace.category] }}>
                     {cardPlace.uncategorized ? <MapPinIcon className="h-5 w-5" /> : <CategoryIcon category={cardPlace.category} className="h-5 w-5" />}
@@ -707,7 +713,7 @@ export function PlaceMapScreen({ chainPlaces, diningVersion, onAddPlace, onRemov
             )}
 
             {chainPlaces.length > 0 && (
-              <div className="pointer-events-auto rounded-3xl bg-white/95 p-3 shadow-[0_4px_16px_-4px_rgba(15,23,42,0.25)] ring-1 ring-black/5">
+              <div className="pointer-events-auto read-surface rounded-3xl p-3">
                 <div className="flex items-center justify-between gap-3 px-1">
                   <p className="text-sm font-extrabold">{t("mapCourseTray", { count: chainPlaces.length })}</p>
                   <button

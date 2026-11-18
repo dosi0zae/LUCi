@@ -1,7 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { PlusIcon } from "@/components/layout/app-icons";
+import { fileToCoverDataUrl } from "@/features/mobile/cover-image";
 import { cn } from "@/lib/utils";
 import { PlacePhoto } from "@/features/mobile/place-photo";
 import type { MobilePlace, TripVisibility } from "@/features/mobile/mobile-data";
@@ -18,6 +20,8 @@ type PublishSheetProps = {
     description: string;
     visibility: TripVisibility;
     coverPlaceId: string;
+    // The author's own photo (gallery or camera), when that is the cover.
+    coverImage?: string;
   }) => void;
 };
 
@@ -36,8 +40,26 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
   const [coverPlaceId, setCoverPlaceId] = useState(
     () => (places.find((place) => place.image) ?? places[0])?.id ?? "",
   );
+  // The author's own photo: picked from the gallery or taken with the camera (the phone offers both for a file input
+  // that accepts images). Once there is one it is the chosen cover until a spot's photo is tapped.
+  const [uploadedCover, setUploadedCover] = useState<string | null>(null);
+  const [useUploadedCover, setUseUploadedCover] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const [isClosing, setIsClosing] = useState(false);
+
+  async function handlePickedFile(file: File | undefined) {
+    if (!file) {
+      return;
+    }
+    try {
+      setUploadedCover(await fileToCoverDataUrl(file));
+      setUseUploadedCover(true);
+      setError("");
+    } catch {
+      setError(t("publishCoverFailed"));
+    }
+  }
 
   function handleCancel() {
     setIsClosing(true);
@@ -58,7 +80,13 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
     }
 
     setError("");
-    onPublish({ title: title.trim(), description: description.trim(), visibility, coverPlaceId });
+    onPublish({
+      title: title.trim(),
+      description: description.trim(),
+      visibility,
+      coverPlaceId,
+      coverImage: useUploadedCover && uploadedCover ? uploadedCover : undefined,
+    });
   }
 
   return (
@@ -88,20 +116,59 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
             {places.map((place) => (
               <button
                 aria-label={place.name}
-                aria-pressed={coverPlaceId === place.id}
-                className={cn("relative shrink-0 rounded-2xl transition", coverPlaceId !== place.id && "opacity-70 hover:opacity-100")}
+                aria-pressed={!useUploadedCover && coverPlaceId === place.id}
+                className={cn("relative shrink-0 rounded-2xl transition", (useUploadedCover || coverPlaceId !== place.id) && "opacity-70 hover:opacity-100")}
                 key={place.id}
-                onClick={() => setCoverPlaceId(place.id)}
+                onClick={() => {
+                  setCoverPlaceId(place.id);
+                  setUseUploadedCover(false);
+                }}
                 type="button"
               >
                 <PlacePhoto className="h-[4.5rem] w-[4.5rem] rounded-2xl" fallbackSize="fill" place={place} />
                 {/* The chosen one is outlined exactly on its own square, drawn inside it: no gap, and nothing sticks out
                     for the scrolling row to cut off. */}
-                {coverPlaceId === place.id && (
+                {!useUploadedCover && coverPlaceId === place.id && (
                   <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-2xl ring-[3px] ring-inset ring-primary" />
                 )}
               </button>
             ))}
+            {/* The author's own photo, once there is one, and at the very end the + that gets (or replaces) it. */}
+            {uploadedCover && (
+              <button
+                aria-label={t("publishCoverOwnAria")}
+                aria-pressed={useUploadedCover}
+                className={cn("relative shrink-0 rounded-2xl transition", !useUploadedCover && "opacity-70 hover:opacity-100")}
+                onClick={() => setUseUploadedCover(true)}
+                type="button"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img alt="" className="block h-[4.5rem] w-[4.5rem] rounded-2xl object-cover" src={uploadedCover} />
+                {useUploadedCover && (
+                  <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-2xl ring-[3px] ring-inset ring-primary" />
+                )}
+              </button>
+            )}
+            <button
+              aria-label={t("publishCoverAddAria")}
+              className="grid h-[4.5rem] w-[4.5rem] shrink-0 place-items-center rounded-2xl border-2 border-dashed border-border-strong bg-surface-muted text-muted-strong transition active:scale-95"
+              onClick={() => fileInputRef.current?.click()}
+              type="button"
+            >
+              <PlusIcon className="h-6 w-6" />
+            </button>
+            <input
+              accept="image/*"
+              className="sr-only"
+              onChange={(event) => {
+                void handlePickedFile(event.target.files?.[0]);
+                // The same photo can be picked again.
+                event.target.value = "";
+              }}
+              ref={fileInputRef}
+              tabIndex={-1}
+              type="file"
+            />
           </div>
           <p className="mt-1.5 text-xs text-muted">{t("publishCoverHint")}</p>
         </div>

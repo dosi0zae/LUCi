@@ -153,6 +153,8 @@ export type FeedTrip = {
   // The spot whose photo represents the course in lists. Unset = the first spot that has
   // a real photo (see getTripCoverPlace).
   coverPlaceId?: string;
+  // The author's own photo (a small JPEG as a data URL, see cover-image.ts): when set it is the cover, instead of a spot's photo.
+  coverImage?: string;
   // Seed trips carry en/ja/zh from their theme text; published trips get theirs
   // asynchronously from /api/translate-trip after publish (see handlePublish).
   translations?: Partial<Record<Locale, LocalizedTripFields>>;

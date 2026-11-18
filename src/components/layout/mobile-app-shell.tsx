@@ -27,13 +27,14 @@ import {
   PlusIcon,
   RefreshIcon,
   RotateUpIcon,
+  RouteIcon,
   SearchIcon,
   TrashIcon,
   UserIcon,
 } from "@/components/layout/app-icons";
 import { IntroSplash } from "@/components/layout/intro-splash";
 import { CourseSkeleton } from "@/features/mobile/course-skeleton";
-import { flyDot, haptic, updateScrollSheen } from "@/features/mobile/motion";
+import { flyDot, haptic } from "@/features/mobile/motion";
 import { cn } from "@/lib/utils";
 import {
   getPlaceById,
@@ -111,7 +112,8 @@ type ExploreSort = "all" | "weekly" | "live";
 // Left to right in the tab bar: live, all (the default, in the middle), weekly. Swiping follows the same order.
 const EXPLORE_SORT_ORDER: ExploreSort[] = ["live", "all", "weekly"];
 // Where (px below the scroll area's top) the pinned sort tabs sit: centered on the back button.
-const EXPLORE_TABS_PIN_TOP = 9;
+// The tab bar pins (shrinking and rising to the top) once it has scrolled up this close to the top of the list.
+const EXPLORE_TABS_PIN_TOP = 44;
 
 const TAB_ORDER: TabId[] = ["home", "explore", "profile"];
 
@@ -940,18 +942,34 @@ export function MobileAppShell() {
     }
   });
 
+  // The explore tab bar is ONE control that morphs: in the page it is the full-width bar with the long words; when it has
+  // scrolled up to the top it shrinks (and shortens its words) while it rises into the top bar, beside the back button.
+  // Both words are always there and cross-fade, so nothing pops.
+  const morphLabel = (long: string, short: string) => (
+    <span className="grid place-items-center">
+      <span className="col-start-1 row-start-1 transition-opacity duration-200" style={{ opacity: isExploreTabsPinned ? 0 : 1, transitionDelay: isExploreTabsPinned ? "0ms" : "220ms" }}>
+        {long}
+      </span>
+      <span className="col-start-1 row-start-1 transition-opacity duration-200" style={{ opacity: isExploreTabsPinned ? 1 : 0, transitionDelay: isExploreTabsPinned ? "0ms" : "220ms" }}>
+        {short}
+      </span>
+    </span>
+  );
   const exploreTabs = (
     <SlidingTabs
       onChange={selectExploreSort}
       fullWidth
       options={[
-        { value: "live", label: t("rankingLive") },
+        { value: "live", label: morphLabel(t("rankingLive"), t("rankingLiveShort")) },
         { value: "all", label: t("exploreSortAll") },
-        { value: "weekly", label: t("rankingWeekly") },
+        { value: "weekly", label: morphLabel(t("rankingWeekly"), t("rankingWeeklyShort")) },
       ]}
       value={exploreSort}
     />
   );
+  // True for a moment after the bar pins or unpins: only then does its top move with a transition (while it is
+  // free it must follow the scrolling list exactly).
+  const [isExploreTabsSettling, setIsExploreTabsSettling] = useState(false);
 
   // The taste behind the 전체 order is taken when Explore opens, not live: liking or saving a
   // course while browsing shouldn't make cards jump around under the finger. It updates the
@@ -961,6 +979,8 @@ export function MobileAppShell() {
   );
   useLayoutEffect(() => {
     if (activeTab === "explore") {
+      // The tab bar starts from its slot at the top of the page again (not where it was when Explore was left).
+      frameRef.current?.style.removeProperty("--tabs-y");
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTasteSnapshot(buildTasteProfile({ likedTrips, savedTrips, savedPlaces: bookmarkedPlaces }));
     }
@@ -1003,9 +1023,19 @@ export function MobileAppShell() {
     if (normalizedExploreQuery && aiSearchIds && aiSearchIds.length > 0) {
       return matching;
     }
+    // The user's own courses come first (newest first: their ids carry the time they were saved), then the rest by
+    // taste. The two rankings ("live", "weekly") are not touched: a number there says how popular a course is.
     return matching
       .map((trip) => ({ trip, score: tasteScore(trip, tasteSnapshot) }))
-      .sort((a, b) => b.score - a.score || b.trip.publishedAt.localeCompare(a.trip.publishedAt))
+      .sort((a, b) => {
+        if (a.trip.isMine !== b.trip.isMine) {
+          return a.trip.isMine ? -1 : 1;
+        }
+        if (a.trip.isMine) {
+          return b.trip.id.localeCompare(a.trip.id);
+        }
+        return b.score - a.score || b.trip.publishedAt.localeCompare(a.trip.publishedAt);
+      })
       .map((entry) => entry.trip);
   }, [allTrips, normalizedExploreQuery, aiSearchIds, exploreSort, tasteSnapshot]);
 
@@ -1637,7 +1667,7 @@ export function MobileAppShell() {
 
   function setTripCover(tripId: string, placeId: string) {
     setPublishedTrips((current) =>
-      current.map((trip) => (trip.id === tripId ? { ...trip, coverPlaceId: placeId } : trip)),
+      current.map((trip) => (trip.id === tripId ? { ...trip, coverPlaceId: placeId, coverImage: undefined } : trip)),
     );
   }
 
@@ -1646,6 +1676,7 @@ export function MobileAppShell() {
     description: string;
     visibility: TripVisibility;
     coverPlaceId: string;
+    coverImage?: string;
   }) {
     const trip: FeedTrip = {
       // handlePublish only ever runs from PublishSheet's submit click, never during
@@ -1659,6 +1690,7 @@ export function MobileAppShell() {
       visibility: input.visibility,
       placeIds: chainIds,
       coverPlaceId: input.coverPlaceId,
+      coverImage: input.coverImage,
       likes: 0,
       comments: 0,
       saved: 0,
@@ -1907,14 +1939,21 @@ export function MobileAppShell() {
               : false;
             setIsTitleScrolledAway((current) => (current === next ? current : next));
             container.style.setProperty("--title-p", Math.min(1, container.scrollTop / 70).toFixed(3));
-            updateScrollSheen(container);
             const scrolled = container.scrollTop > 8;
             setIsScrolled((current) => (current === scrolled ? current : scrolled));
             const tabs = exploreTabsRef.current;
             const pinned = tabs
               ? tabs.getBoundingClientRect().top - container.getBoundingClientRect().top <= EXPLORE_TABS_PIN_TOP
               : false;
-            setIsExploreTabsPinned((current) => (current === pinned ? current : pinned));
+            if (tabs && frameRef.current) {
+              // Where the bar sits in the page (px from the top of the frame): the morphing bar starts from here.
+              frameRef.current.style.setProperty("--tabs-y", `${tabs.getBoundingClientRect().top - frameRef.current.getBoundingClientRect().top}px`);
+            }
+            if (pinned !== isExploreTabsPinned) {
+              setIsExploreTabsPinned(pinned);
+              setIsExploreTabsSettling(true);
+              window.setTimeout(() => setIsExploreTabsSettling(false), 600);
+            }
           }}
         >
           {activeTab === "home" && (
@@ -2594,12 +2633,9 @@ export function MobileAppShell() {
                 <h1 className="scroll-title text-2xl font-extrabold tracking-tight">{t("exploreHeading")}</h1>
               </div>
               {/* Three equal thirds, so the default tab ("all") sits exactly in the middle. */}
-              <div
-                className={cn("mx-auto mt-4 w-full max-w-[20rem]", isExploreTabsPinned && "invisible")}
-                ref={exploreTabsRef}
-              >
-                {exploreTabs}
-              </div>
+              {/* shrink-0: in this flex column a fixed-height empty box would be squeezed to nothing and the list would
+                  slide up under the tab bar. */}
+              <div aria-hidden="true" className="mx-auto mt-4 h-[3.15rem] w-full max-w-[20rem] shrink-0" ref={exploreTabsRef} />
 
               {/* Room at the bottom for the floating search bar. */}
               <div className="min-h-[50vh]" {...exploreSwipe}>
@@ -2703,14 +2739,32 @@ export function MobileAppShell() {
             </button>
               </>
             )}
-            {activeTab === "explore" && isExploreTabsPinned && (
-              <div className="pointer-events-none absolute inset-x-0 z-20 flex justify-center [top:calc(9px+env(safe-area-inset-top))]">
-                <div className="pointer-events-auto w-[calc(100%-2.5rem)] max-w-[20rem]">{exploreTabs}</div>
+            {activeTab === "explore" && (
+              // Free: it sits where its slot in the page is (--tabs-y) and follows the scrolling exactly. Pinned: it
+              // narrows (the width is the room between the back button and the other margin) and rises to the top bar;
+              // the width goes first and the rise follows a beat later, so it never runs into the back button. Coming back it is
+              // the other way round: it comes down first and widens once it is clear of the button.
+              <div
+                className="pointer-events-none absolute inset-x-0 z-20 flex justify-center"
+                style={{
+                  top: isExploreTabsPinned ? "calc(9px + env(safe-area-inset-top))" : "var(--tabs-y, 4.5rem)",
+                  transition: isExploreTabsPinned || isExploreTabsSettling ? `top 380ms cubic-bezier(0.22, 1, 0.36, 1) ${isExploreTabsPinned ? 90 : 0}ms` : "none",
+                }}
+              >
+                <div
+                  className="pointer-events-auto"
+                  style={{
+                    width: isExploreTabsPinned ? "min(15rem, calc(100% - 9rem))" : "min(20rem, calc(100% - 2.5rem))",
+                    transition: `width 240ms cubic-bezier(0.22, 1, 0.36, 1) ${isExploreTabsPinned ? 0 : 200}ms`,
+                  }}
+                >
+                  {exploreTabs}
+                </div>
               </div>
             )}
             {activeTab === "explore" && (
               <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background via-background/85 to-transparent px-5 pt-10 [padding-bottom:calc(1rem+env(safe-area-inset-bottom))]">
-                <div className="glass-panel pointer-events-auto flex h-14 items-center gap-2.5 rounded-full px-5">
+                <div className="ios-glass pointer-events-auto flex h-14 items-center gap-2.5 rounded-full px-5">
                   {isAiSearching ? (
                     <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-border-strong border-t-primary" />
                   ) : aiSearchIds && aiSearchIds.length > 0 ? (
@@ -2795,26 +2849,41 @@ export function MobileAppShell() {
 
         {isOptimizePromptOpen && (
           <div
-            className="sheet-backdrop absolute inset-0 z-50 grid place-items-center bg-black/40 px-8"
+            className="sheet-backdrop absolute inset-0 z-50 grid place-items-center bg-black/35 px-7"
             onClick={() => setIsOptimizePromptOpen(false)}
             role="presentation"
           >
+            {/* The app's own dialog look: a frosted, very round card, a tinted icon, round pill buttons (the blue one is
+                the action, the grey one the way out). */}
             <div
               aria-labelledby="optimize-prompt-title"
               aria-modal="true"
-              className="sheet-panel w-full max-w-[20rem] rounded-lg bg-surface p-4 shadow-panel"
+              className="sheet-panel w-full max-w-[20rem] read-surface rounded-[2rem] p-6 text-center"
               onClick={(event) => event.stopPropagation()}
               role="dialog"
             >
-              <h3 className="text-lg font-extrabold" id="optimize-prompt-title">
+              <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-primary-soft text-primary-strong">
+                <RouteIcon className="h-7 w-7" />
+              </span>
+              <h3 className="mt-4 text-xl font-extrabold tracking-tight" id="optimize-prompt-title">
                 {t("optimizePromptTitle")}
               </h3>
-              <p className="mt-1.5 text-sm leading-6 text-muted-strong">{t("optimizePromptBody")}</p>
-              <div className="mt-4 grid gap-2">
-                <Button onClick={() => confirmOptimizeThenPublish(true)}>{t("optimizePromptYes")}</Button>
-                <Button onClick={() => confirmOptimizeThenPublish(false)} variant="secondary">
+              <p className="mt-1.5 break-keep text-sm leading-6 text-muted-strong text-balance">{t("optimizePromptBody")}</p>
+              <div className="mt-6 grid gap-2.5">
+                <button
+                  className="h-12 rounded-full bg-primary text-base font-extrabold text-white shadow-[0_8px_20px_-6px_rgba(47,111,228,0.55)] transition active:scale-[0.98]"
+                  onClick={() => confirmOptimizeThenPublish(true)}
+                  type="button"
+                >
+                  {t("optimizePromptYes")}
+                </button>
+                <button
+                  className="ios-btn h-12 rounded-full text-base font-bold transition active:scale-[0.98]"
+                  onClick={() => confirmOptimizeThenPublish(false)}
+                  type="button"
+                >
                   {t("optimizePromptNo")}
-                </Button>
+                </button>
               </div>
             </div>
           </div>

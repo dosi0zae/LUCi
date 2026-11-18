@@ -23,6 +23,7 @@ import {
   weaveDefaultDining,
 } from "@/features/mobile/dining-course";
 import { refineCourseCore } from "@/features/mobile/refine-course";
+import { resolvePlaceAnchor, stationFromPrompt } from "@/app/api/recommend/place-anchor";
 
 export const runtime = "nodejs";
 
@@ -93,7 +94,8 @@ function buildSystemPrompt(locale: string): string {
 - pace: 하루의 속도. "여유롭게", "천천히", "힐링"처럼 느긋하면 relaxed, "알차게", "빡빡하게", "최대한 많이"면 packed, 그 외 balanced.
 - startTime: 시작 시간대를 말했거나 뜻하면 morning/afternoon/evening/night ("저녁 먹고 야경", "퇴근하고"는 evening, "아침 일찍"은 morning), 아무 말 없으면 null.
 - placeCount: 추천할 장소 개수, 보통 3~5 사이 정수. 특별한 언급 없으면 4. relaxed면 3~4로 줄이고 packed면 5~6으로 늘려.
-- area: 문장이 서울의 특정 구(區)를 명시했으면(어느 언어로 쓰였든, 예: "용산구", "Yongsan", "종로") 아래 목록 중 정확히 일치하는 값 하나로 답해. 특정 구가 명시되지 않았거나 "인사동"처럼 구보다 작은 동네/장소 이름만 나왔으면 null.
+- area: 문장에 서울의 구(區) 이름이 글자 그대로 쓰여 있을 때만(어느 언어로 쓰였든, 예: "용산구", "Yongsan", "종로") 아래 목록 중 정확히 일치하는 값 하나로 답해. 구 이름이 없으면 반드시 null. 역·동네·건물·관광지 이름(성수역, 성수동, 강남역, 인사동)을 보고 어느 구인지 추측해서 채우지 마.
+- place: 문장이 중심으로 삼는 구체적인 장소·역·동네·건물의 이름(예: "성수역", "홍대입구역", "연남동", "서울숲", "경복궁")이 있으면 문장에 쓰인 그대로 답해. 구 이름만 있거나("마포구") 특정 장소가 없으면 null.
   목록: ${SEOUL_DISTRICTS.join(", ")}
 - reason: 왜 이렇게 추천하는지 ${languageName}로 쓴 한 문장.`;
 }
@@ -107,6 +109,7 @@ type GeminiAiIntent = {
   attributes?: string[];
   placeCount?: number;
   area?: string | null;
+  place?: string | null;
   reason?: string;
 };
 
@@ -133,6 +136,7 @@ async function getAiIntent(prompt: string, locale: string): Promise<GeminiAiInte
           attributes: { type: "ARRAY", items: { type: "STRING", enum: [...ATTRIBUTE_TAXONOMY] } },
           placeCount: { type: "INTEGER" },
           area: { type: "STRING", enum: [...SEOUL_DISTRICTS], nullable: true },
+          place: { type: "STRING", nullable: true },
           reason: { type: "STRING" },
         },
         required: ["focus", "categories", "attributes", "placeCount", "area"],
@@ -371,6 +375,17 @@ function matchesRomanizedDistrict(prompt: string, district: string): boolean {
   return aliases.some((alias) => new RegExp(`\\b${alias}\\b`, "i").test(prompt));
 }
 
+// The model has to answer with a district or null, and for a place name it used to pick one (성수동 -> 송파구, 강남역 ->
+// 종로구). Its answer now counts only when the sentence itself names that district: the full name, its short form
+// ("용산", "종로": two letters or more) or its romanization.
+function promptNamesDistrict(prompt: string, district: string): boolean {
+  if (prompt.includes(district) || matchesRomanizedDistrict(prompt, district)) {
+    return true;
+  }
+  const stem = district.replace(/구$/, "");
+  return stem.length >= 2 && prompt.includes(stem);
+}
+
 function detectAreaFromPrompt(prompt: string): string | null {
   const korean = DISTRICTS_BY_LENGTH_DESC.find((district) => prompt.includes(district));
   if (korean) {
@@ -534,11 +549,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "prompt is required" }, { status: 400 });
   }
 
-  const promptAreaMatch = detectAreaFromPrompt(prompt);
-  const promptLandmarkAnchor = detectLandmarkAnchorFromPrompt(prompt);
+  let promptAreaMatch = detectAreaFromPrompt(prompt);
   const genericLandmarkIntent = isGenericLandmarkPrompt(prompt);
   const hangangIntent = isHangangPrompt(prompt);
   const aiIntent = await getAiIntent(prompt, locale);
+  if (aiIntent && typeof aiIntent.area === "string" && !promptNamesDistrict(prompt, aiIntent.area)) {
+    aiIntent.area = null;
+  }
+
+  // A place the sentence names (a station, a neighbourhood, a landmark) is what the course is built around: it is
+  // looked up on the map, and wins over a district (it is the more exact of the two). Our own short list of famous
+  // spots is only the fallback for when the lookup finds nothing.
+  const namedPlace = (typeof aiIntent?.place === "string" ? aiIntent.place.trim() : "") || stationFromPrompt(prompt) || "";
+  const resolvedPlace = namedPlace && !hangangIntent ? await resolvePlaceAnchor(namedPlace) : null;
+  const promptLandmarkAnchor = resolvedPlace ? { lat: resolvedPlace.lat, lng: resolvedPlace.lng } : detectLandmarkAnchorFromPrompt(prompt);
+  if (resolvedPlace) {
+    promptAreaMatch = null;
+    if (aiIntent) {
+      aiIntent.area = null;
+    }
+  }
   const preference = derivePreference(bookmarkedPlaceIds);
   const intent = normalizeIntent(
     aiIntent,
@@ -615,7 +645,13 @@ export async function POST(request: NextRequest) {
 
   if (result.placeIds.length === result.requestedCount) {
     // The same stretch of the river as the first pass (a second random pick would move the course).
-    const { scored, anchor: poolAnchor } = getScoredPool({ ...intent, hangangAnchor: result.anchor });
+    const { scored, anchor: poolAnchor } = getScoredPool({
+      ...intent,
+      // The same hub as the first pass: a second pick would put the AI's shortlist somewhere else in the city (and make
+      // the anchor reported to the app a different place from the course).
+      anchor: intent.anchor ?? (result.anchor ? { lat: result.anchor.lat, lng: result.anchor.lng } : null),
+      hubAnchor: result.anchor,
+    });
     // `scored` is best-first, so keeping the first of each cluster keeps the best one.
     const kept: MobilePlace[] = [];
     const shortlist = scored.filter(({ place }) => {

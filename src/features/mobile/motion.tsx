@@ -108,21 +108,3 @@ export function flyDot(from: DOMRect, getTarget: () => DOMRect | null) {
   }
   requestAnimationFrame(frame);
 }
-
-const sheenState = new WeakMap<HTMLElement, { top: number; time: number; speed: number; timer: number }>();
-
-// Called from a scroll handler: sets --sy (scroll position) and --sheen (how fast it is scrolling, 0 to 1)
-// on the scroller, which the glass cards read to flash a highlight that slides as you scroll.
-export function updateScrollSheen(container: HTMLElement) {
-  const now = performance.now();
-  const state = sheenState.get(container) ?? { top: container.scrollTop, time: now, speed: 0, timer: 0 };
-  const instant = (container.scrollTop - state.top) / Math.max(1, now - state.time);
-  state.speed = state.speed * 0.7 + instant * 0.3;
-  state.top = container.scrollTop;
-  state.time = now;
-  container.style.setProperty("--sy", String(Math.round(container.scrollTop)));
-  container.style.setProperty("--sheen", Math.min(1, Math.abs(state.speed) / 1.4).toFixed(2));
-  window.clearTimeout(state.timer);
-  state.timer = window.setTimeout(() => container.style.setProperty("--sheen", "0"), 140);
-  sheenState.set(container, state);
-}

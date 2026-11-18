@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { BookmarkIcon, CommentIcon } from "@/components/layout/app-icons";
+import { MyBadge } from "@/features/mobile/my-badge";
 import { PopOnActive, RollingNumber } from "@/features/mobile/motion";
 import { PlacePhoto } from "@/features/mobile/place-photo";
 import { getTripCoverPlace, localizePlace, localizeTrip, type FeedTrip } from "@/features/mobile/mobile-data";
@@ -57,8 +57,8 @@ export function TripFeedList({
           >
             {/* Pinned to the card's top-right, with the same inset as the content's left edge. */}
             {trip.isMine && (
-              <span className="pointer-events-none absolute right-4 top-4">
-                <Badge tone="blue">{t("myCourseBadge")}</Badge>
+              <span className="pointer-events-none absolute right-4 top-[1.125rem]">
+                <MyBadge />
               </span>
             )}
             <button
@@ -72,7 +72,12 @@ export function TripFeedList({
               <div className="flex items-start gap-3">
                 {coverPlace && (
                   <span className="relative shrink-0">
-                    <PlacePhoto className="h-24 w-24 rounded-2xl" place={coverPlace} />
+                    {trip.coverImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img alt="" className="block h-24 w-24 shrink-0 rounded-2xl bg-surface-muted object-cover" src={trip.coverImage} />
+                    ) : (
+                      <PlacePhoto className="h-24 w-24 rounded-2xl" place={coverPlace} />
+                    )}
                     {mode === "ranking" && (
                       <span
                         className={cn(

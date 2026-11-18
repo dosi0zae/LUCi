@@ -25,6 +25,8 @@
   --surface: rgba(255, 255, 255, 0.88);
   --surface-muted: rgba(255, 255, 255, 0.62);
   --surface-glass: rgba(255, 255, 255, 0.64);
+  --glass-read: rgba(255, 255, 255, 0.95);
+  --glass-read-border: rgba(255, 255, 255, 0.8);
   --border: rgba(17, 24, 39, 0.1);
   --border-strong: rgba(17, 24, 39, 0.2);
   --muted: #64748b;
@@ -82,6 +84,8 @@
     --surface: rgba(15, 23, 42, 0.82);
     --surface-muted: rgba(17, 24, 39, 0.7);
     --surface-glass: rgba(10, 17, 20, 0.58);
+    --glass-read: rgba(30, 41, 59, 0.95);
+    --glass-read-border: rgba(255, 255, 255, 0.14);
     --border: rgba(248, 250, 252, 0.2);
     --border-strong: rgba(248, 250, 252, 0.3);
     --muted: #94a3b8;
@@ -168,44 +172,42 @@ input[type="search"]::-webkit-search-cancel-button {
   filter: grayscale(1) opacity(0.55);
 }
 
+/* Transparency rules, one set for the whole app (worked out on the map screen):
+   1. What is read or acted in (cards with text or buttons, sheets, menus, dialogs, the tutorial card, a form) is a
+      reading surface: --glass-read (white at 95%) over a 20 px blur with a little boosted color. The sheet classes
+      .glass-panel .ios-card .ios-row .ios-menu .frosted-overlay .tour-card and .read-surface all share it.
+   2. Controls that float over content (search bars over a list or a map, round buttons, chips) are glass: .map-glass
+      (.ios-glass is the same look), a diagonal sheen of white from 88% to 72%, a strong 22 px blur, a bright rim.
+   3. A scrim behind a dialog or sheet is black at 35% (the photo viewer, 85%).
+   4. Glass is never laid over glass, and text on glass stays dark.
+   5. A badge over a photo is at least 80% white. */
+.glass-panel,
+.frosted-overlay,
+.ios-card,
+.ios-row,
+.ios-menu,
+.read-surface {
+  background: var(--glass-read);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
+}
+
 .glass-panel {
-  border: 1px solid rgba(255, 255, 255, 0.58);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.5) 46%, rgba(255, 255, 255, 0.34)),
-    var(--surface-glass);
+  border: 1px solid var(--glass-read-border);
   box-shadow:
     var(--shadow-soft),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.22);
-  -webkit-backdrop-filter: blur(64px) saturate(1.65) brightness(1.08);
-  backdrop-filter: blur(64px) saturate(1.65) brightness(1.08);
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
-/* Heavier than .glass-panel: meant to fully dissolve whatever's behind it (a full
-   screen of text/UI) into soft color, iOS Control-Center style, rather than just
-   softening the edges of a small card over simple content. */
-.frosted-overlay {
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.58) 50%, rgba(255, 255, 255, 0.7)),
-    rgba(255, 255, 255, 0.5);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  -webkit-backdrop-filter: blur(40px) saturate(1.8) brightness(1.05);
-  backdrop-filter: blur(40px) saturate(1.8) brightness(1.05);
-}
-
-.tab-floating-panel {
-  border-color: color-mix(in srgb, var(--warning) 58%, rgba(255, 255, 255, 0.54));
-  background:
-    linear-gradient(135deg, rgba(183, 232, 107, 0.18), rgba(255, 255, 255, 0.58) 44%, rgba(255, 255, 255, 0.36)),
-    var(--surface-glass);
+/* A reading surface on its own (the cards on the map screen, a dialog): the tight shadow reads well over map tiles. */
+.read-surface {
   box-shadow:
-    0 22px 64px rgba(143, 191, 69, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.74);
+    0 4px 16px -4px rgba(15, 23, 42, 0.25),
+    0 0 0 1px rgba(15, 23, 42, 0.05);
 }
 
-.glass-card {
-  border: 1px solid rgba(17, 24, 39, 0.11);
-  background: color-mix(in srgb, var(--surface) 78%, transparent);
+/* The language screen covers the whole app, so its blur is the same but it has no edge or shadow. */
+.frosted-overlay {
   box-shadow: none;
 }
 
@@ -215,24 +217,18 @@ input[type="search"]::-webkit-search-cancel-button {
 .ios-card {
   border: 1px solid rgba(255, 255, 255, 0.75);
   border-radius: 28px;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.62));
   box-shadow:
     0 14px 44px rgba(15, 23, 42, 0.1),
     0 1px 3px rgba(15, 23, 42, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
-  -webkit-backdrop-filter: blur(30px) saturate(1.7);
-  backdrop-filter: blur(30px) saturate(1.7);
 }
 
 .ios-row {
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.74);
   box-shadow:
     0 8px 28px rgba(15, 23, 42, 0.07),
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
-  -webkit-backdrop-filter: blur(24px) saturate(1.5);
-  backdrop-filter: blur(24px) saturate(1.5);
 }
 
 .ios-row-pinned {
@@ -293,56 +289,49 @@ input[type="search"]::-webkit-search-cancel-button {
   background: var(--primary-strong);
 }
 
-/* Popovers (the stop "..." menu, the map picker) sit over other rows, so they are nearly opaque. */
+/* Popovers (the stop "..." menu, the map picker) sit over other rows: a reading surface. */
 .ios-menu {
   border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.97);
   box-shadow:
     0 18px 48px rgba(15, 23, 42, 0.2),
     0 2px 6px rgba(15, 23, 42, 0.08);
 }
 
-/* Floating controls on the first screen (language button, quick browse): frosted white, bright edge. */
+/* Floating controls on the first screen (language button, quick browse): the look is the shared glass (.map-glass,
+   below), this only adds the press. */
 .ios-glass {
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow:
-    0 8px 24px rgba(15, 23, 42, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
-  backdrop-filter: blur(24px) saturate(1.6);
   transition:
     transform 150ms ease,
     background-color 150ms ease;
 }
 
-.ios-glass:active {
+button.ios-glass:active {
   transform: scale(0.95);
 }
 
-/* The tutorial: frosted panels over a blurred, lightly tinted app. */
+/* The tutorial: a card over a dimmed, slightly blurred app. */
 .tour-scrim {
-  background: rgba(226, 236, 252, 0.42);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  backdrop-filter: blur(16px) saturate(1.4);
+  background: rgba(15, 23, 42, 0.35);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
-/* A large glass card: brighter and thicker than .ios-glass, with a lit top edge and a soft colour wash. */
+/* A large reading card with a lit top edge and a faint colour wash. */
 .tour-card {
   border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 32px;
   background:
-    radial-gradient(120% 90% at 0% 0%, rgba(183, 232, 107, 0.2), transparent 55%),
-    radial-gradient(120% 90% at 100% 100%, rgba(79, 141, 247, 0.2), transparent 55%),
-    rgba(255, 255, 255, 0.6);
+    radial-gradient(120% 90% at 0% 0%, rgba(183, 232, 107, 0.16), transparent 55%),
+    radial-gradient(120% 90% at 100% 100%, rgba(79, 141, 247, 0.14), transparent 55%),
+    var(--glass-read);
   box-shadow:
     0 24px 64px rgba(15, 23, 42, 0.22),
     0 2px 8px rgba(15, 23, 42, 0.06),
     inset 0 1.5px 0 rgba(255, 255, 255, 1),
     inset 0 -1px 0 rgba(255, 255, 255, 0.4);
-  -webkit-backdrop-filter: blur(32px) saturate(1.8);
-  backdrop-filter: blur(32px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
 }
 
 /* The lit ring around the spotlighted element. */
@@ -394,7 +383,6 @@ input[type="search"]::-webkit-search-cancel-button {
 @media (prefers-color-scheme: dark) {
   .ios-card {
     border-color: rgba(255, 255, 255, 0.14);
-    background: linear-gradient(160deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.62));
     box-shadow:
       0 14px 44px rgba(0, 0, 0, 0.35),
       inset 0 1px 0 rgba(255, 255, 255, 0.12);
@@ -402,7 +390,6 @@ input[type="search"]::-webkit-search-cancel-button {
 
   .ios-row {
     border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(30, 41, 59, 0.7);
     box-shadow:
       0 8px 28px rgba(0, 0, 0, 0.28),
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -410,15 +397,6 @@ input[type="search"]::-webkit-search-cancel-button {
 
   .ios-menu {
     border-color: rgba(255, 255, 255, 0.14);
-    background: rgba(30, 41, 59, 0.97);
-  }
-
-  .ios-glass {
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(30, 41, 59, 0.6);
-    box-shadow:
-      0 8px 24px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
   .tour-scrim {
@@ -430,7 +408,7 @@ input[type="search"]::-webkit-search-cancel-button {
     background:
       radial-gradient(120% 90% at 0% 0%, rgba(183, 232, 107, 0.14), transparent 55%),
       radial-gradient(120% 90% at 100% 100%, rgba(79, 141, 247, 0.22), transparent 55%),
-      rgba(30, 41, 59, 0.58);
+      var(--glass-read);
     box-shadow:
       0 24px 64px rgba(0, 0, 0, 0.5),
       inset 0 1.5px 0 rgba(255, 255, 255, 0.22),
@@ -1115,28 +1093,9 @@ input[type="search"]::-webkit-search-cancel-button {
 
 @media (prefers-color-scheme: dark) {
   .glass-panel {
-    background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05) 46%, rgba(255, 255, 255, 0.02)),
-      var(--surface-glass);
     box-shadow:
       var(--shadow-soft),
-      inset 0 1px 0 rgba(255, 255, 255, 0.16),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.06);
-  }
-
-  .glass-card {
-    border-color: rgba(248, 250, 252, 0.16);
-    background: color-mix(in srgb, var(--surface) 78%, transparent);
-  }
-
-  .tab-floating-panel {
-    border-color: color-mix(in srgb, var(--warning) 42%, rgba(248, 250, 252, 0.18));
-    background:
-      linear-gradient(135deg, rgba(183, 232, 107, 0.12), rgba(255, 255, 255, 0.06) 44%, rgba(255, 255, 255, 0.03)),
-      var(--surface-glass);
-    box-shadow:
-      0 22px 64px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
   }
 }
 
@@ -1559,38 +1518,6 @@ button.ios-card:not(:disabled):active {
   }
 }
 
-
-/* The glass highlight: a soft band of light across each card that slides with the scroll position and
-   shows up while the page is moving fast (--sy / --sheen are set on the scroller, see updateScrollSheen). */
-.ios-row::after,
-.ios-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(
-    115deg,
-    transparent 32%,
-    rgba(255, 255, 255, 0.75) 47%,
-    rgba(255, 255, 255, 0.12) 55%,
-    transparent 68%
-  );
-  background-size: 280% 100%;
-  background-position: calc(110% - var(--sy, 0) * 0.45px) 0;
-  opacity: calc(var(--sheen, 0) * 0.85);
-  transition: opacity 240ms ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ios-row::after,
-  .ios-card::after {
-    opacity: 0;
-    transition: none;
-  }
-}
-
-
 /* A map sitting in a scrolling page: while it is locked, a swipe that starts on it scrolls the page.
    Kakao puts touch-action: none on its own inner elements, hence the !important and the star. */
 .map-locked,
@@ -1698,14 +1625,45 @@ button.ios-card:not(:disabled):active {
   }
 }
 
-/* Frosted white controls floating on the map: a light, tight shadow (the big soft one of .glass-panel looked like a
-   smear over map tiles). */
+/* Glass. .map-glass floats over a map, and a map is light in both themes, so it stays white glass with dark letters in
+   dark mode too: the colour variables are put back to their light values inside it (so text-foreground, text-muted and
+   the like on its children stay readable). .ios-glass is the same look over the app's own background, so it follows the
+   theme. A light, tight shadow (the big soft one of .glass-panel looked like a smear over map tiles). */
+.map-glass,
+.ios-glass {
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.72) 55%, rgba(255, 255, 255, 0.8));
+  box-shadow:
+    0 2px 10px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.8) brightness(1.04);
+  backdrop-filter: blur(22px) saturate(1.8) brightness(1.04);
+}
+
 .map-glass {
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
-  -webkit-backdrop-filter: blur(18px) saturate(1.5);
-  backdrop-filter: blur(18px) saturate(1.5);
+  color-scheme: light;
+  color: #111827;
+  --foreground: #111827;
+  --surface-muted: rgba(255, 255, 255, 0.62);
+  --border: rgba(17, 24, 39, 0.1);
+  --border-strong: rgba(17, 24, 39, 0.2);
+  --muted: #64748b;
+  --muted-strong: #334155;
+  --primary: #4f8df7;
+  --primary-strong: #2f6fe4;
+  --primary-soft: rgba(79, 141, 247, 0.16);
+}
+
+@media (prefers-color-scheme: dark) {
+  .ios-glass {
+    border-color: rgba(255, 255, 255, 0.16);
+    background: linear-gradient(135deg, rgba(51, 65, 85, 0.85), rgba(30, 41, 59, 0.7) 55%, rgba(30, 41, 59, 0.78));
+    box-shadow:
+      0 2px 10px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  }
 }
 
 /* The card of a tapped place on the map screen: fades up softly, fades down softly. */
@@ -1765,4 +1723,21 @@ button.ios-card:not(:disabled):active {
     animation-duration: 0.01ms;
   }
 }
+
+/* On the map screen Kakao draws the course's route line in one huge transparent SVG laid over the whole map; that layer
+   took the finger first and the map could no longer be dragged once a course was on it. Nothing in an SVG there needs
+   a tap (the pins are HTML buttons), so SVGs let touches through to the map. */
+.place-map svg,
+.place-map svg * {
+  pointer-events: none !important;
+}
+
+/* The map screen's search box has its own clear (x) button; the browser's built-in one in a search field would be a second one. */
+.map-search-input::-webkit-search-cancel-button {
+  display: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+
 

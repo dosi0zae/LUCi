@@ -107,9 +107,9 @@ export type RecommendIntent = {
   // the river crosses many districts). Routes the pool to SEOUL_HANGANG_PLACE_IDS instead
   // of anchoring on a single point: see that constant's comment for why.
   hangangOnly?: boolean;
-  // Which stretch of the river a 한강 course is built on. Set when the same course is worked on a second time
-  // (the AI selection, a wider/narrower radius) so it stays on the stretch the first pass chose.
-  hangangAnchor?: { lat: number; lng: number } | null;
+  // The hub a course is built around (the riverside stretch of a 한강 course, a district's chosen place). Set when the
+  // same course is worked on a second time (the AI selection, a wider/narrower radius) so it stays where the first pass put it.
+  hubAnchor?: { lat: number; lng: number } | null;
 };
 
 // A 한강 course is ONE stretch of the river and what is around it, never the whole river (the river is 40 km
@@ -736,8 +736,14 @@ export function getScoredPool(intent: RecommendIntent): {
     // MUCH of it is used — poolNear's candidate list here is areaPlaces, not the global
     // places list, so even its widest resilience fallback can never spill into a
     // neighboring district the way the plain radius path below can.
-    anchor = centroid(areaPlaces);
+    // The course is built around one hub inside the district, not around the average of all its sights: a
+    // district's centroid is wherever the sights happen to pile up (마포구: always 망원, 성동구: always 서울숲), so every
+    // request for the district came back with the same corner of it. The hub is one of the district's best-scored
+    // places (so it varies from request to request); a follow-up that keeps the area (the radius control) keeps its hub.
     const radiusKm = intent.radiusKm ?? DEFAULT_RADIUS_KM;
+    const hubs = scoredAll.filter((entry) => entry.place.area === intent.areaFilter).slice(0, 5);
+    const hub = intent.hubAnchor ?? (intent.strictRadius && intent.anchor ? intent.anchor : null) ?? hubs[Math.floor(Math.random() * hubs.length)]?.place ?? centroid(areaPlaces);
+    anchor = { lat: hub.lat, lng: hub.lng };
     pool = poolNear(areaPlaces, anchor, radiusKm, intent.strictRadius ?? false);
   } else if (hangangPlaces && hangangPlaces.length > 0) {
     // One stretch of the river: a riverside place picked among the best-scored ones (or the stretch an
@@ -746,7 +752,7 @@ export function getScoredPool(intent: RecommendIntent): {
     const radiusKm = intent.radiusKm ?? HANGANG_STRETCH_KM;
     const riverTop = scoredAll.filter((entry) => SEOUL_HANGANG_PLACE_IDS.has(entry.place.id)).slice(0, 4);
     const stretch =
-      intent.hangangAnchor ??
+      intent.hubAnchor ??
       (intent.strictRadius ? intent.anchor : null) ??
       riverTop[Math.floor(Math.random() * riverTop.length)]?.place ??
       hangangPlaces[0];
