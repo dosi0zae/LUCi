@@ -1,6 +1,6 @@
 "use client";
 
-import { BookmarkIcon, CommentIcon } from "@/components/layout/app-icons";
+import { BookmarkIcon, CommentIcon, HeartIcon } from "@/components/layout/app-icons";
 import { MyBadge } from "@/features/mobile/my-badge";
 import { PopOnActive, RollingNumber } from "@/features/mobile/motion";
 import { PlacePhoto } from "@/features/mobile/place-photo";
@@ -110,7 +110,9 @@ export function TripFeedList({
                 onClick={() => onToggleLike(trip.id)}
                 type="button"
               >
-                <PopOnActive active={isLiked}>♥</PopOnActive>
+                <PopOnActive active={isLiked}>
+                  <HeartIcon className="h-4 w-4" />
+                </PopOnActive>
                 <RollingNumber value={(trip.likes + (isLiked ? 1 : 0)).toLocaleString()} />
               </button>
               <span className="flex items-center gap-1">

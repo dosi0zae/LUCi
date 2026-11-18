@@ -175,14 +175,13 @@ input[type="search"]::-webkit-search-cancel-button {
 /* Transparency rules, one set for the whole app (worked out on the map screen):
    1. What is read or acted in (cards with text or buttons, sheets, menus, dialogs, the tutorial card, a form) is a
       reading surface: --glass-read (white at 95%) over a 20 px blur with a little boosted color. The sheet classes
-      .glass-panel .ios-card .ios-row .ios-menu .frosted-overlay .tour-card and .read-surface all share it.
+      .glass-panel .ios-card .ios-row .ios-menu .tour-card and .read-surface all share it.
    2. Controls that float over content (search bars over a list or a map, round buttons, chips) are glass: .map-glass
       (.ios-glass is the same look), a diagonal sheen of white from 88% to 72%, a strong 22 px blur, a bright rim.
    3. A scrim behind a dialog or sheet is black at 35% (the photo viewer, 85%).
    4. Glass is never laid over glass, and text on glass stays dark.
    5. A badge over a photo is at least 80% white. */
 .glass-panel,
-.frosted-overlay,
 .ios-card,
 .ios-row,
 .ios-menu,
@@ -206,9 +205,19 @@ input[type="search"]::-webkit-search-cancel-button {
     0 0 0 1px rgba(15, 23, 42, 0.05);
 }
 
-/* The language screen covers the whole app, so its blur is the same but it has no edge or shadow. */
+/* The language screen covers the screen behind it (the first screen) with a thick blur instead of a white sheet: only a
+   light veil of white, so its colours still swim through, smeared past reading. No edge or shadow. */
 .frosted-overlay {
+  background: rgba(255, 255, 255, 0.3);
   box-shadow: none;
+  -webkit-backdrop-filter: blur(48px) saturate(1.8) brightness(1.04);
+  backdrop-filter: blur(48px) saturate(1.8) brightness(1.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  .frosted-overlay {
+    background: rgba(15, 23, 42, 0.4);
+  }
 }
 
 /* iOS-style glass for the course screen: big radii, a light frosted fill with a bright top edge,
@@ -1666,6 +1675,33 @@ button.ios-card:not(:disabled):active {
   }
 }
 
+/* The first screen floats over soft colour blobs, so its glass (the search box, the map pill, the language button) is
+   glassier than the rest of the app: much more see-through, a stronger blur with boosted colour, and a bright rim, so the
+   blobs show through and swim behind the letters. Dark letters stay readable because the blobs are pale. */
+.hero-search form,
+.hero-root .ios-glass {
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.3) 55%, rgba(255, 255, 255, 0.48));
+  box-shadow:
+    0 8px 28px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.4);
+  -webkit-backdrop-filter: blur(40px) saturate(2) brightness(1.06);
+  backdrop-filter: blur(40px) saturate(2) brightness(1.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  .hero-search form,
+  .hero-root .ios-glass {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, rgba(71, 85, 105, 0.5), rgba(30, 41, 59, 0.28) 55%, rgba(51, 65, 85, 0.4));
+    box-shadow:
+      0 8px 28px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  }
+}
+
 /* The card of a tapped place on the map screen: fades up softly, fades down softly. */
 @keyframes map-card-in {
   from {
@@ -1738,6 +1774,8 @@ button.ios-card:not(:disabled):active {
   -webkit-appearance: none;
   appearance: none;
 }
+
+
 
 
 

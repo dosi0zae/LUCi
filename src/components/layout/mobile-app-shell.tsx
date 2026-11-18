@@ -85,6 +85,7 @@ import { useHistoryLayers } from "@/features/mobile/use-history-layers";
 import { LegalLinks } from "@/features/mobile/legal-links";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import { PlaceScroller } from "@/features/mobile/place-scroller";
+import { MyPictureContext } from "@/features/mobile/my-badge";
 import { SlidingTabs } from "@/features/mobile/sliding-tabs";
 import { buildTasteProfile, tasteScore, type TasteProfile } from "@/features/mobile/taste";
 import { useHorizontalSwipe } from "@/features/mobile/use-swipe";
@@ -1922,6 +1923,7 @@ export function MobileAppShell() {
   );
 
   return (
+    <MyPictureContext.Provider value={account?.picture ?? null}>
     <main className="h-[var(--app-vh,100svh)] bg-[#edf2f7] text-foreground">
       <section className="relative mx-auto flex h-[var(--app-vh,100svh)] w-full max-w-[430px] flex-col overflow-hidden bg-background shadow-panel [padding-top:env(safe-area-inset-top)] sm:max-h-[900px]" ref={frameRef}>
         <IntroSplash contained />
@@ -2969,5 +2971,6 @@ export function MobileAppShell() {
         />
       )}
     </main>
+    </MyPictureContext.Provider>
   );
 }
