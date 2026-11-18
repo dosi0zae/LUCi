@@ -90,8 +90,24 @@ type PinProps = {
 // small dot in its kind's color with its icon; the searched spot is larger, blue, and carries its name.
 function Pin({ category, number, label, selected, isAnchor, uncategorized, delayMs, onSelect }: PinProps) {
   const inCourse = number !== undefined;
+  // A drag that starts on a pin moves the map, and with a mouse the pin ends up under the pointer again, so a click is
+  // reported on it: only a press that stayed (almost) in place counts as choosing the pin.
+  const downAt = useRef<{ x: number; y: number } | null>(null);
   return (
-    <button className="relative flex flex-col items-center" onClick={onSelect} type="button">
+    <button
+      className="relative flex flex-col items-center"
+      onClick={(event) => {
+        const down = downAt.current;
+        if (down && Math.hypot(event.clientX - down.x, event.clientY - down.y) > 6) {
+          return;
+        }
+        onSelect();
+      }}
+      onPointerDown={(event) => {
+        downAt.current = { x: event.clientX, y: event.clientY };
+      }}
+      type="button"
+    >
       {/* Only the dot pops in (its own wrapper, so the pop does not fight the enlarged size of a chosen pin). */}
       <span
         className="block"
@@ -345,7 +361,9 @@ export function PlaceMapScreen({ chainPlaces, diningVersion, onAddPlace, onRemov
         />,
       );
       const overlay = new maps!.CustomOverlay({
-        clickable: true,
+        // Not clickable (Kakao stops the map from seeing events that start on a clickable overlay): a drag that begins
+        // on a pin must still move the map. The pin's own button still gets its tap.
+        clickable: false,
         content: element,
         position: new maps!.LatLng(place.lat, place.lng),
         xAnchor: 0,

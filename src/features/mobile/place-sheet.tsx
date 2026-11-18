@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRightIcon,
@@ -13,12 +13,13 @@ import {
   UtensilsIcon,
   AiSparklesIcon,
 } from "@/components/layout/app-icons";
-import { BrandTile } from "@/features/mobile/brand-icons";
+import { MapAppsPopover } from "@/features/mobile/map-apps-popover";
 import { categoryText } from "@/features/mobile/custom-places";
 import { PopOnActive } from "@/features/mobile/motion";
 import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
-import { isDiningCategory, localizePlace, type MobilePlace, type TripComment } from "@/features/mobile/mobile-data";
-import { getGoogleMapsUrl, getKakaoMapUrl, getNaverMapUrl, getNearbyUrl } from "@/features/mobile/map-links";
+import { haversineKm, isDiningCategory, localizePlace, type MobilePlace, type TripComment } from "@/features/mobile/mobile-data";
+import { ensureDiningNear, getLoadedDiningPlaces } from "@/features/mobile/dining-store";
+import { getGoogleMapsUrl, getKakaoMapUrl, getNaverMapUrl } from "@/features/mobile/map-links";
 import { useCategoryLabel, useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import { cn } from "@/lib/utils";
 
@@ -67,8 +68,14 @@ type PlaceSheetProps = {
   onAddComment: (text: string) => void;
   onAddToChain: (place: MobilePlace) => void;
   onToggleBookmark: (id: string) => void;
+  // Another place (one of the restaurants and cafés listed as nearby) was chosen: the parent shows that one instead.
+  onSelectPlace: (id: string) => void;
   onClose: () => void;
 };
+
+// The restaurants and cafés offered as nearby: within this distance of the place, the closest few.
+const NEARBY_RADIUS_KM = 0.6;
+const NEARBY_COUNT = 8;
 
 // Dragging the sheet down this far (or flicking it) dismisses it.
 const DRAG_CLOSE_DISTANCE = 110;
@@ -81,6 +88,7 @@ export function PlaceSheet({
   onAddComment,
   onAddToChain,
   onClose,
+  onSelectPlace,
   onToggleBookmark,
   place,
 }: PlaceSheetProps) {
@@ -96,6 +104,7 @@ export function PlaceSheet({
   const [commentDraft, setCommentDraft] = useState("");
   const [isMapMenuOpen, setIsMapMenuOpen] = useState(false);
   const mapMenuRef = useRef<HTMLDivElement>(null);
+  const mapButtonRef = useRef<HTMLButtonElement>(null);
   // AI digest of the comments; remembered with the comment count it was made from so it
   // disappears (rather than going stale) once someone adds another comment.
   const [commentSummary, setCommentSummary] = useState<{ text: string; count: number } | null>(null);
@@ -113,6 +122,37 @@ export function PlaceSheet({
   const description = localizedPlace.description;
   const hoursLines = splitHoursLines(localizedPlace.hours);
   const isShowingSummary = !isDescExpanded && Boolean(summary);
+
+  // The restaurants and cafés of our own data around this place (the districts around it are loaded first).
+  const [nearbyVersion, setNearbyVersion] = useState(0);
+  useEffect(() => {
+    if (isDining) {
+      return;
+    }
+    let live = true;
+    void ensureDiningNear([place], NEARBY_RADIUS_KM).then(() => {
+      if (live) {
+        setNearbyVersion((version) => version + 1);
+      }
+    });
+    return () => {
+      live = false;
+    };
+  }, [place, isDining]);
+  const nearbyRows = useMemo(() => {
+    if (isDining) {
+      return [];
+    }
+    const near = getLoadedDiningPlaces()
+      .filter((other) => other.id !== place.id)
+      .map((other) => ({ other, km: haversineKm(place, other) }))
+      .filter((entry) => entry.km <= NEARBY_RADIUS_KM)
+      .sort((a, b) => a.km - b.km);
+    return (["식당", "카페"] as const)
+      .map((category) => ({ category, entries: near.filter((entry) => entry.other.category === category).slice(0, NEARBY_COUNT) }))
+      .filter((row) => row.entries.length > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [place, isDining, nearbyVersion]);
 
   useEffect(() => {
     // PlaceSheet always remounts fresh for a new place (it's conditionally rendered off
@@ -219,7 +259,8 @@ export function PlaceSheet({
       return;
     }
     function closeOnOutsidePress(event: PointerEvent) {
-      if (!mapMenuRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (!mapMenuRef.current?.contains(target) && !mapButtonRef.current?.contains(target)) {
         setIsMapMenuOpen(false);
       }
     }
@@ -386,85 +427,53 @@ export function PlaceSheet({
               <p className="text-sm font-bold" style={{ color: "var(--primary)" }}>
                 {categoryText(place, categoryLabel)}
               </p>
-              <div className="mt-0.5 flex items-start gap-2">
-                <h2 className="line-clamp-2 min-w-0 text-[1.375rem] font-extrabold leading-7 tracking-tight">{localizedPlace.name}</h2>
-                {/* One map pictogram beside the name; tapping it fans out the three map apps. */}
-                <div className="relative shrink-0" ref={mapMenuRef}>
+              <h2 className="mt-0.5 line-clamp-2 text-[1.375rem] font-extrabold leading-7 tracking-tight">{localizedPlace.name}</h2>
+              {/* The address, with the one map pictogram after it; tapping it fans out the three map apps. */}
+              <div className="mt-0.5 flex items-center gap-1">
+                <p className="truncate text-sm text-muted">{place.address}</p>
+                {/* The popover hangs from the bottom right of this pin, the button that opens it. */}
+                <div className="relative shrink-0">
                   <button
                     aria-expanded={isMapMenuOpen}
                     aria-label={t("mapAppsHeading")}
                     className={cn(
-                      "grid h-8 w-8 place-items-center rounded-full",
-                      isMapMenuOpen ? "ios-btn ios-btn-on" : "ios-btn",
+                      "grid h-6 w-6 shrink-0 place-items-center rounded-full",
+                      isMapMenuOpen ? "ios-btn ios-btn-on" : "text-muted hover:text-primary",
                     )}
                     onClick={() => setIsMapMenuOpen((open) => !open)}
+                    ref={mapButtonRef}
                     title={t("mapAppsHeading")}
                     type="button"
                   >
                     <MapPinIcon className="h-4 w-4" />
                   </button>
-                  {isMapMenuOpen && (
-                    <div className="ios-menu absolute right-0 top-full z-20 mt-2 flex items-center gap-2 p-2">
-                      <a
-                        aria-label={t("mapKakao")}
-                        className="shrink-0 transition hover:opacity-80"
-                        href={getKakaoMapUrl(place)}
-                        onClick={() => setIsMapMenuOpen(false)}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                        title={t("mapKakao")}
-                      >
-                        <BrandTile brand="kakaomap" className="h-9 w-9" />
-                      </a>
-                      <a
-                        aria-label={t("mapNaver")}
-                        className="shrink-0 transition hover:opacity-80"
-                        href={getNaverMapUrl(place)}
-                        onClick={() => setIsMapMenuOpen(false)}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                        title={t("mapNaver")}
-                      >
-                        <BrandTile brand="navermap" className="h-9 w-9" />
-                      </a>
-                      <a
-                        aria-label={t("mapGoogle")}
-                        className="shrink-0 transition hover:opacity-80"
-                        href={getGoogleMapsUrl(place)}
-                        onClick={() => setIsMapMenuOpen(false)}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                        title={t("mapGoogle")}
-                      >
-                        <BrandTile brand="googlemaps" className="h-9 w-9" />
-                      </a>
-                    </div>
-                  )}
+                  <MapAppsPopover
+                    items={[
+                      { key: "kakao", label: t("mapKakao"), brand: "kakaomap", href: getKakaoMapUrl(place), onSelect: () => setIsMapMenuOpen(false) },
+                      { key: "naver", label: t("mapNaver"), brand: "navermap", href: getNaverMapUrl(place), onSelect: () => setIsMapMenuOpen(false) },
+                      { key: "google", label: t("mapGoogle"), brand: "googlemaps", href: getGoogleMapsUrl(place), onSelect: () => setIsMapMenuOpen(false) },
+                    ]}
+                    menuRef={mapMenuRef}
+                    open={isMapMenuOpen}
+                  />
                 </div>
               </div>
-              <p className="mt-0.5 truncate text-sm text-muted">{place.address}</p>
             </div>
           </div>
-          <div className="flex shrink-0 items-start gap-1">
-            <div className="flex flex-col items-center">
-              <button
-                aria-label={isBookmarked ? t("bookmarkedPlaceAria") : t("bookmarkPlaceAria")}
-                className={cn(
-                  "grid h-10 w-10 place-items-center rounded-full",
-                  isBookmarked ? "ios-btn ios-btn-on" : "ios-btn",
-                )}
-                onClick={() => onToggleBookmark(place.id)}
-                type="button"
-              >
-                <PopOnActive active={isBookmarked}>
-                  <BookmarkIcon className="h-4.5 w-4.5" />
-                </PopOnActive>
-              </button>
-              {/* A dining stop's savedBy is only our sort key, not a real count. */}
-              {!isDining && (
-                <span className="mt-0.5 text-xs font-bold text-muted">{place.savedBy.toLocaleString()}</span>
+          <div className="relative flex shrink-0 items-start gap-1">
+            <button
+              aria-label={isBookmarked ? t("bookmarkedPlaceAria") : t("bookmarkPlaceAria")}
+              className={cn(
+                "grid h-10 w-10 place-items-center rounded-full",
+                isBookmarked ? "ios-btn ios-btn-on" : "ios-btn",
               )}
-            </div>
+              onClick={() => onToggleBookmark(place.id)}
+              type="button"
+            >
+              <PopOnActive active={isBookmarked}>
+                <BookmarkIcon className="h-4.5 w-4.5" />
+              </PopOnActive>
+            </button>
             <button
               aria-label={t("placeDetailCloseAria")}
               className="ios-btn grid h-10 w-10 place-items-center rounded-full"
@@ -545,23 +554,30 @@ export function PlaceSheet({
           </a>
         )}
 
-        {/* Meals and coffee around this spot, searched in a map app. */}
-        <div className={cn("mt-4 grid grid-cols-2 gap-2", isDining && "hidden")}>
-          {(["food", "cafe"] as const).map((kind) => (
-            <a
-              className="ios-btn inline-flex h-12 items-center justify-center gap-2 rounded-full"
-              href={getNearbyUrl(kind, { lat: place.lat, lng: place.lng }, locale)}
-              key={kind}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              {kind === "food" ? <UtensilsIcon className="h-4 w-4" /> : <CoffeeIcon className="h-4 w-4" />}
-              <span className="text-[0.9375rem] font-semibold">
-                {kind === "food" ? t("nearbyFoodButton") : t("nearbyCafeButton")}
-              </span>
-            </a>
-          ))}
-        </div>
+        {/* Restaurants and cafés of our own data around this spot: each kind in its own row. */}
+        {nearbyRows.length > 0 && (
+          <section className="mt-5">
+            <h3 className="text-sm font-bold text-muted-strong">{t("nearbyOursHeading")}</h3>
+            <div className="mt-2 grid gap-2">
+              {nearbyRows.map((row) => (
+                <div className="place-list-scroll -mx-5 flex gap-2 overflow-x-auto px-5 pb-1" key={row.category}>
+                  {row.entries.map(({ other, km }) => (
+                    <button
+                      className="ios-btn inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5"
+                      key={other.id}
+                      onClick={() => onSelectPlace(other.id)}
+                      type="button"
+                    >
+                      {row.category === "카페" ? <CoffeeIcon className="h-4 w-4" /> : <UtensilsIcon className="h-4 w-4" />}
+                      <span className="text-sm font-semibold">{localizePlace(other, locale).name}</span>
+                      <span className="text-xs text-muted">{km < 1 ? `${Math.round(km * 100) * 10}m` : `${km.toFixed(1)}km`}</span>
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Comments about this place, and an AI digest of them. */}
         <section className="mt-5">

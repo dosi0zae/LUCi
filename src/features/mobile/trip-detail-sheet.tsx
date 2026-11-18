@@ -965,6 +965,7 @@ export function TripDetailSheet({
 
       {selectedPlace && (
         <PlaceSheet
+          key={selectedPlace.id}
           comments={placeComments[selectedPlace.id] ?? []}
           isBookmarked={bookmarkedPlaceIds.has(selectedPlace.id)}
           isInChain={chainIds.includes(selectedPlace.id)}
@@ -975,6 +976,7 @@ export function TripDetailSheet({
             setShareMessage(t("addedToChain"));
           }}
           onClose={() => setSelectedPlaceId(null)}
+          onSelectPlace={setSelectedPlaceId}
           onToggleBookmark={onToggleBookmarkPlace}
           place={selectedPlace}
         />

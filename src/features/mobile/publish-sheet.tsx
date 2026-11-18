@@ -4,13 +4,12 @@ import { FormEvent, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "@/components/layout/app-icons";
 import { fileToCoverDataUrl } from "@/features/mobile/cover-image";
+import { useSheetDismiss } from "@/features/mobile/use-sheet-dismiss";
 import { cn } from "@/lib/utils";
 import { PlacePhoto } from "@/features/mobile/place-photo";
 import type { MobilePlace, TripVisibility } from "@/features/mobile/mobile-data";
 import { useT } from "@/features/mobile/i18n/i18n-context";
 import type { TranslationKey } from "@/features/mobile/i18n/translations";
-
-const CLOSE_ANIMATION_MS = 200;
 
 type PublishSheetProps = {
   places: MobilePlace[];
@@ -46,7 +45,7 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
   const [useUploadedCover, setUseUploadedCover] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
-  const [isClosing, setIsClosing] = useState(false);
+  const { close: handleCancel, grabProps, isClosing, panelClass, panelRef, panelStyle } = useSheetDismiss<HTMLFormElement>(onCancel);
 
   async function handlePickedFile(file: File | undefined) {
     if (!file) {
@@ -59,11 +58,6 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
     } catch {
       setError(t("publishCoverFailed"));
     }
-  }
-
-  function handleCancel() {
-    setIsClosing(true);
-    window.setTimeout(onCancel, CLOSE_ANIMATION_MS);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -100,12 +94,20 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
       <form
         className={cn(
           "app-scroll-area glass-panel flex max-h-[86%] w-full flex-col overflow-y-auto rounded-t-[2rem] p-5 pb-6",
-          isClosing ? "sheet-panel-out" : "sheet-panel",
+          panelClass,
         )}
         onClick={(event) => event.stopPropagation()}
         onSubmit={handleSubmit}
+        ref={panelRef}
+        style={panelStyle}
       >
-        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-border-strong" />
+        {/* Grab handle: drag it (or the sheet, from its top) down to dismiss. */}
+        <div
+          className="-mx-5 -mt-5 px-5 pb-3 pt-3 flex cursor-grab touch-none justify-center active:cursor-grabbing"
+          {...grabProps}
+        >
+          <span className="h-1.5 w-11 rounded-full bg-border-strong" />
+        </div>
 
         <h2 className="text-2xl font-extrabold tracking-tight">{t("publishHeading")}</h2>
         <p className="mt-1.5 break-keep text-sm text-muted text-balance">{t("publishSubtitle", { count: places.length })}</p>

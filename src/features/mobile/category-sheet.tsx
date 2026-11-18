@@ -1,14 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { isDiningCategory, localizePlace, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
+import { isDiningCategory, localizePlace, type MobilePlace } from "@/features/mobile/mobile-data";
 import { CloseIcon } from "@/components/layout/app-icons";
 import { PlacePhoto } from "@/features/mobile/place-photo";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
-import { useCategoryLabel, useLocale, useT } from "@/features/mobile/i18n/i18n-context";
+import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
+import { useSheetDismiss } from "@/features/mobile/use-sheet-dismiss";
 import { cn } from "@/lib/utils";
-
-const CLOSE_ANIMATION_MS = 200;
 
 export type PlaceBadgeKind = "near" | "popular" | "recommended";
 
@@ -19,7 +17,8 @@ const BADGE_LABEL_KEY: Record<PlaceBadgeKind, "placeBadgeNear" | "placeBadgePopu
 };
 
 type CategorySheetProps = {
-  category: PlaceCategory;
+  // The group's name in the user's language (a kind of place, or "명소" for all the sights together).
+  label: string;
   areaName: string;
   places: MobilePlace[];
   badges: Map<string, PlaceBadgeKind>;
@@ -27,16 +26,10 @@ type CategorySheetProps = {
   onClose: () => void;
 };
 
-export function CategorySheet({ areaName, badges, category, onClose, onSelectPlace, places }: CategorySheetProps) {
+export function CategorySheet({ areaName, badges, label, onClose, onSelectPlace, places }: CategorySheetProps) {
   const t = useT();
-  const categoryLabel = useCategoryLabel();
   const { locale } = useLocale();
-  const [isClosing, setIsClosing] = useState(false);
-
-  function handleClose() {
-    setIsClosing(true);
-    window.setTimeout(onClose, CLOSE_ANIMATION_MS);
-  }
+  const { close: handleClose, grabProps, isClosing, panelClass, panelRef, panelStyle, scrollRef } = useSheetDismiss(onClose);
 
   return (
     <div
@@ -49,20 +42,28 @@ export function CategorySheet({ areaName, badges, category, onClose, onSelectPla
       <div
         className={cn(
           "glass-panel flex max-h-[82%] w-full flex-col rounded-t-[2rem] p-5 pb-6",
-          isClosing ? "sheet-panel-out" : "sheet-panel",
+          panelClass,
         )}
-        aria-label={t("categoryListAria", { area: areaName, category: categoryLabel(category) })}
+        aria-label={t("categoryListAria", { area: areaName, category: label })}
         onClick={(event) => event.stopPropagation()}
+        ref={panelRef}
         role="dialog"
+        style={panelStyle}
       >
-        <div className="mx-auto mb-4 h-1.5 w-11 shrink-0 rounded-full bg-border-strong" />
+        {/* Grab handle: drag it (or the list, from its top) down to dismiss. */}
+        <div
+          className="-mx-5 -mt-5 shrink-0 px-5 pb-3 pt-3 flex cursor-grab touch-none justify-center active:cursor-grabbing"
+          {...grabProps}
+        >
+          <span className="h-1.5 w-11 rounded-full bg-border-strong" />
+        </div>
 
         <div className="flex shrink-0 items-center justify-between gap-3">
           <div>
             <p className="text-sm font-bold" style={{ color: "var(--primary)" }}>
               {areaName}
             </p>
-            <h2 className="mt-1 text-2xl font-extrabold tracking-tight">{categoryLabel(category)}</h2>
+            <h2 className="mt-1 text-2xl font-extrabold tracking-tight">{label}</h2>
           </div>
           <button
             aria-label={t("categoryListCloseAria")}
@@ -74,7 +75,12 @@ export function CategorySheet({ areaName, badges, category, onClose, onSelectPla
           </button>
         </div>
 
-        <div className="app-scroll-area mt-4 min-h-0 flex-1 overflow-y-auto">
+        {/* Runs down to the sheet's bottom edge (the panel's own bottom padding is taken back) and fades out over its last
+            2 rem, so the list goes under the edge softly instead of being cut off by a band of white. */}
+        <div
+          className="app-scroll-area -mb-6 mt-4 min-h-0 flex-1 overflow-y-auto pb-10 [-webkit-mask-image:linear-gradient(to_bottom,black_calc(100%-2rem),transparent)] [mask-image:linear-gradient(to_bottom,black_calc(100%-2rem),transparent)]"
+          ref={scrollRef}
+        >
           <div className="grid grid-cols-2 gap-3 pb-2">
             {places.map((place) => {
               const localizedPlace = localizePlace(place, locale);

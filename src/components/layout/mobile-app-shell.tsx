@@ -57,7 +57,6 @@ import {
 import { readInitialLocale, useCategoryLabel, useLocale, usePromptExamples, useT } from "@/features/mobile/i18n/i18n-context";
 import { dictionaries } from "@/features/mobile/i18n/translations";
 import { buildPromptSuggestions, fetchSeoulWeather } from "@/features/mobile/prompt-suggestions";
-import { BrandTile } from "@/features/mobile/brand-icons";
 import { PlaceMapScreen } from "@/features/mobile/place-map-screen";
 import { categoryText, isCustomId, loadCustomPlaces, subscribeCustomPlaces } from "@/features/mobile/custom-places";
 import { CategorySheet, type PlaceBadgeKind } from "@/features/mobile/category-sheet";
@@ -86,6 +85,7 @@ import { LegalLinks } from "@/features/mobile/legal-links";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import { PlaceScroller } from "@/features/mobile/place-scroller";
 import { MyPictureContext } from "@/features/mobile/my-badge";
+import { MapAppsPopover } from "@/features/mobile/map-apps-popover";
 import { SlidingTabs } from "@/features/mobile/sliding-tabs";
 import { buildTasteProfile, tasteScore, type TasteProfile } from "@/features/mobile/taste";
 import { useHorizontalSwipe } from "@/features/mobile/use-swipe";
@@ -129,8 +129,10 @@ const NEARBY_LABELS = ["A", "B", "C", "D", "E"];
 function formatDistance(km: number): string {
   return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
 }
-const CATEGORY_ORDER: PlaceCategory[] = ["관광지", "문화재", "문화시설", "축제행사"];
-const DINING_ORDER: PlaceCategory[] = ["식당", "카페", "술집"];
+// "다른 장소도 볼까요?" lists sights as ONE group ("명소": tourist spots, heritage, culture venues and festivals together,
+// like the map screen's filter), then each kind of dining on its own.
+type PlaceGroup = PlaceCategory | "sights";
+const DINING_ORDER: PlaceGroup[] = ["식당", "카페", "술집"];
 // Restaurants/cafés/bars listed under "다른 장소도 볼까요?" must be within this of some stop;
 // the full "더보기" list reaches further.
 const OTHER_DINING_RADIUS_KM = 1.5;
@@ -261,7 +263,7 @@ export function MobileAppShell() {
   const radiusChainCacheRef = useRef<Map<number, string[]>>(new Map());
 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
-  const [viewingCategory, setViewingCategory] = useState<PlaceCategory | null>(null);
+  const [viewingCategory, setViewingCategory] = useState<PlaceGroup | null>(null);
   const [viewingAuthorHandle, setViewingAuthorHandle] = useState<string | null>(null);
   const [showPublish, setShowPublish] = useState(false);
   // The stop whose photo is open full-size.
@@ -746,16 +748,19 @@ export function MobileAppShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chainKey]);
 
+  const groupLabel = (group: PlaceGroup) => (group === "sights" ? t("mapFilterSights") : categoryLabel(group));
+
   const otherPlacesByCategory = useMemo(() => {
     const remaining = places.filter(
       (place) => !chainIds.includes(place.id) && distanceToChainKm(place, chainPlaces) <= OTHER_SIGHTS_RADIUS_KM,
     );
-    const byCategory = new Map<PlaceCategory, MobilePlace[]>();
+    const byCategory = new Map<PlaceGroup, MobilePlace[]>();
 
     for (const place of remaining) {
-      const bucket = byCategory.get(place.category) ?? [];
+      const group: PlaceGroup = isDiningCategory(place.category) ? place.category : "sights";
+      const bucket = byCategory.get(group) ?? [];
       bucket.push(place);
-      byCategory.set(place.category, bucket);
+      byCategory.set(group, bucket);
     }
 
     const nearbyDining = getLoadedDiningPlaces().filter(
@@ -769,7 +774,7 @@ export function MobileAppShell() {
 
     // A food-led course lists restaurants/cafés/bars first, a sights course lists them last.
     const diningLed = chainPlaces.filter((place) => isDiningCategory(place.category)).length * 2 >= chainPlaces.length;
-    const order = diningLed ? [...DINING_ORDER, ...CATEGORY_ORDER] : [...CATEGORY_ORDER, ...DINING_ORDER];
+    const order: PlaceGroup[] = diningLed ? [...DINING_ORDER, "sights"] : ["sights", ...DINING_ORDER];
 
     return order
       .map((category) => ({
@@ -778,7 +783,7 @@ export function MobileAppShell() {
         // far more likely to add a 5th one nearby than a merely popular spot across town.
         places: (byCategory.get(category) ?? [])
           .sort((a, b) =>
-            isDiningCategory(category)
+            category !== "sights" && isDiningCategory(category)
               ? diningRank(a, chainPlaces) - diningRank(b, chainPlaces)
               : distanceToChainKm(a, chainPlaces) - distanceToChainKm(b, chainPlaces),
           )
@@ -792,7 +797,7 @@ export function MobileAppShell() {
     if (!viewingCategory) {
       return [];
     }
-    if (isDiningCategory(viewingCategory)) {
+    if (viewingCategory !== "sights" && isDiningCategory(viewingCategory)) {
       return getLoadedDiningPlaces()
         .filter(
           (place) =>
@@ -804,8 +809,10 @@ export function MobileAppShell() {
         .slice(0, 60);
     }
     return places
-      .filter((place) => place.category === viewingCategory && !chainIds.includes(place.id))
-      .sort((a, b) => distanceToChainKm(a, chainPlaces) - distanceToChainKm(b, chainPlaces));
+      .filter((place) => !isDiningCategory(place.category) && !chainIds.includes(place.id))
+      .sort((a, b) => distanceToChainKm(a, chainPlaces) - distanceToChainKm(b, chainPlaces))
+      // All the sights together are over a thousand: the nearest ones are what someone adding a stop wants.
+      .slice(0, 80);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chainIds, chainPlaces, viewingCategory, diningVersion]);
 
@@ -2096,7 +2103,7 @@ export function MobileAppShell() {
                 </div>
 
                 <button
-                  className="ios-glass hero-rise absolute inset-x-0 z-10 mx-auto flex h-12 w-fit items-center gap-2.5 rounded-full pl-6 pr-2 text-base font-bold [--rise:480ms] [bottom:calc(2.5rem+env(safe-area-inset-bottom))]"
+                  className="ios-glass hero-rise hero-dock absolute inset-x-0 z-10 mx-auto flex h-12 w-fit items-center gap-2.5 rounded-full pl-6 pr-2 text-base font-bold [--rise:480ms] [bottom:calc(2.5rem+env(safe-area-inset-bottom))]"
                   data-tour="quick-browse"
                   onClick={(event) => openMap(event.currentTarget)}
                   style={{ color: "var(--success)" }}
@@ -2109,7 +2116,7 @@ export function MobileAppShell() {
                   </span>
                 </button>
 
-                <LanguageMenuButton className="hero-rise absolute left-5 z-20 [--rise:540ms] [bottom:calc(2.5rem+env(safe-area-inset-bottom))]" />
+                <LanguageMenuButton className="hero-rise hero-dock absolute left-5 z-20 [--rise:540ms] [bottom:calc(2.5rem+env(safe-area-inset-bottom))]" />
 
                 {/* Terms and privacy policy under the explore button (Google asks for them on the home page). They stay put and fade out while the keyboard is up. */}
                 <LegalLinks className="hero-rise hero-legal absolute inset-x-0 z-10 [--rise:600ms] [bottom:calc(0.75rem+env(safe-area-inset-bottom))]" />
@@ -2200,45 +2207,36 @@ export function MobileAppShell() {
                               <NavigationIcon className="h-[1.125rem] w-[1.125rem]" />
                             </button>
                             {isNavigateMenuOpen && (
-                              <>
-                                <button
-                                  aria-hidden="true"
-                                  className="fixed inset-0 z-10 cursor-default"
-                                  onClick={() => setIsNavigateMenuOpen(false)}
-                                  tabIndex={-1}
-                                />
-                                <div className="ios-menu absolute right-0 top-full z-20 mt-2 flex items-center gap-2 p-2">
-                                  <button
-                                    aria-label={t("mapKakao")}
-                                    className="shrink-0 transition hover:opacity-80"
-                                    onClick={() => {
-                                      setIsNavigateMenuOpen(false);
-                                      window.open(buildKakaoWalkingRouteUrl(chainPlaces), "_blank", "noopener,noreferrer");
-                                    }}
-                                    title={t("mapKakao")}
-                                    type="button"
-                                  >
-                                    <BrandTile brand="kakaomap" className="h-11 w-11" />
-                                  </button>
-                                  <button
-                                    aria-label={t("mapGoogle")}
-                                    className="shrink-0 transition hover:opacity-80"
-                                    onClick={() => {
-                                      setIsNavigateMenuOpen(false);
-                                      window.open(
-                                        buildGoogleMapsWalkingRouteUrl(chainPlaces),
-                                        "_blank",
-                                        "noopener,noreferrer",
-                                      );
-                                    }}
-                                    title={t("mapGoogle")}
-                                    type="button"
-                                  >
-                                    <BrandTile brand="googlemaps" className="h-11 w-11" />
-                                  </button>
-                                </div>
-                              </>
+                              <button
+                                aria-hidden="true"
+                                className="fixed inset-0 z-10 cursor-default"
+                                onClick={() => setIsNavigateMenuOpen(false)}
+                                tabIndex={-1}
+                              />
                             )}
+                            <MapAppsPopover
+                              items={[
+                                {
+                                  key: "kakao",
+                                  label: t("mapKakao"),
+                                  brand: "kakaomap",
+                                  onSelect: () => {
+                                    setIsNavigateMenuOpen(false);
+                                    window.open(buildKakaoWalkingRouteUrl(chainPlaces), "_blank", "noopener,noreferrer");
+                                  },
+                                },
+                                {
+                                  key: "google",
+                                  label: t("mapGoogle"),
+                                  brand: "googlemaps",
+                                  onSelect: () => {
+                                    setIsNavigateMenuOpen(false);
+                                    window.open(buildGoogleMapsWalkingRouteUrl(chainPlaces), "_blank", "noopener,noreferrer");
+                                  },
+                                },
+                              ]}
+                              open={isNavigateMenuOpen}
+                            />
                           </div>
                         )}
                       </div>
@@ -2568,9 +2566,9 @@ export function MobileAppShell() {
                       {otherPlacesByCategory.map((group) => (
                         <div className="min-w-0" key={group.category}>
                           <div className="mb-2 flex items-center justify-between gap-2">
-                            <p className="text-base font-bold text-muted-strong">{categoryLabel(group.category)}</p>
+                            <p className="text-base font-bold text-muted-strong">{groupLabel(group.category)}</p>
                             <button
-                              aria-label={t("categoryMoreAria", { category: categoryLabel(group.category) })}
+                              aria-label={t("categoryMoreAria", { category: groupLabel(group.category) })}
                               className="text-primary transition hover:opacity-70"
                               onClick={() => setViewingCategory(group.category)}
                               type="button"
@@ -2818,7 +2816,7 @@ export function MobileAppShell() {
           <CategorySheet
             areaName={t("seoulWide")}
             badges={viewingCategoryBadges}
-            category={viewingCategory}
+            label={groupLabel(viewingCategory)}
             onClose={() => setViewingCategory(null)}
             onSelectPlace={(id) => {
               setViewingCategory(null);
@@ -2846,12 +2844,14 @@ export function MobileAppShell() {
 
         {selectedPlace && (
           <PlaceSheet
+            key={selectedPlace.id}
             comments={userComments[selectedPlace.id] ?? []}
             isBookmarked={bookmarkedPlaceIds.has(selectedPlace.id)}
             isInChain={chainIds.includes(selectedPlace.id)}
             onAddComment={(text) => addComment(selectedPlace.id, text)}
             onAddToChain={addToChain}
             onClose={() => setSelectedPlaceId(null)}
+            onSelectPlace={setSelectedPlaceId}
             onToggleBookmark={toggleBookmarkPlace}
             place={selectedPlace}
           />

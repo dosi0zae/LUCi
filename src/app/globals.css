@@ -1375,11 +1375,14 @@ button.ios-card:not(:disabled):active {
 /* The terms / privacy row under "바로 탐색하기" stays where it is (no layout change, so nothing rides up with the
    keyboard) and just fades out while the search box is in use. The wrapper carries the opacity: the
    element itself is busy with the hero-rise animation. */
-.hero-legal {
+/* The buttons at the bottom (map pill, language) go the same way: with the keyboard up they would ride up over it. */
+.hero-legal,
+.hero-dock {
   transition: opacity 200ms ease-out;
 }
 
-.hero-root[data-focus="true"] .hero-legal {
+.hero-root[data-focus="true"] .hero-legal,
+.hero-root[data-focus="true"] .hero-dock {
   opacity: 0 !important;
   pointer-events: none;
 }
@@ -1675,11 +1678,9 @@ button.ios-card:not(:disabled):active {
   }
 }
 
-/* The first screen floats over soft colour blobs, so its glass (the search box, the map pill, the language button) is
-   glassier than the rest of the app: much more see-through, a stronger blur with boosted colour, and a bright rim, so the
+/* The first screen floats over soft colour blobs, so its search box is glassier than the rest of the app: much more see-through, a stronger blur with boosted colour, and a bright rim, so the
    blobs show through and swim behind the letters. Dark letters stay readable because the blobs are pale. */
-.hero-search form,
-.hero-root .ios-glass {
+.hero-search form {
   border: 1px solid rgba(255, 255, 255, 0.7);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.3) 55%, rgba(255, 255, 255, 0.48));
   box-shadow:
@@ -1691,14 +1692,90 @@ button.ios-card:not(:disabled):active {
 }
 
 @media (prefers-color-scheme: dark) {
-  .hero-search form,
-  .hero-root .ios-glass {
+  .hero-search form {
     border-color: rgba(255, 255, 255, 0.2);
     background: linear-gradient(135deg, rgba(71, 85, 105, 0.5), rgba(30, 41, 59, 0.28) 55%, rgba(51, 65, 85, 0.4));
     box-shadow:
       0 8px 28px rgba(0, 0, 0, 0.35),
       inset 0 1px 0 rgba(255, 255, 255, 0.18),
       inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  }
+}
+
+/* The popover that offers the map apps: a pill of frosted glass, mostly opaque with a thick blur (a more see-through one let the text
+   under it show through the icons), springing open from its top right corner while its icons pop in one by one, and shrinking away. */
+.map-pop {
+  transform-origin: top right;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.8) 55%, rgba(255, 255, 255, 0.88));
+  box-shadow:
+    0 8px 24px rgba(15, 23, 42, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.35);
+  -webkit-backdrop-filter: blur(36px) saturate(1.9) brightness(1.05);
+  backdrop-filter: blur(36px) saturate(1.9) brightness(1.05);
+  animation: map-pop-in 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.map-pop[data-closing="true"] {
+  animation: map-pop-out 170ms ease-in both;
+}
+
+.map-pop-item {
+  animation: map-pop-item 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: calc(var(--i, 0) * 70ms + 70ms);
+}
+
+.map-pop[data-closing="true"] .map-pop-item {
+  animation: none;
+}
+
+@keyframes map-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.6);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes map-pop-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.7);
+  }
+}
+
+@keyframes map-pop-item {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.2) rotate(-18deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .map-pop {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: linear-gradient(135deg, rgba(71, 85, 105, 0.92), rgba(30, 41, 59, 0.8) 55%, rgba(51, 65, 85, 0.88));
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-pop,
+  .map-pop-item {
+    animation-duration: 0.01ms;
+    animation-delay: 0ms;
   }
 }
 
@@ -1774,6 +1851,8 @@ button.ios-card:not(:disabled):active {
   -webkit-appearance: none;
   appearance: none;
 }
+
+
 
 
 

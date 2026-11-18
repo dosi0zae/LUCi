@@ -113,14 +113,14 @@ const TILE_GLYPH: Partial<Record<BrandTileName, (props: BrandIconProps) => React
   naver: NaverIcon,
 };
 
-export function BrandTile({ brand, className }: { brand: BrandTileName; className?: string }) {
+export function BrandTile({ brand, className, round = false }: { brand: BrandTileName; className?: string; round?: boolean }) {
   const Glyph = TILE_GLYPH[brand];
   const glyphSize = TILE_GLYPH_SIZE[brand];
 
   return (
     <span
       aria-hidden="true"
-      className={`grid shrink-0 place-items-center overflow-hidden rounded-[22%] ${brand === "googlemaps" || brand === "navermap" ? "border border-border-strong " : ""}${className ?? "h-12 w-12"}`}
+      className={`grid shrink-0 place-items-center overflow-hidden ${round ? "rounded-full" : "rounded-[22%]"} ${brand === "googlemaps" || brand === "navermap" ? "border border-border-strong " : ""}${className ?? "h-12 w-12"}`}
       style={{ background: TILE_BACKGROUND[brand] }}
     >
       {Glyph && (
