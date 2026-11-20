@@ -216,7 +216,10 @@ export function MobileAppShell() {
   // startY/startTop are the pointer's clientY and the card's offsetTop when the drag began;
   // lastY follows the pointer — together they keep the dragged card under the finger even
   // as reordering moves its slot.
-  const dragStateRef = useRef<{ id: string; startY: number; startTop: number; lastY: number } | null>(null);
+  // startScroll is the scroll position of the page then (the page may scroll while a card is held near its edge).
+  const dragStateRef = useRef<{ id: string; startY: number; startTop: number; startScroll: number; lastY: number } | null>(null);
+  // Takes the listeners of a drag in progress off the window again.
+  const dragCleanupRef = useRef<(() => void) | null>(null);
   const chainListRef = useRef<HTMLDivElement | null>(null);
   // Stops the user pinned keep their exact position: drag/optimize/swap work around them.
   const [isTitleScrolledAway, setIsTitleScrolledAway] = useState(false);
@@ -1477,55 +1480,44 @@ export function MobileAppShell() {
     });
   }
 
+  useEffect(() => () => dragCleanupRef.current?.(), []);
+
   function getChainCard(id: string): HTMLElement | null {
     return chainListRef.current?.querySelector<HTMLElement>(`[data-chain-id="${CSS.escape(id)}"]`) ?? null;
   }
 
+  function getChainScroller(): HTMLElement | null {
+    return chainListRef.current?.closest<HTMLElement>(".app-scroll-area") ?? null;
+  }
+
   // Keeps the dragged card glued to the pointer: its slot (offsetTop) jumps whenever the
   // order changes mid-drag, so the transform is whatever offset closes the gap between
-  // where the pointer is and where the card's slot currently sits.
+  // where the pointer is and where the card's slot currently sits (and the page may have scrolled since).
   function positionDraggedCard() {
     const dragState = dragStateRef.current;
     const card = dragState ? getChainCard(dragState.id) : null;
     if (!dragState || !card) {
       return;
     }
-    const offset = dragState.lastY - dragState.startY - (card.offsetTop - dragState.startTop);
+    const scrolled = (getChainScroller()?.scrollTop ?? 0) - dragState.startScroll;
+    const offset = dragState.lastY - dragState.startY - (card.offsetTop - dragState.startTop) + scrolled;
     card.style.transform = `translateY(${offset}px) scale(1.02)`;
   }
 
-  function handleChainDragStart(event: ReactPointerEvent<HTMLButtonElement>, id: string) {
-    // React only suppresses mouse/click handlers on a disabled button, not pointer ones.
-    if (pinnedIds.has(id)) {
-      return;
-    }
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    const card = getChainCard(id);
-    dragStateRef.current = {
-      id,
-      lastY: event.clientY,
-      startTop: card?.offsetTop ?? 0,
-      startY: event.clientY,
-    };
-    setDraggingChainId(id);
-  }
-
-  function handleChainDragMove(event: ReactPointerEvent<HTMLButtonElement>) {
+  // Which slot the pointer is over, and the order that follows from it.
+  function updateChainDrag() {
     const dragState = dragStateRef.current;
     const container = chainListRef.current;
     if (!dragState || !container) {
       return;
     }
 
-    dragState.lastY = event.clientY;
-
     // Slot geometry comes from untransformed offsets (not getBoundingClientRect) so the
     // dragged card's own follow-the-pointer transform can't feed back into which slot it
     // thinks it's hovering and make the order flicker.
     const cards = [...container.querySelectorAll<HTMLElement>("[data-chain-id]")];
     const origin = cards[0]?.offsetTop ?? 0;
-    const pointerY = event.clientY - container.getBoundingClientRect().top;
+    const pointerY = dragState.lastY - container.getBoundingClientRect().top;
     let targetIndex = cards.length - 1;
 
     for (let i = 0; i < cards.length; i++) {
@@ -1540,7 +1532,9 @@ export function MobileAppShell() {
     positionDraggedCard();
   }
 
-  function handleChainDragEnd() {
+  function finishChainDrag() {
+    dragCleanupRef.current?.();
+    dragCleanupRef.current = null;
     const dragState = dragStateRef.current;
     const card = dragState ? getChainCard(dragState.id) : null;
     dragStateRef.current = null;
@@ -1558,6 +1552,83 @@ export function MobileAppShell() {
         easing: "cubic-bezier(0.22, 1, 0.36, 1)",
       });
     }
+  }
+
+  // The drag is followed on the window, not on the handle: when the order changes React moves the dragged card's element
+  // in the page, and a browser drops the pointer capture of an element that is moved, which used to stop the drag halfway
+  // (the card stayed lifted and the order stopped following the finger).
+  function handleChainDragStart(event: ReactPointerEvent<HTMLButtonElement>, id: string) {
+    // React only suppresses mouse/click handlers on a disabled button, not pointer ones.
+    if (pinnedIds.has(id) || dragStateRef.current) {
+      return;
+    }
+    event.preventDefault();
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Only a nicety now: the window follows the drag anyway.
+    }
+    const card = getChainCard(id);
+    dragStateRef.current = {
+      id,
+      lastY: event.clientY,
+      startScroll: getChainScroller()?.scrollTop ?? 0,
+      startTop: card?.offsetTop ?? 0,
+      startY: event.clientY,
+    };
+    setDraggingChainId(id);
+
+    const pointerId = event.pointerId;
+    let frame = 0;
+
+    // Holding a card near the top or bottom edge of the screen scrolls the page, faster the closer to the edge.
+    function autoScroll() {
+      const dragState = dragStateRef.current;
+      const scroller = getChainScroller();
+      if (dragState && scroller) {
+        const box = scroller.getBoundingClientRect();
+        const EDGE = 90;
+        const top = box.top + 72; // the floating buttons are over the top of the page
+        const bottom = box.bottom - 16;
+        let speed = 0;
+        if (dragState.lastY < top + EDGE) {
+          speed = -Math.min(18, ((top + EDGE - dragState.lastY) / EDGE) * 18);
+        } else if (dragState.lastY > bottom - EDGE) {
+          speed = Math.min(18, ((dragState.lastY - (bottom - EDGE)) / EDGE) * 18);
+        }
+        if (speed !== 0) {
+          const before = scroller.scrollTop;
+          scroller.scrollTop += speed;
+          if (scroller.scrollTop !== before) {
+            updateChainDrag();
+          }
+        }
+        frame = window.requestAnimationFrame(autoScroll);
+      }
+    }
+    frame = window.requestAnimationFrame(autoScroll);
+
+    function onMove(moveEvent: PointerEvent) {
+      if (moveEvent.pointerId !== pointerId || !dragStateRef.current) {
+        return;
+      }
+      dragStateRef.current.lastY = moveEvent.clientY;
+      updateChainDrag();
+    }
+    function onEnd(endEvent: PointerEvent) {
+      if (endEvent.pointerId === pointerId) {
+        finishChainDrag();
+      }
+    }
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onEnd);
+    window.addEventListener("pointercancel", onEnd);
+    dragCleanupRef.current = () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onEnd);
+      window.removeEventListener("pointercancel", onEnd);
+    };
   }
 
   function refreshCardTops() {
@@ -2366,10 +2437,7 @@ export function MobileAppShell() {
                           aria-label={t("reorderAria")}
                           className="grid h-10 w-5 shrink-0 touch-none place-items-center text-muted disabled:opacity-30"
                           disabled={isPinned}
-                          onPointerCancel={handleChainDragEnd}
                           onPointerDown={(event) => handleChainDragStart(event, place.id)}
-                          onPointerMove={handleChainDragMove}
-                          onPointerUp={handleChainDragEnd}
                           type="button"
                         >
                           <GripIcon className="h-4 w-4" />
