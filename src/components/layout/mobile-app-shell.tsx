@@ -41,6 +41,7 @@ import {
   getPlaceById,
   getPlacesByIds,
   getSeedComments,
+  estimateLegMinutes,
   getTotalMinutes,
   haversineKm,
   isDiningCategory,
@@ -656,6 +657,70 @@ export function MobileAppShell() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const chainPlaces = useMemo(() => getPlacesByIds(chainIds), [chainIds, diningVersion]);
+
+  // The description under the course was written for the stops the course first had. When the stops change by hand (one
+  // added, removed or swapped; a plain reorder does not count) it is written again for the new set, after a short pause so
+  // several edits in a row make one request. While that runs the old text is shown dimmed; without a new text it goes away
+  // rather than say what is no longer true.
+  const [isDescribing, setIsDescribing] = useState(false);
+  const describedKeyRef = useRef<string | null>(null);
+  const stopSetKey = useMemo(() => [...chainIds].sort().join(","), [chainIds]);
+  const latestStopSetKeyRef = useRef(stopSetKey);
+  useEffect(() => {
+    latestStopSetKeyRef.current = stopSetKey;
+  }, [stopSetKey]);
+  useEffect(() => {
+    if (!recommendReason) {
+      describedKeyRef.current = null;
+      return;
+    }
+    if (describedKeyRef.current === null) {
+      // The text has just arrived with this set of stops.
+      describedKeyRef.current = stopSetKey;
+      return;
+    }
+    if (describedKeyRef.current === stopSetKey) {
+      return;
+    }
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      setIsDescribing(true);
+      let next: string | null = null;
+      try {
+        const response = await fetch("/api/describe-course", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stops: chainPlaces.map((place) => {
+              const shown = localizePlace(place, locale);
+              return { name: shown.name, category: place.category, area: shown.area };
+            }),
+            prompt: submittedPrompt,
+            locale,
+          }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          next = typeof data.reason === "string" && data.reason ? data.reason : null;
+        }
+      } catch {
+        // No new text: the old one goes away below.
+      }
+      if (cancelled || latestStopSetKeyRef.current !== stopSetKey) {
+        return;
+      }
+      setIsDescribing(false);
+      if (next) {
+        describedKeyRef.current = stopSetKey;
+      }
+      setRecommendReason(next);
+    }, 1000);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      setIsDescribing(false);
+    };
+  }, [stopSetKey, recommendReason, chainPlaces, submittedPrompt, locale]);
   const isOptimized = useMemo(() => isRouteOptimized(chainPlaces, pinnedIds), [chainPlaces, pinnedIds]);
   // The alternatives listed under the open card: the frozen candidate list minus anything
   // that has since joined the course, with distances from the stop they'd replace.
@@ -2285,33 +2350,34 @@ export function MobileAppShell() {
                                 tabIndex={-1}
                               />
                             )}
-                            <MapAppsPopover
-                              items={[
-                                {
-                                  key: "kakao",
-                                  label: t("mapKakao"),
-                                  brand: "kakaomap",
-                                  onSelect: () => {
-                                    setIsNavigateMenuOpen(false);
-                                    window.open(buildKakaoWalkingRouteUrl(chainPlaces), "_blank", "noopener,noreferrer");
-                                  },
-                                },
-                                {
-                                  key: "google",
-                                  label: t("mapGoogle"),
-                                  brand: "googlemaps",
-                                  onSelect: () => {
-                                    setIsNavigateMenuOpen(false);
-                                    window.open(buildGoogleMapsWalkingRouteUrl(chainPlaces), "_blank", "noopener,noreferrer");
-                                  },
-                                },
-                              ]}
-                              open={isNavigateMenuOpen}
-                            />
                           </div>
                         )}
                       </div>
                     </div>
+                    <MapAppsPopover
+                        inline
+                                items={[
+                                  {
+                                    key: "kakao",
+                                    label: t("mapKakao"),
+                                    brand: "kakaomap",
+                                    onSelect: () => {
+                                      setIsNavigateMenuOpen(false);
+                                      window.open(buildKakaoWalkingRouteUrl(chainPlaces), "_blank", "noopener,noreferrer");
+                                    },
+                                  },
+                                  {
+                                    key: "google",
+                                    label: t("mapGoogle"),
+                                    brand: "googlemaps",
+                                    onSelect: () => {
+                                      setIsNavigateMenuOpen(false);
+                                      window.open(buildGoogleMapsWalkingRouteUrl(chainPlaces), "_blank", "noopener,noreferrer");
+                                    },
+                                  },
+                                ]}
+                                open={isNavigateMenuOpen}
+                              />
                     {courseTitle && courseTitle.prompt === submittedPrompt ? (
                       <>
                         <h2 className="mt-5 break-keep text-2xl font-extrabold leading-8 tracking-tight text-balance min-[360px]:text-[1.75rem] min-[360px]:leading-9">{courseTitle.title}</h2>
@@ -2330,7 +2396,7 @@ export function MobileAppShell() {
                       <ConstellationCard nudgeOptimize={!isOptimized} onOptimize={optimizeOrder} places={chainPlaces} suggestions={suggestionPlaces} />
                     </div>
                     {recommendReason && (
-                      <p className="mt-4 break-keep text-[0.9375rem] leading-6 text-muted-strong text-pretty">{recommendReason}</p>
+                      <p className={cn("mt-4 break-keep text-[0.9375rem] leading-6 text-muted-strong text-pretty transition-opacity duration-300", isDescribing && "opacity-50")}>{recommendReason}</p>
                     )}
                     {isAiCourse && !usedAI && !isRecommending && (
                       <p className="mt-3 text-sm leading-5 text-muted">{t("aiFallbackNotice")}</p>
@@ -2435,7 +2501,7 @@ export function MobileAppShell() {
                         <div className="flex min-w-0 items-center gap-2">
                         <button
                           aria-label={t("reorderAria")}
-                          className="grid h-10 w-5 shrink-0 touch-none place-items-center text-muted disabled:opacity-30"
+                          className="relative grid h-10 w-5 shrink-0 touch-none place-items-center text-muted before:absolute before:-inset-x-2 before:inset-y-0 before:content-[''] disabled:opacity-30"
                           disabled={isPinned}
                           onPointerDown={(event) => handleChainDragStart(event, place.id)}
                           type="button"
@@ -2468,6 +2534,12 @@ export function MobileAppShell() {
                             </button>
                             <span className="block truncate text-sm text-muted">
                               {placeSubtitle(localizedPlace, categoryText(place, categoryLabel), locale)}
+                              {index > 0 && (
+                                <>
+                                  {" · "}
+                                  {t("legFromPrevious", { minutes: estimateLegMinutes(chainPlaces[index - 1], place) })}
+                                </>
+                              )}
                             </span>
                           </div>
                         </div>
@@ -2854,7 +2926,7 @@ export function MobileAppShell() {
                   {exploreQuery && (
                     <button
                       aria-label={t("cancel")}
-                      className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-muted"
+                      className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-muted relative before:absolute before:-inset-2.5 before:content-['']"
                       onClick={() => {
                         setExploreQuery("");
                         exploreInputRef.current?.focus();

@@ -1730,6 +1730,37 @@ button.ios-card:not(:disabled):active {
   animation: none;
 }
 
+/* The inline popover: a row of its own whose room opens and closes (a grid row going from 0 to 1 fraction). */
+.map-pop-row {
+  display: grid;
+  grid-template-rows: 1fr;
+  animation: map-pop-row-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.map-pop-row[data-closing="true"] {
+  animation: map-pop-row-out 180ms ease-in both;
+}
+
+@keyframes map-pop-row-in {
+  from {
+    grid-template-rows: 0fr;
+  }
+
+  to {
+    grid-template-rows: 1fr;
+  }
+}
+
+@keyframes map-pop-row-out {
+  from {
+    grid-template-rows: 1fr;
+  }
+
+  to {
+    grid-template-rows: 0fr;
+  }
+}
+
 @keyframes map-pop-in {
   from {
     opacity: 0;
@@ -1773,6 +1804,7 @@ button.ios-card:not(:disabled):active {
 
 @media (prefers-reduced-motion: reduce) {
   .map-pop,
+  .map-pop-row,
   .map-pop-item {
     animation-duration: 0.01ms;
     animation-delay: 0ms;

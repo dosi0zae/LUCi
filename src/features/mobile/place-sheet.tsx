@@ -437,7 +437,7 @@ export function PlaceSheet({
                     aria-expanded={isMapMenuOpen}
                     aria-label={t("mapAppsHeading")}
                     className={cn(
-                      "grid h-6 w-6 shrink-0 place-items-center rounded-full",
+                      "grid h-6 w-6 shrink-0 place-items-center rounded-full relative before:absolute before:-inset-2.5 before:content-['']",
                       isMapMenuOpen ? "ios-btn ios-btn-on" : "text-muted hover:text-primary",
                     )}
                     onClick={() => setIsMapMenuOpen((open) => !open)}
@@ -447,15 +447,6 @@ export function PlaceSheet({
                   >
                     <MapPinIcon className="h-4 w-4" />
                   </button>
-                  <MapAppsPopover
-                    items={[
-                      { key: "kakao", label: t("mapKakao"), brand: "kakaomap", href: getKakaoMapUrl(place), onSelect: () => setIsMapMenuOpen(false) },
-                      { key: "naver", label: t("mapNaver"), brand: "navermap", href: getNaverMapUrl(place), onSelect: () => setIsMapMenuOpen(false) },
-                      { key: "google", label: t("mapGoogle"), brand: "googlemaps", href: getGoogleMapsUrl(place), onSelect: () => setIsMapMenuOpen(false) },
-                    ]}
-                    menuRef={mapMenuRef}
-                    open={isMapMenuOpen}
-                  />
                 </div>
               </div>
             </div>
@@ -484,6 +475,18 @@ export function PlaceSheet({
             </button>
           </div>
         </div>
+
+        {/* The map apps open as a row under the header: nothing is covered. */}
+        <MapAppsPopover
+            inline
+                      items={[
+                        { key: "kakao", label: t("mapKakao"), brand: "kakaomap", href: getKakaoMapUrl(place), onSelect: () => setIsMapMenuOpen(false) },
+                        { key: "naver", label: t("mapNaver"), brand: "navermap", href: getNaverMapUrl(place), onSelect: () => setIsMapMenuOpen(false) },
+                        { key: "google", label: t("mapGoogle"), brand: "googlemaps", href: getGoogleMapsUrl(place), onSelect: () => setIsMapMenuOpen(false) },
+                      ]}
+                      menuRef={mapMenuRef}
+                      open={isMapMenuOpen}
+                    />
 
         <p
           className={cn(

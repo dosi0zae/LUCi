@@ -13,7 +13,11 @@ import {
   SEOUL_DISTRICTS,
   type RecommendIntent,
 } from "@/features/mobile/recommend-engine";
-import { getPlacesByIds, haversineKm, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
+import { getPlacesByIds, haversineKm, localizePlace, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
+import { SUPPORTED_LOCALES, type Locale } from "@/features/mobile/i18n/translations";
+import { applyReview, pickAlternatives, reviewCourseWithGemini } from "@/features/mobile/course-critic";
+import { describeCourseWithGemini } from "@/features/mobile/describe-course";
+import { getLoadedDiningPlaces } from "@/features/mobile/dining-store";
 import {
   buildDiningCourse,
   DINING_UNAVAILABLE_NOTE,
@@ -26,6 +30,9 @@ import { refineCourseCore } from "@/features/mobile/refine-course";
 import { resolvePlaceAnchor, stationFromPrompt } from "@/app/api/recommend/place-anchor";
 
 export const runtime = "nodejs";
+// A course takes several model calls in turn (the request read, the pick, the review, the new introduction); the default
+// limit of a serverless function is short.
+export const maxDuration = 30;
 
 const GEMINI_MODEL = "gemini-flash-lite-latest";
 const CATEGORIES: PlaceCategory[] = ["문화재", "관광지", "문화시설", "축제행사"];
@@ -715,12 +722,56 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // The review: the finished course is looked at as a person planning a day would (does it double back, is one stop far
+  // from the rest, are two stops the same kind of thing) and, when a stop is clearly out of place, swapped for a
+  // nearby alternative; every swap is checked (see course-critic.ts). A changed course gets a new introduction,
+  // because the first one was written for the stops it had.
+  let reviewSwaps = 0;
+  let reviewChanged = false;
+  if (focus !== "dining" && finalPlaceIds.length >= 4) {
+    const stops = getPlacesByIds(finalPlaceIds);
+    if (stops.length === finalPlaceIds.length) {
+      const pool = getScoredPool({
+        ...intent,
+        anchor: intent.anchor ?? (result.anchor ? { lat: result.anchor.lat, lng: result.anchor.lng } : null),
+        hubAnchor: result.anchor,
+      }).scored.map(({ place }) => place);
+      const alternatives = pickAlternatives(stops, pool, getLoadedDiningPlaces());
+      const review = await reviewCourseWithGemini({ prompt, locale, stops, alternatives });
+      const fixed = review && (review.swaps.length > 0 || review.order.length > 0) ? applyReview(stops, alternatives, review) : null;
+      console.log(`[recommend] review: ${review ? `${review.swaps.length} swap(s), order ${review.order.length ? "asked" : "kept"}: ${fixed ? "applied" : "nothing applied"}` : "no answer"}${review?.summary ? ` — ${review.summary}` : ""}`);
+      if (fixed) {
+        finalPlaceIds = fixed.map((place) => place.id);
+        reviewChanged = true;
+        reviewSwaps = Math.max(1, review?.swaps.length ?? 0);
+      }
+    }
+  }
+
+  // The introduction is written again from the final stops when the review changed the course (the first one was written
+  // for the old stops), and when the pick step gave none of its own (then it would be the general line of the request read,
+  // which says nothing about this course).
+  let freshReason: string | null = null;
+  if (focus !== "dining" && (reviewChanged || (!selectionReason && !mixedReason))) {
+    const shownLocale: Locale = (SUPPORTED_LOCALES as string[]).includes(locale) ? (locale as Locale) : "en";
+    freshReason = await describeCourseWithGemini({
+      stops: getPlacesByIds(finalPlaceIds).map((place) => {
+        const shown = localizePlace(place, shownLocale);
+        return { name: shown.name, category: place.category, area: shown.area };
+      }),
+      prompt,
+      locale,
+    });
+  }
+  const introduction = reviewChanged ? freshReason : (mixedReason ?? selectionReason ?? freshReason ?? aiIntent?.reason);
+
   return NextResponse.json({
     placeIds: finalPlaceIds,
     anchor: result.anchor,
     areaFilter: intent.areaFilter ?? null,
+    reviewSwaps,
     reason:
-      [mixedReason ?? selectionReason ?? aiIntent?.reason, wovenNote, weatherNote, maxShownNote, diningUnavailableNote]
+      [introduction, wovenNote, weatherNote, maxShownNote, diningUnavailableNote]
         .filter(Boolean)
         .join(" ") || null,
     title: courseTitle,

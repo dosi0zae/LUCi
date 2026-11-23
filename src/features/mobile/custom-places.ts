@@ -110,6 +110,54 @@ export function categoryText(place: MobilePlace, label: (category: PlaceCategory
 
 const SEOUL_DISTRICT = /서울(?:특별시)?\s+(\S+?[구])(?:\s|$)/;
 
+// A custom place as it travels in a shared link: the receiver does not have it (it lives in the sharer's localStorage),
+// so the link carries what is needed to draw it. [id, name, lat, lng, address, category, kind text, uncategorized 0/1]
+export type SharedCustomPlace = [string, string, number, number, string, string, string, number];
+
+const CATEGORIES: PlaceCategory[] = ["문화재", "관광지", "문화시설", "축제행사", "식당", "카페", "술집"];
+
+export function customPlaceToShared(place: MobilePlace): SharedCustomPlace {
+  const round = (value: number) => Math.round(value * 1e5) / 1e5;
+  return [place.id, place.name, round(place.lat), round(place.lng), place.address, place.category, place.tags[0] ?? "", place.uncategorized ? 1 : 0];
+}
+
+// The other way, for what a link holds: anything that is not well-formed is dropped (a link is text from anyone).
+export function placeFromShared(entry: unknown): MobilePlace | null {
+  if (!Array.isArray(entry) || entry.length < 8) {
+    return null;
+  }
+  const [id, name, lat, lng, address, category, kind, uncategorized] = entry;
+  if (
+    typeof id !== "string" || !isCustomId(id) || id.length > 60 ||
+    typeof name !== "string" || !name ||
+    typeof lat !== "number" || typeof lng !== "number" || !Number.isFinite(lat) || !Number.isFinite(lng) ||
+    Math.abs(lat) > 90 || Math.abs(lng) > 180 ||
+    typeof address !== "string" || typeof kind !== "string" ||
+    typeof category !== "string" || !CATEGORIES.includes(category as PlaceCategory)
+  ) {
+    return null;
+  }
+  const isDining = category === "식당" || category === "카페" || category === "술집";
+  const text = kind.slice(0, 40);
+  return {
+    id,
+    name: name.slice(0, 80),
+    category: category as PlaceCategory,
+    area: SEOUL_DISTRICT.exec(address)?.[1] ?? "",
+    address: address.slice(0, 160),
+    description: text || address.slice(0, 160),
+    duration: isDining ? "60분" : "45분",
+    fee: "정보 없음",
+    tags: text ? [text] : [],
+    hours: "정보 없음",
+    savedBy: 0,
+    lat,
+    lng,
+    source: "custom",
+    uncategorized: uncategorized === 1,
+  };
+}
+
 export function placeFromResult(result: MapSearchResult): MobilePlace {
   const known = categoryOfResult(result);
   const category = known ?? "관광지";

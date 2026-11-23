@@ -1,3 +1,4 @@
+import { customPlaceToShared, getCustomPlace, placeFromShared, registerCustomPlace } from "@/features/mobile/custom-places";
 import { isDiningId } from "@/features/mobile/dining-store";
 import { getPlaceById } from "@/features/mobile/mobile-data";
 
@@ -6,6 +7,9 @@ import { getPlaceById } from "@/features/mobile/mobile-data";
 // a link to a *published* trip (which today only ever exists in the publisher's own
 // localStorage, so sharing `origin/mobile` alone silently drops the actual course).
 const COURSE_PARAM = "course";
+// Places the sharer found on the map screen (not in our data) ride along in the link, see custom-places.ts.
+const CUSTOM_PARAM = "cp";
+const MAX_CUSTOM = 20;
 const TITLE_PARAM = "title";
 
 // `lang` is only for the preview a chat app builds from the link (its text and picture follow the sharer's language).
@@ -15,6 +19,13 @@ export function buildCourseShareUrl(origin: string, placeIds: string[], title: s
   params.set(TITLE_PARAM, title);
   if (lang) {
     params.set("lang", lang);
+  }
+  const custom = placeIds.flatMap((id) => {
+    const place = getCustomPlace(id);
+    return place ? [customPlaceToShared(place)] : [];
+  });
+  if (custom.length > 0) {
+    params.set(CUSTOM_PARAM, JSON.stringify(custom));
   }
   return `${origin}/mobile?${params.toString()}`;
 }
@@ -30,6 +41,24 @@ export function decodeCourseFromLocation(search: string): { placeIds: string[]; 
   const raw = params.get(COURSE_PARAM);
   if (!raw) {
     return null;
+  }
+
+  // The places that are not in our data come first, so the ids below find them.
+  const rawCustom = params.get(CUSTOM_PARAM);
+  if (rawCustom) {
+    try {
+      const list: unknown = JSON.parse(rawCustom);
+      if (Array.isArray(list)) {
+        for (const entry of list.slice(0, MAX_CUSTOM)) {
+          const place = placeFromShared(entry);
+          if (place) {
+            registerCustomPlace(place);
+          }
+        }
+      }
+    } catch {
+      // A damaged link: the rest of the course still opens.
+    }
   }
 
   // Dining stops load per district on demand (dining-store), so they can't be looked up yet

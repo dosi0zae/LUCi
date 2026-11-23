@@ -291,11 +291,32 @@ export function getPlacesByIds(ids: string[]): MobilePlace[] {
     .filter((place): place is MobilePlace => Boolean(place));
 }
 
+// Minutes to get from one stop to the next. There is no routing service behind this, so it is an estimate from the straight
+// line: streets are about 1.3 times longer than it, and up to 1.5 km of street it is a walk at 4.5 km/h; further than that
+// the person takes a bus or the subway, about 10 minutes of waiting and getting there plus 3 minutes per km.
+const STREET_FACTOR = 1.3;
+const WALK_KMH = 4.5;
+const MAX_WALK_KM = 1.5;
+
+export function estimateLegMinutes(from: { lat: number; lng: number }, to: { lat: number; lng: number }): number {
+  const streetKm = haversineKm(from, to) * STREET_FACTOR;
+  if (streetKm < 0.05) {
+    return 0;
+  }
+  return streetKm <= MAX_WALK_KM ? Math.max(1, Math.round((streetKm / WALK_KMH) * 60)) : Math.round(10 + streetKm * 3);
+}
+
+// The time of the course: what is spent at every stop, plus getting from each stop to the next.
 export function getTotalMinutes(places: MobilePlace[]): number {
-  return places.reduce((total, place) => {
+  const visits = places.reduce((total, place) => {
     const minutes = Number.parseInt(place.duration, 10);
     return Number.isNaN(minutes) ? total : total + minutes;
   }, 0);
+  let travel = 0;
+  for (let index = 1; index < places.length; index += 1) {
+    travel += estimateLegMinutes(places[index - 1], places[index]);
+  }
+  return visits + travel;
 }
 
 export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {

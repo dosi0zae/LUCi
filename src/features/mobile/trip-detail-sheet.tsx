@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeftIcon,
@@ -26,6 +26,7 @@ import { buildFacebookShareUrl, buildLineShareUrl, buildTwitterShareUrl, buildWh
 import { PopOnActive } from "@/features/mobile/motion";
 import { PhotoLightbox, PlacePhotoThumb } from "@/features/mobile/place-photo";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
+import { useSheetDismiss } from "@/features/mobile/use-sheet-dismiss";
 import {
   getPlacesByIds,
   getTotalMinutes,
@@ -446,6 +447,7 @@ export function TripDetailSheet({
       if (navigator.canShare?.({ files: [file] })) {
         try {
           await navigator.share({ files: [file], title: localizedTrip.title, text: shareText, url: shareUrl });
+          setIsShareMenuOpen(false);
           setShareMessage(t("shareDone"));
         } catch {
           // Share sheet was dismissed by the user — nothing to report.
@@ -457,6 +459,7 @@ export function TripDetailSheet({
     if (navigator.share) {
       try {
         await navigator.share({ title: localizedTrip.title, text: shareText, url: shareUrl });
+        setIsShareMenuOpen(false);
         setShareMessage(t("shareDone"));
       } catch {
         // Share sheet was dismissed by the user — nothing to report.
@@ -466,8 +469,10 @@ export function TripDetailSheet({
 
     try {
       await navigator.clipboard.writeText(shareUrl);
+      setIsShareMenuOpen(false);
       setShareMessage(t("shareLinkCopied"));
     } catch {
+      setIsShareMenuOpen(false);
       setShareMessage(t("shareLinkFailed"));
     }
   }
@@ -533,9 +538,10 @@ export function TripDetailSheet({
   // Share targets in the order that suits the viewer's language (KakaoTalk first in Korean, LINE first in
   // Japanese). Instagram has no web share link, so its tile opens the phone's own share sheet with the card
   // image (the only way a website can hand something to Instagram).
-  const SHARE_APP_RUNNERS: Record<Exclude<BrandTileName, "naver" | "navermap" | "kakaomap" | "googlemaps">, { label: string; run: () => void }> = {
+  const SHARE_APP_RUNNERS: Record<Exclude<BrandTileName, "naver" | "navermap" | "kakaomap" | "googlemaps">, { label: string; run: () => void; keepsSheet?: boolean }> = {
     kakaotalk: { label: t("shareKakaoShort"), run: () => void shareToKakao() },
-    instagram: { label: "Instagram", run: () => void shareTrip() },
+    // Opens the phone's own share sheet: this sheet stays under it (it closes by itself once something was shared).
+    instagram: { label: "Instagram", run: () => void shareTrip(), keepsSheet: true },
     x: { label: "X", run: shareToTwitter },
     facebook: { label: "Facebook", run: shareToFacebook },
     whatsapp: { label: "WhatsApp", run: shareToWhatsApp },
@@ -551,7 +557,7 @@ export function TripDetailSheet({
   const shareActions = [
     { key: "copy", label: t("shareCopyLink"), icon: <LinkIcon className="h-5 w-5" />, run: () => void copyShareLink() },
     { key: "image", label: t("shareSaveImageShort"), icon: <DownloadIcon className="h-5 w-5" />, run: () => void downloadShareCard() },
-    { key: "more", label: t("shareMoreApps"), icon: <MoreIcon className="h-5 w-5" />, run: () => void shareTrip() },
+    { key: "more", label: t("shareMoreApps"), icon: <MoreIcon className="h-5 w-5" />, run: () => void shareTrip(), keepsSheet: true },
   ];
 
   return (
@@ -882,30 +888,7 @@ export function TripDetailSheet({
       </footer>
 
       {isShareMenuOpen && (
-        <div
-          className="sheet-backdrop absolute inset-0 z-50 flex items-end bg-black/35"
-          onClick={() => setIsShareMenuOpen(false)}
-          role="presentation"
-        >
-          <div
-            aria-label={t("shareSheetTitle")}
-            aria-modal="true"
-            className="sheet-panel glass-panel w-full rounded-t-[2rem] px-5 pt-5 [padding-bottom:calc(1.5rem+env(safe-area-inset-bottom))]"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-extrabold tracking-tight">{t("shareSheetTitle")}</h3>
-              <button
-                aria-label={t("cancel")}
-                className="ios-btn grid h-9 w-9 place-items-center rounded-full"
-                onClick={() => setIsShareMenuOpen(false)}
-                type="button"
-              >
-                <CloseIcon className="h-[1.125rem] w-[1.125rem]" />
-              </button>
-            </div>
-
+        <ShareSheetFrame closeLabel={t("cancel")} onClose={() => setIsShareMenuOpen(false)} title={t("shareSheetTitle")}>
             {/* What a chat app will show under the link: the same picture the link's preview uses. */}
             <div className="mt-4 overflow-hidden rounded-2xl bg-surface-muted shadow-[0_6px_18px_-8px_rgba(15,23,42,0.3)] ring-1 ring-black/5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -924,7 +907,9 @@ export function TripDetailSheet({
                   className="flex w-[4.25rem] shrink-0 flex-col items-center gap-1.5 active:opacity-70"
                   key={app.brand}
                   onClick={() => {
-                    setIsShareMenuOpen(false);
+                    if (!app.keepsSheet) {
+                      setIsShareMenuOpen(false);
+                    }
                     app.run();
                   }}
                   type="button"
@@ -941,7 +926,9 @@ export function TripDetailSheet({
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[0.9375rem] font-bold active:bg-black/5"
                   key={action.key}
                   onClick={() => {
-                    setIsShareMenuOpen(false);
+                    if (!("keepsSheet" in action && action.keepsSheet)) {
+                      setIsShareMenuOpen(false);
+                    }
                     action.run();
                   }}
                   type="button"
@@ -951,8 +938,7 @@ export function TripDetailSheet({
                 </button>
               ))}
             </div>
-          </div>
-        </div>
+        </ShareSheetFrame>
       )}
 
       {photoPlaceId && (
@@ -981,6 +967,52 @@ export function TripDetailSheet({
           place={selectedPlace}
         />
       )}
+    </div>
+  );
+}
+
+// The share sheet's frame: the backdrop, the panel and its title row. It goes down with a swipe (a finger anywhere on it,
+// or a mouse on the strip along its top edge; no visible handle) or a tap on the backdrop or the X.
+function ShareSheetFrame({
+  children,
+  closeLabel,
+  onClose,
+  title,
+}: {
+  children: ReactNode;
+  closeLabel: string;
+  onClose: () => void;
+  title: string;
+}) {
+  const { close, grabProps, isClosing, panelClass, panelRef, panelStyle } = useSheetDismiss(onClose);
+
+  return (
+    <div
+      className={cn("absolute inset-0 z-50 flex items-end bg-black/35", isClosing ? "sheet-backdrop-out" : "sheet-backdrop")}
+      onClick={close}
+      role="presentation"
+    >
+      <div
+        aria-label={title}
+        aria-modal="true"
+        className={cn(
+          "glass-panel relative w-full rounded-t-[2rem] px-5 pt-5 [padding-bottom:calc(1.5rem+env(safe-area-inset-bottom))]",
+          panelClass,
+        )}
+        onClick={(event) => event.stopPropagation()}
+        ref={panelRef}
+        role="dialog"
+        style={panelStyle}
+      >
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 z-10 h-6 cursor-grab touch-none active:cursor-grabbing" {...grabProps} />
+        <div className="flex items-center justify-between">
+          <h3 className="text-2xl font-extrabold tracking-tight">{title}</h3>
+          <button aria-label={closeLabel} className="ios-btn grid h-9 w-9 place-items-center rounded-full" onClick={close} type="button">
+            <CloseIcon className="h-[1.125rem] w-[1.125rem]" />
+          </button>
+        </div>
+        {children}
+      </div>
     </div>
   );
 }

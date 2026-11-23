@@ -45,7 +45,7 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
   const [useUploadedCover, setUseUploadedCover] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
-  const { close: handleCancel, grabProps, isClosing, panelClass, panelRef, panelStyle } = useSheetDismiss<HTMLFormElement>(onCancel);
+  const { close: handleCancel, grabProps, isClosing, panelClass, panelRef, panelStyle, scrollRef } = useSheetDismiss<HTMLFormElement>(onCancel);
 
   async function handlePickedFile(file: File | undefined) {
     if (!file) {
@@ -93,7 +93,7 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
     >
       <form
         className={cn(
-          "app-scroll-area glass-panel flex max-h-[86%] w-full flex-col overflow-y-auto rounded-t-[2rem] p-5 pb-6",
+          "glass-panel flex max-h-[86%] w-full flex-col rounded-t-[2rem] p-5 pb-6",
           panelClass,
         )}
         onClick={(event) => event.stopPropagation()}
@@ -103,12 +103,17 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
       >
         {/* Grab handle: drag it (or the sheet, from its top) down to dismiss. */}
         <div
-          className="-mx-5 -mt-5 px-5 pb-3 pt-3 flex cursor-grab touch-none justify-center active:cursor-grabbing"
+          className="-mx-5 -mt-5 shrink-0 px-5 pb-3 pt-3 flex cursor-grab touch-none justify-center active:cursor-grabbing"
           {...grabProps}
         >
           <span className="h-1.5 w-11 rounded-full bg-border-strong" />
         </div>
 
+        {/* Runs down to the sheet's bottom edge and fades out over its last 2 rem (as in the category sheet). */}
+        <div
+          className="app-scroll-area -mb-6 min-h-0 flex-1 overflow-y-auto pb-10 [-webkit-mask-image:linear-gradient(to_bottom,black_calc(100%-2rem),transparent)] [mask-image:linear-gradient(to_bottom,black_calc(100%-2rem),transparent)]"
+          ref={scrollRef}
+        >
         <h2 className="text-2xl font-extrabold tracking-tight">{t("publishHeading")}</h2>
         <p className="mt-1.5 break-keep text-sm text-muted text-balance">{t("publishSubtitle", { count: places.length })}</p>
 
@@ -229,6 +234,7 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
           <Button className="h-14 text-[1.0625rem] shadow-[0_10px_28px_rgba(47,111,228,0.32)]" shape="pill" type="submit">
             {t("saveCourse")}
           </Button>
+        </div>
         </div>
       </form>
     </div>

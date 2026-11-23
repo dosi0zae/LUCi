@@ -25,6 +25,10 @@ const LIMITS: Record<string, Rule[]> = {
     { windowMs: MINUTE, max: 15 },
     { windowMs: HOUR, max: 120 },
   ],
+  "/api/describe-course": [
+    { windowMs: MINUTE, max: 15 },
+    { windowMs: HOUR, max: 120 },
+  ],
   "/api/search-trips": [
     { windowMs: MINUTE, max: 15 },
     { windowMs: HOUR, max: 120 },

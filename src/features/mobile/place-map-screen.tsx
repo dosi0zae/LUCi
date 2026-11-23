@@ -587,7 +587,7 @@ export function PlaceMapScreen({ chainPlaces, diningVersion, onAddPlace, onRemov
                 {query && searchState !== "searching" && (
                   <button
                     aria-label={t("cancel")}
-                    className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-muted"
+                    className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-muted relative before:absolute before:-inset-2.5 before:content-['']"
                     onClick={() => {
                       setQuery("");
                       setResults([]);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type RefObject } from "react";
 import { BrandTile, type BrandTileName } from "@/features/mobile/brand-icons";
+import { cn } from "@/lib/utils";
 
 const LEAVE_MS = 170;
 
@@ -31,12 +32,16 @@ function usePresence(open: boolean, ms: number) {
 
 // The little popover that offers the map apps (a place's page, or the walking route of a course): one pill of glass
 // with round app icons. It springs open from the top right corner, its icons pop in one after the other, and it
-// shrinks away again. Put it inside a `relative` box under the button that opens it.
+// shrinks away again. By default it floats over what is under it (put it inside a `relative` box under the button that
+// opens it); `inline` puts it in the flow as a row of its own, right-aligned, which opens and closes its room (nothing is
+// covered, what is below moves down and back).
 export function MapAppsPopover({
+  inline = false,
   items,
   menuRef,
   open,
 }: {
+  inline?: boolean;
   items: MapAppItem[];
   menuRef?: RefObject<HTMLDivElement | null>;
   open: boolean;
@@ -46,14 +51,14 @@ export function MapAppsPopover({
     return null;
   }
 
-  return (
+  const pill = (
     <div
-      className="map-pop absolute right-0 top-full z-20 mt-2 flex items-center gap-2 rounded-full p-1.5"
+      className={cn("map-pop flex items-center gap-2 rounded-full p-1.5", !inline && "absolute right-0 top-full z-20 mt-2")}
       data-closing={!open}
-      ref={menuRef}
+      ref={inline ? undefined : menuRef}
     >
       {items.map((item, index) => {
-        const tile = <BrandTile brand={item.brand} className="h-10 w-10" round />;
+        const tile = <BrandTile brand={item.brand} className="h-10 w-10" />;
         const common = {
           "aria-label": item.label,
           className: "map-pop-item shrink-0 rounded-full transition active:scale-90",
@@ -71,6 +76,17 @@ export function MapAppsPopover({
           </button>
         );
       })}
+    </div>
+  );
+
+  if (!inline) {
+    return pill;
+  }
+  return (
+    <div className="map-pop-row" data-closing={!open} ref={menuRef}>
+      <div className="min-h-0 overflow-hidden">
+        <div className="flex justify-end px-1 pb-2 pt-3">{pill}</div>
+      </div>
     </div>
   );
 }

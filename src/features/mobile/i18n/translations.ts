@@ -176,6 +176,7 @@ const ko = {
   statSaved: "저장",
   placesCount: "{count}곳",
   minutesCount: "{count}분",
+  legFromPrevious: "이전 장소에서 {minutes}분",
   shareDone: "공유했어요.",
   shareLinkCopied: "공유 링크를 복사했어요.",
   shareLinkFailed: "공유 링크 복사에 실패했어요.",
@@ -269,6 +270,7 @@ const ko = {
   zoomInAria: "지도 확대",
   zoomOutAria: "지도 축소",
   resetViewAria: "전체 동선 보기",
+  mapTapToMove: "탭하면 지도를 움직일 수 있어요",
   viewAsConstellationAria: "별자리 카드로 보기",
   viewAsMapAria: "지도로 보기",
 
@@ -437,6 +439,7 @@ const en: Dictionary = {
   statSaved: "Saved",
   placesCount: "{count} places",
   minutesCount: "{count} min",
+  legFromPrevious: "{minutes} min from the previous stop",
   shareDone: "Shared.",
   shareLinkCopied: "Copied the share link.",
   shareLinkFailed: "Couldn't copy the share link.",
@@ -530,6 +533,7 @@ const en: Dictionary = {
   zoomInAria: "Zoom in",
   zoomOutAria: "Zoom out",
   resetViewAria: "Show full route",
+  mapTapToMove: "Tap the map to move it",
   viewAsConstellationAria: "View as constellation card",
   viewAsMapAria: "View as map",
 
@@ -695,6 +699,7 @@ const ja: Dictionary = {
   statSaved: "保存",
   placesCount: "{count}か所",
   minutesCount: "{count}分",
+  legFromPrevious: "前の場所から{minutes}分",
   shareDone: "共有しました。",
   shareLinkCopied: "共有リンクをコピーしました。",
   shareLinkFailed: "共有リンクのコピーに失敗しました。",
@@ -788,6 +793,7 @@ const ja: Dictionary = {
   zoomInAria: "地図を拡大",
   zoomOutAria: "地図を縮小",
   resetViewAria: "全ルートを表示",
+  mapTapToMove: "タップすると地図を動かせます",
   viewAsConstellationAria: "星座カードで見る",
   viewAsMapAria: "地図で見る",
 
@@ -953,6 +959,7 @@ const zh: Dictionary = {
   statSaved: "收藏",
   placesCount: "{count}处",
   minutesCount: "{count}分钟",
+  legFromPrevious: "距上一站{minutes}分钟",
   shareDone: "已分享。",
   shareLinkCopied: "已复制分享链接。",
   shareLinkFailed: "复制分享链接失败。",
@@ -1046,6 +1053,7 @@ const zh: Dictionary = {
   zoomInAria: "放大地图",
   zoomOutAria: "缩小地图",
   resetViewAria: "查看完整路线",
+  mapTapToMove: "点按后可拖动地图",
   viewAsConstellationAria: "以星座卡片查看",
   viewAsMapAria: "以地图查看",
 

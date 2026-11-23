@@ -226,6 +226,9 @@ function AbstractConstellation({ places }: { places: MobilePlace[] }) {
 // view, undoing any pan/zoom) on every parent re-render.
 const NO_SUGGESTIONS: MobilePlace[] = [];
 
+// The hint about tapping the map is shown once per visit, not on every course.
+let mapHintShown = false;
+
 export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOptimize, nudgeOptimize = false }: ConstellationCardProps) {
   const t = useT();
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
@@ -237,6 +240,16 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
   // The zoom level at which the whole route fits; anything closer than that counts as "zoomed in".
   const fitLevelRef = useRef(6);
   const polylineRef = useRef<KakaoPolyline | null>(null);
+  // On a phone the map sits in a page that scrolls, and a finger that starts on it would drag it instead of scrolling the
+  // page. So it starts locked (the page scrolls over it) and a tap wakes it: then it can be dragged and pinched, an outline
+  // shows it is awake, and it falls asleep again when the page is scrolled, when something else is touched, or after a few
+  // seconds without use. With a mouse (wheel scrolls the page, a drag cannot be an accident) it is always awake.
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const isTouchRef = useRef(false);
+  const isActiveRef = useRef(false);
+  const activeTimerRef = useRef<number | undefined>(undefined);
+  const [isMapActive, setIsMapActive] = useState(false);
+  const [showMapHint, setShowMapHint] = useState<boolean | null>(null);
   const [status, setStatus] = useState<"idle" | "ready" | "error">(appKey ? "idle" : "error");
   const [viewMode, setViewMode] = useState<"map" | "abstract">("map");
   const [optimizeNote, setOptimizeNote] = useState<"done" | "already" | null>(null);
@@ -278,10 +291,18 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
           level: 6,
           scrollwheel: false,
         });
-        mapRef.current.setZoomable(false);
-        containerRef.current.classList.add("map-locked");
+        const map = mapRef.current;
+        isTouchRef.current = window.matchMedia("(pointer: coarse)").matches;
+        maps.event.addListener(map, "dragend", () => keepMapActive());
+        maps.event.addListener(map, "zoom_changed", () => keepMapActive());
+        setMapActive(!isTouchRef.current);
         hideScaleBar(containerRef.current);
         setStatus("ready");
+        if (isTouchRef.current && !mapHintShown) {
+          mapHintShown = true;
+          setShowMapHint(true);
+          window.setTimeout(() => setShowMapHint(false), 3400);
+        }
       })
       .catch(() => {
         if (!cancelled) {
@@ -291,6 +312,7 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
 
     return () => {
       cancelled = true;
+      window.clearTimeout(activeTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appKey, canDrawMap]);
@@ -308,10 +330,7 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
     suggestions.forEach((place) => bounds.extend(new maps.LatLng(place.lat, place.lng)));
     map.setBounds(bounds, 32);
     fitLevelRef.current = map.getLevel();
-    map.setDraggable(false);
-    if (containerRef.current) {
-      containerRef.current.classList.add("map-locked");
-    }
+    setMapActive(!isTouchRef.current);
 
     polylineRef.current?.setMap(null);
     polylineRef.current = new maps.Polyline({
@@ -360,7 +379,34 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
       polylineRef.current?.setMap(null);
       overlaysRef.current.forEach((overlay) => overlay.setMap(null));
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [places, suggestions, status]);
+
+  function setMapActive(on: boolean) {
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+    map.setDraggable(on);
+    map.setZoomable(on);
+    containerRef.current?.classList.toggle("map-locked", !on);
+    isActiveRef.current = on;
+    window.clearTimeout(activeTimerRef.current);
+    if (isTouchRef.current) {
+      setIsMapActive(on);
+      if (on) {
+        activeTimerRef.current = window.setTimeout(() => setMapActive(false), 6000);
+      }
+    }
+  }
+
+  // Using the map keeps it awake a while longer.
+  function keepMapActive() {
+    if (isTouchRef.current && isActiveRef.current) {
+      window.clearTimeout(activeTimerRef.current);
+      activeTimerRef.current = window.setTimeout(() => setMapActive(false), 6000);
+    }
+  }
 
   function zoomBy(delta: number) {
     const map = mapRef.current;
@@ -369,11 +415,8 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
     }
     const next = Math.min(14, Math.max(1, map.getLevel() + delta));
     map.setLevel(next);
-    // Zoomed in past the whole-route view the person wants to look around, so dragging comes on;
-    // at or beyond it there is nothing to pan to and the page scrolls instead.
-    const canDrag = next < fitLevelRef.current;
-    map.setDraggable(canDrag);
-    containerRef.current?.classList.toggle("map-locked", !canDrag);
+    // Someone zooming wants to look around: the map wakes (see the note on the refs above).
+    setMapActive(true);
   }
 
   function resetView() {
@@ -386,11 +429,28 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
     places.forEach((place) => bounds.extend(new maps.LatLng(place.lat, place.lng)));
     map.setBounds(bounds, 32);
     fitLevelRef.current = map.getLevel();
-    map.setDraggable(false);
-    if (containerRef.current) {
-      containerRef.current.classList.add("map-locked");
-    }
+    setMapActive(!isTouchRef.current);
   }
+
+  useEffect(() => {
+    if (!isMapActive) {
+      return;
+    }
+    const scroller = wrapperRef.current?.closest<HTMLElement>(".app-scroll-area");
+    const sleep = () => setMapActive(false);
+    const touchedElsewhere = (event: PointerEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) {
+        setMapActive(false);
+      }
+    };
+    scroller?.addEventListener("scroll", sleep, { passive: true });
+    document.addEventListener("pointerdown", touchedElsewhere);
+    return () => {
+      scroller?.removeEventListener("scroll", sleep);
+      document.removeEventListener("pointerdown", touchedElsewhere);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMapActive]);
 
   if (places.length < 2) {
     return null;
@@ -399,7 +459,7 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
   if (!appKey) {
     return (
       <div
-        className="overflow-hidden rounded-lg"
+        className="overflow-hidden rounded-3xl"
         style={{ aspectRatio: `${WIDTH} / ${HEIGHT}`, background: "#0b1220" }}
       >
         <AbstractConstellation places={places} />
@@ -411,7 +471,13 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
 
   return (
     <div
-      className="relative overflow-hidden rounded-lg [perspective:1200px]"
+      className="relative overflow-hidden rounded-3xl [perspective:1200px]"
+      onClick={() => {
+        if (isTouchRef.current && !isActiveRef.current && status === "ready" && viewMode === "map") {
+          setMapActive(true);
+        }
+      }}
+      ref={wrapperRef}
       style={{ aspectRatio: `${WIDTH} / ${HEIGHT}`, background: "#0b1220" }}
     >
       <div
@@ -423,6 +489,17 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
           <AbstractConstellation places={places} />
         </div>
       </div>
+      {status === "ready" && viewMode === "map" && isMapActive && (
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 rounded-3xl ring-[2.5px] ring-inset ring-primary" />
+      )}
+      {status === "ready" && viewMode === "map" && showMapHint !== null && (
+        <div
+          aria-hidden="true"
+          className={cn("pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center transition-opacity duration-500", showMapHint ? "opacity-100" : "opacity-0")}
+        >
+          <span className="rounded-full bg-[#111827]/70 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">{t("mapTapToMove")}</span>
+        </div>
+      )}
       {status === "ready" && viewMode === "map" && (
         <>
           <div
@@ -468,7 +545,7 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
           <button
             aria-label={t("optimizeRouteAria")}
             className={cn(
-              "absolute bottom-[3rem] right-2 z-10 grid h-8 w-8 place-items-center map-glass rounded-full text-foreground",
+              "absolute bottom-[3rem] right-2 z-10 grid h-8 w-8 place-items-center map-glass rounded-full text-foreground hover:scale-105",
               nudgeOptimize && "optimize-nudge",
             )}
             onClick={handleOptimize}
@@ -492,7 +569,7 @@ export function ConstellationCard({ places, suggestions = NO_SUGGESTIONS, onOpti
       {status === "ready" && (
         <button
           aria-label={viewMode === "map" ? t("viewAsConstellationAria") : t("viewAsMapAria")}
-          className="absolute bottom-2 right-2 z-10 grid h-8 w-8 place-items-center map-glass rounded-full text-foreground"
+          className="absolute bottom-2 right-2 z-10 grid h-8 w-8 place-items-center map-glass rounded-full text-foreground hover:scale-105"
           onClick={() => setViewMode((mode) => (mode === "map" ? "abstract" : "map"))}
           type="button"
         >
