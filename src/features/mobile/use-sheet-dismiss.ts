@@ -87,13 +87,19 @@ export function useSheetDismiss<T extends HTMLElement = HTMLDivElement>(onClose:
       return;
     }
     let tracking = false;
+    // A finger that starts out moving sideways belongs to whatever scrolls sideways under it (a row of chips or cards), not to
+    // the sheet: it is let go of for the rest of that touch, or a slightly downward swipe would pull the sheet instead.
+    let sideways = false;
+    let startX = 0;
 
     function onTouchStart(event: TouchEvent) {
+      sideways = false;
       if (scrolledTop() > 0 || event.touches.length !== 1) {
         return;
       }
       tracking = false;
       const startY = event.touches[0].clientY;
+      startX = event.touches[0].clientX;
       // Start tracking, but only commit to a drag once the finger moves downward.
       dragRef.current = { startY, lastY: startY, lastT: performance.now(), velocity: 0 };
     }
@@ -104,7 +110,15 @@ export function useSheetDismiss<T extends HTMLElement = HTMLDivElement>(onClose:
         return;
       }
       const y = event.touches[0].clientY;
+      if (sideways) {
+        return;
+      }
       if (!tracking) {
+        if (Math.abs(event.touches[0].clientX - startX) > Math.abs(y - drag.startY) && Math.abs(event.touches[0].clientX - startX) > 6) {
+          sideways = true;
+          dragRef.current = null;
+          return;
+        }
         if (y - drag.startY > 6 && scrolledTop() <= 0) {
           tracking = true;
           setIsDragging(true);

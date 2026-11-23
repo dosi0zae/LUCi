@@ -85,6 +85,7 @@ import { useHistoryLayers } from "@/features/mobile/use-history-layers";
 import { LegalLinks } from "@/features/mobile/legal-links";
 import { PlaceSheet } from "@/features/mobile/place-sheet";
 import { PlaceScroller } from "@/features/mobile/place-scroller";
+import { useDragScroll } from "@/features/mobile/use-drag-scroll";
 import { MyPictureContext } from "@/features/mobile/my-badge";
 import { MapAppsPopover } from "@/features/mobile/map-apps-popover";
 import { SlidingTabs } from "@/features/mobile/sliding-tabs";
@@ -182,6 +183,7 @@ function median(values: number[]): number {
 }
 
 export function MobileAppShell() {
+  useDragScroll();
   const t = useT();
   const categoryLabel = useCategoryLabel();
   const { locale } = useLocale();
@@ -2173,7 +2175,7 @@ export function MobileAppShell() {
                       and judders). Only transforms and opacity: the logo shrinks to half size and travels down to
                       sit just above the box (--logo-fly-y is measured when the box gets focus), while the title
                       and subtitle scatter upward one after the other. Leaving the box plays it all backwards. */}
-                  <div className="hero-rise relative z-10 py-1 [--rise:0ms]">
+                  <div className={cn("relative z-10 py-1 [--rise:0ms]", heroBaseDelay === 0 && "hero-rise")}>
                     <div className="hero-logo-fly">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img alt="Trip Chain" className="hero-logo-float mx-auto block h-[5.3125rem] w-auto" src="/tripchain-logo.svg" />

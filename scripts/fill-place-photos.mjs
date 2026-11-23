@@ -3,6 +3,7 @@
 //
 //   node scripts/fill-place-photos.mjs --limit 150          # try the 150 best-known sights without a photo (resumes)
 //   node scripts/fill-place-photos.mjs --limit 150 --write  # and put the photos that passed into seoul-places.json
+//   node scripts/fill-place-photos.mjs --commons --limit 300 --write   # stage 3: Wikimedia Commons by position and by name
 //
 // Sources (nothing else): the Korea Tourism Organization's TourAPI (photos of the "공공누리 1유형" licence: free to use with the
 // source named), and Wikimedia Commons through the Korean Wikipedia (CC BY, CC BY-SA, CC0 or public domain; never NC or ND), each
@@ -16,14 +17,18 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+const args = process.argv.slice(2);
+const COMMONS = args.includes("--commons");
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CACHE = path.join(ROOT, "scripts", ".cache");
 const PLACES_FILE = path.join(ROOT, "src", "features", "mobile", "seoul-places.json");
-const STATE_FILE = path.join(CACHE, "photo-fill.json");
-const REPORT_FILE = path.join(CACHE, "photo-fill.html");
+const STATE_FILE = path.join(CACHE, COMMONS ? "photo-fill-commons.json" : "photo-fill.json");
+const FIRST_STATE_FILE = path.join(CACHE, "photo-fill.json");
+const REPORT_FILE = path.join(CACHE, COMMONS ? "photo-fill-commons.html" : "photo-fill.html");
 const SPEND_FILE = path.join(CACHE, "gemini-spend.json");
-const args = process.argv.slice(2);
 const WRITE = args.includes("--write");
+// Stage 3 (--commons): for the places the first stage found nothing for, look in Wikimedia Commons directly: the photos taken
+// near the place's position, and the files that carry its name. Same licences, same picture test; its own state file.
 const LIMIT = Number(args[args.indexOf("--limit") + 1]) || 100;
 
 const env = {};
@@ -131,6 +136,44 @@ async function wikiCandidates(place) {
   return out;
 }
 
+// Stage 3. The files geotagged within 250 m of the place (nearest first) and the files whose title or text matches its name
+// and district. Anything may turn up (a street, a neighbour); the picture test decides what is really the place.
+const COMMONS_API = "https://commons.wikimedia.org/w/api.php";
+async function commonsQuery(extra) {
+  const params = new URLSearchParams({ action: "query", format: "json", prop: "imageinfo", iiprop: "url|extmetadata|size|mime", iiurlwidth: "1000", origin: "*", ...extra });
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const response = await fetch(`${COMMONS_API}?${params}`, { signal: AbortSignal.timeout(25_000), headers: { "User-Agent": "TripChainPhotos/1.0 (place photo audit)" } }).catch(() => null);
+    if (response?.status === 429 || (response && response.status >= 500)) {
+      await sleep(2000 * attempt);
+      continue;
+    }
+    return (await response?.json().catch(() => null)) ?? null;
+  }
+  return null;
+}
+function commonsFiles(data) {
+  const pages = Object.values(data?.query?.pages ?? {}).sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+  const out = [];
+  for (const page of pages) {
+    const file = page.imageinfo?.[0];
+    const meta = file?.extmetadata ?? {};
+    const licence = meta.LicenseShortName?.value ?? "";
+    if (!file?.thumburl || file.mime !== "image/jpeg" || (file.width ?? 0) < 700 || (file.height ?? 0) < 450) continue;
+    if (!WIKI_LICENCE_OK.test(licence) || /NC|ND/i.test(licence)) continue;
+    if (/(map|logo|flag|diagram|plan|poster|signature)/i.test(page.title)) continue;
+    const artist = (meta.Artist?.value ?? "").replace(/<[^>]+>/g, "").trim().slice(0, 60);
+    out.push({ url: file.thumburl, source: "wikimedia", credit: `${artist ? artist + " · " : ""}${licence} · Wikimedia Commons`, file: page.title });
+  }
+  return out;
+}
+async function commonsCandidates(place) {
+  const near = commonsFiles(await commonsQuery({ generator: "geosearch", ggscoord: `${place.lat}|${place.lng}`, ggsradius: "250", ggslimit: "15", ggsnamespace: "6" })).slice(0, 4);
+  const district = (place.address ?? "").match(/([가-힣]+구)/)?.[1] ?? "";
+  const clean = place.name.replace(/\(.*?\)/g, "").replace(/^서울\s*/, "").trim();
+  const named = commonsFiles(await commonsQuery({ generator: "search", gsrsearch: `${clean} ${district}`.trim(), gsrnamespace: "6", gsrlimit: "8" })).slice(0, 3);
+  return [...new Map([...near, ...named].map((c) => [c.url, c])).values()];
+}
+
 // ---- the picture test (the same as audit-place-photos.mjs) --------------------------------------------------------------
 
 async function fetchImage(url) {
@@ -199,8 +242,9 @@ async function judge(place, image) {
 
 // ---- run -------------------------------------------------------------------------------------------------------------------
 
+const firstState = COMMONS ? readJson(FIRST_STATE_FILE, {}) : {};
 const todo = places
-  .filter((place) => !place.image && !state[place.id])
+  .filter((place) => !place.image && !state[place.id] && (!COMMONS || firstState[place.id]?.status !== "found"))
   .sort((a, b) => (b.fameScore ?? 0) - (a.fameScore ?? 0))
   .slice(0, LIMIT);
 console.log(`[fill] ${places.filter((p) => !p.image).length} sights without a photo, ${Object.keys(state).length} tried before, trying ${todo.length} now`);
@@ -209,12 +253,12 @@ let kept = 0;
 let none = 0;
 try {
   for (const [index, place] of todo.entries()) {
-    if (tourStopped) {
+    if (tourStopped && !COMMONS) {
       console.log("[fill] TourAPI limit reached; stopping (resumes next time)");
       break;
     }
-    let candidates = await tourCandidates(place);
-    if (candidates.length === 0 && !tourStopped) candidates = await wikiCandidates(place);
+    let candidates = COMMONS ? await commonsCandidates(place) : await tourCandidates(place);
+    if (!COMMONS && candidates.length === 0 && !tourStopped) candidates = await wikiCandidates(place);
     let best = null;
     const looked = [];
     for (const candidate of candidates) {

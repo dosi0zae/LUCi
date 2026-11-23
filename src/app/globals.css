@@ -253,6 +253,10 @@ input[type="search"]::-webkit-search-cancel-button {
   box-shadow:
     0 6px 16px -4px rgba(15, 23, 42, 0.16),
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  /* No blur here: inside the strip (it clips, and fades its edge with a mask) there is nothing behind the card to blur, and a blurred
+     layer under the round "add" button made that button blink while the page scrolled. */
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .ios-row-dragging {
@@ -499,132 +503,31 @@ button.ios-glass:active {
   display: grid;
   place-items: center;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.12), transparent 38%),
-    rgba(79, 141, 247, 0.86);
-  -webkit-backdrop-filter: blur(34px) saturate(1.2);
-  backdrop-filter: blur(34px) saturate(1.2);
   pointer-events: none;
-  will-change: opacity, backdrop-filter;
-  animation: intro-splash-exit 2.25s cubic-bezier(0.33, 1, 0.68, 1) forwards;
 }
 
-.intro-splash::before {
-  content: "";
+/* The blue sheet and the white logo on it; see intro-splash.tsx for the way they leave (the logo flies to the first screen's own
+   logo and turns blue, the sheet fades). The logo is the same shape as the one on the first screen, cut out of a white block by a
+   mask, so its colour can change smoothly. */
+.intro-splash__wall {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 42%),
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.22), transparent 44%);
-  opacity: 0.74;
-  animation: intro-glow-breathe 2.25s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+  background: linear-gradient(160deg, #5b97f8, #3f7be8);
 }
 
 .intro-splash__logo {
   position: relative;
-  width: min(59vw, 504px);
-  aspect-ratio: 841.89 / 595.28;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.34)),
-    rgba(255, 255, 255, 0.5);
-  filter:
-    blur(6px)
-    drop-shadow(0 24px 72px rgba(255, 255, 255, 0.36));
-  opacity: 0.76;
-  mask-image: url("/tripchain-logo.svg");
-  mask-position: center;
-  mask-repeat: no-repeat;
-  mask-size: contain;
-  -webkit-mask-image: url("/tripchain-logo.svg");
-  -webkit-mask-position: center;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-size: contain;
-  transform: translateZ(0);
-  will-change: opacity, transform, filter;
-  animation: intro-logo-bloom 2.25s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+  width: 132px;
+  aspect-ratio: 333.18 / 314.77;
+  background-color: #ffffff;
+  opacity: 0;
+  -webkit-mask: url("/tripchain-logo.svg") center / 100% 100% no-repeat;
+  mask: url("/tripchain-logo.svg") center / 100% 100% no-repeat;
+  will-change: transform, opacity, background-color;
 }
 
 .intro-splash--contained {
   position: absolute;
-}
-
-.intro-splash--contained .intro-splash__logo {
-  width: min(31%, 252px);
-}
-
-@keyframes intro-logo-bloom {
-  0% {
-    opacity: 0;
-    filter:
-      blur(16px)
-      drop-shadow(0 24px 72px rgba(255, 255, 255, 0.22));
-    transform: translateZ(0) scale(0.96);
-  }
-
-  32% {
-    opacity: 0.78;
-    filter:
-      blur(7px)
-      drop-shadow(0 24px 76px rgba(255, 255, 255, 0.4));
-    transform: translateZ(0) scale(1);
-  }
-
-  66% {
-    opacity: 0.68;
-    filter:
-      blur(10px)
-      drop-shadow(0 28px 86px rgba(255, 255, 255, 0.34));
-    transform: translateZ(0) scale(1.12);
-  }
-
-  100% {
-    opacity: 0;
-    filter:
-      blur(20px)
-      drop-shadow(0 34px 96px rgba(255, 255, 255, 0.22));
-    transform: translateZ(0) scale(2.4);
-  }
-}
-
-@keyframes intro-splash-exit {
-  0%,
-  70% {
-    opacity: 1;
-    -webkit-backdrop-filter: blur(34px) saturate(1.2);
-    backdrop-filter: blur(34px) saturate(1.2);
-  }
-
-  100% {
-    opacity: 0;
-    visibility: hidden;
-    -webkit-backdrop-filter: blur(2px) saturate(1);
-    backdrop-filter: blur(2px) saturate(1);
-  }
-}
-
-@keyframes intro-glow-breathe {
-  0% {
-    opacity: 0.42;
-    transform: scale(0.94);
-  }
-
-  58% {
-    opacity: 0.78;
-    transform: scale(1.04);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(1.18);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .intro-splash,
-  .intro-splash::before,
-  .intro-splash__logo {
-    animation-duration: 0.01ms;
-  }
 }
 
 @keyframes sheet-backdrop-in {
@@ -1869,4 +1772,6 @@ button.ios-card:not(:disabled):active {
   -webkit-appearance: none;
   appearance: none;
 }
+
+
 
