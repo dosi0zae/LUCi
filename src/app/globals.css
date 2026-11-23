@@ -1732,6 +1732,9 @@ button.ios-card:not(:disabled):active {
 
 /* The inline popover: a row of its own whose room opens and closes (a grid row going from 0 to 1 fraction). */
 .map-pop-row {
+  /* Above the invisible layer that closes a menu on an outside tap (z-index 10), or that layer would take the taps meant for the icons. */
+  position: relative;
+  z-index: 20;
   display: grid;
   grid-template-rows: 1fr;
   animation: map-pop-row-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -1739,6 +1742,14 @@ button.ios-card:not(:disabled):active {
 
 .map-pop-row[data-closing="true"] {
   animation: map-pop-row-out 180ms ease-in both;
+}
+
+/* In its row the pill's shadow has to fit in the room the row leaves (the row clips), so it is tighter than the floating one. */
+.map-pop-row .map-pop {
+  box-shadow:
+    0 4px 14px -2px rgba(15, 23, 42, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.35);
 }
 
 @keyframes map-pop-row-in {
@@ -1883,6 +1894,7 @@ button.ios-card:not(:disabled):active {
   -webkit-appearance: none;
   appearance: none;
 }
+
 
 
 

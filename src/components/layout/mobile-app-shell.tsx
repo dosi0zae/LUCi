@@ -626,6 +626,7 @@ export function MobileAppShell() {
   const [isAiCourse, setIsAiCourse] = useState(false);
   const [usedAI, setUsedAI] = useState(false);
   const [isNavigateMenuOpen, setIsNavigateMenuOpen] = useState(false);
+  const navButtonRef = useRef<HTMLButtonElement>(null);
   // The "tell the AI how to change this course" box under the course card.
   const [refineText, setRefineText] = useState("");
   const [isRefining, setIsRefining] = useState(false);
@@ -2332,6 +2333,7 @@ export function MobileAppShell() {
                           <div className="relative">
                             <button
                               aria-label={t("navigateCourseAria")}
+                              ref={navButtonRef}
                               className={cn(
                                 "grid h-10 w-10 place-items-center rounded-full",
                                 isNavigateMenuOpen ? "ios-btn ios-btn-on" : "ios-btn",
@@ -2355,6 +2357,7 @@ export function MobileAppShell() {
                       </div>
                     </div>
                     <MapAppsPopover
+                        alignTo={navButtonRef}
                         inline
                                 items={[
                                   {

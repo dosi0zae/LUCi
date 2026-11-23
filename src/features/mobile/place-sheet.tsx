@@ -478,6 +478,7 @@ export function PlaceSheet({
 
         {/* The map apps open as a row under the header: nothing is covered. */}
         <MapAppsPopover
+            alignTo={mapButtonRef}
             inline
                       items={[
                         { key: "kakao", label: t("mapKakao"), brand: "kakaomap", href: getKakaoMapUrl(place), onSelect: () => setIsMapMenuOpen(false) },

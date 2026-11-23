@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { BrandTile, type BrandTileName } from "@/features/mobile/brand-icons";
 import { cn } from "@/lib/utils";
 
 const LEAVE_MS = 170;
+// Room around the pill inside the clipped row, for its shadow (the row hides what leaves it).
+const SHADOW_ROOM = 20; // (the sides; below the pill 16)
 
 export type MapAppItem = {
   key: string;
@@ -36,17 +38,33 @@ function usePresence(open: boolean, ms: number) {
 // opens it); `inline` puts it in the flow as a row of its own, right-aligned, which opens and closes its room (nothing is
 // covered, what is below moves down and back).
 export function MapAppsPopover({
+  alignTo,
   inline = false,
   items,
   menuRef,
   open,
 }: {
+  // The element that opens it (inline only): the pill's right edge is put under that element's right edge.
+  alignTo?: RefObject<HTMLElement | null>;
   inline?: boolean;
   items: MapAppItem[];
   menuRef?: RefObject<HTMLDivElement | null>;
   open: boolean;
 }) {
   const present = usePresence(open, LEAVE_MS);
+  const rowRef = useRef<HTMLDivElement | null>(null);
+  const slotRef = useRef<HTMLDivElement | null>(null);
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    const slot = slotRef.current;
+    const anchor = alignTo?.current;
+    if (!open || !row || !slot || !anchor) {
+      return;
+    }
+    // How far the opener's right edge is from the row's: the pill gets that much room on its right.
+    const gap = Math.max(0, row.getBoundingClientRect().right - anchor.getBoundingClientRect().right);
+    slot.style.paddingRight = `${SHADOW_ROOM + gap}px`;
+  }, [open, alignTo, present]);
   if (!present) {
     return null;
   }
@@ -83,9 +101,14 @@ export function MapAppsPopover({
     return pill;
   }
   return (
-    <div className="map-pop-row" data-closing={!open} ref={menuRef}>
-      <div className="min-h-0 overflow-hidden">
-        <div className="flex justify-end px-1 pb-2 pt-3">{pill}</div>
+    <div className="map-pop-row" data-closing={!open} ref={(element) => {
+      rowRef.current = element;
+      if (menuRef) {
+        menuRef.current = element;
+      }
+    }}>
+      <div className="-mx-5 min-h-0 overflow-hidden">
+        <div className="flex justify-end pb-4 pl-5 pr-5 pt-3" ref={slotRef}>{pill}</div>
       </div>
     </div>
   );
