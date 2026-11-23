@@ -971,8 +971,8 @@ export function TripDetailSheet({
   );
 }
 
-// The share sheet's frame: the backdrop, the panel and its title row. It goes down with a swipe (a finger anywhere on it,
-// or a mouse on the strip along its top edge; no visible handle) or a tap on the backdrop or the X.
+// The share sheet's frame: the backdrop, the panel and its title row, with a handle on top like the place sheet's. It goes down
+// with a swipe (a finger anywhere on it, a mouse on the handle) or a tap on the backdrop or the X.
 function ShareSheetFrame({
   children,
   closeLabel,
@@ -1004,7 +1004,10 @@ function ShareSheetFrame({
         role="dialog"
         style={panelStyle}
       >
-        <div aria-hidden="true" className="absolute inset-x-0 top-0 z-10 h-6 cursor-grab touch-none active:cursor-grabbing" {...grabProps} />
+        {/* Grab handle, the same as the place sheet's: it shows the sheet can be pulled down (a mouse drags it too). */}
+        <div className="-mx-5 -mt-5 flex cursor-grab touch-none justify-center px-5 pb-3 pt-3 active:cursor-grabbing" {...grabProps}>
+          <span className="h-1.5 w-11 rounded-full bg-border-strong" />
+        </div>
         <div className="flex items-center justify-between">
           <h3 className="text-2xl font-extrabold tracking-tight">{title}</h3>
           <button aria-label={closeLabel} className="ios-btn grid h-9 w-9 place-items-center rounded-full" onClick={close} type="button">
