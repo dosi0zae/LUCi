@@ -71,7 +71,6 @@ import {
   subscribeDining,
 } from "@/features/mobile/dining-store";
 import { placeSubtitle } from "@/features/mobile/dining-tags";
-import { PlaceThumb } from "@/features/mobile/place-thumb";
 import { CreatorProfileSheet } from "@/features/mobile/creator-profile-sheet";
 import { loadKakaoMaps } from "@/features/mobile/kakao-loader";
 import {
@@ -2646,11 +2645,7 @@ export function MobileAppShell() {
                                             onClick={() => setSelectedPlaceId(nearby.id)}
                                             type="button"
                                           >
-                                            {isDiningCategory(nearby.category) ? (
-                                              <PlaceThumb category={nearby.category} size="md" />
-                                            ) : (
-                                              <PlacePhoto className="h-12 w-12 rounded-md" fallbackSize="md" place={nearby} />
-                                            )}
+                                            <PlacePhoto className="h-12 w-12 rounded-md" fallbackSize="md" place={nearby} />
                                             <span className="min-w-0 flex-1">
                                               <span className="block truncate text-[0.9375rem] font-bold">{localizedNearby.name}</span>
                                               <span className="block truncate text-xs text-muted">
@@ -2733,13 +2728,7 @@ export function MobileAppShell() {
                                     type="button"
                                   >
                                     <span className="block h-36 w-full shrink-0 overflow-hidden bg-surface-muted">
-                                      {isDiningCategory(place.category) ? (
-                                        <span className="grid h-full w-full place-items-center">
-                                          <PlaceThumb category={place.category} size="lg" />
-                                        </span>
-                                      ) : (
-                                        <PlacePhoto className="h-full w-full" place={place} />
-                                      )}
+                                      <PlacePhoto className="h-full w-full" place={place} />
                                     </span>
                                     <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-3 py-3">
                                       <span className="truncate text-[0.9375rem] font-bold">{localizedPlace.name}</span>

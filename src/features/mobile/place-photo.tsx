@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { CloseIcon } from "@/components/layout/app-icons";
 import { PlaceThumb } from "@/features/mobile/place-thumb";
-import { getPlaceImageUrl, isDiningCategory, type MobilePlace } from "@/features/mobile/mobile-data";
+import { getPlaceImageUrl, type MobilePlace } from "@/features/mobile/mobile-data";
 import { useT } from "@/features/mobile/i18n/i18n-context";
 import { cn } from "@/lib/utils";
 
@@ -27,10 +27,10 @@ type PlacePhotoThumbProps = {
   badge?: ReactNode;
 };
 
-// Dining stops have no photo of ours (and a stock photo would mislead), so they start on the icon tile.
+// A place without a photo of its own (or whose photo does not load) shows the category icon tile.
 export function PlacePhotoThumb({ badge, label, onFallback, onOpenPhoto, place, size }: PlacePhotoThumbProps) {
   const src = getPlaceImageUrl(place.id);
-  const [failed, setFailed] = useState(isDiningCategory(place.category) || !src);
+  const [failed, setFailed] = useState(!src);
 
   return (
     <button
@@ -48,6 +48,7 @@ export function PlacePhotoThumb({ badge, label, onFallback, onOpenPhoto, place, 
           className={cn("block bg-surface-muted object-cover", SIZES[size])}
           loading="lazy"
           onError={() => setFailed(true)}
+          referrerPolicy="no-referrer"
           src={src ?? undefined}
         />
       )}
@@ -105,6 +106,7 @@ export function PhotoLightbox({ name, onClose, place }: PhotoLightboxProps) {
         <img
           alt={name}
           className="max-h-[75vh] max-w-full rounded-lg object-contain"
+          referrerPolicy="no-referrer"
           src={src}
         />
         <figcaption className="text-center text-sm font-bold text-white">
@@ -129,7 +131,7 @@ export function PlacePhoto({
   fallbackSize?: "sm" | "md" | "row" | "lg" | "fill";
 }) {
   const src = getPlaceImageUrl(place.id);
-  const [failed, setFailed] = useState(isDiningCategory(place.category) || !src);
+  const [failed, setFailed] = useState(!src);
 
   if (failed || !src) {
     return (
@@ -146,6 +148,7 @@ export function PlacePhoto({
       className={cn("block shrink-0 bg-surface-muted object-cover", className)}
       loading="lazy"
       onError={() => setFailed(true)}
+      referrerPolicy="no-referrer"
       src={src}
     />
   );

@@ -27,6 +27,11 @@ const STATE_FILE = path.join(CACHE, "dining-photo.json");
 const REPORT_FILE = path.join(CACHE, "dining-photo.html");
 const SPEND_FILE = path.join(CACHE, "gemini-spend.json");
 const USAGE_FILE = path.join(CACHE, "hub-usage.json");
+// Node's own network layer sometimes throws from inside a socket event (an internal assertion when a server closes a connection
+// early), which no try/catch around the request can reach and which used to end a long run. The request that was hit then simply
+// times out (it is retried or skipped), so the run goes on.
+process.on("uncaughtException", (error) => console.log(`[dining] network error ignored: ${error?.message ?? error}`));
+process.on("unhandledRejection", (error) => console.log(`[dining] rejected promise ignored: ${error?.message ?? error}`));
 const args = process.argv.slice(2);
 const arg = (name, fallback) => (args.includes(`--${name}`) ? args[args.indexOf(`--${name}`) + 1] : fallback);
 const WRITE = args.includes("--write");
@@ -92,7 +97,7 @@ async function imageSearch(query) {
 const squash = (text) => String(text ?? "").replace(/<[^>]+>/g, "").replace(/[^0-9a-zA-Z가-힣]/g, "").toLowerCase();
 // "낙산냉면" or "차지 종로점" -> the part that is the name: a trailing branch ("종로점", "본점") does not have to be in the title.
 const brandOf = (name) => name.replace(/\(.*?\)/g, "").replace(/\s+\S*(점|호점|지점)$/, "").trim();
-const BAD_HOST = /(coupang|gmarket|11st|auction|smartstore|shopping|danawa|wemakeprice|tmon|ssg\.com|interpark|aliexpress|temu|pinterest|alamy|shutterstock|istock|gettyimages|dreamstime|123rf|freepik)/i;
+const BAD_HOST = /(coupang|gmarket|11st|auction|smartstore|shopping|danawa|wemakeprice|tmon|ssg\.com|interpark|aliexpress|temu|pinterest|alamy|shutterstock|istock|gettyimages|dreamstime|123rf|freepik|alba.kr|albamon|foodnjob|peterpanz|jumpoline)/i;
 
 function usable(item) {
   const width = Number(item.sizewidth);
@@ -178,8 +183,10 @@ async function judge(place, image) {
     });
     if (response.status === 429 || response.status >= 500) {
       await sleep(3000 * attempt);
+      if (attempt === 3) throw new Error(`the judge is not answering (${response.status}); out of credit, or too busy`);
       continue;
     }
+    if (response.status === 401 || response.status === 402 || response.status === 403) throw new Error(`the judge refused (${response.status})`);
     if (!response.ok) return null;
     const data = await response.json();
     const usage = data.usageMetadata ?? {};
@@ -241,6 +248,7 @@ let none = 0;
 let done = 0;
 let next = 0;
 let halted = false;
+let failures = 0;
 const WORKERS = Number(arg("workers", "6"));
 
 function save() {
@@ -283,9 +291,17 @@ async function worker() {
     next += 1;
     try {
       await handle(place);
+      failures = 0;
     } catch (error) {
-      console.log(`[dining] stopped: ${error.message}`);
-      halted = true;
+      // The spend limit ends the run. Anything else (a timeout, the judge being out of reach, or out of credit) leaves this place
+      // untried (it is done the next time) and, when it keeps happening, ends the run rather than writing down wrong "no photo"s.
+      failures += 1;
+      if (/spend guard/.test(error.message) || failures >= 8) {
+        console.log(`[dining] stopped: ${error.message}${failures >= 8 ? " (eight failures in a row)" : ""}`);
+        halted = true;
+      } else {
+        console.log(`[dining] skipped ${place.name}: ${error.message}`);
+      }
     }
   }
 }

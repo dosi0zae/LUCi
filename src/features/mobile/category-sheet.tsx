@@ -1,9 +1,8 @@
 "use client";
 
-import { isDiningCategory, localizePlace, type MobilePlace } from "@/features/mobile/mobile-data";
+import { localizePlace, type MobilePlace } from "@/features/mobile/mobile-data";
 import { CloseIcon } from "@/components/layout/app-icons";
 import { PlacePhoto } from "@/features/mobile/place-photo";
-import { PlaceThumb } from "@/features/mobile/place-thumb";
 import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import { useSheetDismiss } from "@/features/mobile/use-sheet-dismiss";
 import { cn } from "@/lib/utils";
@@ -93,13 +92,7 @@ export function CategorySheet({ areaName, badges, label, onClose, onSelectPlace,
                 type="button"
               >
                 <span className="relative block h-32 w-full shrink-0 overflow-hidden bg-surface-muted">
-                  {isDiningCategory(place.category) ? (
-                    <span className="grid h-full w-full place-items-center">
-                      <PlaceThumb category={place.category} size="lg" />
-                    </span>
-                  ) : (
-                    <PlacePhoto className="h-full w-full" place={place} />
-                  )}
+                  <PlacePhoto className="h-full w-full" place={place} />
                   {badge && (
                     <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-primary shadow-sm">
                       {t(BADGE_LABEL_KEY[badge])}
