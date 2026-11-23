@@ -107,7 +107,10 @@ export function PhotoLightbox({ name, onClose, place }: PhotoLightboxProps) {
           className="max-h-[75vh] max-w-full rounded-lg object-contain"
           src={src}
         />
-        <figcaption className="text-sm font-bold text-white">{name}</figcaption>
+        <figcaption className="text-center text-sm font-bold text-white">
+          {name}
+          {place.photoCredit && <span className="mt-1 block text-xs font-medium text-white/70">{place.photoCredit}</span>}
+        </figcaption>
       </figure>
     </div>
   );

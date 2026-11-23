@@ -58,6 +58,9 @@ export type MobilePlace = {
   lat: number;
   lng: number;
   image?: string;
+  // Who the photo is from and under which licence ("한국관광공사 · 공공누리 제1유형", "Name · CC BY-SA 4.0 · Wikimedia Commons"): shown
+  // with the photo where it is shown large. Only the photos from sources that require naming have one.
+  photoCredit?: string;
   translations?: Partial<Record<"en" | "ja" | "zh", Partial<LocalizedPlaceFields>>>;
   // Which pipeline this place came from — absent for the original TourAPI/문화재청 sync
   // (sync-seoul-places.mjs; their id prefix, tour-/heritage-, already tells them apart).
