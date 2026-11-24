@@ -19,7 +19,7 @@ import { BrandTile, type BrandTileName } from "@/features/mobile/brand-icons";
 import { categoryText } from "@/features/mobile/custom-places";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
 import { MyBadge } from "@/features/mobile/my-badge";
-import { buildCoursePreviewImageUrl, buildCourseShareUrl } from "@/features/mobile/course-share";
+import { buildCoursePreviewImageUrl, buildCourseShareUrl, shareOrigin } from "@/features/mobile/course-share";
 import { placeSubtitle } from "@/features/mobile/dining-tags";
 import { shareToKakaoTalk } from "@/features/mobile/kakao-share";
 import { buildFacebookShareUrl, buildLineShareUrl, buildTwitterShareUrl, buildWhatsAppShareUrl } from "@/features/mobile/sns-share";
@@ -287,7 +287,7 @@ export function TripDetailSheet({
   // sheet) — plain functions, not values computed at render time, since window.location
   // isn't available during server rendering and these must only run from a click handler.
   function getShareUrl() {
-    return buildCourseShareUrl(window.location.origin, trip.placeIds, localizedTrip.title, locale);
+    return buildCourseShareUrl(shareOrigin(), trip.placeIds, localizedTrip.title, locale);
   }
   function getShareText() {
     return `${localizedTrip.title} · ${t("placesCount", { count: places.length })} · ${t("minutesCount", { count: totalMinutes })}`;
@@ -489,7 +489,7 @@ export function TripDetailSheet({
         appKey,
         title: localizedTrip.title,
         description: localizedTrip.description || `${t("placesCount", { count: places.length })} · ${t("minutesCount", { count: totalMinutes })}`,
-        imageUrl: buildCoursePreviewImageUrl(window.location.origin, trip.placeIds, localizedTrip.title, locale),
+        imageUrl: buildCoursePreviewImageUrl(shareOrigin(), trip.placeIds, localizedTrip.title, locale),
         link: getShareUrl(),
         buttonLabel: t("loadToChainButton"),
       });

@@ -12,6 +12,17 @@ const CUSTOM_PARAM = "cp";
 const MAX_CUSTOM = 20;
 const TITLE_PARAM = "title";
 
+// The address a shared link points to. On the live site that is simply the address the page is on. On this PC (localhost) or
+// a phone reaching it over the Wi-Fi (192.168.x.x and the like) it would be an address nobody else can open, so the link
+// points at the deployed site instead (NEXT_PUBLIC_SHARE_ORIGIN, otherwise trip-chain.com).
+const PUBLIC_ORIGIN = process.env.NEXT_PUBLIC_SHARE_ORIGIN ?? "https://trip-chain.com";
+const PRIVATE_HOST = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[::1\]|.*\.local$|.*\.localhost$)/i;
+
+export function shareOrigin(): string {
+  const { hostname, origin } = window.location;
+  return PRIVATE_HOST.test(hostname) ? PUBLIC_ORIGIN : origin;
+}
+
 // `lang` is only for the preview a chat app builds from the link (its text and picture follow the sharer's language).
 export function buildCourseShareUrl(origin: string, placeIds: string[], title: string, lang?: string): string {
   const params = new URLSearchParams();
