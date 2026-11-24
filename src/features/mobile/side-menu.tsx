@@ -173,7 +173,7 @@ export function SideMenu({ account, onClose, onExplore, onProfile, onTutorial, o
             <Fold open={themeOpen}>
               <div className="flex flex-wrap gap-2 px-2.5 pb-2 pt-0.5">
                 {THEME_MODES.map((entry) => (
-                  <button aria-pressed={mode === entry.id} className={chip(mode === entry.id)} key={entry.id} onClick={() => transitionScreen(() => setMode(entry.id))}
+                  <button aria-pressed={mode === entry.id} className={chip(mode === entry.id)} key={entry.id} onClick={() => transitionScreen(() => setMode(entry.id), "theme")}
                     type="button"
                   >
                     {t(entry.labelKey)}
@@ -200,7 +200,7 @@ export function SideMenu({ account, onClose, onExplore, onProfile, onTutorial, o
             <Fold open={languageOpen}>
               <div className="flex flex-wrap gap-2 px-2.5 pb-2 pt-0.5">
                 {SUPPORTED_LOCALES.map((option) => (
-                  <button aria-pressed={locale === option} className={chip(locale === option)} key={option} onClick={() => transitionScreen(() => setLocale(option))} type="button">
+                  <button aria-pressed={locale === option} className={chip(locale === option)} key={option} onClick={() => transitionScreen(() => setLocale(option), "language")} type="button">
                     {localeLabel[option]}
                   </button>
                 ))}

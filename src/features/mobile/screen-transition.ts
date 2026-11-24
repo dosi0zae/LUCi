@@ -1,26 +1,37 @@
 "use client";
 
-import { flushSync } from "react-dom";
-
-// Runs a change that repaints the whole screen (the screen mode, the language) as one smooth cross-fade of the screen instead of
-// everything snapping at once. Where the browser has the View Transitions API the old screen dissolves into the new one (see the
-// ::view-transition rules in globals.css); elsewhere the colours ease over about half a second (the .screen-fade class). Nothing
-// moves for someone who has asked for reduced motion.
-export function transitionScreen(update: () => void) {
+// Runs a change that repaints the whole screen (the screen mode, the language) with a short, soft transition instead of everything
+// snapping at once. The whole app dips to a faint veil and comes back (so a change that cannot ease, like the words of the language
+// or a gradient, is covered), and for the screen mode every colour also eases over about half a second (the .screen-fade class in
+// globals.css). It does NOT use the browser's View Transitions snapshots: on iPhone Safari they showed the old and the new screen
+// on top of each other (double text, a panel with no blur). Nothing moves for someone who has asked for reduced motion.
+export function transitionScreen(update: () => void, kind: "theme" | "language") {
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const doc = document as Document & { startViewTransition?: (callback: () => void) => unknown };
-
-  if (reduced) {
+  const app = document.querySelector<HTMLElement>("main");
+  if (reduced || !app) {
     update();
     return;
   }
-  if (typeof doc.startViewTransition === "function") {
-    // flushSync: the new screen has to be in the page by the time the browser takes its "after" picture.
-    doc.startViewTransition(() => flushSync(update));
-    return;
-  }
+
   const root = document.documentElement;
-  root.classList.add("screen-fade");
-  update();
-  window.setTimeout(() => root.classList.remove("screen-fade"), 600);
+  if (kind === "theme") {
+    root.classList.add("screen-fade");
+    window.setTimeout(() => root.classList.remove("screen-fade"), 800);
+  }
+
+  // Down to the veil, change while it is down, then back up.
+  app.style.transition = "opacity 170ms ease";
+  app.style.opacity = kind === "theme" ? "0.55" : "0.12";
+  window.setTimeout(() => {
+    update();
+    // One frame later, so the new screen is painted under the veil before it lifts.
+    window.requestAnimationFrame(() => {
+      app.style.transition = `opacity ${kind === "theme" ? 520 : 420}ms ease`;
+      app.style.opacity = "1";
+      window.setTimeout(() => {
+        app.style.transition = "";
+        app.style.opacity = "";
+      }, 560);
+    });
+  }, 180);
 }

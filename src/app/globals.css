@@ -1959,18 +1959,12 @@ button.ios-card:not(:disabled):active {
   }
 }
 
-/* A change that repaints the whole screen (screen mode, language) cross-fades: the View Transitions picture of the old screen
-   dissolves into the new one; browsers without it ease the colours instead (see features/mobile/screen-transition.ts). */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 520ms;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
+/* The screen mode eases every colour for a moment (see features/mobile/screen-transition.ts). */
+/* (not <main>: its own opacity dip has to keep its own transition) */
 html.screen-fade,
-html.screen-fade *,
-html.screen-fade *::before,
-html.screen-fade *::after {
+html.screen-fade :not(main),
+html.screen-fade :not(main)::before,
+html.screen-fade :not(main)::after {
   transition:
     background-color 520ms ease,
     color 520ms ease,
