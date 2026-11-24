@@ -3,6 +3,7 @@
 //   node scripts/fill-dining-photos.mjs --limit 100                      # the 100 best-known places without a photo (resumes)
 //   node scripts/fill-dining-photos.mjs --limit 100 --district jongno    # only one district's file
 //   node scripts/fill-dining-photos.mjs --limit 100 --write              # and put the photos that passed into the district files
+//   node scripts/fill-dining-photos.mjs --retry --category 술집 --limit 400 --write   # places that found nothing the first time: other queries
 //
 // This is the "photos stored ahead" way the owner chose for the alpha, knowing the risk: these are other people's pictures (blog
 // and shop photos that Naver image search lists), with no licence. Before a public launch they are to be replaced (Google, or the
@@ -37,6 +38,8 @@ const arg = (name, fallback) => (args.includes(`--${name}`) ? args[args.indexOf(
 const WRITE = args.includes("--write");
 const LIMIT = Number(arg("limit", "100"));
 const ONLY = arg("district", "");
+const RETRY = args.includes("--retry");
+const ONLY_CATEGORY = arg("category", "");
 
 const env = {};
 for (const line of readFileSync(path.join(ROOT, ".env.local"), "utf8").split("\n")) {
@@ -120,6 +123,27 @@ async function candidatesFor(place) {
     out.push({ url: item.link, thumb: item.thumbnail, title: String(item.title).replace(/<[^>]+>/g, "").slice(0, 80), titleMatch, w: Number(item.sizewidth), h: Number(item.sizeheight) });
   }
   // Pictures whose own title carries the place's name first.
+  out.sort((a, b) => Number(b.titleMatch) - Number(a.titleMatch));
+  return out.slice(0, 4);
+}
+
+// --retry: places that found nothing the first time (all pictures refused, or none came up). Other queries (the outside; the street),
+// and only pictures that were not looked at before.
+const roadOf = (address) => (String(address ?? "").match(/([가-힣0-9]+(?:로|길))\s*\d/) ?? [])[1] ?? "";
+async function retryCandidatesFor(place, seen) {
+  const brand = brandOf(place.name);
+  const queries = [`${brand} ${place.area} 외관`, `${brand} ${roadOf(place.address)}`.trim()];
+  const key = squash(brand);
+  const out = [];
+  for (const query of queries) {
+    const items = await imageSearch(query);
+    if (!items) continue;
+    for (const item of items) {
+      if (!usable(item) || seen.has(item.link) || out.some((c) => c.url === item.link)) continue;
+      const titleMatch = key.length >= 2 && squash(item.title).includes(key);
+      out.push({ url: item.link, thumb: item.thumbnail, title: String(item.title).replace(/<[^>]+>/g, "").slice(0, 80), titleMatch, w: Number(item.sizewidth), h: Number(item.sizeheight) });
+    }
+  }
   out.sort((a, b) => Number(b.titleMatch) - Number(a.titleMatch));
   return out.slice(0, 4);
 }
@@ -238,7 +262,13 @@ if (args.includes("--reeval")) {
 // ---- run -------------------------------------------------------------------------------------------------------------------
 
 const todo = all
-  .filter((place) => !place.image && !state[place.id])
+  .filter((place) => {
+    if (place.image) return false;
+    if (ONLY_CATEGORY && place.category !== ONLY_CATEGORY) return false;
+    if (!RETRY) return !state[place.id];
+    const before = state[place.id];
+    return before && before.status !== "found" && !before.retried;
+  })
   .sort((a, b) => (b.savedBy ?? 0) - (a.savedBy ?? 0))
   .slice(0, LIMIT);
 console.log(`[dining] ${all.filter((p) => !p.image).length} places without a photo, ${Object.keys(state).length} tried before, trying ${todo.length} now`);
@@ -257,7 +287,9 @@ function save() {
 }
 
 async function handle(place) {
-  const candidates = await candidatesFor(place);
+  const before = state[place.id];
+  const seen = new Set((before?.looked ?? []).map((item) => item.url));
+  const candidates = RETRY ? await retryCandidatesFor(place, seen) : await candidatesFor(place);
   if (stopped) {
     halted = true;
     return;
@@ -274,7 +306,13 @@ async function handle(place) {
     if (decision.ok && (!best || decision.rank > best.rank)) best = { ...candidate, ...result, rank: decision.rank };
   }
   if (best) usedUrls.add(best.url);
-  state[place.id] = { name: place.name, area: place.area, category: place.category, status: best ? "found" : candidates.length ? "rejected" : "none", chosen: best, looked, at: new Date().toISOString().slice(0, 10) };
+  if (RETRY) {
+    // Keep what was looked at before; a place is retried once.
+    const all = [...(before?.looked ?? []), ...looked];
+    state[place.id] = { name: place.name, area: place.area, category: place.category, status: best ? "found" : all.length ? "rejected" : "none", chosen: best, looked: all, retried: true, at: new Date().toISOString().slice(0, 10) };
+  } else {
+    state[place.id] = { name: place.name, area: place.area, category: place.category, status: best ? "found" : candidates.length ? "rejected" : "none", chosen: best, looked, at: new Date().toISOString().slice(0, 10) };
+  }
   if (best) kept += 1;
   else none += 1;
   done += 1;
