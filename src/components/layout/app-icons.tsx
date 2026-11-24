@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 type IconProps = {
   className?: string;
 };
@@ -449,12 +451,21 @@ export function EyeIcon({ className }: IconProps) {
 }
 
 export function LanguageIcon({ className }: IconProps) {
+  // Two overlapping tiles: a filled one with an "A" and an outlined one with "文" (translation). Everything that used to be white (the
+  // "A", the gap around the second tile, the second tile's inside) is cut out of the first tile instead, so it is see-through and
+  // shows whatever is behind the icon, in light and in dark.
+  const maskId = useId();
   return (
-    // Two overlapping tiles: a filled one with an "A" and a white one with "文" (translation).
     <svg className={className} {...iconProps} fill="currentColor" stroke="none">
-      <rect height="14" rx="4" width="14" x="2" y="2" />
-      <path d="M5.2 11.6 9 4.8l3.8 6.8M6.5 9.6h5" fill="none" stroke="#fff" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} />
-      <rect fill="#fff" height="12.4" rx="3.7" stroke="currentColor" strokeWidth={1.6} width="12.4" x="9.4" y="9.4" />
+      <defs>
+        <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+          <rect fill="#fff" height="24" width="24" />
+          <path d="M5.2 11.6 9 4.8l3.8 6.8M6.5 9.6h5" fill="none" stroke="#000" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} />
+          <rect fill="#000" height="14.4" rx="4.7" width="14.4" x="8.4" y="8.4" />
+        </mask>
+      </defs>
+      <rect height="14" mask={`url(#${maskId})`} rx="4" width="14" x="2" y="2" />
+      <rect fill="none" height="12.4" rx="3.7" stroke="currentColor" strokeWidth={1.6} width="12.4" x="9.4" y="9.4" />
       <path
         d="M15.6 11.8v.9M12.6 13.3h6M13.6 13.5l4.2 4.6M17.6 13.5c-.5 2.2-1.9 3.8-4 4.6"
         fill="none"

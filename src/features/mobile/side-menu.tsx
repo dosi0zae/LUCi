@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { ChevronDownIcon, CloseIcon, CompassIcon, HelpIcon, LanguageIcon, MessageIcon, ThemeIcon } from "@/components/layout/app-icons";
 import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import { SUPPORTED_LOCALES, localeLabel } from "@/features/mobile/i18n/translations";
-import { LegalLinks } from "@/features/mobile/legal-links";
 import { ProfileAvatar } from "@/features/mobile/my-badge";
+import { transitionScreen } from "@/features/mobile/screen-transition";
 import { useTheme, type ThemeMode } from "@/features/mobile/theme";
 import { cn } from "@/lib/utils";
 
@@ -78,6 +78,16 @@ export function SideMenu({ account, onClose, onExplore, onProfile, onTutorial, o
   const { mode, setMode } = useTheme();
   const [languageOpen, setLanguageOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
+  // A question asked before "사용법 다시 보기" or "의견 보내기" does anything.
+  const [confirming, setConfirming] = useState<"tutorial" | "feedback" | null>(null);
+
+  // A question left open does not outlive the menu (closed by Back, say).
+  useEffect(() => {
+    if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setConfirming(null);
+    }
+  }, [open]);
 
   // Each piece comes in after the one before it, sliding in from the left and fading up. The delay applies only while opening, so
   // closing is quick and everything leaves together.
@@ -131,7 +141,9 @@ export function SideMenu({ account, onClose, onExplore, onProfile, onTutorial, o
           </button>
         </div>
 
-        <div className="mt-6 grid gap-1 overflow-y-auto">
+        {/* The list scrolls only if the screen is too short for it; its scrollbar stays hidden (like the app's other scroll areas), and
+            nothing may push it sideways: a scrollbar flashing in and out while rows fold open and slide in looked like a glitch. */}
+        <div className="app-scroll-area mt-6 grid gap-1 overflow-x-hidden overflow-y-auto">
           <div className="motion-reduce:!transition-none" style={enter(1)}>
             <Row
               icon={<CompassIcon className="h-[1.5rem] w-[1.5rem]" />}
@@ -161,7 +173,13 @@ export function SideMenu({ account, onClose, onExplore, onProfile, onTutorial, o
             <Fold open={themeOpen}>
               <div className="flex flex-wrap gap-2 px-2.5 pb-2 pt-0.5">
                 {THEME_MODES.map((entry) => (
-                  <button aria-pressed={mode === entry.id} className={chip(mode === entry.id)} key={entry.id} onClick={() => setMode(entry.id)} type="button">
+                  <button aria-pressed={mode === entry.id} className={chip(mode === entry.id)} key={entry.id} onClick={(event) => {
+                      // The screen mode washes over the screen from the button that was tapped.
+                      const box = event.currentTarget.getBoundingClientRect();
+                      transitionScreen(() => setMode(entry.id), { wash: { x: box.left + box.width / 2, y: box.top + box.height / 2 } });
+                    }}
+                    type="button"
+                  >
                     {t(entry.labelKey)}
                   </button>
                 ))}
@@ -186,7 +204,7 @@ export function SideMenu({ account, onClose, onExplore, onProfile, onTutorial, o
             <Fold open={languageOpen}>
               <div className="flex flex-wrap gap-2 px-2.5 pb-2 pt-0.5">
                 {SUPPORTED_LOCALES.map((option) => (
-                  <button aria-pressed={locale === option} className={chip(locale === option)} key={option} onClick={() => setLocale(option)} type="button">
+                  <button aria-pressed={locale === option} className={chip(locale === option)} key={option} onClick={() => transitionScreen(() => setLocale(option))} type="button">
                     {localeLabel[option]}
                   </button>
                 ))}
@@ -197,10 +215,7 @@ export function SideMenu({ account, onClose, onExplore, onProfile, onTutorial, o
           <div className="motion-reduce:!transition-none" style={enter(4)}>
             <Row
               icon={<HelpIcon className="h-[1.5rem] w-[1.5rem]" />}
-              onClick={() => {
-                onClose();
-                onTutorial();
-              }}
+              onClick={() => setConfirming("tutorial")}
             >
               {t("menuTutorial")}
             </Row>
@@ -209,17 +224,15 @@ export function SideMenu({ account, onClose, onExplore, onProfile, onTutorial, o
           <div className="motion-reduce:!transition-none" style={enter(5)}>
             <Row
               icon={<MessageIcon className="h-[1.5rem] w-[1.5rem]" />}
-              onClick={() => {
-                window.open(FEEDBACK_FORM_URL, "_blank", "noopener,noreferrer");
-              }}
+              onClick={() => setConfirming("feedback")}
             >
               {t("menuFeedback")}
             </Row>
           </div>
         </div>
 
-        {/* The bottom of the panel: the profile, set off from the rows above only by a hairline (no box behind it), with the terms in
-            small type under it. The person's picture and name when signed in, otherwise the person mark and "프로필"; the mark is the
+        {/* The bottom of the panel: the profile, set off from the rows above only by a hairline (no box behind it):
+            the person's picture and name when signed in, otherwise the person mark and "프로필"; the mark is the
             same one the "my course" badge uses. */}
         <div className="mt-auto motion-reduce:!transition-none" style={enter(6, "translateY(18px)")}>
           <div className="border-t border-[var(--hairline)] pt-3">
@@ -234,10 +247,58 @@ export function SideMenu({ account, onClose, onExplore, onProfile, onTutorial, o
               <ProfileAvatar className="h-10 w-10" iconClassName="h-[1.375rem] w-[1.375rem]" picture={account?.picture ?? null} />
               <span className="block min-w-0 flex-1 truncate text-[1.0625rem] font-bold">{account?.name || t("menuProfile")}</span>
             </button>
-            <LegalLinks className="mt-3" />
           </div>
         </div>
       </nav>
+
+      {confirming && (
+        <div
+          className="sheet-backdrop absolute inset-0 z-10 grid place-items-center bg-black/35 px-7"
+          onClick={() => setConfirming(null)}
+          role="presentation"
+        >
+          {/* The app's own dialog look (as the "optimize the route?" question): a frosted, very round card, a tinted icon, and round pill
+              buttons: the blue one does it, the grey one is the way out. */}
+          <div
+            aria-labelledby="menu-confirm-title"
+            aria-modal="true"
+            className="sheet-panel read-surface w-full max-w-[20rem] rounded-[2rem] p-6 text-center"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+          >
+            <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-primary-soft text-primary-strong">
+              {confirming === "tutorial" ? <HelpIcon className="h-7 w-7" /> : <MessageIcon className="h-7 w-7" />}
+            </span>
+            <h3 className="mt-4 text-xl font-extrabold tracking-tight" id="menu-confirm-title">
+              {t(confirming === "tutorial" ? "confirmTutorialTitle" : "confirmFeedbackTitle")}
+            </h3>
+            <p className="mt-1.5 break-keep text-sm leading-6 text-muted-strong text-balance">
+              {t(confirming === "tutorial" ? "confirmTutorialBody" : "confirmFeedbackBody")}
+            </p>
+            <div className="mt-6 grid gap-2.5">
+              <button
+                className="h-12 rounded-full bg-primary text-base font-extrabold text-white shadow-[0_8px_20px_-6px_rgba(47,111,228,0.55)] transition active:scale-[0.98]"
+                onClick={() => {
+                  const which = confirming;
+                  setConfirming(null);
+                  if (which === "tutorial") {
+                    onClose();
+                    onTutorial();
+                  } else {
+                    window.open(FEEDBACK_FORM_URL, "_blank", "noopener,noreferrer");
+                  }
+                }}
+                type="button"
+              >
+                {t(confirming === "tutorial" ? "confirmTutorialOk" : "confirmFeedbackOk")}
+              </button>
+              <button className="ios-btn h-12 rounded-full text-base font-bold transition active:scale-[0.98]" onClick={() => setConfirming(null)} type="button">
+                {t("cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
