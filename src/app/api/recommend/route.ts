@@ -133,6 +133,32 @@ type GeminiAiIntent = {
   reason?: string;
 };
 
+// The same sentence asked again (the refresh button, a wider or narrower radius, the same example tapped twice) reads the same, so the
+// answer of the intent step is kept for a while in this server instance and reused instead of asking the model again (about 2-4
+// seconds saved). Only a real answer is kept, and a copy is handed out because the caller changes what it gets.
+const INTENT_CACHE_MS = 15 * 60 * 1000;
+const INTENT_CACHE_MAX = 300;
+const intentCache = new Map<string, { at: number; intent: GeminiAiIntent }>();
+
+async function getAiIntentCached(prompt: string, locale: string): Promise<GeminiAiIntent | null> {
+  const key = `${locale}\n${prompt}`;
+  const hit = intentCache.get(key);
+  if (hit && Date.now() - hit.at < INTENT_CACHE_MS) {
+    return structuredClone(hit.intent);
+  }
+  const intent = await getAiIntent(prompt, locale);
+  if (intent) {
+    if (intentCache.size >= INTENT_CACHE_MAX) {
+      const oldest = intentCache.keys().next().value;
+      if (oldest !== undefined) {
+        intentCache.delete(oldest);
+      }
+    }
+    intentCache.set(key, { at: Date.now(), intent: structuredClone(intent) });
+  }
+  return intent;
+}
+
 async function getAiIntent(prompt: string, locale: string): Promise<GeminiAiIntent | null> {
   const apiKey = process.env.GEMINI_API_KEY;
 
@@ -232,7 +258,7 @@ function buildSelectionSystemPrompt(locale: string, count: number): string {
 - 같은 종류의 장소(예: 한강공원 여러 곳, 같은 거리의 비슷한 가게)를 여러 개 고르지 마. 요청의 주제(예: 노을, 야경)를 보여주는 곳은 한 곳이면 충분하고, 나머지는 그 주변의 다른 성격의 곳(전시, 골목, 휴식)으로 채워서 그 주제로 향하는 하루가 되게 해. 해질녘·노을이 주제면 그 장소는 코스의 뒤쪽에 둬.
 반드시 주어진 id 목록에 있는 값만 쓰고, 중복 없이 정확히 ${count}개를 골라야 해.
 title: 코스 이름. ${languageName}로 12자~20자 안팎, 장소 이름을 나열하지 말고 이 코스만의 분위기나 흐름을 한 구절로. 고른 장소의 특징에서 새로 지어내고, 다른 코스와 겹칠 법한 흔한 문구는 피해. 따옴표나 마침표는 쓰지 마.${locale === "ko" ? "" : ` 제목에 한글을 한 글자도 섞지 마: 지명이나 장소 이름을 쓰게 되면 ${languageName}로 옮겨 써.`}
-reason: 왜 이 조합인지 ${languageName}로 자연스러운 한 문장, 실제로 고른 장소들을 반영해서. 휠체어·유모차 접근성, 반려동물 동반, 가격·예산, 영업시간은 우리 데이터에 없으니 이 조건을 충족한다고 reason과 title에 쓰지 마.
+reason: 왜 이 조합인지 ${languageName}로 자연스러운 한 문장, 실제로 고른 장소들을 반영해서. "사용자"나 "요청하신"이라는 말은 쓰지 않는다. 휠체어·유모차 접근성, 반려동물 동반, 가격·예산, 영업시간은 우리 데이터에 없으니 이 조건을 충족한다고 reason과 title에 쓰지 마.
 다른 말 없이 주어진 스키마로만 답해.`;
 }
 
@@ -762,6 +788,18 @@ function normalizeIntent(
 }
 
 export async function POST(request: NextRequest) {
+  // How long each step took (logged once at the end, see below): the steps run one after another, so this shows where the wait is.
+  const startedAt = Date.now();
+  const stages: Record<string, number> = {};
+  const timed = async <T,>(label: string, work: Promise<T>): Promise<T> => {
+    const from = Date.now();
+    try {
+      return await work;
+    } finally {
+      stages[label] = (stages[label] ?? 0) + (Date.now() - from);
+    }
+  };
+
   let prompt = "";
   let locale = "en";
   let anchor: { lat: number; lng: number } | null = null;
@@ -799,7 +837,9 @@ export async function POST(request: NextRequest) {
   let promptAreaMatch = detectAreaFromPrompt(prompt);
   const genericLandmarkIntent = isGenericLandmarkPrompt(prompt);
   const hangangIntent = isHangangPrompt(prompt);
-  const aiIntent = await getAiIntent(prompt, locale);
+  // The weather lookup does not depend on the intent read, so it runs beside it (it used to wait for it, about 0.7 s).
+  const rainCheck = checkIsRaining(anchor ?? SEOUL_FALLBACK_COORD);
+  const aiIntent = await timed("intent", getAiIntentCached(prompt, locale));
   if (aiIntent && typeof aiIntent.area === "string" && !promptNamesDistrict(prompt, aiIntent.area)) {
     aiIntent.area = null;
   }
@@ -807,9 +847,9 @@ export async function POST(request: NextRequest) {
   // A place the sentence names (a station, a neighbourhood, a landmark) is what the course is built around: it is
   // looked up on the map, and wins over a district (it is the more exact of the two). Our own short list of famous
   // spots is only the fallback for when the lookup finds nothing.
-  const meeting = hangangIntent ? null : await resolveMeetingPoint(aiIntent, prompt);
+  const meeting = hangangIntent ? null : await timed("meeting", resolveMeetingPoint(aiIntent, prompt));
   const namedPlace = meeting ? "" : (typeof aiIntent?.place === "string" ? aiIntent.place.trim() : "") || stationFromPrompt(prompt) || "";
-  const resolvedPlace = namedPlace && !hangangIntent ? await resolvePlaceAnchor(namedPlace) : null;
+  const resolvedPlace = namedPlace && !hangangIntent ? await timed("placeLookup", resolvePlaceAnchor(namedPlace)) : null;
   const promptLandmarkAnchor = meeting
     ? meeting.center
     : resolvedPlace
@@ -847,7 +887,7 @@ export async function POST(request: NextRequest) {
   // an explicit "실외" ask (e.g. "한강 산책") should win over the weather, not get overruled.
   let weatherNote: string | null = null;
   if (!intent.attributes.includes("실내") && !intent.attributes.includes("실외")) {
-    const isRaining = await checkIsRaining(anchor ?? SEOUL_FALLBACK_COORD);
+    const isRaining = await timed("weather", rainCheck);
     if (isRaining) {
       intent.preferredTags = [...new Set([...(intent.preferredTags ?? []), "실내"])];
       weatherNote = WEATHER_INDOOR_NOTE[locale] ?? WEATHER_INDOOR_NOTE.en;
@@ -864,15 +904,16 @@ export async function POST(request: NextRequest) {
         : "sights";
   let diningUnavailableNote: string | null = null;
   if (focus === "dining") {
-    const dining = await buildDiningCourse({
+    const dining = await timed("diningCourse", buildDiningCourse({
       prompt,
       locale,
       placeCount: intent.placeCount,
       areaFilter: intent.areaFilter ?? null,
       anchor: intent.anchor ?? null,
       radiusKm,
-    });
+    }));
     if (dining) {
+      console.log(`[recommend] ${Date.now() - startedAt}ms total, steps: ${JSON.stringify(stages)}`);
       if (!radiusStep) {
         logRecommendation({ prompt, locale, aiIntent, intent, focus, maxMinutes, meetingNames: meeting?.names ?? null, placeIds: dining.placeIds, unmet: notices.tags });
       }
@@ -937,11 +978,11 @@ export async function POST(request: NextRequest) {
         .slice(0, SELECTION_DISCOVERY_SIZE);
       const candidates: SelectionCandidate[] = [...top, ...discoveries].map(({ place }) => toSelectionCandidate(place, poolAnchor));
 
-      const selection = await selectChainWithGemini(prompt, locale, candidates, result.requestedCount, {
+      const selection = await timed("selection", selectChainWithGemini(prompt, locale, candidates, result.requestedCount, {
         variety: intent.variety,
         pace: intent.pace,
         startTime: intent.startTime,
-      });
+      }));
       if (selection) {
         const selectedPlaces = selection.placeIds
           .map((id) => byId.get(id))
@@ -965,7 +1006,7 @@ export async function POST(request: NextRequest) {
   // the introduction: a woven-in course gets a fresh introduction written from its final stops.
   let mixedWoven = false;
   if (focus === "mixed") {
-    const refined = await refineCourseCore({ instruction: prompt.slice(0, 200), stopIds: finalPlaceIds, pinnedIds: [], locale, indoorOnly: intent.indoorOnly, outdoorOnly: intent.outdoorOnly });
+    const refined = await timed("mixedEdit", refineCourseCore({ instruction: prompt.slice(0, 200), stopIds: finalPlaceIds, pinnedIds: [], locale, indoorOnly: intent.indoorOnly, outdoorOnly: intent.outdoorOnly }));
     if (refined.ok) {
       finalPlaceIds = optimizeRoutePreservingPins(getPlacesByIds(refined.ids), new Set(), false).map((place) => place.id);
       mixedWoven = true;
@@ -976,7 +1017,7 @@ export async function POST(request: NextRequest) {
   // request is about something specific that rules them out.
   let wovenNote: string | null = null;
   if (focus === "sights" && !NO_DINING_PATTERN.test(prompt)) {
-    const woven = await weaveDefaultDining(finalPlaceIds);
+    const woven = await timed("weave", weaveDefaultDining(finalPlaceIds));
     if (woven) {
       // The meal and café went in by their own rules (near the stop they follow); put the sights back in the
       // shortest order around them, meals keeping their place in the day.
@@ -985,38 +1026,17 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // The review: the finished course is looked at as a person planning a day would (does it double back, is one stop far
-  // from the rest, are two stops the same kind of thing) and, when a stop is clearly out of place, swapped for a
-  // nearby alternative; every swap is checked (see course-critic.ts). A changed course gets a new introduction,
-  // because the first one was written for the stops it had.
-  let reviewSwaps = 0;
-  let reviewChanged = mixedWoven;
-  if (focus !== "dining" && finalPlaceIds.length >= 4) {
-    const stops = getPlacesByIds(finalPlaceIds);
-    if (stops.length === finalPlaceIds.length) {
-      const pool = getScoredPool({
-        ...intent,
-        anchor: intent.anchor ?? (result.anchor ? { lat: result.anchor.lat, lng: result.anchor.lng } : null),
-        hubAnchor: result.anchor,
-      }).scored.map(({ place }) => place);
-      const alternatives = pickAlternatives(stops, pool, getLoadedDiningPlaces());
-      const review = await reviewCourseWithGemini({ prompt, locale, stops, alternatives });
-      const fixed = review && (review.swaps.length > 0 || review.order.length > 0) ? applyReview(stops, alternatives, review) : null;
-      console.log(`[recommend] review: ${review ? `${review.swaps.length} swap(s), order ${review.order.length ? "asked" : "kept"}: ${fixed ? "applied" : "nothing applied"}` : "no answer"}${review?.summary ? ` — ${review.summary}` : ""}`);
-      if (fixed) {
-        finalPlaceIds = fixed.map((place) => place.id);
-        reviewChanged = true;
-        reviewSwaps = Math.max(1, review?.swaps.length ?? 0);
-      }
-    }
-  }
-
-  // The time limit, checked on the finished course.
+  // The time limit: the course is cut to fit before the review looks at it (so the review and the introduction see the final stops),
+  // and checked again after the review, because a swap can change the length.
   const unmet: string[] = [...notices.tags];
   let timeFitNote: string | null = null;
   let meetingNote: string | null = null;
+  let reviewChanged = mixedWoven;
   const timeCap = maxMinutes ?? (STOP_COUNT_WORDS.test(prompt) ? null : FULL_DAY_WORDS.test(prompt) ? FULL_DAY_MAX_MINUTES : DEFAULT_MAX_MINUTES);
-  if (timeCap && focus !== "dining") {
+  const fitTime = () => {
+    if (!timeCap || focus === "dining") {
+      return;
+    }
     const fitted = trimToMinutes(finalPlaceIds, timeCap);
     if (fitted.length < finalPlaceIds.length) {
       finalPlaceIds = fitted;
@@ -1026,14 +1046,64 @@ export async function POST(request: NextRequest) {
         wovenNote = null;
       }
     }
-    // Only a limit the sentence stated gets a note (and counts as unmet); the default cap just keeps the course a sensible length.
-    if (maxMinutes) {
-      if (getTotalMinutes(getPlacesByIds(finalPlaceIds)) <= maxMinutes) {
-        timeFitNote = (TIME_FIT_NOTE[locale] ?? TIME_FIT_NOTE.en)(formatHours(maxMinutes, locale), finalPlaceIds.length);
-      } else {
-        unmet.push("time");
-        timeFitNote = (TIME_MISS_NOTE[locale] ?? TIME_MISS_NOTE.en)(formatHours(maxMinutes, locale), finalPlaceIds.length);
+  };
+  fitTime();
+
+  // The introduction is written again from the final stops when the course was changed after the pick step (woven-in meals, a cut
+  // to fit the time, a review swap: the first one was written for other stops), and when the pick step gave none of its own (then
+  // it would be the general line of the request read, which says nothing about this course).
+  const shownLocale: Locale = (SUPPORTED_LOCALES as string[]).includes(locale) ? (locale as Locale) : "en";
+  const writeIntroduction = (ids: string[]) =>
+    timed(
+      "describe",
+      describeCourseWithGemini({
+        stops: getPlacesByIds(ids).map((place) => {
+          const shown = localizePlace(place, shownLocale);
+          return { name: shown.name, category: place.category, area: shown.area };
+        }),
+        prompt,
+        locale,
+      }),
+    );
+  // When it is already certain that it has to be written, it starts now and runs beside the review (about a second saved); if the
+  // review then changes the stops (rare), it is written again for them.
+  const early =
+    focus !== "dining" && (reviewChanged || !selectionReason)
+      ? { key: finalPlaceIds.join(","), text: writeIntroduction(finalPlaceIds).catch(() => null) }
+      : null;
+
+  // The review: the finished course is looked at as a person planning a day would (does it double back, is one stop far
+  // from the rest, are two stops the same kind of thing) and, when a stop is clearly out of place, swapped for a
+  // nearby alternative; every swap is checked (see course-critic.ts).
+  let reviewSwaps = 0;
+  if (focus !== "dining" && finalPlaceIds.length >= 4) {
+    const stops = getPlacesByIds(finalPlaceIds);
+    if (stops.length === finalPlaceIds.length) {
+      const pool = getScoredPool({
+        ...intent,
+        anchor: intent.anchor ?? (result.anchor ? { lat: result.anchor.lat, lng: result.anchor.lng } : null),
+        hubAnchor: result.anchor,
+      }).scored.map(({ place }) => place);
+      const alternatives = pickAlternatives(stops, pool, getLoadedDiningPlaces());
+      const review = await timed("review", reviewCourseWithGemini({ prompt, locale, stops, alternatives }));
+      const fixed = review && (review.swaps.length > 0 || review.order.length > 0) ? applyReview(stops, alternatives, review) : null;
+      console.log(`[recommend] review: ${review ? `${review.swaps.length} swap(s), order ${review.order.length ? "asked" : "kept"}: ${fixed ? "applied" : "nothing applied"}` : "no answer"}${review?.summary ? ` — ${review.summary}` : ""}`);
+      if (fixed) {
+        finalPlaceIds = fixed.map((place) => place.id);
+        reviewChanged = true;
+        reviewSwaps = Math.max(1, review?.swaps.length ?? 0);
       }
+    }
+  }
+  fitTime();
+
+  // Only a limit the sentence stated gets a note (and counts as unmet); the default cap just keeps the course a sensible length.
+  if (maxMinutes && focus !== "dining") {
+    if (getTotalMinutes(getPlacesByIds(finalPlaceIds)) <= maxMinutes) {
+      timeFitNote = (TIME_FIT_NOTE[locale] ?? TIME_FIT_NOTE.en)(formatHours(maxMinutes, locale), finalPlaceIds.length);
+    } else {
+      unmet.push("time");
+      timeFitNote = (TIME_MISS_NOTE[locale] ?? TIME_MISS_NOTE.en)(formatHours(maxMinutes, locale), finalPlaceIds.length);
     }
   }
   if (result.placeIds.length < result.requestedCount) {
@@ -1053,23 +1123,13 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // The introduction is written again from the final stops when the review changed the course (the first one was written
-  // for the old stops), and when the pick step gave none of its own (then it would be the general line of the request read,
-  // which says nothing about this course).
   let freshReason: string | null = null;
   if (focus !== "dining" && (reviewChanged || !selectionReason)) {
-    const shownLocale: Locale = (SUPPORTED_LOCALES as string[]).includes(locale) ? (locale as Locale) : "en";
-    freshReason = await describeCourseWithGemini({
-      stops: getPlacesByIds(finalPlaceIds).map((place) => {
-        const shown = localizePlace(place, shownLocale);
-        return { name: shown.name, category: place.category, area: shown.area };
-      }),
-      prompt,
-      locale,
-    });
+    freshReason = early && early.key === finalPlaceIds.join(",") ? await early.text : await writeIntroduction(finalPlaceIds);
   }
   const introduction = reviewChanged ? freshReason : (selectionReason ?? freshReason ?? aiIntent?.reason);
 
+  console.log(`[recommend] ${Date.now() - startedAt}ms total, steps: ${JSON.stringify(stages)}`);
   if (!radiusStep) {
     logRecommendation({ prompt, locale, aiIntent, intent, focus, maxMinutes, meetingNames: meeting?.names ?? null, placeIds: finalPlaceIds, unmet });
   }
