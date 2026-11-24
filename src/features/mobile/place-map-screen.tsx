@@ -205,6 +205,15 @@ export function PlaceMapScreen({ chainPlaces, diningVersion, onAddPlace, onRemov
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<MapSearchResult[]>([]);
   const [searchState, setSearchState] = useState<"idle" | "searching" | "empty" | "failed">("idle");
+  // Shown for a few seconds when "my position" gave nothing (permission off, or no fix in time).
+  const [locateNotice, setLocateNotice] = useState<string | null>(null);
+  useEffect(() => {
+    if (!locateNotice) {
+      return;
+    }
+    const timer = window.setTimeout(() => setLocateNotice(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [locateNotice]);
   const [showResults, setShowResults] = useState(false);
 
   const [origin, setOrigin] = useState<{ lat: number; lng: number } | null>(null);
@@ -494,12 +503,14 @@ export function PlaceMapScreen({ chainPlaces, diningVersion, onAddPlace, onRemov
   }
 
   function locateMe() {
+    setLocateNotice(null);
     if (!navigator.geolocation) {
+      setLocateNotice(t("locationFailed"));
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (position) => void goTo({ lat: position.coords.latitude, lng: position.coords.longitude }, null),
-      () => undefined,
+      (error) => setLocateNotice(t(error.code === error.PERMISSION_DENIED ? "locationDenied" : "locationFailed")),
       { timeout: 8000 },
     );
   }
@@ -655,6 +666,11 @@ export function PlaceMapScreen({ chainPlaces, diningVersion, onAddPlace, onRemov
                   </button>
                 ))}
               </div>
+            )}
+            {locateNotice && (
+              <p className="map-glass rounded-2xl px-4 py-3 text-center text-sm font-semibold text-danger" role="status">
+                {locateNotice}
+              </p>
             )}
             {showNearby && nearby.length === 0 && (
               <p className="map-glass rounded-2xl px-4 py-3 text-center text-sm font-semibold text-muted-strong">{t("mapNothingNearby")}</p>

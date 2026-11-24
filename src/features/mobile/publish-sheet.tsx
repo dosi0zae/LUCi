@@ -13,6 +13,10 @@ import type { TranslationKey } from "@/features/mobile/i18n/translations";
 
 type PublishSheetProps = {
   places: MobilePlace[];
+  // The AI's own title and introduction for this course, filled in to begin with (each can be cleared with one tap and
+  // written over).
+  defaultTitle?: string;
+  defaultDescription?: string;
   onCancel: () => void;
   onPublish: (input: {
     title: string;
@@ -30,10 +34,31 @@ const visibilityOptionKeys: { id: TripVisibility; labelKey: TranslationKey; hint
   { id: "private", labelKey: "visibilityPrivate", hintKey: "visibilityPrivateHint" },
 ];
 
-export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps) {
+// "전체 삭제": empties the field it belongs to (the AI's text is only a starting point). It takes no room while the field is empty.
+function ClearAllButton({ hidden, onClick }: { hidden: boolean; onClick: () => void }) {
   const t = useT();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  return (
+    <button
+      className={cn(
+        "rounded-full px-3 py-1 text-xs font-extrabold text-muted-strong transition active:scale-95 ios-btn",
+        hidden && "pointer-events-none invisible",
+      )}
+      disabled={hidden}
+      onClick={onClick}
+      tabIndex={hidden ? -1 : 0}
+      type="button"
+    >
+      {t("publishClearAll")}
+    </button>
+  );
+}
+
+export function PublishSheet({ defaultDescription = "", defaultTitle = "", onCancel, onPublish, places }: PublishSheetProps) {
+  const t = useT();
+  const [title, setTitle] = useState(defaultTitle);
+  const [description, setDescription] = useState(defaultDescription);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const [visibility, setVisibility] = useState<TripVisibility>("public");
   // Default cover: the first spot that has a real photo.
   const [coverPlaceId, setCoverPlaceId] = useState(
@@ -180,25 +205,51 @@ export function PublishSheet({ onCancel, onPublish, places }: PublishSheetProps)
           <p className="mt-1.5 text-xs text-muted">{t("publishCoverHint")}</p>
         </div>
 
-        <label className="mt-5 block text-sm font-bold text-muted-strong">
-          {t("publishTitleLabel")}
+        <div className="mt-5">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-bold text-muted-strong" htmlFor="publish-title">
+              {t("publishTitleLabel")}
+            </label>
+            <ClearAllButton
+              hidden={title.length === 0}
+              onClick={() => {
+                setTitle("");
+                titleRef.current?.focus();
+              }}
+            />
+          </div>
           <input
             className="ios-pill mt-2 h-12 w-full rounded-2xl px-4 text-base font-semibold text-foreground outline-none placeholder:text-muted focus:ring-2 focus:ring-primary/40"
+            id="publish-title"
             onChange={(event) => setTitle(event.target.value)}
             placeholder={t("publishTitlePlaceholder")}
+            ref={titleRef}
             value={title}
           />
-        </label>
+        </div>
 
-        <label className="mt-4 block text-sm font-bold text-muted-strong">
-          {t("publishDescriptionLabel")}
+        <div className="mt-4">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-bold text-muted-strong" htmlFor="publish-description">
+              {t("publishDescriptionLabel")}
+            </label>
+            <ClearAllButton
+              hidden={description.length === 0}
+              onClick={() => {
+                setDescription("");
+                descriptionRef.current?.focus();
+              }}
+            />
+          </div>
           <textarea
             className="ios-pill mt-2 min-h-24 w-full rounded-2xl px-4 py-3 text-base text-foreground outline-none placeholder:text-muted focus:ring-2 focus:ring-primary/40"
+            id="publish-description"
             onChange={(event) => setDescription(event.target.value)}
             placeholder={t("publishDescriptionPlaceholder")}
+            ref={descriptionRef}
             value={description}
           />
-        </label>
+        </div>
 
         <div className="mt-4 grid gap-2.5">
           {visibilityOptionKeys.map((option) => (

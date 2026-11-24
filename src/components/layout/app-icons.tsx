@@ -489,3 +489,14 @@ export function FrownIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+// Three flat lines: opens the side menu on the first screen.
+export function MenuIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M4 7h16" />
+      <path d="M4 12h16" />
+      <path d="M4 17h16" />
+    </svg>
+  );
+}

@@ -20,6 +20,7 @@ import {
   GripIcon,
   LocateIcon,
   MapSearchIcon,
+  MenuIcon,
   MinusIcon,
   MoreIcon,
   NavigationIcon,
@@ -61,7 +62,7 @@ import { buildPromptSuggestions, fetchSeoulWeather } from "@/features/mobile/pro
 import { PlaceMapScreen } from "@/features/mobile/place-map-screen";
 import { categoryText, isCustomId, loadCustomPlaces, subscribeCustomPlaces } from "@/features/mobile/custom-places";
 import { CategorySheet, type PlaceBadgeKind } from "@/features/mobile/category-sheet";
-import { LanguageMenuButton } from "@/features/mobile/language-menu-button";
+import { SideMenu } from "@/features/mobile/side-menu";
 import { ConstellationCard } from "@/features/mobile/constellation-card";
 import { decodeCourseFromLocation } from "@/features/mobile/course-share";
 import {
@@ -253,6 +254,9 @@ export function MobileAppShell() {
   // Last-known offsetTop per card, for the FLIP slide when the order changes.
   const cardTopsRef = useRef<Map<string, number>>(new Map());
   const [isLocating, setIsLocating] = useState(false);
+  // The first screen's side menu (explore, profile, language), and a short message when the position could not be had.
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [locationNotice, setLocationNotice] = useState<string | null>(null);
   const [radiusKm, setRadiusKm] = useState<(typeof RADIUS_STEPS_KM)[number]>(DEFAULT_RADIUS_KM);
   // The anchor the CURRENT course was actually built around, so wider/narrower can
   // reuse it directly instead of re-rolling location/AI intent from scratch.
@@ -637,6 +641,13 @@ export function MobileAppShell() {
     model: string | null;
     unmet: string[];
   } | null>(null);
+  // What the request could not get (another city, a condition the data does not hold...): small notes under the introduction.
+  const [courseNotices, setCourseNotices] = useState<string[]>([]);
+  // The AI's answer for each radius tried on the current request, so stepping back restores that answer whole (stops, title,
+  // introduction), not only its stops.
+  const aiRadiusCacheRef = useRef<
+    Map<number, { ids: string[]; reason: string | null; title: string | null; usedAI: boolean; anchor: { lat: number; lng: number } | null; areaFilter: string | null; model: string | null; unmet: string[]; notices: string[] }>
+  >(new Map());
   const [isNavigateMenuOpen, setIsNavigateMenuOpen] = useState(false);
   const navButtonRef = useRef<HTMLButtonElement>(null);
   // The "tell the AI how to change this course" box under the course card.
@@ -1165,6 +1176,7 @@ export function MobileAppShell() {
     setSubmittedPrompt(nextPrompt);
     replaceChain(placeIds);
     setRecommendReason(null);
+    setCourseNotices([]);
     setIsAiCourse(false);
     setCourseAnchor(anchor);
     setCourseAreaFilter(null);
@@ -1173,14 +1185,20 @@ export function MobileAppShell() {
 
   async function startCourseFromPrompt(nextPrompt: string, radiusOverride?: number) {
     radiusChainCacheRef.current.clear();
+    // A radius step keeps the other radii's answers; anything else is a new request.
+    if (radiusOverride === undefined) {
+      aiRadiusCacheRef.current.clear();
+    }
     // Browser Back during generation bumps this counter; the run then drops its result.
     const run = ++courseRunRef.current;
     const isCancelled = () => run !== courseRunRef.current;
     setIsRecommending(true);
     setIsGenerating(true);
+    setIsMenuOpen(false);
     setIsHeroSearchFocused(false);
     setRecommendReason(null);
     setCourseTitle(null);
+    setCourseNotices([]);
     setIsAiCourse(true);
     setUsedAI(false);
     const effectiveRadius = radiusOverride ?? radiusKm;
@@ -1198,6 +1216,8 @@ export function MobileAppShell() {
           anchor,
           radiusKm: effectiveRadius,
           bookmarkedPlaceIds: [...bookmarkedPlaceIds],
+          // A radius step asks the same sentence again: it is not a new request for the log.
+          radiusStep: radiusOverride !== undefined,
         }),
       });
 
@@ -1232,6 +1252,22 @@ export function MobileAppShell() {
           : null,
       );
       setCourseAreaFilter(typeof data.areaFilter === "string" ? data.areaFilter : null);
+      const notices = Array.isArray(data.notices) ? data.notices.filter((text: unknown): text is string => typeof text === "string") : [];
+      setCourseNotices(notices);
+      aiRadiusCacheRef.current.set(effectiveRadius, {
+        ids: data.placeIds.filter((id: unknown): id is string => typeof id === "string"),
+        reason: typeof data.reason === "string" ? data.reason : null,
+        title: typeof data.title === "string" && data.title ? data.title : null,
+        usedAI: data.usedAI === true,
+        anchor:
+          data.anchor && typeof data.anchor.lat === "number" && typeof data.anchor.lng === "number"
+            ? { lat: data.anchor.lat, lng: data.anchor.lng }
+            : null,
+        areaFilter: typeof data.areaFilter === "string" ? data.areaFilter : null,
+        model: typeof data.model === "string" ? data.model : null,
+        unmet: Array.isArray(data.unmet) ? data.unmet.filter((tag: unknown): tag is string => typeof tag === "string") : [],
+        notices,
+      });
     } catch {
       if (isCancelled()) return;
       const result = buildChain({
@@ -1304,6 +1340,31 @@ export function MobileAppShell() {
       return;
     }
 
+    // An AI course answers a sentence ("반포한강공원 보고 근처 걷는 코스"): a different radius is the same sentence asked again,
+    // so the stops, the title and the introduction stay one answer. (Building a plain chain around the old centre would drop
+    // what the person asked for while the heading still said it.) An answer already given for that radius is restored whole.
+    if (isAiCourse && usedAI && submittedPrompt) {
+      setRadiusKm(nextRadius);
+      const cachedAnswer = aiRadiusCacheRef.current.get(nextRadius);
+      if (cachedAnswer) {
+        void (async () => {
+          await ensureDiningLoadedForIds(cachedAnswer.ids);
+          replaceChain(cachedAnswer.ids);
+          setRecommendReason(cachedAnswer.reason);
+          setCourseTitle(cachedAnswer.title ? { title: cachedAnswer.title, prompt: submittedPrompt } : null);
+          setUsedAI(cachedAnswer.usedAI);
+          setCourseAnchor(cachedAnswer.anchor);
+          setCourseAreaFilter(cachedAnswer.areaFilter);
+          setCourseNotices(cachedAnswer.notices);
+          setLastRecommendation({ id: ++courseRunRef.current, prompt: submittedPrompt, placeIds: cachedAnswer.ids, usedAI: cachedAnswer.usedAI, model: cachedAnswer.model, unmet: cachedAnswer.unmet });
+          setRadiusMessage(null);
+        })();
+        return;
+      }
+      void startCourseFromPrompt(submittedPrompt, nextRadius);
+      return;
+    }
+
     // Stepping back to a radius already seen this course restores exactly what was
     // there instead of rebuilding a fresh (differently-randomized) chain — only the
     // refresh button or a new search should ever produce a genuinely new pick.
@@ -1363,7 +1424,9 @@ export function MobileAppShell() {
   }
 
   function locateNearby() {
+    setLocationNotice(null);
     if (!navigator.geolocation) {
+      setLocationNotice(t("locationFailed"));
       return;
     }
 
@@ -1376,12 +1439,23 @@ export function MobileAppShell() {
         });
         setIsLocating(false);
       },
-      () => {
+      (error) => {
         setIsLocating(false);
+        // Say why nothing happened: the permission is off (the person has to turn it on) or the position just did not come.
+        setLocationNotice(t(error.code === error.PERMISSION_DENIED ? "locationDenied" : "locationFailed"));
       },
       { timeout: 8000 },
     );
   }
+
+  // The message goes away by itself.
+  useEffect(() => {
+    if (!locationNotice) {
+      return;
+    }
+    const timer = window.setTimeout(() => setLocationNotice(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [locationNotice]);
 
   // Asks /api/refine-course to change the current course as the user worded it ("카페 하나 더",
   // "두 번째 장소 빼줘"). The server answers with the whole new id list, validated against real
@@ -2011,6 +2085,7 @@ export function MobileAppShell() {
     replaceChain(trip.placeIds);
     setSubmittedPrompt(localizeTrip(trip, locale).title);
     setRecommendReason(null);
+    setCourseNotices([]);
     setIsAiCourse(false);
     setOpenTripId(null);
     setActiveTab("home");
@@ -2019,6 +2094,7 @@ export function MobileAppShell() {
   // The browser's Back button steps out of the topmost open screen (topmost first) instead of
   // leaving the site: explore/profile → the first screen, a trip or place sheet → what was under it.
   useHistoryLayers([
+    { open: isMenuOpen, close: () => setIsMenuOpen(false) },
     { open: viewingAuthorHandle !== null, close: () => setViewingAuthorHandle(null) },
     { open: openTripId !== null, close: () => setOpenTripId(null) },
     { open: showPublish, close: () => setShowPublish(false) },
@@ -2040,6 +2116,7 @@ export function MobileAppShell() {
   ]);
 
   const searchForm = (
+    <>
     <form
       className="glass-panel flex min-h-16 items-center gap-2 rounded-[2rem] py-2.5 pl-4 pr-2.5"
       data-tour="search-form"
@@ -2084,6 +2161,12 @@ export function MobileAppShell() {
         )}
       </button>
     </form>
+    {locationNotice && (
+      <p className="mt-2.5 break-keep px-3 text-center text-sm font-semibold text-danger" role="status">
+        {locationNotice}
+      </p>
+    )}
+    </>
   );
 
   return (
@@ -2091,6 +2174,12 @@ export function MobileAppShell() {
     <main className="h-[var(--app-vh,100svh)] bg-[#edf2f7] text-foreground">
       <section className="relative mx-auto flex h-[var(--app-vh,100svh)] w-full max-w-[430px] flex-col overflow-hidden bg-background shadow-panel [padding-top:env(safe-area-inset-top)] sm:max-h-[900px]" ref={frameRef}>
         <IntroSplash contained />
+        <SideMenu
+          onClose={() => setIsMenuOpen(false)}
+          onExplore={() => setActiveTab("explore")}
+          onProfile={() => setActiveTab("profile")}
+          open={isMenuOpen}
+        />
         <div
           className="app-scroll-area min-h-0 flex-1 overflow-y-auto"
           // Room to scroll a focused field above the keyboard (the first screen instead lifts
@@ -2273,8 +2362,6 @@ export function MobileAppShell() {
                   </span>
                 </button>
 
-                <LanguageMenuButton className="hero-rise hero-dock absolute left-5 z-20 [--rise:540ms] [bottom:calc(2.5rem+env(safe-area-inset-bottom))]" />
-
                 {/* Terms and privacy policy under the explore button (Google asks for them on the home page). They stay put and fade out while the keyboard is up. */}
                 <LegalLinks className="hero-rise hero-legal absolute inset-x-0 z-10 [--rise:600ms] [bottom:calc(0.75rem+env(safe-area-inset-bottom))]" />
               </div>
@@ -2420,6 +2507,15 @@ export function MobileAppShell() {
                     </div>
                     {recommendReason && (
                       <p className={cn("mt-4 break-keep text-[0.9375rem] leading-6 text-muted-strong text-pretty transition-opacity duration-300", isDescribing && "opacity-50")}>{recommendReason}</p>
+                    )}
+                    {courseNotices.length > 0 && (
+                      <ul className="mt-3 grid gap-1.5 rounded-2xl bg-surface-muted px-3.5 py-3">
+                        {courseNotices.map((text) => (
+                          <li className="break-keep text-sm font-semibold leading-5 text-muted-strong" key={text}>
+                            {text}
+                          </li>
+                        ))}
+                      </ul>
                     )}
                     {isAiCourse && !usedAI && !isRecommending && (
                       <p className="mt-3 text-sm leading-5 text-muted">{t("aiFallbackNotice")}</p>
@@ -2853,6 +2949,19 @@ export function MobileAppShell() {
 
         {/* The first screen stays bare ("바로 탐색하기" is its way into explore). Profile and
             explore icons only appear once a course exists. */}
+        {activeTab === "home" && !hasResult && !isGenerating && (
+          <button
+            aria-expanded={isMenuOpen}
+            aria-label={t("menuOpenAria")}
+            // Just the icon, in the brand blue: no circle behind it (the tap area is still 44 px).
+            className="hero-rise absolute left-4 z-20 grid h-11 w-11 place-items-center text-primary [--rise:200ms] [top:calc(0.75rem+env(safe-area-inset-top))]"
+            data-tour="menu-button"
+            onClick={() => setIsMenuOpen(true)}
+            type="button"
+          >
+            <MenuIcon className="h-[1.375rem] w-[1.375rem]" />
+          </button>
+        )}
         {(activeTab !== "home" || hasResult || isGenerating) && (
           <>
             <div
@@ -3074,6 +3183,9 @@ export function MobileAppShell() {
 
         {showPublish && (
           <PublishSheet
+            // The AI's own title and introduction, when this course came from the AI (the person can clear and rewrite them).
+            defaultDescription={isAiCourse && usedAI ? (recommendReason ?? "") : ""}
+            defaultTitle={isAiCourse && usedAI && courseTitle && courseTitle.prompt === submittedPrompt ? courseTitle.title : ""}
             onCancel={() => setShowPublish(false)}
             onPublish={handlePublish}
             places={chainPlaces}

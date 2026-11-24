@@ -232,7 +232,7 @@ function buildSelectionSystemPrompt(locale: string, count: number): string {
 - 같은 종류의 장소(예: 한강공원 여러 곳, 같은 거리의 비슷한 가게)를 여러 개 고르지 마. 요청의 주제(예: 노을, 야경)를 보여주는 곳은 한 곳이면 충분하고, 나머지는 그 주변의 다른 성격의 곳(전시, 골목, 휴식)으로 채워서 그 주제로 향하는 하루가 되게 해. 해질녘·노을이 주제면 그 장소는 코스의 뒤쪽에 둬.
 반드시 주어진 id 목록에 있는 값만 쓰고, 중복 없이 정확히 ${count}개를 골라야 해.
 title: 코스 이름. ${languageName}로 12자~20자 안팎, 장소 이름을 나열하지 말고 이 코스만의 분위기나 흐름을 한 구절로. 고른 장소의 특징에서 새로 지어내고, 다른 코스와 겹칠 법한 흔한 문구는 피해. 따옴표나 마침표는 쓰지 마.${locale === "ko" ? "" : ` 제목에 한글을 한 글자도 섞지 마: 지명이나 장소 이름을 쓰게 되면 ${languageName}로 옮겨 써.`}
-reason: 왜 이 조합인지 ${languageName}로 자연스러운 한 문장, 실제로 고른 장소들을 반영해서.
+reason: 왜 이 조합인지 ${languageName}로 자연스러운 한 문장, 실제로 고른 장소들을 반영해서. 휠체어·유모차 접근성, 반려동물 동반, 가격·예산, 영업시간은 우리 데이터에 없으니 이 조건을 충족한다고 reason과 title에 쓰지 마.
 다른 말 없이 주어진 스키마로만 답해.`;
 }
 
@@ -559,6 +559,78 @@ const MEETING_MISS_NOTE: Record<string, string> = {
   zh: "未能在地图上找到所有出发地,因此没有以中间位置为中心。",
 };
 
+// What a request can ask for that this app cannot honour. Said in a short note under the introduction (and logged as `unmet`), so
+// the course never looks as if it had kept the condition.
+const NOTICE_TEXT: Record<string, Record<string, string>> = {
+  outside: {
+    ko: "서울 안의 코스만 만들 수 있어서, 서울에서 비슷한 분위기로 골랐어요.",
+    en: "Courses are only available inside Seoul, so this one is picked in Seoul instead.",
+    ja: "コースはソウル市内のみ対応のため、ソウルで選びました。",
+    zh: "目前只能规划首尔市内的路线,所以改为在首尔挑选。",
+  },
+  unclear: {
+    ko: "요청을 잘 이해하지 못해서 서울 대표 코스로 골랐어요. 가고 싶은 곳이나 분위기를 말해 주시면 더 잘 맞출게요.",
+    en: "I couldn't quite understand that, so this is a popular Seoul course. Tell me a place or a mood and I'll fit it better.",
+    ja: "うまく理解できなかったため、ソウルの定番コースにしました。行きたい場所や雰囲気を教えてください。",
+    zh: "没有完全理解您的要求,所以选了首尔的热门路线。告诉我想去的地方或氛围,我会更贴合。",
+  },
+  hours: {
+    ko: "영업시간 정보가 많이 비어 있어서, 그 시간에 문을 여는지는 확인하지 못했어요. 가기 전에 영업시간을 확인해 주세요.",
+    en: "Opening hours are missing for many places, so I couldn't check which are open then. Please check the hours before you go.",
+    ja: "営業時間の情報が不足しており、その時間に開いているかは確認できませんでした。行く前に営業時間をご確認ください。",
+    zh: "很多地点缺少营业时间信息,无法确认那个时间是否营业。出发前请先确认营业时间。",
+  },
+  access: {
+    ko: "휠체어·유모차 이용 정보는 아직 없어서 반영하지 못했어요. 가기 전에 확인해 주세요.",
+    en: "There is no wheelchair or stroller access information yet, so it isn't reflected. Please check before you go.",
+    ja: "車椅子・ベビーカーの情報はまだないため反映できていません。行く前にご確認ください。",
+    zh: "目前没有轮椅/婴儿车通行信息,所以未能体现。出发前请先确认。",
+  },
+  pet: {
+    ko: "반려동물 동반 가능 여부는 아직 몰라서 반영하지 못했어요. 가기 전에 확인해 주세요.",
+    en: "I don't know yet which places allow pets, so it isn't reflected. Please check before you go.",
+    ja: "ペット同伴の可否はまだ分からず反映できていません。行く前にご確認ください。",
+    zh: "目前还不知道哪些地点可以带宠物,所以未能体现。出发前请先确认。",
+  },
+  budget: {
+    ko: "가격 정보가 부족해서 예산은 반영하지 못했어요.",
+    en: "Price information is limited, so your budget isn't reflected.",
+    ja: "価格情報が不足しているため、予算は反映できていません。",
+    zh: "价格信息不足,所以未能体现预算。",
+  },
+};
+
+// Another city or a famous place outside Seoul (the data covers Seoul only).
+const OUTSIDE_SEOUL = /(부산|해운대|광안리|감천|대구|인천|대전|울산|제주|한라산|성산일출봉|협재|경주|불국사|전주|강릉|속초|설악산|양양|여수|통영|남해|거제|수원|화성행궁|춘천|남이섬|가평|에버랜드|용인|파주|대부도|안동|포항|목포|순천|busan|jeju|incheon|daegu|gyeongju|jeonju|gangneung|sokcho|suwon|釜山|済州|济州|仁川|慶州|庆州)/i;
+const HOURS_CONDITION = /(새벽|심야|한밤중|자정|24\s*시|늦은 밤|after midnight|late[- ]night|midnight|深夜|真夜中|凌晨)/i;
+const ACCESS_CONDITION = /(휠체어|유모차|거동|무장애|계단 없|wheelchair|stroller|accessib|step-free|barrier-free|車椅子|ベビーカー|轮椅|婴儿车)/i;
+const PET_CONDITION = /(강아지|반려견|반려동물|애견|댕댕|고양이|\bdogs?\b|\bpets?\b|puppy|ペット|犬連れ|宠物|带狗)/i;
+const BUDGET_CONDITION = /(예산|가성비|저렴|싸게|무료로만|\d+\s*만\s*원|\d{4,6}\s*원|\bbudget\b|\bcheap\b|予算|预算)/i;
+// No word in any script of two letters or more (only consonants like "ㅁㄴㅇㄹ", or one stray letter).
+const READABLE_WORD = /[가-힣A-Za-z\u3040-\u30ff\u4e00-\u9fff]{2,}/;
+
+function requestNotices(prompt: string, locale: string, namesSeoulArea: boolean): { tags: string[]; texts: string[] } {
+  const tags: string[] = [];
+  if (!READABLE_WORD.test(prompt)) {
+    tags.push("unclear");
+  }
+  if (OUTSIDE_SEOUL.test(prompt) && !namesSeoulArea && !/서울|seoul|ソウル|首尔/i.test(prompt)) {
+    tags.push("outside");
+  }
+  if (HOURS_CONDITION.test(prompt)) tags.push("hours");
+  if (ACCESS_CONDITION.test(prompt)) tags.push("access");
+  if (PET_CONDITION.test(prompt)) tags.push("pet");
+  if (BUDGET_CONDITION.test(prompt)) tags.push("budget");
+  return { tags, texts: tags.map((tag) => NOTICE_TEXT[tag][locale] ?? NOTICE_TEXT[tag].en) };
+}
+
+// Without a limit in the sentence, a course is kept to about six hours of visits and walking (a whole day when the sentence asks
+// for one, or when it names how many stops it wants); five long stops with a meal could otherwise run past eight hours.
+const DEFAULT_MAX_MINUTES = 360;
+const FULL_DAY_MAX_MINUTES = 540;
+const FULL_DAY_WORDS = /(하루|종일|full[- ]day|all[- ]day|whole day|一日|丸一日|一整天|全天)/i;
+const STOP_COUNT_WORDS = /(\d+\s*(곳|군데|개|places|stops|spots|か所|个地点))/i;
+
 // One row in the log sheet per recommendation (see log-sheet.ts): what was typed, what the app read from it, what it gave.
 function logRecommendation(input: {
   prompt: string;
@@ -695,9 +767,12 @@ export async function POST(request: NextRequest) {
   let anchor: { lat: number; lng: number } | null = null;
   let radiusKm: number | undefined;
   let bookmarkedPlaceIds: string[] = [];
+  // Asked again only because the radius was stepped: the same sentence, so it is not logged a second time.
+  let radiusStep = false;
 
   try {
     const body = await request.json();
+    radiusStep = body?.radiusStep === true;
     prompt = typeof body?.prompt === "string" ? body.prompt.trim() : "";
     locale = typeof body?.locale === "string" ? body.locale : "en";
     if (
@@ -746,6 +821,8 @@ export async function POST(request: NextRequest) {
       aiIntent.area = null;
     }
   }
+  // (Only a Seoul district named in the sentence counts as naming Seoul: a map lookup of "해운대" must not.)
+  const notices = requestNotices(prompt, locale, Boolean(promptAreaMatch));
   const preference = derivePreference(bookmarkedPlaceIds);
   const intent = normalizeIntent(
     aiIntent,
@@ -796,7 +873,9 @@ export async function POST(request: NextRequest) {
       radiusKm,
     });
     if (dining) {
-      logRecommendation({ prompt, locale, aiIntent, intent, focus, maxMinutes, meetingNames: meeting?.names ?? null, placeIds: dining.placeIds, unmet: [] });
+      if (!radiusStep) {
+        logRecommendation({ prompt, locale, aiIntent, intent, focus, maxMinutes, meetingNames: meeting?.names ?? null, placeIds: dining.placeIds, unmet: notices.tags });
+      }
       return NextResponse.json({
         placeIds: dining.placeIds,
         anchor: dining.anchor,
@@ -806,7 +885,8 @@ export async function POST(request: NextRequest) {
         usedAI: Boolean(aiIntent),
         usedGeminiSelection: dining.usedGemini,
         model: aiIntent ? INTENT_MODEL : null,
-        unmet: [],
+        unmet: notices.tags,
+        notices: notices.texts,
       });
     }
     diningUnavailableNote = DINING_UNAVAILABLE_NOTE[locale] ?? DINING_UNAVAILABLE_NOTE.en;
@@ -881,12 +961,14 @@ export async function POST(request: NextRequest) {
 
   // A sights course that also asks for meals or cafés ("전시 보고 점심 먹고 카페 가는 코스"):
   // weave dining in with the same editor used for "카페 하나 더 추가해줘".
-  let mixedReason: string | null = null;
+  // The editor's own note ("replaced X with Y to match the request") talks about stops the person never saw, so it is never used as
+  // the introduction: a woven-in course gets a fresh introduction written from its final stops.
+  let mixedWoven = false;
   if (focus === "mixed") {
     const refined = await refineCourseCore({ instruction: prompt.slice(0, 200), stopIds: finalPlaceIds, pinnedIds: [], locale, indoorOnly: intent.indoorOnly, outdoorOnly: intent.outdoorOnly });
     if (refined.ok) {
       finalPlaceIds = optimizeRoutePreservingPins(getPlacesByIds(refined.ids), new Set(), false).map((place) => place.id);
-      mixedReason = refined.reason || null;
+      mixedWoven = true;
     }
   }
 
@@ -908,7 +990,7 @@ export async function POST(request: NextRequest) {
   // nearby alternative; every swap is checked (see course-critic.ts). A changed course gets a new introduction,
   // because the first one was written for the stops it had.
   let reviewSwaps = 0;
-  let reviewChanged = false;
+  let reviewChanged = mixedWoven;
   if (focus !== "dining" && finalPlaceIds.length >= 4) {
     const stops = getPlacesByIds(finalPlaceIds);
     if (stops.length === finalPlaceIds.length) {
@@ -930,11 +1012,12 @@ export async function POST(request: NextRequest) {
   }
 
   // The time limit, checked on the finished course.
-  const unmet: string[] = [];
+  const unmet: string[] = [...notices.tags];
   let timeFitNote: string | null = null;
   let meetingNote: string | null = null;
-  if (maxMinutes && focus !== "dining") {
-    const fitted = trimToMinutes(finalPlaceIds, maxMinutes);
+  const timeCap = maxMinutes ?? (STOP_COUNT_WORDS.test(prompt) ? null : FULL_DAY_WORDS.test(prompt) ? FULL_DAY_MAX_MINUTES : DEFAULT_MAX_MINUTES);
+  if (timeCap && focus !== "dining") {
+    const fitted = trimToMinutes(finalPlaceIds, timeCap);
     if (fitted.length < finalPlaceIds.length) {
       finalPlaceIds = fitted;
       reviewChanged = true;
@@ -943,11 +1026,14 @@ export async function POST(request: NextRequest) {
         wovenNote = null;
       }
     }
-    if (getTotalMinutes(getPlacesByIds(finalPlaceIds)) <= maxMinutes) {
-      timeFitNote = (TIME_FIT_NOTE[locale] ?? TIME_FIT_NOTE.en)(formatHours(maxMinutes, locale), finalPlaceIds.length);
-    } else {
-      unmet.push("time");
-      timeFitNote = (TIME_MISS_NOTE[locale] ?? TIME_MISS_NOTE.en)(formatHours(maxMinutes, locale), finalPlaceIds.length);
+    // Only a limit the sentence stated gets a note (and counts as unmet); the default cap just keeps the course a sensible length.
+    if (maxMinutes) {
+      if (getTotalMinutes(getPlacesByIds(finalPlaceIds)) <= maxMinutes) {
+        timeFitNote = (TIME_FIT_NOTE[locale] ?? TIME_FIT_NOTE.en)(formatHours(maxMinutes, locale), finalPlaceIds.length);
+      } else {
+        unmet.push("time");
+        timeFitNote = (TIME_MISS_NOTE[locale] ?? TIME_MISS_NOTE.en)(formatHours(maxMinutes, locale), finalPlaceIds.length);
+      }
     }
   }
   if (result.placeIds.length < result.requestedCount) {
@@ -971,7 +1057,7 @@ export async function POST(request: NextRequest) {
   // for the old stops), and when the pick step gave none of its own (then it would be the general line of the request read,
   // which says nothing about this course).
   let freshReason: string | null = null;
-  if (focus !== "dining" && (reviewChanged || (!selectionReason && !mixedReason))) {
+  if (focus !== "dining" && (reviewChanged || !selectionReason)) {
     const shownLocale: Locale = (SUPPORTED_LOCALES as string[]).includes(locale) ? (locale as Locale) : "en";
     freshReason = await describeCourseWithGemini({
       stops: getPlacesByIds(finalPlaceIds).map((place) => {
@@ -982,9 +1068,11 @@ export async function POST(request: NextRequest) {
       locale,
     });
   }
-  const introduction = reviewChanged ? freshReason : (mixedReason ?? selectionReason ?? freshReason ?? aiIntent?.reason);
+  const introduction = reviewChanged ? freshReason : (selectionReason ?? freshReason ?? aiIntent?.reason);
 
-  logRecommendation({ prompt, locale, aiIntent, intent, focus, maxMinutes, meetingNames: meeting?.names ?? null, placeIds: finalPlaceIds, unmet });
+  if (!radiusStep) {
+    logRecommendation({ prompt, locale, aiIntent, intent, focus, maxMinutes, meetingNames: meeting?.names ?? null, placeIds: finalPlaceIds, unmet });
+  }
   return NextResponse.json({
     placeIds: finalPlaceIds,
     anchor: result.anchor,
@@ -999,5 +1087,6 @@ export async function POST(request: NextRequest) {
     usedGeminiSelection: Boolean(selectionReason),
     model: aiIntent ? INTENT_MODEL : null,
     unmet,
+    notices: notices.texts,
   });
 }

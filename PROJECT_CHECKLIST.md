@@ -1891,3 +1891,22 @@ Verification:
 
 - Passed: `pnpm lint`
 - Passed: `pnpm build`
+
+### Mobile Phase X: User-journey fixes (2026-11-24)
+
+Status: Complete
+
+Scope (from a walk through the app as a first-time user at 375 px):
+
+- First screen: the language button is gone; a blue menu icon (no circle) at the top left opens a left side menu (frosted, see-through panel, a white card per category): "바로 탐색하기" (explore feed), the language (named "Language", or "언어" when English is set; the four languages fold open under it), and the profile at the bottom. Back button closes the menu (`side-menu.tsx`, history layer). `language-menu-button.tsx` removed.
+- Radius step on an AI course asks the AI again with the new radius (answers cached per radius and restored whole), so title, introduction and stops stay one answer and the requested place is not lost; the log is not written again for it (`radiusStep`).
+- "코스 확정하기": the AI's title and introduction are filled in, each with a "전체 삭제" button (clears and focuses the field).
+- A woven-in (mixed) course gets a fresh introduction from its final stops, never the editor's note; the editor's own note is worded for the person ("~했어요", no "사용자").
+- Location denied or failed: a short red message under the search box (home) and on the map screen, instead of silence.
+- Requests the app cannot honour now say so in a note box under the introduction (and are logged as `unmet`): another city, unreadable text, opening hours at night, wheelchair/stroller, pets, budget; the writing prompts no longer claim such conditions are met.
+- Default course length: kept to about six hours (nine for a whole day, none when the sentence names a stop count); an explicit limit still gets its own note.
+
+Verification:
+
+- Passed: `tsc --noEmit`, `pnpm lint` (0 errors)
+- Checked by hand in the browser pane: menu open/close/back, language folding, explore from the menu, radius step and restore, publish sheet prefill and clear-all, location-denied notices; request notices through `/api/recommend`.

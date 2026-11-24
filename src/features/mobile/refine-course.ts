@@ -143,7 +143,7 @@ export async function refineCourseCore(input: RefineInput): Promise<RefineResult
 
   const prompt = [
     `수정 요청: ${input.instruction}`,
-    `reason은 ${language}로 쓴다.`,
+    `reason은 ${language}로 쓴다. 친근한 말투(한국어라면 "~했어요")로 한두 문장, 무엇을 했는지만 짧게 말한다. "사용자"라는 말은 쓰지 말고, 방금 요청한 사람에게 직접 말하듯 쓴다. 예: "마지막 장소 잠수교를 빼고 5곳으로 줄였어요."`,
     "",
     "현재 코스:",
     ...stops.map((place, index) => describeStop(place, index, pinned.has(place.id))),
