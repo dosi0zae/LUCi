@@ -227,6 +227,8 @@ async function judge(place, image) {
       await sleep(3000 * attempt);
       continue;
     }
+    // Out of credit, or the key refused: the run stops here and this place is NOT written down as "no photo".
+    if (response.status === 401 || response.status === 402 || response.status === 403) throw new Error(`the judge refused (${response.status})`);
     if (!response.ok) return null;
     const data = await response.json();
     const usage = data.usageMetadata ?? {};
@@ -237,7 +239,8 @@ async function judge(place, image) {
       return null;
     }
   }
-  return null;
+  // Still rate-limited after three tries: stop rather than record a wrong "no photo" for this place.
+  throw new Error("the judge is rate-limited (429/5xx)");
 }
 
 // ---- run -------------------------------------------------------------------------------------------------------------------
