@@ -173,11 +173,7 @@ export function SideMenu({ account, onClose, onExplore, onProfile, onTutorial, o
             <Fold open={themeOpen}>
               <div className="flex flex-wrap gap-2 px-2.5 pb-2 pt-0.5">
                 {THEME_MODES.map((entry) => (
-                  <button aria-pressed={mode === entry.id} className={chip(mode === entry.id)} key={entry.id} onClick={(event) => {
-                      // The screen mode washes over the screen from the button that was tapped.
-                      const box = event.currentTarget.getBoundingClientRect();
-                      transitionScreen(() => setMode(entry.id), { wash: { x: box.left + box.width / 2, y: box.top + box.height / 2 } });
-                    }}
+                  <button aria-pressed={mode === entry.id} className={chip(mode === entry.id)} key={entry.id} onClick={() => transitionScreen(() => setMode(entry.id))}
                     type="button"
                   >
                     {t(entry.labelKey)}

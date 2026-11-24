@@ -1979,28 +1979,3 @@ html.screen-fade *::after {
     stroke 520ms ease,
     box-shadow 520ms ease !important;
 }
-
-/* The screen mode "washes" over the screen: the new screen spreads out from the tapped button as a soft-edged circle (a radial mask
-   whose radius --wash-r is animated in screen-transition.ts; --wash-x / --wash-y say where it starts), so the old and new pictures
-   must not cross-fade on top of it. */
-@property --wash-r {
-  syntax: "<length>";
-  inherits: false;
-  initial-value: 0px;
-}
-
-html.vt-wash::view-transition-old(root),
-html.vt-wash::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-
-html.vt-wash::view-transition-old(root) {
-  z-index: 1;
-}
-
-html.vt-wash::view-transition-new(root) {
-  z-index: 2;
-  -webkit-mask-image: radial-gradient(circle at var(--wash-x, 50%) var(--wash-y, 50%), #000 calc(var(--wash-r) - var(--wash-feather, 240px)), transparent var(--wash-r));
-  mask-image: radial-gradient(circle at var(--wash-x, 50%) var(--wash-y, 50%), #000 calc(var(--wash-r) - var(--wash-feather, 240px)), transparent var(--wash-r));
-}

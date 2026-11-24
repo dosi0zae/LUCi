@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 // The address link previews are built against (the picture URL in them must be absolute).
@@ -52,15 +53,18 @@ export default function RootLayout({
   return (
     // suppressHydrationWarning: the script below puts data-theme on <html> before React takes over.
     <html lang="ko" className="h-full antialiased" suppressHydrationWarning>
-      <head>
-        {/* The chosen screen mode (see features/mobile/theme.ts) is put on <html> before the first paint, so there is no flash. */}
-        <script
+      <body className="min-h-full">
+        {/* The chosen screen mode (see features/mobile/theme.ts) is put on <html> before the first paint, so there is no flash.
+            next/script (not a bare <script>): React warns about a script tag rendered like a component. */}
+        <Script
           dangerouslySetInnerHTML={{
             __html: `try{var m=localStorage.getItem("tripchain:theme");if(m==="light"||m==="dark")document.documentElement.setAttribute("data-theme",m)}catch(e){}`,
           }}
+          id="theme-init"
+          strategy="beforeInteractive"
         />
-      </head>
-      <body className="min-h-full">{children}</body>
+        {children}
+      </body>
     </html>
   );
 }
