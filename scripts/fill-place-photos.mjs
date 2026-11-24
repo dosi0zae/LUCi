@@ -19,12 +19,18 @@ import { fileURLToPath } from "node:url";
 
 const args = process.argv.slice(2);
 const COMMONS = args.includes("--commons");
+// Stage 4 (--naver): for the sights the first stages found nothing for, Naver image search (the way the dining photos were
+// found), each picture looked at by Gemini. Other people's pictures with no licence: an alpha-only choice by the owner, to be
+// replaced before a public launch. Stricter than the dining photos, because a wrong photo for a sight is easy to see: the
+// picture's own title must carry the sight's name, and the judge must say it is that place with a score of 7 or more.
+const NAVER = args.includes("--naver");
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CACHE = path.join(ROOT, "scripts", ".cache");
 const PLACES_FILE = path.join(ROOT, "src", "features", "mobile", "seoul-places.json");
-const STATE_FILE = path.join(CACHE, COMMONS ? "photo-fill-commons.json" : "photo-fill.json");
+const STATE_FILE = path.join(CACHE, NAVER ? "photo-fill-naver.json" : COMMONS ? "photo-fill-commons.json" : "photo-fill.json");
 const FIRST_STATE_FILE = path.join(CACHE, "photo-fill.json");
-const REPORT_FILE = path.join(CACHE, COMMONS ? "photo-fill-commons.html" : "photo-fill.html");
+const REPORT_FILE = path.join(CACHE, NAVER ? "photo-fill-naver.html" : COMMONS ? "photo-fill-commons.html" : "photo-fill.html");
+const USAGE_FILE = path.join(CACHE, "hub-usage.json");
 const SPEND_FILE = path.join(CACHE, "gemini-spend.json");
 const WRITE = args.includes("--write");
 // Stage 3 (--commons): for the places the first stage found nothing for, look in Wikimedia Commons directly: the photos taken
@@ -174,6 +180,75 @@ async function commonsCandidates(place) {
   return [...new Map([...near, ...named].map((c) => [c.url, c])).values()];
 }
 
+// Stage 4: Naver image search. The daily search limit is shared with the dining script (scripts/.cache/hub-usage.json).
+const HUB = "https://naverapihub.apigw.ntruss.com";
+const NAVER_STOP_AT = Math.floor(25_000 * 0.99);
+const kstToday = () => new Date(Date.now() + 9 * 3_600_000).toISOString().slice(0, 10);
+const callsToday = () => {
+  const usage = readJson(USAGE_FILE, {});
+  return usage.date === kstToday() ? usage.calls : 0;
+};
+let naverStopped = "";
+async function naverSearch(query) {
+  const url = `${HUB}/search/v1/image?query=${encodeURIComponent(query)}&display=20&filter=large&sort=sim`;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    if (callsToday() >= NAVER_STOP_AT) {
+      naverStopped = "Naver daily limit reached";
+      return null;
+    }
+    writeFileSync(USAGE_FILE, JSON.stringify({ date: kstToday(), calls: callsToday() + 1 }), "utf8");
+    const response = await fetch(url, { headers: { "X-NCP-APIGW-API-KEY-ID": env.NAVER_CLIENT_ID, "X-NCP-APIGW-API-KEY": env.NAVER_CLIENT_SECRET }, signal: AbortSignal.timeout(20_000) }).catch(() => null);
+    if (!response) return null;
+    if (response.status === 429) {
+      await sleep(1500 * attempt);
+      continue;
+    }
+    if (response.status === 401) {
+      naverStopped = "the image search is not switched on for this Naver application (401)";
+      return null;
+    }
+    if (!response.ok) return null;
+    return (await response.json().catch(() => null))?.items ?? [];
+  }
+  return null;
+}
+const squash = (text) => String(text ?? "").replace(/<[^>]+>/g, "").replace(/[^0-9a-zA-Z가-힣]/g, "").toLowerCase();
+const NAVER_BAD_HOST = /(coupang|gmarket|11st|auction|smartstore|shopping|danawa|wemakeprice|tmon|ssg\.com|interpark|aliexpress|temu|pinterest|alamy|shutterstock|istock|gettyimages|dreamstime|123rf|freepik|alba\.kr|albamon|foodnjob|peterpanz|jumpoline)/i;
+const usedUrls = new Set(places.map((place) => place.image).filter(Boolean));
+const OTHER_CITY = /(부산|대구|인천|광주|대전|울산|세종|제주|경주|전주|강릉|속초|수원|춘천|여수|통영|안동|포항|목포|순천|청주|천안|제천|남해|거제|양양|가평|파주|고양|성남|용인)/;
+// The names a sight goes by: "서울 호암산성" -> "호암산성"; "탑골공원 (파고다공원)" -> both.
+function nameVariants(name) {
+  const inner = [...name.matchAll(/\((.*?)\)/g)].map((match) => match[1]);
+  const outer = name.replace(/\(.*?\)/g, "").replace(/^서울\s*/, "").trim();
+  return [...new Set([outer, ...inner.map((text) => text.replace(/^서울\s*/, "").trim())])].filter((text) => squash(text).length >= 2);
+}
+async function naverCandidates(place) {
+  const variants = nameVariants(place.name);
+  if (variants.length === 0) return [];
+  const district = (place.address ?? "").match(/([가-힣]+구)/)?.[1] ?? place.area ?? "";
+  const items = await naverSearch(`${variants[0]} ${district}`.trim());
+  if (!items) return [];
+  const keys = variants.map(squash);
+  const out = [];
+  for (const item of items) {
+    const width = Number(item.sizewidth);
+    const height = Number(item.sizeheight);
+    // https only (an http picture is blocked on an https page); big enough; a usual shape; not a shop or stock site; not used twice.
+    if (!item.link || !/^https:/.test(item.link) || NAVER_BAD_HOST.test(item.link) || usedUrls.has(item.link)) continue;
+    if (!(width >= 500 && height >= 350)) continue;
+    const ratio = width / height;
+    if (ratio < 0.6 || ratio > 2.2) continue;
+    const title = squash(item.title);
+    // The title has to carry the sight's name (a name of one or two letters is too common to trust).
+    if (!keys.some((key) => key.length >= 3 && title.includes(key))) continue;
+    // A common name ("하늘전망대") also belongs to places elsewhere: a title that names another city is not this place.
+    const elsewhere = title.match(OTHER_CITY);
+    if (elsewhere && !squash(place.name).includes(elsewhere[0])) continue;
+    out.push({ url: item.link, source: "naver", credit: `${new URL(item.link).hostname.replace(/^www\./, "")} · 네이버 이미지 검색`, title: String(item.title).replace(/<[^>]+>/g, "").slice(0, 80) });
+  }
+  return out.slice(0, 4);
+}
+
 // ---- the picture test (the same as audit-place-photos.mjs) --------------------------------------------------------------
 
 async function fetchImage(url) {
@@ -245,6 +320,8 @@ async function judge(place, image) {
 
 // ---- run -------------------------------------------------------------------------------------------------------------------
 
+const NAVER_MIN_SCORE = 7;
+const NAVER_OUT_SUBJECTS = new Set(["food", "person", "text_or_poster", "map_or_diagram", "logo", "other"]);
 const firstState = COMMONS ? readJson(FIRST_STATE_FILE, {}) : {};
 const todo = places
   .filter((place) => !place.image && !state[place.id] && (!COMMONS || firstState[place.id]?.status !== "found"))
@@ -260,8 +337,13 @@ try {
       console.log("[fill] TourAPI limit reached; stopping (resumes next time)");
       break;
     }
-    let candidates = COMMONS ? await commonsCandidates(place) : await tourCandidates(place);
-    if (!COMMONS && candidates.length === 0 && !tourStopped) candidates = await wikiCandidates(place);
+    let candidates = NAVER ? await naverCandidates(place) : COMMONS ? await commonsCandidates(place) : await tourCandidates(place);
+    if (naverStopped) {
+      // Not written down as "no photo": the search did not run.
+      console.log(`[fill] ${naverStopped}; stopping`);
+      break;
+    }
+    if (!COMMONS && !NAVER && candidates.length === 0 && !tourStopped) candidates = await wikiCandidates(place);
     let best = null;
     const looked = [];
     for (const candidate of candidates) {
@@ -270,7 +352,9 @@ try {
       const result = await judge(place, image);
       if (!result) continue;
       looked.push({ ...candidate, ...result });
-      if (result.isPlace === "yes" && result.representativeScore >= MIN_SCORE && (!best || result.representativeScore > best.representativeScore)) best = { ...candidate, ...result };
+      // A picture of a sight, not of a person, food, a poster or a map (the first stages' sources hold none of these; a search does).
+      if (NAVER && NAVER_OUT_SUBJECTS.has(result.subject)) continue;
+      if (result.isPlace === "yes" && result.representativeScore >= (NAVER ? NAVER_MIN_SCORE : MIN_SCORE) && (!best || result.representativeScore > best.representativeScore)) best = { ...candidate, ...result };
     }
     state[place.id] = { name: place.name, status: best ? "found" : candidates.length ? "rejected" : "none", chosen: best, looked, at: new Date().toISOString().slice(0, 10) };
     if (best) kept += 1;
