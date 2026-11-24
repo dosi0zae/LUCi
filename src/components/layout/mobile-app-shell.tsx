@@ -2175,6 +2175,7 @@ export function MobileAppShell() {
       <section className="relative mx-auto flex h-[var(--app-vh,100svh)] w-full max-w-[430px] flex-col overflow-hidden bg-background shadow-panel [padding-top:env(safe-area-inset-top)] sm:max-h-[900px]" ref={frameRef}>
         <IntroSplash contained />
         <SideMenu
+          account={isSignedIn && account ? { name: account.name, picture: account.picture } : null}
           onClose={() => setIsMenuOpen(false)}
           onExplore={() => setActiveTab("explore")}
           onProfile={() => setActiveTab("profile")}
