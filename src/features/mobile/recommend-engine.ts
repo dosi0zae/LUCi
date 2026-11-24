@@ -76,6 +76,10 @@ export type RecommendIntent = {
   variety?: CourseVariety;
   pace?: CoursePace;
   startTime?: CourseStartTime;
+  // Hard conditions from the sentence ("실내 코스", "야외로만"): unlike an attribute, which only raises a place's score, these
+  // take the other kind of place out of the pool altogether.
+  indoorOnly?: boolean;
+  outdoorOnly?: boolean;
   categories: PlaceCategory[];
   attributes: string[];
   placeCount: number;
@@ -557,7 +561,7 @@ export function rankReplacementStops(
 // picks across more of the pool over repeated generations.
 const CANDIDATE_POOL_SIZE = 6;
 
-function isIndoor(place: MobilePlace): boolean | null {
+export function isIndoor(place: MobilePlace): boolean | null {
   const attributes = attributesOf(place);
   if (attributes.includes("실내")) return true;
   if (attributes.includes("실외")) return false;
@@ -715,7 +719,12 @@ export function getScoredPool(intent: RecommendIntent): {
 } {
   // Night-only places (clubs) are for people who ask for the night; every other course leaves them out.
   const wantsNight = intent.startTime === "night" || intent.attributes.includes("야경");
-  const usable = places.filter((place) => wantsNight || !place.nightOnly);
+  const usable = places.filter(
+    (place) =>
+      (wantsNight || !place.nightOnly) &&
+      !(intent.indoorOnly && isIndoor(place) === false) &&
+      !(intent.outdoorOnly && isIndoor(place) === true),
+  );
   const scoredAll = usable
     .map((place) => ({ place, score: scorePlace(place, intent) }))
     .sort((a, b) => b.score - a.score);

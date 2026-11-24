@@ -466,3 +466,26 @@ export function LanguageIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+// Face icons for the "was this recommendation good?" answer, in the same round-stroke style as the rest: a smile and a frown.
+export function SmileIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9 9.5h.01" />
+      <path d="M15 9.5h.01" />
+      <path d="M8.5 14.5c.9 1.3 2 2 3.5 2s2.6-.7 3.5-2" />
+    </svg>
+  );
+}
+
+export function FrownIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9 9.5h.01" />
+      <path d="M15 9.5h.01" />
+      <path d="M8.5 16.5c.9-1.3 2-2 3.5-2s2.6.7 3.5 2" />
+    </svg>
+  );
+}

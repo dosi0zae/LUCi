@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 const CONTACT = "dosi0zae@gmail.com";
-const UPDATED = "2026-11-17";
+const UPDATED = "2026-11-24";
 
 export default function PrivacyPage() {
   return (
@@ -34,7 +34,9 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>코스 추천 요청 시</strong>: 입력한 문장, 선택한 언어, (허용한 경우) 현재 위치 좌표, 북마크한 장소 번호. 코스를 만들기 위해
-            서버를 거쳐 Google Gemini API로 전달됩니다. 요청 내용은 코스 생성 후 저장하지 않습니다.
+            서버를 거쳐 Google Gemini API로 전달됩니다. 추천을 더 정확하게 만들기 위해 입력한 문장과 결과(장소 번호, 선택한 언어)를 계정이나
+            기기 식별 정보 없이 운영자의 Google 스프레드시트에 기록하며, 이메일 주소와 전화번호처럼 보이는 내용은 기록 전에 지웁니다. 추천 아래의
+            &quot;좋아요/별로예요&quot;를 누르면 그 평가와 (적었다면) 의견도 함께 기록됩니다.
           </li>
           <li>
             <strong>위치 정보</strong>: &quot;내 주변&quot; 기능을 눌렀을 때만 브라우저가 허용을 묻고, 허용한 경우에만 가까운 장소를 찾는 데 씁니다.
@@ -50,7 +52,7 @@ export default function PrivacyPage() {
         <h2 className="text-xl font-extrabold">3. 외부 서비스</h2>
         <p className="mt-2">서비스를 제공하려고 다음 외부 서비스를 이용합니다. 각 서비스는 자체 개인정보 정책을 따릅니다.</p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>Google (로그인, Gemini API) — 이름·이메일·프로필 사진, 추천 요청 문장</li>
+          <li>Google (로그인, Gemini API, 스프레드시트) — 이름·이메일·프로필 사진, 추천 요청 문장과 결과(추천 개선용 기록)</li>
           <li>Kakao (지도, 카카오톡 공유, 장소 정보) — 지도를 표시하고 공유 메시지를 만들 때</li>
           <li>Open-Meteo (날씨) — 위치 좌표 없이 서울 고정 좌표로만 조회</li>
           <li>Vercel (호스팅) — 접속 기록(IP 주소, 요청 시각 등 서버 로그)이 서비스 운영 목적으로 일시 보관될 수 있습니다.</li>
@@ -93,13 +95,16 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Course requests</strong>: the sentence you type, your language, your location (only if you allow it) and your bookmarked place
-          ids are sent through our server to the Google Gemini API to build the course. They are not kept afterwards.
+          ids are sent through our server to the Google Gemini API to build the course. To make recommendations better, the sentence and the
+          result (place ids, language) are also recorded, with no account or device identifier, in the operator&apos;s Google Sheet; anything that
+          looks like an email address or phone number is removed first. If you tap &quot;Good / Not good&quot; under a recommendation, that rating and
+          your comment (if any) are recorded too.
         </li>
         <li>
           <strong>Location</strong> is asked for only when you tap the nearby feature, and used only to find close places.
         </li>
         <li>
-          <strong>Third parties</strong>: Google (sign-in, Gemini), Kakao (maps, KakaoTalk sharing, place data), Open-Meteo (weather for a fixed
+          <strong>Third parties</strong>: Google (sign-in, Gemini, Sheets), Kakao (maps, KakaoTalk sharing, place data), Open-Meteo (weather for a fixed
           Seoul point) and Vercel (hosting, which may keep server logs such as IP address and time of request).
         </li>
         <li>

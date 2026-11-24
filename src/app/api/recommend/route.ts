@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
+import { logToSheet } from "@/features/mobile/log-sheet";
 import {
   ATTRIBUTE_TAXONOMY,
   buildChain,
@@ -13,7 +14,7 @@ import {
   SEOUL_DISTRICTS,
   type RecommendIntent,
 } from "@/features/mobile/recommend-engine";
-import { getPlacesByIds, haversineKm, localizePlace, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
+import { getPlacesByIds, getTotalMinutes, haversineKm, isDiningCategory, localizePlace, type MobilePlace, type PlaceCategory } from "@/features/mobile/mobile-data";
 import { SUPPORTED_LOCALES, type Locale } from "@/features/mobile/i18n/translations";
 import { applyReview, pickAlternatives, reviewCourseWithGemini } from "@/features/mobile/course-critic";
 import { describeCourseWithGemini } from "@/features/mobile/describe-course";
@@ -35,6 +36,11 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const GEMINI_MODEL = "gemini-flash-lite-latest";
+// The request read (what the sentence means) is the step that decides how well a person is understood, and it is one short call,
+// so it runs on a stronger model than the rest: about 2.5 won a call against about 1.1 (measured, thinking kept to "low").
+// 3.8 Flash's price is promotional through 2026-12-31 and doubles on 2027-01-01 (0.75 -> 1.50 input, 3.75 -> 7.50 output per 1M
+// tokens): decide before then whether to keep it. GEMINI_INTENT_MODEL overrides it (set it to GEMINI_MODEL's value to go back).
+const INTENT_MODEL = process.env.GEMINI_INTENT_MODEL ?? "gemini-3.8-flash";
 const CATEGORIES: PlaceCategory[] = ["문화재", "관광지", "문화시설", "축제행사"];
 
 // Weather codes are WMO's, per Open-Meteo's docs — drizzle/rain/rain-showers/thunderstorm.
@@ -104,6 +110,9 @@ function buildSystemPrompt(locale: string): string {
 - area: 문장에 서울의 구(區) 이름이 글자 그대로 쓰여 있을 때만(어느 언어로 쓰였든, 예: "용산구", "Yongsan", "종로") 아래 목록 중 정확히 일치하는 값 하나로 답해. 구 이름이 없으면 반드시 null. 역·동네·건물·관광지 이름(성수역, 성수동, 강남역, 인사동)을 보고 어느 구인지 추측해서 채우지 마.
 - place: 문장이 중심으로 삼는 구체적인 장소·역·동네·건물의 이름(예: "성수역", "홍대입구역", "연남동", "서울숲", "경복궁")이 있으면 문장에 쓰인 그대로 답해. 구 이름만 있거나("마포구") 특정 장소가 없으면 null.
   목록: ${SEOUL_DISTRICTS.join(", ")}
+- meetingPoints: 서로 다른 곳에서 출발하는 사람들이 만나는 요청("A역, B역, C역에서 출발해서 만날 곳", "강남이랑 홍대 사이")이면 각 출발지의 이름(역·동네)을 문장에 쓰인 그대로 담은 배열. 출발지가 하나이거나 없으면 빈 배열.
+- maxMinutes: 전체 코스 시간의 상한을 분으로. "4시간 이내"는 240, "두 시간 안에"는 120, "반나절"은 240. 말이 없으면 null.
+- indoorOnly: 실내 장소만 원하면 true("실내 코스", "비 피해서", "밖에 나가기 싫어"). 아니면 false. outdoorOnly: 야외·실외 장소만 원하면 true("야외로만", "산책 위주"). 아니면 false. 둘 다 true일 수는 없어.
 - reason: 왜 이렇게 추천하는지 ${languageName}로 쓴 한 문장.`;
 }
 
@@ -117,6 +126,10 @@ type GeminiAiIntent = {
   placeCount?: number;
   area?: string | null;
   place?: string | null;
+  meetingPoints?: string[];
+  maxMinutes?: number | null;
+  indoorOnly?: boolean;
+  outdoorOnly?: boolean;
   reason?: string;
 };
 
@@ -132,6 +145,7 @@ async function getAiIntent(prompt: string, locale: string): Promise<GeminiAiInte
     systemInstruction: { parts: [{ text: buildSystemPrompt(locale) }] },
     generationConfig: {
       responseMimeType: "application/json",
+      thinkingConfig: { thinkingLevel: "low" },
       responseSchema: {
         type: "OBJECT",
         properties: {
@@ -144,6 +158,10 @@ async function getAiIntent(prompt: string, locale: string): Promise<GeminiAiInte
           placeCount: { type: "INTEGER" },
           area: { type: "STRING", enum: [...SEOUL_DISTRICTS], nullable: true },
           place: { type: "STRING", nullable: true },
+          meetingPoints: { type: "ARRAY", items: { type: "STRING" } },
+          maxMinutes: { type: "INTEGER", nullable: true },
+          indoorOnly: { type: "BOOLEAN" },
+          outdoorOnly: { type: "BOOLEAN" },
           reason: { type: "STRING" },
         },
         required: ["focus", "categories", "attributes", "placeCount", "area"],
@@ -153,12 +171,12 @@ async function getAiIntent(prompt: string, locale: string): Promise<GeminiAiInte
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${INTENT_MODEL}:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(10000),
       },
     );
 
@@ -460,6 +478,153 @@ function isGenericLandmarkPrompt(prompt: string): boolean {
   return GENERIC_LANDMARK_KEYWORDS.some((keyword) => lower.includes(keyword.toLowerCase()));
 }
 
+// Conditions the sentence states outright are read from the words themselves first (the same way a district name is): the
+// model has missed plain ones before, and a "4시간 이내" must not depend on it.
+function maxMinutesFromPrompt(prompt: string): number | null {
+  const hours = /(\d+(?:\.\d+)?)\s*시간\s*(반)?\s*(?:이내|안에|안|내|정도|까지|미만)/.exec(prompt);
+  if (hours) {
+    return Math.round((Number(hours[1]) + (hours[2] ? 0.5 : 0)) * 60);
+  }
+  const minutes = /(\d{2,3})\s*분\s*(?:이내|안에|안|내|정도|까지|미만)/.exec(prompt);
+  return minutes ? Number(minutes[1]) : null;
+}
+
+const OUTDOOR_WORDS = /(야외|실외|outdoor)/i;
+const INDOOR_WORDS = /(실내|indoor)/i;
+
+// The words of the sentence decide when they are plain ("실내 코스"); the model's read only fills in what the words do not say
+// ("비 피해서"), and when the two disagree the words win (the model once marked a rainy-day indoor request as outdoor-only).
+function indoorChoice(prompt: string, aiIntent: GeminiAiIntent | null): { indoorOnly: boolean; outdoorOnly: boolean } {
+  const wordsIndoor = INDOOR_WORDS.test(prompt) && !OUTDOOR_WORDS.test(prompt);
+  const wordsOutdoor = OUTDOOR_WORDS.test(prompt) && !INDOOR_WORDS.test(prompt);
+  const aiIndoor = Boolean(aiIntent?.indoorOnly) && !aiIntent?.outdoorOnly;
+  const aiOutdoor = Boolean(aiIntent?.outdoorOnly) && !aiIntent?.indoorOnly;
+  return {
+    indoorOnly: wordsIndoor || (aiIndoor && !wordsOutdoor),
+    outdoorOnly: wordsOutdoor || (aiOutdoor && !wordsIndoor),
+  };
+}
+
+// People starting from different places ("양재, 광운대역, 디지털미디어시티역에서 출발해서 만날 곳"): every starting point is
+// looked up on the map and the course is built around the middle of them, not around whichever one the sentence names first.
+async function resolveMeetingPoint(
+  aiIntent: GeminiAiIntent | null,
+  prompt: string,
+): Promise<{ center: { lat: number; lng: number }; names: string[] } | null> {
+  const fromAi = Array.isArray(aiIntent?.meetingPoints) ? aiIntent.meetingPoints.filter((name): name is string => typeof name === "string") : [];
+  const stations = prompt.match(/[가-힣0-9]{2,12}역(?![가-힣])/g) ?? [];
+  const names = [...new Set(fromAi.length >= 2 ? fromAi : /(만나|중간|사이|모이|출발)/.test(prompt) ? stations : [])].slice(0, 5);
+  if (names.length < 2) {
+    return null;
+  }
+  const lookups = await Promise.all(names.map(async (name) => ({ name, point: await resolvePlaceAnchor(name) })));
+  const found = lookups.filter((entry): entry is { name: string; point: NonNullable<typeof entry.point> } => Boolean(entry.point));
+  if (found.length < 2) {
+    return null;
+  }
+  const center = {
+    lat: found.reduce((sum, entry) => sum + entry.point.lat, 0) / found.length,
+    lng: found.reduce((sum, entry) => sum + entry.point.lng, 0) / found.length,
+  };
+  // The names shown are the ones the sentence used ("양재", "광운대역"), not the map's full title ("양재역 신분당선").
+  return { center, names: found.map((entry) => entry.name) };
+}
+
+const MEETING_NOTE: Record<string, (names: string, area: string) => string> = {
+  ko: (names, area) => `${names}의 중간쯤인 ${area} 일대로 잡았어요.`,
+  en: (names, area) => `Set around ${area}, roughly halfway between ${names}.`,
+  ja: (names, area) => `${names}の中間あたりの${area}周辺にしました。`,
+  zh: (names, area) => `选在${names}大致中间的${area}一带。`,
+};
+
+const TIME_FIT_NOTE: Record<string, (hours: string, count: number) => string> = {
+  ko: (hours, count) => `${hours} 안에 마치도록 ${count}곳으로 담았어요.`,
+  en: (hours, count) => `Kept to ${count} stops so it fits in ${hours}.`,
+  ja: (hours, count) => `${hours}以内に収まるよう${count}か所にしました。`,
+  zh: (hours, count) => `为了在${hours}内结束,安排了${count}个地点。`,
+};
+
+// Said when a condition could not be kept, so the course never silently ignores what was asked.
+const TIME_MISS_NOTE: Record<string, (hours: string, count: number) => string> = {
+  ko: (hours, count) => `${hours} 안에 맞추기는 어려워서 가장 짧은 ${count}곳으로 담았어요.`,
+  en: (hours, count) => `Fitting ${hours} wasn't possible here, so this is the shortest option with ${count} stops.`,
+  ja: (hours, count) => `${hours}以内は難しいため、最も短い${count}か所にしました。`,
+  zh: (hours, count) => `难以在${hours}内完成,所以安排了最短的${count}个地点。`,
+};
+
+const MEETING_MISS_NOTE: Record<string, string> = {
+  ko: "출발지를 지도에서 모두 찾지 못해 중간 지점으로 잡지는 못했어요.",
+  en: "Couldn't find every starting point on the map, so this isn't set around their middle.",
+  ja: "出発地をすべて地図で見つけられず、中間地点には設定できませんでした。",
+  zh: "未能在地图上找到所有出发地,因此没有以中间位置为中心。",
+};
+
+// One row in the log sheet per recommendation (see log-sheet.ts): what was typed, what the app read from it, what it gave.
+function logRecommendation(input: {
+  prompt: string;
+  locale: string;
+  aiIntent: GeminiAiIntent | null;
+  intent: RecommendIntent;
+  focus: string;
+  maxMinutes: number | null;
+  meetingNames: string[] | null;
+  placeIds: string[];
+  unmet: string[];
+}) {
+  after(() =>
+    logToSheet({
+      kind: "recommend",
+      locale: input.locale,
+      prompt: input.prompt,
+      model: input.aiIntent ? INTENT_MODEL : "",
+      usedAI: Boolean(input.aiIntent),
+      intent: {
+        focus: input.focus,
+        area: input.intent.areaFilter ?? null,
+        count: input.intent.placeCount,
+        startTime: input.intent.startTime ?? null,
+        pace: input.intent.pace ?? null,
+        indoorOnly: input.intent.indoorOnly ?? false,
+        outdoorOnly: input.intent.outdoorOnly ?? false,
+        maxMinutes: input.maxMinutes,
+        meeting: input.meetingNames,
+        attributes: input.intent.attributes,
+      },
+      placeIds: input.placeIds,
+      unmet: input.unmet,
+    }),
+  );
+}
+
+function formatHours(minutes: number, locale: string): string {
+  const hours = minutes / 60;
+  const text = Number.isInteger(hours) ? String(hours) : hours.toFixed(1);
+  return locale === "ko" ? `${text}시간` : locale === "ja" ? `${text}時間` : locale === "zh" ? `${text}小时` : `${text} h`;
+}
+
+// A limit on the whole course ("4시간 이내") is checked on the finished course, not only asked for: stops go one at a time,
+// the least known first (the later one on a tie), until visits plus travel fit, but never below two stops.
+function trimToMinutes(ids: string[], maxMinutes: number): string[] {
+  const kept = [...ids];
+  while (kept.length > 2) {
+    const stops = getPlacesByIds(kept);
+    if (stops.length !== kept.length || getTotalMinutes(stops) <= maxMinutes) {
+      break;
+    }
+    let drop = 0;
+    let lowest = Infinity;
+    stops.forEach((place, index) => {
+      const fame = place.fameScore ?? 50;
+      if (fame <= lowest) {
+        lowest = fame;
+        drop = index;
+      }
+    });
+    kept.splice(drop, 1);
+  }
+  return kept;
+}
+
 function normalizeIntent(
   aiIntent: GeminiAiIntent | null,
   anchor: { lat: number; lng: number } | null,
@@ -567,10 +732,15 @@ export async function POST(request: NextRequest) {
   // A place the sentence names (a station, a neighbourhood, a landmark) is what the course is built around: it is
   // looked up on the map, and wins over a district (it is the more exact of the two). Our own short list of famous
   // spots is only the fallback for when the lookup finds nothing.
-  const namedPlace = (typeof aiIntent?.place === "string" ? aiIntent.place.trim() : "") || stationFromPrompt(prompt) || "";
+  const meeting = hangangIntent ? null : await resolveMeetingPoint(aiIntent, prompt);
+  const namedPlace = meeting ? "" : (typeof aiIntent?.place === "string" ? aiIntent.place.trim() : "") || stationFromPrompt(prompt) || "";
   const resolvedPlace = namedPlace && !hangangIntent ? await resolvePlaceAnchor(namedPlace) : null;
-  const promptLandmarkAnchor = resolvedPlace ? { lat: resolvedPlace.lat, lng: resolvedPlace.lng } : detectLandmarkAnchorFromPrompt(prompt);
-  if (resolvedPlace) {
+  const promptLandmarkAnchor = meeting
+    ? meeting.center
+    : resolvedPlace
+      ? { lat: resolvedPlace.lat, lng: resolvedPlace.lng }
+      : detectLandmarkAnchorFromPrompt(prompt);
+  if (resolvedPlace || meeting) {
     promptAreaMatch = null;
     if (aiIntent) {
       aiIntent.area = null;
@@ -587,6 +757,14 @@ export async function POST(request: NextRequest) {
     hangangIntent,
     preference,
   );
+  Object.assign(intent, indoorChoice(prompt, aiIntent));
+
+  // A limit on the whole course ("4시간 이내"): fewer stops are asked for from the start (about 70 minutes each with the
+  // walk between), and the finished course is cut to fit below, because a meal and a café are woven in after the pick.
+  const maxMinutes = maxMinutesFromPrompt(prompt) ?? (typeof aiIntent?.maxMinutes === "number" && aiIntent.maxMinutes >= 60 && aiIntent.maxMinutes <= 1440 ? Math.round(aiIntent.maxMinutes) : null);
+  if (maxMinutes) {
+    intent.placeCount = Math.min(intent.placeCount, Math.max(2, Math.floor(maxMinutes / 70)));
+  }
 
   // Only nudge toward indoor places when the user hasn't already told us what they want —
   // an explicit "실외" ask (e.g. "한강 산책") should win over the weather, not get overruled.
@@ -618,6 +796,7 @@ export async function POST(request: NextRequest) {
       radiusKm,
     });
     if (dining) {
+      logRecommendation({ prompt, locale, aiIntent, intent, focus, maxMinutes, meetingNames: meeting?.names ?? null, placeIds: dining.placeIds, unmet: [] });
       return NextResponse.json({
         placeIds: dining.placeIds,
         anchor: dining.anchor,
@@ -626,6 +805,8 @@ export async function POST(request: NextRequest) {
         title: dining.title,
         usedAI: Boolean(aiIntent),
         usedGeminiSelection: dining.usedGemini,
+        model: aiIntent ? INTENT_MODEL : null,
+        unmet: [],
       });
     }
     diningUnavailableNote = DINING_UNAVAILABLE_NOTE[locale] ?? DINING_UNAVAILABLE_NOTE.en;
@@ -702,7 +883,7 @@ export async function POST(request: NextRequest) {
   // weave dining in with the same editor used for "카페 하나 더 추가해줘".
   let mixedReason: string | null = null;
   if (focus === "mixed") {
-    const refined = await refineCourseCore({ instruction: prompt.slice(0, 200), stopIds: finalPlaceIds, pinnedIds: [], locale });
+    const refined = await refineCourseCore({ instruction: prompt.slice(0, 200), stopIds: finalPlaceIds, pinnedIds: [], locale, indoorOnly: intent.indoorOnly, outdoorOnly: intent.outdoorOnly });
     if (refined.ok) {
       finalPlaceIds = optimizeRoutePreservingPins(getPlacesByIds(refined.ids), new Set(), false).map((place) => place.id);
       mixedReason = refined.reason || null;
@@ -748,6 +929,44 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // The time limit, checked on the finished course.
+  const unmet: string[] = [];
+  let timeFitNote: string | null = null;
+  let meetingNote: string | null = null;
+  if (maxMinutes && focus !== "dining") {
+    const fitted = trimToMinutes(finalPlaceIds, maxMinutes);
+    if (fitted.length < finalPlaceIds.length) {
+      finalPlaceIds = fitted;
+      reviewChanged = true;
+      // The note about the woven-in meal and café is only true while one of them is still in the course.
+      if (!getPlacesByIds(finalPlaceIds).some((place) => isDiningCategory(place.category))) {
+        wovenNote = null;
+      }
+    }
+    if (getTotalMinutes(getPlacesByIds(finalPlaceIds)) <= maxMinutes) {
+      timeFitNote = (TIME_FIT_NOTE[locale] ?? TIME_FIT_NOTE.en)(formatHours(maxMinutes, locale), finalPlaceIds.length);
+    } else {
+      unmet.push("time");
+      timeFitNote = (TIME_MISS_NOTE[locale] ?? TIME_MISS_NOTE.en)(formatHours(maxMinutes, locale), finalPlaceIds.length);
+    }
+  }
+  if (result.placeIds.length < result.requestedCount) {
+    unmet.push("fewer");
+  }
+  if (!meeting && (aiIntent?.meetingPoints?.filter((name) => typeof name === "string").length ?? 0) >= 2) {
+    unmet.push("meeting");
+    meetingNote = MEETING_MISS_NOTE[locale] ?? MEETING_MISS_NOTE.en;
+  }
+  if (meeting) {
+    const middle = [...getScoredPool({ ...intent, anchor: meeting.center, areaFilter: null }).scored]
+      .map(({ place }) => place)
+      .sort((a, b) => haversineKm(meeting.center, a) - haversineKm(meeting.center, b))[0];
+    const area = localizeDistrictName(middle?.area ?? null, locale);
+    if (area) {
+      meetingNote = (MEETING_NOTE[locale] ?? MEETING_NOTE.en)(meeting.names.join(", "), area);
+    }
+  }
+
   // The introduction is written again from the final stops when the review changed the course (the first one was written
   // for the old stops), and when the pick step gave none of its own (then it would be the general line of the request read,
   // which says nothing about this course).
@@ -765,17 +984,20 @@ export async function POST(request: NextRequest) {
   }
   const introduction = reviewChanged ? freshReason : (mixedReason ?? selectionReason ?? freshReason ?? aiIntent?.reason);
 
+  logRecommendation({ prompt, locale, aiIntent, intent, focus, maxMinutes, meetingNames: meeting?.names ?? null, placeIds: finalPlaceIds, unmet });
   return NextResponse.json({
     placeIds: finalPlaceIds,
     anchor: result.anchor,
     areaFilter: intent.areaFilter ?? null,
     reviewSwaps,
     reason:
-      [introduction, wovenNote, weatherNote, maxShownNote, diningUnavailableNote]
+      [introduction, meetingNote, timeFitNote, wovenNote, weatherNote, maxShownNote, diningUnavailableNote]
         .filter(Boolean)
         .join(" ") || null,
     title: courseTitle,
     usedAI: Boolean(aiIntent),
     usedGeminiSelection: Boolean(selectionReason),
+    model: aiIntent ? INTENT_MODEL : null,
+    unmet,
   });
 }

@@ -91,6 +91,7 @@ import { SlidingTabs } from "@/features/mobile/sliding-tabs";
 import { buildTasteProfile, tasteScore, type TasteProfile } from "@/features/mobile/taste";
 import { useHorizontalSwipe } from "@/features/mobile/use-swipe";
 import { PhotoLightbox, PlacePhoto, PlacePhotoThumb } from "@/features/mobile/place-photo";
+import { RecommendFeedback } from "@/features/mobile/recommend-feedback";
 import { PublishSheet } from "@/features/mobile/publish-sheet";
 import {
   buildChain,
@@ -626,6 +627,16 @@ export function MobileAppShell() {
   const [stopMenuId, setStopMenuId] = useState<string | null>(null);
   const [isAiCourse, setIsAiCourse] = useState(false);
   const [usedAI, setUsedAI] = useState(false);
+  // What the last recommendation was (sentence, stops, which model read it, which conditions it could not keep): the good / not good
+  // row under the course sends it along with the answer. `id` is the run number, so each new recommendation starts a fresh row.
+  const [lastRecommendation, setLastRecommendation] = useState<{
+    id: number;
+    prompt: string;
+    placeIds: string[];
+    usedAI: boolean;
+    model: string | null;
+    unmet: string[];
+  } | null>(null);
   const [isNavigateMenuOpen, setIsNavigateMenuOpen] = useState(false);
   const navButtonRef = useRef<HTMLButtonElement>(null);
   // The "tell the AI how to change this course" box under the course card.
@@ -1206,6 +1217,14 @@ export function MobileAppShell() {
       setRecommendReason(typeof data.reason === "string" ? data.reason : null);
       setCourseTitle(typeof data.title === "string" && data.title ? { title: data.title, prompt: nextPrompt } : null);
       setUsedAI(data.usedAI === true);
+      setLastRecommendation({
+        id: run,
+        prompt: nextPrompt,
+        placeIds: data.placeIds.filter((id: unknown): id is string => typeof id === "string"),
+        usedAI: data.usedAI === true,
+        model: typeof data.model === "string" ? data.model : null,
+        unmet: Array.isArray(data.unmet) ? data.unmet.filter((tag: unknown): tag is string => typeof tag === "string") : [],
+      });
       setSubmittedPrompt(nextPrompt);
       setCourseAnchor(
         data.anchor && typeof data.anchor.lat === "number" && typeof data.anchor.lng === "number"
@@ -2699,6 +2718,18 @@ export function MobileAppShell() {
                   >
                     {t("confirmCourse", { count: chainPlaces.length })}
                   </Button>
+
+                  {isAiCourse && lastRecommendation && !isRecommending && (
+                    <RecommendFeedback
+                      key={lastRecommendation.id}
+                      locale={locale}
+                      model={lastRecommendation.model}
+                      placeIds={lastRecommendation.placeIds}
+                      prompt={lastRecommendation.prompt}
+                      unmet={lastRecommendation.unmet}
+                      usedAI={lastRecommendation.usedAI}
+                    />
+                  )}
 
                   {otherPlacesByCategory.length > 0 && (
                     <div className="grid gap-4">

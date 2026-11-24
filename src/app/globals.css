@@ -1773,5 +1773,42 @@ button.ios-card:not(:disabled):active {
   appearance: none;
 }
 
+/* The good / not good row under a recommendation (recommend-feedback.tsx): a thank-you line that rises in, and a small pop on the
+   side that was just chosen. */
+@keyframes fb-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
+@keyframes fb-pop {
+  0% {
+    transform: scale(0.94);
+  }
+  55% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
 
+.fb-rise {
+  animation: fb-rise 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.fb-pop {
+  animation: fb-pop 340ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fb-rise,
+  .fb-pop {
+    animation: none;
+  }
+}

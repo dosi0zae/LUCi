@@ -34,12 +34,14 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
   const description = places.length ? `${stats} · ${names}${places.length > 4 ? " …" : ""}` : t.sharedCourseFallbackTitle;
 
   const imageParams = new URLSearchParams({ course: ids.join(","), title, lang: locale });
+  // The shared link's own address, so a site that saves a link once (Facebook, LINE) counts every copy of it as the same page.
+  const urlParams = new URLSearchParams({ course: ids.join(","), title, lang: locale });
   const image = { url: `/og?${imageParams.toString()}`, width: 1200, height: 630, alt: title };
 
   return {
     title: `${title} | Trip Chain`,
     description,
-    openGraph: { type: "website", siteName: "Trip Chain", title, description, images: [image] },
+    openGraph: { type: "website", siteName: "Trip Chain", url: `/mobile?${urlParams.toString()}`, title, description, images: [image] },
     twitter: { card: "summary_large_image", title, description, images: [image.url] },
   };
 }

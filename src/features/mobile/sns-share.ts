@@ -4,8 +4,10 @@
 // trip-detail-sheet.tsx, which is why that stays the first, most-used option in the
 // share menu). These three cover the platforms that DO support a one-tap deep link.
 
-export function buildTwitterShareUrl(text: string, url: string): string {
-  const params = new URLSearchParams({ text, url });
+// Every link here carries the address alone: the app builds the preview card (picture, title, stops) from the page's own tags
+// (src/app/mobile/page.tsx), so a text next to it would only repeat the card as a second line.
+export function buildTwitterShareUrl(url: string): string {
+  const params = new URLSearchParams({ url });
   return `https://twitter.com/intent/tweet?${params.toString()}`;
 }
 
@@ -15,12 +17,12 @@ export function buildFacebookShareUrl(url: string): string {
 }
 
 // LINE (the main chat app in Japan) has a public share link too.
-export function buildLineShareUrl(text: string, url: string): string {
-  const params = new URLSearchParams({ url, text });
+export function buildLineShareUrl(url: string): string {
+  const params = new URLSearchParams({ url });
   return `https://social-plugins.line.me/lineit/share?${params.toString()}`;
 }
 
-export function buildWhatsAppShareUrl(text: string, url: string): string {
-  const params = new URLSearchParams({ text: `${text} ${url}` });
+export function buildWhatsAppShareUrl(url: string): string {
+  const params = new URLSearchParams({ text: url });
   return `https://wa.me/?${params.toString()}`;
 }

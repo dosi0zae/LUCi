@@ -432,6 +432,31 @@ export function TripDetailSheet({
   // course-share.ts) rather than pointing at a per-trip server page — there's no
   // server-side trip storage (mobile-app-shell's publish flow is localStorage-only), but
   // every place id is static bundled data, so the link resolves for anyone regardless.
+  // "More": the phone's own share sheet with the link alone. Adding a title, a text or the card picture makes an app like
+  // KakaoTalk send those as extra messages next to the link; the link alone shows up as one clean preview card (picture, title and
+  // description come from the page's own tags, see src/app/mobile/page.tsx). The picture is what the Instagram button shares.
+  async function shareLinkOnly() {
+    const shareUrl = getShareUrl();
+    if (navigator.share) {
+      try {
+        await navigator.share({ url: shareUrl });
+        setIsShareMenuOpen(false);
+        setShareMessage(t("shareDone"));
+      } catch {
+        // Share sheet was dismissed by the user — nothing to report.
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setIsShareMenuOpen(false);
+      setShareMessage(t("shareLinkCopied"));
+    } catch {
+      setIsShareMenuOpen(false);
+      setShareMessage(t("shareLinkFailed"));
+    }
+  }
+
   async function shareTrip() {
     const shareText = getShareText();
     const shareUrl = getShareUrl();
@@ -501,16 +526,16 @@ export function TripDetailSheet({
   // X, Facebook and WhatsApp all publish a real share-intent URL (unlike Instagram/TikTok,
   // which don't — see sns-share.ts), so these just open that link directly.
   function shareToTwitter() {
-    window.open(buildTwitterShareUrl(getShareText(), getShareUrl()), "_blank", "noopener,noreferrer");
+    window.open(buildTwitterShareUrl(getShareUrl()), "_blank", "noopener,noreferrer");
   }
   function shareToFacebook() {
     window.open(buildFacebookShareUrl(getShareUrl()), "_blank", "noopener,noreferrer");
   }
   function shareToWhatsApp() {
-    window.open(buildWhatsAppShareUrl(getShareText(), getShareUrl()), "_blank", "noopener,noreferrer");
+    window.open(buildWhatsAppShareUrl(getShareUrl()), "_blank", "noopener,noreferrer");
   }
   function shareToLine() {
-    window.open(buildLineShareUrl(getShareText(), getShareUrl()), "_blank", "noopener,noreferrer");
+    window.open(buildLineShareUrl(getShareUrl()), "_blank", "noopener,noreferrer");
   }
 
   async function copyShareLink() {
@@ -557,7 +582,7 @@ export function TripDetailSheet({
   const shareActions = [
     { key: "copy", label: t("shareCopyLink"), icon: <LinkIcon className="h-5 w-5" />, run: () => void copyShareLink() },
     { key: "image", label: t("shareSaveImageShort"), icon: <DownloadIcon className="h-5 w-5" />, run: () => void downloadShareCard() },
-    { key: "more", label: t("shareMoreApps"), icon: <MoreIcon className="h-5 w-5" />, run: () => void shareTrip(), keepsSheet: true },
+    { key: "more", label: t("shareMoreApps"), icon: <MoreIcon className="h-5 w-5" />, run: () => void shareLinkOnly(), keepsSheet: true },
   ];
 
   return (
