@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { ChevronDownIcon, CloseIcon, CompassIcon, LanguageIcon } from "@/components/layout/app-icons";
 import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import { SUPPORTED_LOCALES, localeLabel } from "@/features/mobile/i18n/translations";
@@ -47,15 +47,26 @@ export function SideMenu({ account, onClose, onExplore, onProfile, open }: SideM
   const { locale, setLocale } = useLocale();
   const [languageOpen, setLanguageOpen] = useState(false);
 
+  // Each piece comes in after the one before it, sliding in from the left and fading up. The delay applies only while opening, so
+  // closing is quick and everything leaves together.
+  const enter = (index: number, from = "translateX(-22px)"): CSSProperties => {
+    const delay = open ? 140 + index * 80 : 0;
+    return {
+      opacity: open ? 1 : 0,
+      transform: open ? "none" : from,
+      transition: `opacity 380ms ease ${delay}ms, transform 560ms ${EASE} ${delay}ms`,
+    };
+  };
+
   return (
     <div aria-hidden={!open} className={cn("absolute inset-0 z-40", !open && "pointer-events-none")} inert={!open}>
-      <button
-        aria-label={t("menuCloseAria")}
-        className="absolute inset-0 bg-black/20 motion-reduce:!transition-none"
+      {/* The dimmed screen behind the panel closes the menu when tapped. It is a plain layer, not a button, so a tap on it shows no
+          pressed or highlighted state; the close (X) button and the browser's Back do the same for keyboards. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-black/20 motion-reduce:!transition-none [-webkit-tap-highlight-color:transparent]"
         onClick={onClose}
-        style={{ opacity: open ? 1 : 0, transition: "opacity 300ms ease" }}
-        tabIndex={-1}
-        type="button"
+        style={{ opacity: open ? 1 : 0, transition: "opacity 360ms ease" }}
       />
       <nav
         aria-label={t("menuOpenAria")}
@@ -69,11 +80,17 @@ export function SideMenu({ account, onClose, onExplore, onProfile, open }: SideM
       >
         <div className="flex h-11 items-center justify-between pl-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img alt="Trip Chain" className="block h-[1.375rem] w-auto" src="/tripchain-logo-horizontal.svg" />
+          <img alt="Trip Chain" className="block h-[1.375rem] w-auto" src="/tripchain-logo-horizontal.svg" style={enter(0)} />
+          {/* The X turns as it comes in (a half turn, with a little overshoot) and turns back as it goes. */}
           <button
             aria-label={t("menuCloseAria")}
-            className="grid h-11 w-11 place-items-center rounded-full text-muted-strong"
+            className="grid h-11 w-11 place-items-center rounded-full text-muted-strong [-webkit-tap-highlight-color:transparent] motion-reduce:!transition-none"
             onClick={onClose}
+            style={{
+              opacity: open ? 1 : 0,
+              transform: open ? "rotate(0deg) scale(1)" : "rotate(-180deg) scale(0.4)",
+              transition: `opacity 300ms ease ${open ? 200 : 0}ms, transform 640ms cubic-bezier(0.34, 1.56, 0.64, 1) ${open ? 200 : 0}ms`,
+            }}
             type="button"
           >
             <CloseIcon className="h-[1.375rem] w-[1.375rem]" />
@@ -81,17 +98,19 @@ export function SideMenu({ account, onClose, onExplore, onProfile, open }: SideM
         </div>
 
         <div className="mt-6 grid gap-1">
-          <Row
-            icon={<CompassIcon className="h-[1.5rem] w-[1.5rem]" />}
-            onClick={() => {
-              onClose();
-              onExplore();
-            }}
-          >
-            {t("menuExplore")}
-          </Row>
+          <div className="motion-reduce:!transition-none" style={enter(1)}>
+            <Row
+              icon={<CompassIcon className="h-[1.5rem] w-[1.5rem]" />}
+              onClick={() => {
+                onClose();
+                onExplore();
+              }}
+            >
+              {t("menuExplore")}
+            </Row>
+          </div>
 
-          <div>
+          <div className="motion-reduce:!transition-none" style={enter(2)}>
             <Row
               expanded={languageOpen}
               icon={<LanguageIcon className="h-[1.5rem] w-[1.5rem]" />}
@@ -130,22 +149,26 @@ export function SideMenu({ account, onClose, onExplore, onProfile, open }: SideM
           </div>
         </div>
 
-        {/* The profile sits at the bottom of the panel, in a box of its own (the rows above have none): the person's picture and name when
-            signed in, otherwise the person mark and "프로필". The mark is the same one the "my course" badge uses. */}
-        <button
-          className="mt-auto flex h-[4.25rem] w-full items-center gap-3.5 rounded-2xl bg-surface px-3.5 text-left ring-1 ring-black/10 transition active:scale-[0.98]"
-          onClick={() => {
-            onClose();
-            onProfile();
-          }}
-          type="button"
-        >
-          <ProfileAvatar className="h-11 w-11" iconClassName="h-6 w-6" picture={account?.picture ?? null} />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-[1.0625rem] font-bold">{account?.name || t("menuProfile")}</span>
-            {account && <span className="block truncate text-sm font-semibold text-muted">{t("menuProfile")}</span>}
-          </span>
-        </button>
+        {/* The profile sits at the bottom of the panel, set off from the rows above only by a hairline (no box behind it): the person's
+            picture and name when signed in, otherwise the person mark and "프로필". The mark is the same one the "my course" badge uses. */}
+        <div className="mt-auto motion-reduce:!transition-none" style={enter(3, "translateY(18px)")}>
+          <div className="border-t border-black/10 pt-3 dark:border-white/15">
+            <button
+              className="flex h-14 w-full items-center gap-3.5 rounded-2xl px-2.5 text-left transition active:bg-black/5"
+              onClick={() => {
+                onClose();
+                onProfile();
+              }}
+              type="button"
+            >
+              <ProfileAvatar className="h-10 w-10" iconClassName="h-[1.375rem] w-[1.375rem]" picture={account?.picture ?? null} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[1.0625rem] font-bold">{account?.name || t("menuProfile")}</span>
+                {account && <span className="block truncate text-sm font-semibold text-muted">{t("menuProfile")}</span>}
+              </span>
+            </button>
+          </div>
+        </div>
       </nav>
     </div>
   );
