@@ -50,7 +50,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="h-full antialiased">
+    // suppressHydrationWarning: the script below puts data-theme on <html> before React takes over.
+    <html lang="ko" className="h-full antialiased" suppressHydrationWarning>
+      <head>
+        {/* The chosen screen mode (see features/mobile/theme.ts) is put on <html> before the first paint, so there is no flash. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var m=localStorage.getItem("tripchain:theme");if(m==="light"||m==="dark")document.documentElement.setAttribute("data-theme",m)}catch(e){}`,
+          }}
+        />
+      </head>
       <body className="min-h-full">{children}</body>
     </html>
   );

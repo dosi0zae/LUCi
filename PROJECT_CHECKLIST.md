@@ -1910,3 +1910,5 @@ Verification:
 
 - Passed: `tsc --noEmit`, `pnpm lint` (0 errors)
 - Checked by hand in the browser pane: menu open/close/back, language folding, explore from the menu, radius step and restore, publish sheet prefill and clear-all, location-denied notices; request notices through `/api/recommend`.
+
+Side menu additions (same day): "화면 모드" (자동 / 라이트 / 다크; kept in `localStorage` `tripchain:theme`, put on `<html data-theme>` before first paint by a small script in `layout.tsx`; every dark block in `globals.css` now has an auto version and a chosen-dark version, and the browser toolbar colour follows), "사용법 다시 보기" (starts the tutorial again), "의견 보내기" (opens the Google Form in a new tab), and the terms / privacy links in small type under the profile. The signed-in profile shows the name only (the small "프로필" caption was removed). Verified in the browser: dark / light / auto switching and its persistence across a reload, the tutorial restart, the layout of all rows.

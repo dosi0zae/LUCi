@@ -500,3 +500,34 @@ export function MenuIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+// Side-menu icons, flat strokes like the rest: screen mode (a circle half filled), how to use (a question mark in a circle), and
+// feedback (a speech bubble).
+export function ThemeIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function HelpIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.8c0 1.6-2.4 2-2.4 3.6" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
+
+export function MessageIcon({ className }: IconProps) {
+  return (
+    <svg className={className} {...iconProps}>
+      <path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
+      <path d="M8 10h8" />
+      <path d="M8 13h5" />
+    </svg>
+  );
+}

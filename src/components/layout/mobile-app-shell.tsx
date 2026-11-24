@@ -2179,6 +2179,7 @@ export function MobileAppShell() {
           onClose={() => setIsMenuOpen(false)}
           onExplore={() => setActiveTab("explore")}
           onProfile={() => setActiveTab("profile")}
+          onTutorial={startTour}
           open={isMenuOpen}
         />
         <div

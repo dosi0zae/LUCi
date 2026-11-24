@@ -1,25 +1,38 @@
 "use client";
 
 import { useState, type CSSProperties, type ReactNode } from "react";
-import { ChevronDownIcon, CloseIcon, CompassIcon, LanguageIcon } from "@/components/layout/app-icons";
+import { ChevronDownIcon, CloseIcon, CompassIcon, HelpIcon, LanguageIcon, MessageIcon, ThemeIcon } from "@/components/layout/app-icons";
 import { useLocale, useT } from "@/features/mobile/i18n/i18n-context";
 import { SUPPORTED_LOCALES, localeLabel } from "@/features/mobile/i18n/translations";
+import { LegalLinks } from "@/features/mobile/legal-links";
 import { ProfileAvatar } from "@/features/mobile/my-badge";
+import { useTheme, type ThemeMode } from "@/features/mobile/theme";
 import { cn } from "@/lib/utils";
 
 const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+// "의견 보내기" opens this form (in a new tab).
+const FEEDBACK_FORM_URL = "https://forms.gle/w5HA1r9NAAGmXWTL6";
 
 // The language row is named in a language other than the one that is set, so someone who ended up in a language they cannot
 // read can still find it ("Language" for everyone but English, and "언어" when English is set).
 const LANGUAGE_ROW_LABEL: Record<string, string> = { ko: "Language", en: "언어", ja: "Language", zh: "Language" };
 
+const THEME_MODES: { id: ThemeMode; labelKey: "themeAuto" | "themeLight" | "themeDark" }[] = [
+  { id: "auto", labelKey: "themeAuto" },
+  { id: "light", labelKey: "themeLight" },
+  { id: "dark", labelKey: "themeDark" },
+];
+
 type SideMenuProps = {
-  // The signed-in person (name and picture), or null: the profile box at the bottom shows them.
+  // The signed-in person (name and picture), or null: the profile row at the bottom shows them.
   account: { name: string; picture: string } | null;
   open: boolean;
   onClose: () => void;
   onExplore: () => void;
   onProfile: () => void;
+  // Starts the first-run tutorial again.
+  onTutorial: () => void;
 };
 
 // A menu row sits straight on the frosted panel (no pill behind it, no shadow): just a blue icon and the label.
@@ -38,25 +51,46 @@ function Row({ children, icon, onClick, trailing, expanded }: { children: ReactN
   );
 }
 
+// Folds open under a row (grid rows 0fr -> 1fr: no fixed height needed). Closed content is inert.
+function Fold({ children, open }: { children: ReactNode; open: boolean }) {
+  return (
+    <div
+      className="grid motion-reduce:!transition-none"
+      inert={!open}
+      style={{ gridTemplateRows: open ? "1fr" : "0fr", opacity: open ? 1 : 0, transition: `grid-template-rows 320ms ${EASE}, opacity 220ms ease` }}
+    >
+      <div className="min-h-0 overflow-hidden">{children}</div>
+    </div>
+  );
+}
+
+function Chevron({ open }: { open: boolean }) {
+  return <ChevronDownIcon className={cn("h-4 w-4 transition-transform duration-300", open && "rotate-180")} />;
+}
+
 // The first screen's menu: it slides in from the left over a lightly dimmed screen. The panel itself is see-through and blurred, so
 // the first screen glows faintly through it. It holds what the first screen keeps out of sight: the explore feed ("바로 탐색하기"),
-// the language, and (at the bottom) the profile. It is always mounted and slides by transform, so closing plays too; while shut it
-// is inert (not focusable, not read out).
-export function SideMenu({ account, onClose, onExplore, onProfile, open }: SideMenuProps) {
+// the screen mode, the language, the tutorial, the feedback form, and (at the bottom) the profile and the terms. It is always mounted and
+// slides by transform, so closing plays too; while shut it is inert (not focusable, not read out).
+export function SideMenu({ account, onClose, onExplore, onProfile, onTutorial, open }: SideMenuProps) {
   const t = useT();
   const { locale, setLocale } = useLocale();
+  const { mode, setMode } = useTheme();
   const [languageOpen, setLanguageOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
 
   // Each piece comes in after the one before it, sliding in from the left and fading up. The delay applies only while opening, so
   // closing is quick and everything leaves together.
   const enter = (index: number, from = "translateX(-22px)"): CSSProperties => {
-    const delay = open ? 140 + index * 80 : 0;
+    const delay = open ? 140 + index * 70 : 0;
     return {
       opacity: open ? 1 : 0,
       transform: open ? "none" : from,
       transition: `opacity 380ms ease ${delay}ms, transform 560ms ${EASE} ${delay}ms`,
     };
   };
+
+  const chip = (selected: boolean) => cn("rounded-full px-4 py-2 text-sm font-extrabold transition active:scale-95", selected ? "bg-primary text-white" : "ios-btn");
 
   return (
     <div aria-hidden={!open} className={cn("absolute inset-0 z-40", !open && "pointer-events-none")} inert={!open}>
@@ -70,7 +104,7 @@ export function SideMenu({ account, onClose, onExplore, onProfile, open }: SideM
       />
       <nav
         aria-label={t("menuOpenAria")}
-        className="absolute inset-y-0 left-0 flex w-[78%] max-w-[19rem] flex-col rounded-r-[2rem] bg-white/55 px-4 shadow-[8px_0_32px_rgba(15,23,42,0.14)] motion-reduce:!transition-none dark:bg-slate-900/55 [padding-bottom:calc(1.5rem+env(safe-area-inset-bottom))] [padding-top:calc(0.75rem+env(safe-area-inset-top))]"
+        className="absolute inset-y-0 left-0 flex w-[78%] max-w-[19rem] flex-col rounded-r-[2rem] bg-[var(--panel-frost)] px-4 shadow-[8px_0_32px_rgba(15,23,42,0.14)] motion-reduce:!transition-none [padding-bottom:calc(1rem+env(safe-area-inset-bottom))] [padding-top:calc(0.75rem+env(safe-area-inset-top))]"
         style={{
           WebkitBackdropFilter: "blur(28px) saturate(1.6)",
           backdropFilter: "blur(28px) saturate(1.6)",
@@ -97,7 +131,7 @@ export function SideMenu({ account, onClose, onExplore, onProfile, open }: SideM
           </button>
         </div>
 
-        <div className="mt-6 grid gap-1">
+        <div className="mt-6 grid gap-1 overflow-y-auto">
           <div className="motion-reduce:!transition-none" style={enter(1)}>
             <Row
               icon={<CompassIcon className="h-[1.5rem] w-[1.5rem]" />}
@@ -112,47 +146,83 @@ export function SideMenu({ account, onClose, onExplore, onProfile, open }: SideM
 
           <div className="motion-reduce:!transition-none" style={enter(2)}>
             <Row
+              expanded={themeOpen}
+              icon={<ThemeIcon className="h-[1.5rem] w-[1.5rem]" />}
+              onClick={() => setThemeOpen((value) => !value)}
+              trailing={
+                <span className="flex shrink-0 items-center gap-1.5 text-sm font-semibold text-muted">
+                  {t(THEME_MODES.find((entry) => entry.id === mode)?.labelKey ?? "themeAuto")}
+                  <Chevron open={themeOpen} />
+                </span>
+              }
+            >
+              {t("menuTheme")}
+            </Row>
+            <Fold open={themeOpen}>
+              <div className="flex flex-wrap gap-2 px-2.5 pb-2 pt-0.5">
+                {THEME_MODES.map((entry) => (
+                  <button aria-pressed={mode === entry.id} className={chip(mode === entry.id)} key={entry.id} onClick={() => setMode(entry.id)} type="button">
+                    {t(entry.labelKey)}
+                  </button>
+                ))}
+              </div>
+            </Fold>
+          </div>
+
+          <div className="motion-reduce:!transition-none" style={enter(3)}>
+            <Row
               expanded={languageOpen}
               icon={<LanguageIcon className="h-[1.5rem] w-[1.5rem]" />}
               onClick={() => setLanguageOpen((value) => !value)}
               trailing={
                 <span className="flex shrink-0 items-center gap-1.5 text-sm font-semibold text-muted">
                   {localeLabel[locale]}
-                  <ChevronDownIcon className={cn("h-4 w-4 transition-transform duration-300", languageOpen && "rotate-180")} />
+                  <Chevron open={languageOpen} />
                 </span>
               }
             >
               {LANGUAGE_ROW_LABEL[locale] ?? "Language"}
             </Row>
-            {/* The four languages fold open under the row (grid rows 0fr -> 1fr: no fixed height needed). */}
-            <div
-              className="grid motion-reduce:!transition-none"
-              inert={!languageOpen}
-              style={{ gridTemplateRows: languageOpen ? "1fr" : "0fr", opacity: languageOpen ? 1 : 0, transition: `grid-template-rows 320ms ${EASE}, opacity 220ms ease` }}
-            >
-              <div className="min-h-0 overflow-hidden">
-                <div className="flex flex-wrap gap-2 px-2.5 pb-2 pt-0.5">
-                  {SUPPORTED_LOCALES.map((option) => (
-                    <button
-                      aria-pressed={locale === option}
-                      className={cn("rounded-full px-4 py-2 text-sm font-extrabold transition active:scale-95", locale === option ? "bg-primary text-white" : "ios-btn")}
-                      key={option}
-                      onClick={() => setLocale(option)}
-                      type="button"
-                    >
-                      {localeLabel[option]}
-                    </button>
-                  ))}
-                </div>
+            <Fold open={languageOpen}>
+              <div className="flex flex-wrap gap-2 px-2.5 pb-2 pt-0.5">
+                {SUPPORTED_LOCALES.map((option) => (
+                  <button aria-pressed={locale === option} className={chip(locale === option)} key={option} onClick={() => setLocale(option)} type="button">
+                    {localeLabel[option]}
+                  </button>
+                ))}
               </div>
-            </div>
+            </Fold>
+          </div>
+
+          <div className="motion-reduce:!transition-none" style={enter(4)}>
+            <Row
+              icon={<HelpIcon className="h-[1.5rem] w-[1.5rem]" />}
+              onClick={() => {
+                onClose();
+                onTutorial();
+              }}
+            >
+              {t("menuTutorial")}
+            </Row>
+          </div>
+
+          <div className="motion-reduce:!transition-none" style={enter(5)}>
+            <Row
+              icon={<MessageIcon className="h-[1.5rem] w-[1.5rem]" />}
+              onClick={() => {
+                window.open(FEEDBACK_FORM_URL, "_blank", "noopener,noreferrer");
+              }}
+            >
+              {t("menuFeedback")}
+            </Row>
           </div>
         </div>
 
-        {/* The profile sits at the bottom of the panel, set off from the rows above only by a hairline (no box behind it): the person's
-            picture and name when signed in, otherwise the person mark and "프로필". The mark is the same one the "my course" badge uses. */}
-        <div className="mt-auto motion-reduce:!transition-none" style={enter(3, "translateY(18px)")}>
-          <div className="border-t border-black/10 pt-3 dark:border-white/15">
+        {/* The bottom of the panel: the profile, set off from the rows above only by a hairline (no box behind it), with the terms in
+            small type under it. The person's picture and name when signed in, otherwise the person mark and "프로필"; the mark is the
+            same one the "my course" badge uses. */}
+        <div className="mt-auto motion-reduce:!transition-none" style={enter(6, "translateY(18px)")}>
+          <div className="border-t border-[var(--hairline)] pt-3">
             <button
               className="flex h-14 w-full items-center gap-3.5 rounded-2xl px-2.5 text-left transition active:bg-black/5"
               onClick={() => {
@@ -162,11 +232,9 @@ export function SideMenu({ account, onClose, onExplore, onProfile, open }: SideM
               type="button"
             >
               <ProfileAvatar className="h-10 w-10" iconClassName="h-[1.375rem] w-[1.375rem]" picture={account?.picture ?? null} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[1.0625rem] font-bold">{account?.name || t("menuProfile")}</span>
-                {account && <span className="block truncate text-sm font-semibold text-muted">{t("menuProfile")}</span>}
-              </span>
+              <span className="block min-w-0 flex-1 truncate text-[1.0625rem] font-bold">{account?.name || t("menuProfile")}</span>
             </button>
+            <LegalLinks className="mt-3" />
           </div>
         </div>
       </nav>
